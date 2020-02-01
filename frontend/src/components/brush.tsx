@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { LazyBrush } from 'lazy-brush';
-import { drawInterface } from './canvasHelpers';
 import { Catenary } from 'catenary-curve';
 
 import { postLine } from '../repositories/canvas.repositories';
 import { Point } from './canvas.todo';
 import { CanvasSettings } from '../models/canvas';
+import canvas from './canvas';
 
 const canvasStyle = {
     display: 'block',
@@ -43,7 +43,9 @@ interface BrushProps {
 }
 
 const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, canvasSettings, ...props }) => {
+    console.log(canvasSettings);
     const brushCanvas = useRef<HTMLCanvasElement>(null);
+
     const [lazy, setLazy] = useState(
         new LazyBrush({
             radius: canvasSettings.lazyRadius * window.devicePixelRatio,
@@ -55,40 +57,75 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
         })
     );
     const [catenary, setCatenary] = useState(new Catenary());
-    const [mouseHasMoved, setMouseHasMoved] = useState(false);
+    const mouseHasMoved = useRef(false);
     const [chainLength, setChainLength] = useState(0);
 
-    const loop = ({ once = false } = {}) => {
+    const drawInterface = (pointer: Point, brush: Point, canvasSettings: CanvasSettings) => {
+        console.log(canvasSettings);
         if (brushCanvas.current && brushCanvas.current.getContext('2d')) {
-            const brushContext = brushCanvas.current.getContext('2d') as any;
-            if (mouseHasMoved) {
-                console.log('MOVED');
-                const pointer = lazy.getPointerCoordinates();
-                const brush = lazy.getBrushCoordinates();
+            const c = brushCanvas.current.getContext('2d') as any;
+            c.clearRect(0, 0, c.canvas.width, c.canvas.height);
 
-                drawInterface(brushContext, lazy, catenary, pointer, brush, canvasSettings);
-                setMouseHasMoved(false);
-            }
+            // Draw brush preview
+            c.beginPath();
+            c.fillStyle = canvasSettings.brushColor;
+            c.arc(brush.x, brush.y, canvasSettings.brushRadius, 0, Math.PI * 2, true);
+            c.fill();
 
-            if (!once) {
-                window.requestAnimationFrame(() => {
-                    loop();
-                });
-            }
+            // Draw mouse point (the one directly at the cursor)
+            c.beginPath();
+            c.fillStyle = canvasSettings.catenaryColor;
+            c.arc(pointer.x, pointer.y, 4, 0, Math.PI * 2, true);
+            c.fill();
+
+            c.beginPath();
+            c.lineWidth = 2;
+            c.lineCap = 'round';
+            c.setLineDash([2, 4]);
+            c.strokeStyle = canvasSettings.catenaryColor;
+            catenary.drawToCanvas(c, brush, pointer, canvasSettings.lazyRadius);
+            c.stroke();
+
+            // Draw brush point (the one in the middle of the brush preview)
+            c.beginPath();
+            c.fillStyle = canvasSettings.catenaryColor;
+            c.arc(brush.x, brush.y, 2, 0, Math.PI * 2, true);
+            c.fill();
         }
     };
 
     useEffect(() => {
+        let animationFrame: number;
+        function loop() {
+            animationFrame = requestAnimationFrame(onFrame);
+        }
+        function onFrame() {
+            if (mouseHasMoved && mouseHasMoved.current) {
+                const pointer = lazy.getPointerCoordinates();
+                const brush = lazy.getBrushCoordinates();
+
+                drawInterface(pointer, brush, canvasSettings);
+                mouseHasMoved.current = false;
+            }
+            loop();
+        }
+        loop();
+
+        return () => {
+            cancelAnimationFrame(animationFrame);
+        };
+    }, [canvasSettings]);
+
+    useEffect(() => {
         setChainLength(canvasSettings.lazyRadius * window.devicePixelRatio);
 
-        loop();
         window.setTimeout(() => {
             const initX = window.innerWidth / 2;
             const initY = window.innerHeight / 2;
             lazy.update({ x: initX - chainLength / 4, y: initY }, { both: true });
             lazy.update({ x: initX + chainLength / 4, y: initY }, { both: false });
 
-            setMouseHasMoved(true);
+            mouseHasMoved.current = true;
             // this.valuesChanged = true;
             // this.clear();
         }, 100);
@@ -134,8 +171,7 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
         //     });
         // }
 
-        console.log('moved2');
-        setMouseHasMoved(true);
+        mouseHasMoved.current = true;
     };
 
     const handleMouseDown = (e: any) => {
@@ -145,7 +181,6 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
 
     const handleMouseMove = (e: any) => {
         const { x, y } = getPointerPos(e);
-        console.log(x, y);
         handlePointerMove(x, y);
     };
 

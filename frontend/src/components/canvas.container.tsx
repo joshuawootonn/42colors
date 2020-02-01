@@ -19,10 +19,11 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasSettings
     //
     //     // if (fetchedLines.length !== lines.length) setLines(fetchedLines);
     // }, 333);
+    console.log(canvasSettings);
 
     return (
         <CanvasWrapper>
-            <Brush canvasWidth="100vw" canvasHeight="100vh" {...canvasSettings} canvasSettings={canvasSettings} />
+            <Brush canvasWidth="100vw" canvasHeight="100vh" canvasSettings={canvasSettings} />
         </CanvasWrapper>
     );
 };

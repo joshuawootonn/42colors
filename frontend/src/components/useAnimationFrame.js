@@ -8,15 +8,15 @@ const useAnimationFrame = callback => {
 
     const animate = time => {
         if (previousTimeRef.current != undefined) {
-            const deltaTime = time - previousTimeRef.current;
-            callback(deltaTime);
+            callback();
         }
         previousTimeRef.current = time;
-        requestRef.current = requestAnimationFrame(animate);
+
+        requestRef.current = window.requestAnimationFrame(animate);
     };
 
     React.useEffect(() => {
-        requestRef.current = requestAnimationFrame(animate);
+        requestRef.current = window.requestAnimationFrame(animate);
         return () => cancelAnimationFrame(requestRef.current);
     }, []); // Make sure the effect runs only once
 };

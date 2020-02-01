@@ -30,39 +30,3 @@ export const drawGrid = (ctx: CanvasRenderingContext2D) => {
     ctx.stroke();
 };
 
-export const drawInterface = (
-    ctx: CanvasRenderingContext2D,
-    lazyBrush: any,
-    catenary: any,
-    pointer: Point,
-    brush: Point,
-    canvasSettings: CanvasSettings
-) => {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-    // Draw brush preview
-    ctx.beginPath();
-    ctx.fillStyle = canvasSettings.brushColor;
-    ctx.arc(brush.x, brush.y, canvasSettings.brushRadius, 0, Math.PI * 2, true);
-    ctx.fill();
-
-    // Draw mouse point (the one directly at the cursor)
-    ctx.beginPath();
-    ctx.fillStyle = canvasSettings.catenaryColor;
-    ctx.arc(pointer.x, pointer.y, 4, 0, Math.PI * 2, true);
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.setLineDash([2, 4]);
-    ctx.strokeStyle = canvasSettings.catenaryColor;
-    catenary.drawToCanvas(ctx, brush, pointer, canvasSettings.lazyRadius);
-    ctx.stroke();
-
-    // Draw brush point (the one in the middle of the brush preview)
-    ctx.beginPath();
-    ctx.fillStyle = canvasSettings.catenaryColor;
-    ctx.arc(brush.x, brush.y, 2, 0, Math.PI * 2, true);
-    ctx.fill();
-};
