@@ -1,43 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import { LazyBrush } from 'lazy-brush';
 import { Catenary } from 'catenary-curve';
 
-import { postLine } from '../repositories/canvas.repositories';
 import { Point } from './canvas.todo';
 import { CanvasSettings } from '../models/canvas';
-import canvas from './canvas';
 import { useWindowSize } from 'react-use';
+import styled from 'styled-components';
 
-const canvasStyle = {
-    display: 'block',
-    position: 'absolute',
-    zIndex: 15,
-};
-
-const canvasTypes = [
-    {
-        name: 'interface',
-        zIndex: 15,
-    },
-    {
-        name: 'drawing',
-        zIndex: 11,
-    },
-    {
-        name: 'temp',
-        zIndex: 12,
-    },
-    {
-        name: 'grid',
-        zIndex: 10,
-    },
-];
+const BrushCanvas = styled.canvas`
+    display: block;
+    position: absolute;
+    z-index: 15;
+`;
 
 interface BrushProps {
     canvasWidth: number | string;
     canvasHeight: number | string;
-
     style?: any;
     className?: any;
     canvasSettings: CanvasSettings;
@@ -62,7 +40,6 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
     const [chainLength, setChainLength] = useState(0);
 
     const drawInterface = (pointer: Point, brush: Point, canvasSettings: CanvasSettings) => {
-        console.log(canvasSettings);
         if (brushCanvas.current && brushCanvas.current.getContext('2d')) {
             const c = brushCanvas.current.getContext('2d') as any;
             c.clearRect(0, 0, c.canvas.width, c.canvas.height);
@@ -112,7 +89,7 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
         }
         loop();
 
-        lazy.setRadius(canvasSettings.lazyRadius * window.devicePixelRatio)
+        lazy.setRadius(canvasSettings.lazyRadius * window.devicePixelRatio);
 
         return () => {
             cancelAnimationFrame(animationFrame);
@@ -162,33 +139,8 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
     };
 
     const handlePointerMove = (x: number, y: number) => {
-        const hasChanged = lazy.update({ x, y });
-        const isDisabled = !lazy.isEnabled();
-        //
-        // if ((this.isPressing && hasChanged && !this.isDrawing) || (isDisabled && this.isPressing)) {
-        //     // Start drawing and add point
-        //     this.isDrawing = true;
-        //     this.points.push(this.lazy.brush.toObject());
-        // }
-        //
-        // if (this.isDrawing && (this.lazy.brushHasMoved() || isDisabled)) {
-        //     // Add new point
-        //     this.points.push(this.lazy.brush.toObject());
-        //
-        //     // Draw current points
-        //     this.drawPoints({
-        //         points: this.points,
-        //         brushColor: this.props.brushColor,
-        //         brushRadius: this.props.brushRadius,
-        //     });
-        // }
-
+        lazy.update({ x, y });
         mouseHasMoved.current = true;
-    };
-
-    const handleMouseDown = (e: any) => {
-        e.preventDefault();
-        // this.isPressing = true;
     };
 
     const handleMouseMove = (e: any) => {
@@ -196,87 +148,6 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
         handlePointerMove(x, y);
     };
 
-    const handleMouseUp = (e: any) => {
-        e.preventDefault();
-        // this.isDrawing = false;
-        // this.isPressing = false;
-        //
-        // this.saveLine();
-    };
-
-    return (
-        <canvas
-            ref={brushCanvas}
-            style={{ ...canvasStyle } as any}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseOut={handleMouseUp}
-        />
-    );
+    return <BrushCanvas ref={brushCanvas} onMouseMove={handleMouseMove} />;
 };
 export default Brush;
-
-// constructor(props: BrushProps) {
-//     super(props);
-//
-//     this.brushCanvas = null;
-//     this.brushContext = null;
-//
-//     this.catenary = new Catenary();
-//
-//     this.points = [];
-//     this.lines = [];
-//
-//     this.mouseHasMoved = true;
-//     this.valuesChanged = true;
-//     this.isDrawing = false;
-//     this.isPressing = false;
-// }
-
-// const componentDidMount() {
-
-// }
-
-// componentDidUpdate(prevProps) {
-//     if (prevProps.lazyRadius !== this.props.lazyRadius) {
-//         // Set new lazyRadius values
-//         this.chainLength = this.props.lazyRadius * window.devicePixelRatio;
-//         this.lazy.setRadius(this.props.lazyRadius * window.devicePixelRatio);
-//     }
-//
-//     if (JSON.stringify(prevProps) !== JSON.stringify(this.props)) {
-//         // Signal this.loop function that values changed
-//         this.valuesChanged = true;
-//     }
-// }
-
-// const saveLine = ({ brushColor, brushRadius } = {}) => {
-//     if (this.points.length < 2) return;
-//
-//     const line = {
-//         points: [...this.points],
-//         brushColor: brushColor || this.props.brushColor,
-//         brushRadius: brushRadius || this.props.brushRadius,
-//     };
-//
-//     postLine(line);
-//
-//     // Save as new line
-//     this.lines.push(line);
-//
-//     // Reset points array
-//     this.points.length = 0;
-//
-//     const width = this.canvas.temp.width;
-//     const height = this.canvas.temp.height;
-//
-//     // Copy the line to the drawing canvas
-//     this.ctx.drawing.drawImage(this.canvas.temp, 0, 0, width, height);
-//
-//     // Clear the temporary line-drawing canvas
-//     this.ctx.temp.clearRect(0, 0, width, height);
-// };
-//
-//
-//
