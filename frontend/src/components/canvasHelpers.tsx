@@ -1,5 +1,5 @@
 import { Point } from './canvas.todo';
-import { lazy } from 'react';
+import { lazy, MutableRefObject, RefObject } from 'react';
 import { CanvasSettings } from '../models/canvas';
 
 export const drawGrid = (ctx: CanvasRenderingContext2D) => {
@@ -30,3 +30,44 @@ export const drawGrid = (ctx: CanvasRenderingContext2D) => {
     ctx.stroke();
 };
 
+export const drawBrush = (
+    canvas: RefObject<HTMLCanvasElement>,
+    lazy: any,
+    catenary: any,
+    pointer: Point,
+    brush: Point,
+    canvasSettings: CanvasSettings
+) => {
+    if (canvas.current && canvas.current.getContext('2d')) {
+        const c = canvas.current.getContext('2d') as any;
+        c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+
+        // Draw brush preview
+        c.beginPath();
+        c.fillStyle = canvasSettings.brushColor;
+        c.arc(brush.x, brush.y, canvasSettings.brushRadius, 0, Math.PI * 2, true);
+        c.fill();
+
+        // Draw mouse point (the one directly at the cursor)
+        c.beginPath();
+        c.fillStyle = canvasSettings.catenaryColor;
+        c.arc(pointer.x, pointer.y, 4, 0, Math.PI * 2, true);
+        c.fill();
+
+        if (lazy.isEnabled()) {
+            c.beginPath();
+
+            c.lineWidth = 2;
+            c.lineCap = 'round';
+            c.setLineDash([2, 4]);
+            c.strokeStyle = canvasSettings.catenaryColor;
+            catenary.drawToCanvas(c, brush, pointer, canvasSettings.lazyRadius);
+            c.stroke();
+        }
+        // Draw brush point (the one in the middle of the brush preview)
+        c.beginPath();
+        c.fillStyle = canvasSettings.catenaryColor;
+        c.arc(brush.x, brush.y, 2, 0, Math.PI * 2, true);
+        c.fill();
+    }
+};

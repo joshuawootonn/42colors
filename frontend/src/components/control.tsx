@@ -34,7 +34,7 @@ export const Control: React.FC<ControlProps> = ({ canvasSettings, setCanvasSetti
             <input
                 name="lazyRadius"
                 type="range"
-                min="1"
+                min="0"
                 max="100"
                 value={canvasSettings.lazyRadius}
                 onChange={event => setCanvasSettings({ ...canvasSettings, lazyRadius: parseInt(event.target.value) })}
