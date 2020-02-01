@@ -1,0 +1,63 @@
+{
+  "name": "42colors",
+  "version": "0.1.0",
+  "author": "Joshua Wootonn <joshuawootonn@gmail.com>",
+  "license": "MIT",
+  "homepage": "http://joshuawootonn.github.io/42colors",
+  "dependencies": {
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "@types/jest": "^24.0.0",
+    "@types/lazy-brush": "^1.0.0",
+    "@types/node": "^12.0.0",
+    "@types/react": "^16.9.0",
+    "@types/react-dom": "^16.9.0",
+    "@types/styled-components": "^4.4.2",
+    "axios": "^0.19.2",
+    "catenary-curve": "^1.0.1",
+    "cross-env": "^6.0.0",
+    "date-fns": "^2.4.1",
+    "dotenv": "^8.1.0",
+    "lazy-brush": "^1.0.1",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "react-scripts": "3.3.0",
+    "react-use": "^13.22.0",
+    "resize-observer-polyfill": "^1.5.1",
+    "styled-components": "^4.4.1",
+    "typescript": "~3.7.2"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "lint": "./node_modules/.bin/eslint ./src/**/* --fix",
+    "lint:fix": "yarn lint --fix",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^2.16.0",
+    "@typescript-eslint/parser": "^2.16.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.9.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "eslint-plugin-react": "^7.17.0",
+    "gh-pages": "^2.1.1",
+    "prettier": "^1.19.1"
+  }
+}
