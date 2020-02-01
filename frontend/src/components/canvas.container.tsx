@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useInterval } from 'react-use';
 import { getAllLines } from '../repositories/canvas.repositories';
 import { Line } from './canvas.todo';
-import Canvas from './canvas';
+import Brush from './brush';
 import { CanvasSettings } from '../models/canvas';
 import CanvasWrapper from './canvasWrapper';
 
@@ -22,7 +22,7 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasSettings
 
     return (
         <CanvasWrapper>
-            <Canvas
+            <Brush
                 saveData={lines}
                 immediateLoading={true}
                 canvasWidth="100vw"
@@ -30,7 +30,6 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasSettings
                 {...canvasSettings}
                 canvasSettings={canvasSettings}
             />
-            ;
         </CanvasWrapper>
     );
 };

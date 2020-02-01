@@ -6,13 +6,6 @@ import { drawInterface } from './canvasHelpers';
 
 import { postLine } from '../repositories/canvas.repositories';
 
-function midPointBtw(p1, p2) {
-    return {
-        x: p1.x + (p2.x - p1.x) / 2,
-        y: p1.y + (p2.y - p1.y) / 2,
-    };
-}
-
 const canvasStyle = {
     display: 'block',
     position: 'absolute',
@@ -77,8 +70,8 @@ export default class extends PureComponent {
     constructor(props) {
         super(props);
 
-        this.canvas = {};
-        this.ctx = {};
+        this.brushCanvas = null;
+        this.brushContext = null;
 
         this.catenary = new Catenary();
 
@@ -126,9 +119,7 @@ export default class extends PureComponent {
             this.lazy.setRadius(this.props.lazyRadius * window.devicePixelRatio);
         }
 
-        if (prevProps.saveData !== this.props.saveData) {
-            this.loadSavedLines(this.props.saveData);
-        }
+
 
         if (JSON.stringify(prevProps) !== JSON.stringify(this.props)) {
             // Signal this.loop function that values changed
@@ -136,42 +127,8 @@ export default class extends PureComponent {
         }
     }
 
-    loadSavedLines = (lines, immediate = this.props.immediateLoading) => {
-        this.clear();
-        this.simulateDrawingLines({
-            lines,
-            immediate: true,
-        });
-    };
 
-    simulateDrawingLines = ({ lines, immediate }) => {
-        // Simulate live-drawing of the loaded lines
-        // TODO use a generator
-        let curTime = 0;
-        const timeoutGap = immediate ? 0 : this.props.loadTimeOffset;
 
-        lines.forEach(line => {
-            const { points, brushColor, brushRadius } = line;
-
-            for (let i = 1; i < points.length; i++) {
-                curTime += timeoutGap;
-                window.setTimeout(() => {
-                    this.drawPoints({
-                        points: points.slice(0, i + 1),
-                        brushColor,
-                        brushRadius,
-                    });
-                }, curTime);
-            }
-
-            curTime += timeoutGap;
-            window.setTimeout(() => {
-                // Save this line with its props instead of this.props
-                this.points = points;
-                this.saveLine({ brushColor, brushRadius });
-            }, curTime);
-        });
-    };
 
     handleTouchStart = e => {
         const { x, y } = this.getPointerPos(e);
@@ -259,34 +216,6 @@ export default class extends PureComponent {
         this.mouseHasMoved = true;
     };
 
-    drawPoints = ({ points, brushColor, brushRadius }) => {
-        this.ctx.temp.lineJoin = 'round';
-        this.ctx.temp.lineCap = 'round';
-        this.ctx.temp.strokeStyle = brushColor;
-
-        this.ctx.temp.clearRect(0, 0, this.ctx.temp.canvas.width, this.ctx.temp.canvas.height);
-        this.ctx.temp.lineWidth = brushRadius * 2;
-
-        let p1 = points[0];
-        let p2 = points[1];
-
-        this.ctx.temp.moveTo(p2.x, p2.y);
-        this.ctx.temp.beginPath();
-
-        for (let i = 1, len = points.length; i < len; i++) {
-            // we pick the point between pi+1 & pi+2 as the
-            // end point and p1 as our control point
-            const midPoint = midPointBtw(p1, p2);
-            this.ctx.temp.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
-            p1 = points[i];
-            p2 = points[i + 1];
-        }
-        // Draw last line as a straight line while
-        // we wait for the next point to be able to calculate
-        // the bezier control point
-        this.ctx.temp.lineTo(p1.x, p1.y);
-        this.ctx.temp.stroke();
-    };
 
     saveLine = ({ brushColor, brushRadius } = {}) => {
         if (this.points.length < 2) return;
@@ -357,25 +286,19 @@ export default class extends PureComponent {
                     }
                 }}
             >
-                {canvasTypes.map(({ name, zIndex }) => {
-                    const isInterface = name === 'interface';
-                    return (
-                        <canvas
-                            key={name}
-                            ref={canvas => {
-                                if (canvas) {
-                                    this.canvas[name] = canvas;
-                                    this.ctx[name] = canvas.getContext('2d');
-                                }
-                            }}
-                            style={{ ...canvasStyle, zIndex }}
-                            onMouseDown={isInterface ? this.handleMouseDown : undefined}
-                            onMouseMove={isInterface ? this.handleMouseMove : undefined}
-                            onMouseUp={isInterface ? this.handleMouseUp : undefined}
-                            onMouseOut={isInterface ? this.handleMouseUp : undefined}
-                        />
-                    );
-                })}
+                <canvas
+                    ref={canvas => {
+                        if (canvas) {
+                            this.brushCanvas = canvas;
+                            this.brushContext = canvas.getContext('2d');
+                        }
+                    }}
+                    style={{ ...canvasStyle, zIndex }}
+                    onMouseDown={this.handleMouseDown}
+                    onMouseMove={this.handleMouseMove}
+                    onMouseUp={this.handleMouseUp }
+                    onMouseOut={ this.handleMouseUp }
+                />
             </div>
         );
     }
