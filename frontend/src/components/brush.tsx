@@ -7,6 +7,7 @@ import { postLine } from '../repositories/canvas.repositories';
 import { Point } from './canvas.todo';
 import { CanvasSettings } from '../models/canvas';
 import canvas from './canvas';
+import { useWindowSize } from 'react-use';
 
 const canvasStyle = {
     display: 'block',
@@ -43,16 +44,16 @@ interface BrushProps {
 }
 
 const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, canvasSettings, ...props }) => {
-    console.log(canvasSettings);
     const brushCanvas = useRef<HTMLCanvasElement>(null);
+    const { width, height } = useWindowSize();
 
     const [lazy, setLazy] = useState(
         new LazyBrush({
             radius: canvasSettings.lazyRadius * window.devicePixelRatio,
             enabled: true,
             initialPoint: {
-                x: window.innerWidth / 2,
-                y: window.innerHeight / 2,
+                x: width / 2,
+                y: height / 2,
             },
         })
     );
@@ -111,6 +112,8 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
         }
         loop();
 
+        lazy.setRadius(canvasSettings.lazyRadius * window.devicePixelRatio)
+
         return () => {
             cancelAnimationFrame(animationFrame);
         };
@@ -130,6 +133,15 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
             // this.clear();
         }, 100);
     }, []);
+
+    useEffect(() => {
+        if (brushCanvas.current) {
+            brushCanvas.current.width = width;
+            brushCanvas.current.height = height;
+            brushCanvas.current.style.width = width;
+            brushCanvas.current.style.height = height;
+        }
+    }, [width, height]);
 
     const getPointerPos = (e: any): Point => {
         if (brushCanvas.current) {

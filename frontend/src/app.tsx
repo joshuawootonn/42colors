@@ -24,7 +24,7 @@ const Container = styled.div`
 
 const App: React.FC = () => {
     const [canvasSettings, setCanvasSettings] = useState<CanvasSettings>({
-        lazyRadius: 0,
+        lazyRadius: 50,
         brushColor: '#000000',
         brushRadius: 10,
         catenaryColor: '#000000',
