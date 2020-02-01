@@ -13,23 +13,16 @@ interface CanvasContainerProps {
 export const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasSettings }) => {
     const [lines, setLines] = useState<Line[]>([]);
 
-    useInterval(async () => {
-        const fetchedLines = await getAllLines();
-        console.log(fetchedLines);
-
-        // if (fetchedLines.length !== lines.length) setLines(fetchedLines);
-    }, 333);
+    // useInterval(async () => {
+    //     // const fetchedLines = await getAllLines();
+    //     // console.log(fetchedLines);
+    //
+    //     // if (fetchedLines.length !== lines.length) setLines(fetchedLines);
+    // }, 333);
 
     return (
         <CanvasWrapper>
-            <Brush
-                saveData={lines}
-                immediateLoading={true}
-                canvasWidth="100vw"
-                canvasHeight="100vh"
-                {...canvasSettings}
-                canvasSettings={canvasSettings}
-            />
+            <Brush canvasWidth="100vw" canvasHeight="100vh" {...canvasSettings} canvasSettings={canvasSettings} />
         </CanvasWrapper>
     );
 };
