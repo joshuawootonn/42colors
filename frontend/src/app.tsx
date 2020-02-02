@@ -1,15 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import Canvas from './components/canvas';
 import Brand from './components/brand';
 import { CanvasSettings } from './models/canvas';
 import Control from './components/control';
 
-import SaveData1 from './saveData1.json';
-import { useAsync, useInterval } from 'react-use';
-import { getAllLines } from './repositories/canvas.repositories';
-import { Line } from './components/canvas.todo';
-import useAsyncPolling from './hooks/useAsyncPolling';
 import CanvasContainer from './components/canvas.container';
 
 const Container = styled.div`
@@ -24,8 +18,8 @@ const Container = styled.div`
 
 const App: React.FC = () => {
     const [canvasSettings, setCanvasSettings] = useState<CanvasSettings>({
-        lazyRadius: 50,
-        brushColor: '#000000',
+        lazyRadius: 0,
+        brushColor: '#ffff00',
         brushRadius: 10,
         catenaryColor: '#000000',
     });
