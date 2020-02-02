@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useInterval } from 'react-use';
-import { getAllLines } from '../repositories/canvas.repositories';
+import { getAllLines, postLine } from '../repositories/canvas.repositories';
 import { Line } from './canvas.todo';
 import Brush from './brush';
 import { CanvasSettings } from '../models/canvas';
 import CanvasWrapper from './canvasWrapper';
+import Drawing from './drawing';
 
 interface CanvasContainerProps {
     canvasSettings: CanvasSettings;
@@ -13,17 +14,22 @@ interface CanvasContainerProps {
 export const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasSettings }) => {
     const [lines, setLines] = useState<Line[]>([]);
 
-    // useInterval(async () => {
-    //     // const fetchedLines = await getAllLines();
-    //     // console.log(fetchedLines);
-    //
-    //     // if (fetchedLines.length !== lines.length) setLines(fetchedLines);
-    // }, 333);
-    console.log(canvasSettings);
+    useInterval(async () => {
+        const fetchedLines = await getAllLines();
+        if (fetchedLines && fetchedLines.length !== lines.length) setLines(fetchedLines);
+    }, 333);
+
+    const onNewLine = useCallback(
+        (line: Line) => {
+            postLine(line);
+        },
+        [postLine]
+    );
 
     return (
         <CanvasWrapper>
-            <Brush canvasWidth="100vw" canvasHeight="100vh" canvasSettings={canvasSettings} />
+            <Brush onNewLine={onNewLine} canvasWidth="100vw" canvasHeight="100vh" canvasSettings={canvasSettings} />
+            <Drawing lines={lines} canvasWidth="100vw" canvasHeight="100vh" canvasSettings={canvasSettings} />
         </CanvasWrapper>
     );
 };

@@ -2,11 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { LazyBrush } from 'lazy-brush';
 import { Catenary } from 'catenary-curve';
 
-import { Point } from './canvas.todo';
+import { Point, Line } from './canvas.todo';
 import { CanvasSettings } from '../models/canvas';
 import { useWindowSize } from 'react-use';
 import styled from 'styled-components';
-import { drawBrush } from './canvasHelpers';
+import { drawBrush, drawPoints } from './canvasHelpers';
+import canvas from './canvas';
 
 const BrushCanvas = styled.canvas`
     display: block;
@@ -14,7 +15,14 @@ const BrushCanvas = styled.canvas`
     z-index: 15;
 `;
 
+const TempCanvas = styled.canvas`
+    display: block;
+    position: absolute;
+    z-index: 12;
+`;
+
 interface BrushProps {
+    onNewLine: (line: Line) => void;
     canvasWidth: number | string;
     canvasHeight: number | string;
     style?: any;
@@ -24,6 +32,7 @@ interface BrushProps {
 
 const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, canvasSettings, ...props }) => {
     const brushCanvas = useRef<HTMLCanvasElement>(null);
+    const tempCanvas = useRef<HTMLCanvasElement>(null);
     const { width, height } = useWindowSize();
 
     const [lazy, setLazy] = useState(
@@ -38,7 +47,10 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
     );
     const [catenary, setCatenary] = useState(new Catenary());
     const mouseHasMoved = useRef(false);
+    const isPressing = useRef(false);
+    const isDrawing = useRef(false);
     const [chainLength, setChainLength] = useState(0);
+    const [points, setPoints] = useState<Point[]>([]);
 
     useEffect(() => {
         let animationFrame: number;
@@ -90,7 +102,25 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
             brushCanvas.current.style.width = width;
             brushCanvas.current.style.height = height;
         }
+
+        if (tempCanvas.current) {
+            tempCanvas.current.width = width;
+            tempCanvas.current.height = height;
+            tempCanvas.current.style.width = width;
+            tempCanvas.current.style.height = height;
+        }
     }, [width, height]);
+
+    const saveLine = () => {
+        if (points.length < 2) return;
+
+        props.onNewLine({
+            points,
+            brushColor: canvasSettings.brushColor,
+            brushRadius: canvasSettings.brushRadius,
+        });
+        setPoints([]);
+    };
 
     const getPointerPos = (e: React.MouseEvent): Point => {
         if (brushCanvas.current) {
@@ -112,6 +142,23 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
 
     const handlePointerMove = (x: number, y: number) => {
         lazy.update({ x, y });
+
+        if ((isPressing.current && mouseHasMoved.current) || (!lazy.isEnabled() && isPressing.current)) {
+            // Start drawing and add point
+            isDrawing.current = true;
+            setPoints([...points, lazy.brush.toObject()]);
+        }
+
+        if (isDrawing.current && (lazy.brushHasMoved() || !lazy.isEnabled())) {
+            // Add new point
+            setPoints([...points, lazy.brush.toObject()]);
+
+            if (points.length >= 2) {
+                console.log(points);
+                drawPoints(tempCanvas, points, canvasSettings.brushColor, canvasSettings.brushRadius);
+            }
+        }
+
         mouseHasMoved.current = true;
     };
 
@@ -120,6 +167,36 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
         handlePointerMove(x, y);
     };
 
-    return <BrushCanvas ref={brushCanvas} onMouseMove={handleMouseMove} />;
+    const handleMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault();
+        isPressing.current = true;
+    };
+
+    const handleMouseUp = (e: React.MouseEvent) => {
+        e.preventDefault();
+        isDrawing.current = false;
+        isPressing.current = false;
+
+        saveLine();
+    };
+
+    return (
+        <>
+            <BrushCanvas
+                ref={brushCanvas}
+                onMouseDown={handleMouseDown}
+                onMouseOut={handleMouseUp}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
+            />
+            <TempCanvas
+                ref={tempCanvas}
+                onMouseDown={handleMouseDown}
+                onMouseOut={handleMouseUp}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
+            />
+        </>
+    );
 };
 export default Brush;

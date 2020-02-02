@@ -71,3 +71,40 @@ export const drawBrush = (
         c.fill();
     }
 };
+
+function midPointBtw(p1: Point, p2: Point) {
+    return {
+        x: p1.x + (p2.x - p1.x) / 2,
+        y: p1.y + (p2.y - p1.y) / 2,
+    };
+}
+export const drawPoints = (canvas: RefObject<HTMLCanvasElement>, points: Point[], brushColor: string, brushRadius: number) => {
+    if (canvas.current && canvas.current.getContext('2d')) {
+        const c = canvas.current.getContext('2d') as any;
+        c.lineJoin = 'round';
+        c.lineCap = 'round';
+        c.strokeStyle = brushColor;
+
+        c.lineWidth = brushRadius * 2;
+
+        let p1 = points[0];
+        let p2 = points[1];
+
+        c.moveTo(p2.x, p2.y);
+        c.beginPath();
+
+        for (let i = 1, len = points.length; i < len; i++) {
+            // we pick the point between pi+1 & pi+2 as the
+            // end point and p1 as our control point
+            const midPoint = midPointBtw(p1, p2);
+            c.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
+            p1 = points[i];
+            p2 = points[i + 1];
+        }
+        // Draw last line as a straight line while
+        // we wait for the next point to be able to calculate
+        // the bezier control point
+        c.lineTo(p1.x, p1.y);
+        c.stroke();
+    }
+};

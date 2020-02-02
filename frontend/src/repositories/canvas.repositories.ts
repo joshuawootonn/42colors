@@ -6,7 +6,6 @@ export const getAllLines = async () => {
         const {
             data: { lines },
         } = await axiosClient.get('/api/lines');
-        console.log(lines);
         return lines;
     } catch (e) {
         console.error('FAILED TO GET LINES');
