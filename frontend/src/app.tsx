@@ -5,6 +5,7 @@ import { CanvasSettings } from './models/canvas';
 import Control from './components/control';
 
 import CanvasContainer from './components/canvas.container';
+import Warning from './components/warning';
 
 const Container = styled.div`
     height: 100vh;
@@ -29,6 +30,7 @@ const App: React.FC = () => {
             <CanvasContainer canvasSettings={canvasSettings} />
             <Brand />
             <Control canvasSettings={canvasSettings} setCanvasSettings={setCanvasSettings} />
+            <Warning />
         </Container>
     );
 };
