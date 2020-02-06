@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using backend.Models;
+using backend.Views;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -21,17 +22,14 @@ namespace backend.Controllers
         public IActionResult postLine([FromBody] Line line)
         {
             _lines.Add(line);
-            return Ok();
+            return Ok();l
         }
 
         [HttpGet]
         [Route("/api/lines")]
         public IActionResult getAllLines()
         {
-            return Ok(new
-            {
-                lines = _lines
-            });
+            return Ok(new GetLines(_lines));
         }
     }
 }
