@@ -1,4 +1,7 @@
 using AspNetCoreRateLimit;
+using backend.Infrastructure;
+using backend.Requests;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,24 +13,45 @@ namespace backend
         public static IServiceCollection addRateLimit(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddMemoryCache();
-            //load general configuration from appsettings.json
             services.Configure<IpRateLimitOptions>(configuration.GetSection("IpRateLimiting"));
 
             // TODO: this might be helpful if I catch a spammer
             // services.Configure<IpRateLimitPolicies>(configuration.GetSection("IpRateLimitPolicies"));
 
-            // inject counter and rules stores
             services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
             services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
 
-            // https://github.com/aspnet/Hosting/issues/793
-            // the IHttpContextAccessor service is not registered by default.
-            // the clientId/clientIp resolvers use it.
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-
-            // configuration (resolvers, counter key builders)
             services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 
+            return services;
+        }
+
+        public static IServiceCollection addCors(this IServiceCollection services, string policy)
+        {
+            services.AddCors(options =>
+            {
+                options.AddPolicy(policy,
+                    builder =>
+                    {
+                        builder.AllowAnyOrigin()
+                            .AllowAnyHeader()
+                            .AllowAnyMethod();
+                    });
+            });
+            return services;
+        }
+
+
+        public static IServiceCollection addMvc(this IServiceCollection services)
+        {
+            services.AddMvc(options =>
+                {
+                    options.Filters.Add<RequestLoggingFilter>();
+                    options.Filters.Add<ExceptionFilter>();
+                }).AddFluentValidation(fv => fv
+                    .RegisterValidatorsFromAssemblyContaining<CreateLineRequestValidator>())
+                .AddNewtonsoftJson();
             return services;
         }
     }

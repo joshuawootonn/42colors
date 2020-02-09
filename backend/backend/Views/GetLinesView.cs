@@ -5,9 +5,9 @@ using backend.Models;
 namespace backend.Views
 {
     // TODO: this model is a temp
-    public class GetLines
+    public class GetLinesView
     {
-        public GetLines(List<Line> list)
+        public GetLinesView(List<Line> list)
         {
             lines = lines.ToArray();
         }
