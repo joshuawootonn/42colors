@@ -1,11 +1,19 @@
+using System.Linq;
 using backend.Models;
 
 namespace backend.Requests
 {
     public class PostLine
     {
-        private Point[] points { get; set; }
+        public PostLine(Line line)
+        {
+            points = line.points.ToArray();
+            brushColor = line.brushColor;
+            brushRadius = line.brushRadius;
+        }
+
+        private Point[] points { get; }
         public string brushColor { get; set; }
-        public int brushRadius { get; set;  }
+        public int brushRadius { get; set; }
     }
 }

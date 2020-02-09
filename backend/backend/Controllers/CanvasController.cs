@@ -22,7 +22,7 @@ namespace backend.Controllers
         public IActionResult postLine([FromBody] Line line)
         {
             _lines.Add(line);
-            return Ok();l
+            return Ok();
         }
 
         [HttpGet]

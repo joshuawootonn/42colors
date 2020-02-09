@@ -1,11 +1,11 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
 
 namespace backend.Models
 {
     public class Line
     {
-        public double brushRadius { get; set; }
+        public int brushRadius { get; set; }
         public string brushColor { get; set; }
-        public ReadOnlyCollection<Point> points { get; set; }
+        public IReadOnlyCollection<Point> points { get; set; }
     }
 }

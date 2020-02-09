@@ -1,3 +1,4 @@
+using AspNetCoreRateLimit;
 using backend.Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -13,14 +14,17 @@ namespace backend
 
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            this.configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
+        private IConfiguration configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddOptions();
+
+            services.addRateLimit(configuration);
+
             services.AddControllers();
 
             services.AddCors(options =>
@@ -33,7 +37,8 @@ namespace backend
                             .AllowAnyMethod();
                     });
             });
-            services.AddMvc(options => { 
+            services.AddMvc(options =>
+            {
                 options.Filters.Add<RequestLoggingFilter>();
                 options.Filters.Add<ExceptionFilter>();
             }).AddNewtonsoftJson();
@@ -41,9 +46,12 @@ namespace backend
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-        {
+        {     
+            
+            app.UseIpRateLimiting();
             if (env.IsDevelopment()) app.UseDeveloperExceptionPage();
 
+      
 
             app.UseRouting();
 

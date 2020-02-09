@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using backend.integration.Utils;
 using backend.Models;
 using backend.Requests;
 using backend.Views;
@@ -21,14 +22,17 @@ namespace backend.integration.Services
 
         public async Task<GetLines> getLines()
         {
-            return await _flurlClient.Request($"api/lines")
+            return await _flurlClient
+                .Request($"api/lines")
                 .GetJsonAsync();
         }
 
-        public async Task postLine(Line line)
+        public async Task<Response<Empty>> postLine(PostLine line)
         {
-            return await _flurlClient.Request("api/line")
-                .PostJsonAsync(new PostLine())
+            return await _flurlClient
+                .Request("api/line")
+                .PostJsonAsync(line)
+                .toResponse<Empty>();
         }
         
         
