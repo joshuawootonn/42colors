@@ -7,47 +7,45 @@ namespace backend.integration.ControllerTests
 {
     public class CanvasControllerTests : ControllerTestBase.IntegrationTestBase.SetUp
     {
-        [Test,Description("Rate Limit: WHEN_10s_is_awaited_THEN_status_200")]
-        public async Task Rate_Limit_WHEN_10s_is_awaited_THEN_status_200()
+        [TestCase(TestName = "Rate Limit: WHEN post:line reachs request limit and then waits 10s THEN 429")]
+        public async Task test1()
         {
             Task.WaitAll(Enumerable.Range(0, 10).Select(i => backendClient.postLine(Good.Requests.line))
                 .ToArray());
             Task.Delay(10000).Wait();
             (await backendClient.postLine(Good.Requests.line)).statusCode.Should().Be(200);
         }
-
-        [Test,Description("Rate Limit: WHEN_11_in_10s_THEN_status_429")]
-        public async Task Rate_Limit_WHEN_11_in_10s_THEN_status_429()
+        [TestCase(TestName = "Rate Limit: WHEN post:line requests more than 10x in 10s THEN 429")]
+        public async Task test2()
         {
             Task.WaitAll(Enumerable.Range(0, 10).Select(i => backendClient.postLine(Good.Requests.line))
                 .ToArray());
             (await backendClient.postLine(Good.Requests.line)).statusCode.Should().Be(429);
         }
 
-        [Test]
-        public async Task Validator_POST_line_WHEN_happy_THEN_400()
+        [TestCase(TestName = "Validator: WHEN post:line with valid line THEN 200")]
+        public async Task test3()
         {
             (await backendClient.postLine(Good.Requests.line)).statusCode.Should().Be(200);
         }
-        [Test]
-        public async Task Validator_POST_line_WHEN_1_THEN_400()
+        [TestCase(TestName = "Validator: WHEN post:line with invalid brushColor hex THEN 400")]
+        public async Task test4()
         {
             (await backendClient.postLine(Bad.Requests.lineWithInvalidHex)).statusCode.Should().Be(400);
         }
         
-        [Test]
-        public async Task Validator_POST_line_WHEN_2_THEN_400()
+        [TestCase(TestName = "Validator: WHEN post:line with brushRadius of 0 THEN 400")]
+        public async Task test5()
         {
             (await backendClient.postLine(Bad.Requests.lineWith0BrushRadius)).statusCode.Should().Be(400);
         }
-        [Test]
-        public async Task Validator_POST_line_WHEN_3_THEN_400()
+        [TestCase(TestName = "Validator: WHEN post:line with brushRadius of 101 THEN 400")]
+        public async Task test6()
         {
             (await backendClient.postLine(Bad.Requests.lineWith101BrushRadius)).statusCode.Should().Be(400);
         }
-        
-        [Test]
-        public async Task Validator_POST_line_WHEN_4_THEN_400()
+        [TestCase(TestName = "Validator: WHEN post:line with empty points[] THEN 400")]
+        public async Task test7()
         {
             (await backendClient.postLine(Bad.Requests.lineWithEmptyPoints)).statusCode.Should().Be(400);
         }
