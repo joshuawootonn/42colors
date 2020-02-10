@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import styled from 'styled-components';
-import { CanvasSettings } from '../models/canvas';
+import { CanvasSettings } from '../../models/canvas';
 
 const Wrapper = styled.div`
     position: absolute;
@@ -43,11 +43,6 @@ export const Control: React.FC<ControlProps> = ({ canvasSettings, setCanvasSetti
                 name="brushColor"
                 value={canvasSettings.brushColor}
                 onChange={event => setCanvasSettings({ ...canvasSettings, brushColor: event.target.value })}
-            />
-            <input
-                name="caternaryColor"
-                value={canvasSettings.catenaryColor}
-                onChange={event => setCanvasSettings({ ...canvasSettings, catenaryColor: event.target.value })}
             />
         </Wrapper>
     );
