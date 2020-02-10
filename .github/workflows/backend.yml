@@ -21,4 +21,4 @@ jobs:
       run: dotnet build --configuration Release
     - name: Run tests
       working-directory: backend
-      run: dotnet test .\backend.sln
+      run: dotnet test
