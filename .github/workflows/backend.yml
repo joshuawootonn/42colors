@@ -19,3 +19,6 @@ jobs:
     - name: Build with dotnet
       working-directory: backend
       run: dotnet build --configuration Release
+    - name: Run tests
+      working-directory: backend
+      run: dotnet test
