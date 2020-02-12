@@ -30,11 +30,12 @@ namespace backend.integration.Services
             return new BackendClient(flurlClient);
         }
 
-        public async Task<GetLinesView> getLines()
+        public async Task<Response<GetLinesView>> getLines()
         {
             return await _flurlClient
                 .Request("api/lines")
-                .GetJsonAsync();
+                .GetAsync()
+                .toResponse<GetLinesView>();
         }
 
         public async Task<Response<Empty>> postLine(CreateLineRequest lineRequest)
