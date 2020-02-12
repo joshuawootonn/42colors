@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
+using backend.Views;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -10,7 +11,18 @@ namespace backend.integration.ControllerTests
         [TestCase(TestName = "WHEN get:lines and lines are empty THEN 200")]
         public async Task test0()
         {
-            (await backendClient.getLines()).statusCode.Should().Be(200);
+            var getLinesResponse = await backendClient.getLines();
+            getLinesResponse.StatusCode.Should().Be(200);
+            var response = await getLinesResponse.GetJsonAsync<GetLinesView>();
+            response.lines.Length.Should().Be(0); 
+            
+            Task.WaitAll(Enumerable.Range(0, 10).Select(i => backendClient.postLine(Good.Requests.line))
+                .ToArray());
+            
+            getLinesResponse = await backendClient.getLines();
+            getLinesResponse.StatusCode.Should().Be(200);
+            response = await getLinesResponse.GetJsonAsync<GetLinesView>();
+            response.lines.Length.Should().Be(10);       
         }
         
         [TestCase(TestName = "Rate Limit: WHEN post:line reachs request limit and then waits 10s THEN 429")]
