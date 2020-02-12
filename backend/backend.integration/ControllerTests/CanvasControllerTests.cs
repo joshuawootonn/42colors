@@ -7,6 +7,12 @@ namespace backend.integration.ControllerTests
 {
     public class CanvasControllerTests : ControllerTestBase.IntegrationTestBase.SetUp
     {
+        [TestCase(TestName = "WHEN get:lines and lines are empty THEN 200")]
+        public async Task test0()
+        {
+            (await backendClient.getLines()).statusCode.Should().Be(200);
+        }
+        
         [TestCase(TestName = "Rate Limit: WHEN post:line reachs request limit and then waits 10s THEN 429")]
         public async Task test1()
         {

@@ -26,6 +26,7 @@ namespace backend
             services.addCors(MYCORSPOLICY);
             services.addMvc();
         }
+
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseIpRateLimiting();
