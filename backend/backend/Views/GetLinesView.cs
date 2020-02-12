@@ -7,11 +7,11 @@ namespace backend.Views
     // TODO: this model is a temp
     public class GetLinesView
     {
-        public GetLinesView(IEnumerable<Line> lines)
+        public GetLinesView(IReadOnlyCollection<Line> lines)
         {
-            this.lines = lines.ToArray();
+            this.lines = lines.Count > 0 ? lines.ToArray() : new Line[] { };
         }
 
-        private Line[] lines { get; }
+        public Line[] lines { get; }
     }
 }

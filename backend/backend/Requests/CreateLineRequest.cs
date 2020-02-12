@@ -13,9 +13,9 @@ namespace backend.Requests
         {
             return new Line
             {
-                points = points,
-                brushColor = brushColor,
-                brushRadius = brushRadius
+                points = this.points,
+                brushColor = this.brushColor,
+                brushRadius = this.brushRadius
             };
         }
     }
