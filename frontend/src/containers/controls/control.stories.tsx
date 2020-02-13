@@ -14,4 +14,3 @@ export const Default = () => (
         canvasSettings={{ brushRadius: 10, brushColor: '#000000', lazyRadius: 10, catenaryColor: '#000000' }}
     />
 );
-
