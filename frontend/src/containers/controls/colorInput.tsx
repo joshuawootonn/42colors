@@ -10,7 +10,7 @@ const Wrapper = styled.div`
     width: 100%;
     overflow-x: auto;
     white-space: nowrap;
-    overflow-y: hidden;
+    overflow: hidden;
 
     // No scrollbar
     //-ms-overflow-style: none; /* Internet Explorer 10+ */
@@ -47,8 +47,9 @@ const ColorBlock = styled.button<ColorBlockProps>`
 `;
 
 const BigColorBlock = styled(ColorBlock)<ColorBlockProps>`
-    margin-left: 10%;
-    width: 80%;
+    width: 100%;
+    overflow: hidden;
+    overflow-x: hidden;
     height: 40px;
     background-color: ${props => props.color};
     border: 1px solid white;
@@ -65,7 +66,7 @@ const BigColorBlock = styled(ColorBlock)<ColorBlockProps>`
 
 interface ColorInputProps {
     options: string[];
-    onChange: any;
+    onChange: (color: string) => void;
     value: any;
     name: string;
 }
