@@ -36,7 +36,9 @@
     "eject": "react-scripts eject",
     "lint": "./node_modules/.bin/eslint ./src/**/* --fix",
     "lint:fix": "yarn lint --fix",
-    "predeploy": "npm run build"
+    "predeploy": "npm run build",
+    "storybook": "start-storybook -p 9009 -s public",
+    "build-storybook": "build-storybook -s public"
   },
   "browserslist": {
     "production": [
@@ -51,6 +53,11 @@
     ]
   },
   "devDependencies": {
+    "@storybook/addon-actions": "^5.3.12",
+    "@storybook/addon-links": "^5.3.12",
+    "@storybook/addons": "^5.3.12",
+    "@storybook/preset-create-react-app": "^1.5.2",
+    "@storybook/react": "^5.3.12",
     "@typescript-eslint/eslint-plugin": "^2.16.0",
     "@typescript-eslint/parser": "^2.16.0",
     "eslint": "^6.8.0",

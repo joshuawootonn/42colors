@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { LazyBrush } from 'lazy-brush';
 import { Catenary } from 'catenary-curve';
-import { drawInterface } from './canvasHelpers';
+import { drawInterface } from '../helpers/canvas.helpers';
 
 import { postLine } from '../repositories/canvas.repositories';
 

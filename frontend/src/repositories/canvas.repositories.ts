@@ -1,5 +1,5 @@
 import { axiosClient } from '../context/axios.context';
-import { Line } from '../components/canvas.todo';
+import { Line } from '../.old/canvas.todo';
 
 export const getAllLines = async () => {
     try {

@@ -1,4 +1,4 @@
-import { Point } from './canvas.todo';
+import { Point } from '../.old/canvas.todo';
 import { lazy, MutableRefObject, RefObject } from 'react';
 import { CanvasSettings } from '../models/canvas';
 
@@ -86,6 +86,13 @@ export const drawPoints = (canvas: RefObject<HTMLCanvasElement>, points: Point[]
         c.strokeStyle = brushColor;
 
         c.lineWidth = brushRadius * 2;
+        console.log(points.length)
+        if (points.length === 1) {
+            c.beginPath();
+            c.arc(points[0].x, points[0].y, 1, 0, 2 * Math.PI, true);
+            c.stroke();
+            return;
+        }
 
         let p1 = points[0];
         let p2 = points[1];

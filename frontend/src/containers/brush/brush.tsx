@@ -2,12 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { LazyBrush } from 'lazy-brush';
 import { Catenary } from 'catenary-curve';
 
-import { Point, Line } from './canvas.todo';
-import { CanvasSettings } from '../models/canvas';
+import { Point, Line } from '../../.old/canvas.todo';
+import { CanvasSettings } from '../../models/canvas';
 import { useWindowSize } from 'react-use';
 import styled from 'styled-components';
-import { drawBrush, drawPoints } from './canvasHelpers';
-import canvas from './canvas';
+import { drawBrush, drawPoints } from '../../helpers/canvas.helpers';
+import canvas from '../../.old/canvas';
 
 const BrushCanvas = styled.canvas`
     display: block;
@@ -153,8 +153,9 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
             // Add new point
             setPoints([...points, lazy.brush.toObject()]);
 
-            if (points.length >= 2) {
+            if (points.length > 0) {
                 console.log(points);
+
                 drawPoints(tempCanvas, points, canvasSettings.brushColor, canvasSettings.brushRadius);
             }
         }
