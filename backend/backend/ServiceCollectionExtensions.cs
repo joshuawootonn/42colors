@@ -1,3 +1,4 @@
+using System.Data;
 using AspNetCoreRateLimit;
 using backend.Infrastructure;
 using backend.Requests;
@@ -5,6 +6,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 
 namespace backend
 {
@@ -54,5 +56,17 @@ namespace backend
                 .AddNewtonsoftJson();
             return services;
         }
+        
+        public static IServiceCollection addDbConnection(this IServiceCollection services, string connectionString)
+        {
+            services.AddScoped<IDbConnection>(_ =>
+            {
+                var connection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString).ConnectionString);
+                connection.Open();
+                return connection;
+            });
+            return services;
+        }
+        
     }
 }
