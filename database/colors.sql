@@ -1,4 +1,7 @@
 
+drop table if exists line;
+drop table if exists player;
+
 create table player
 (
   player_id SERIAL PRIMARY KEY,
@@ -10,7 +13,7 @@ create table player
 create table line 
 (
   line_id SERIAL PRIMARY KEY,  
-  geom geometry(MultiLineString,4326) NOT NULL,
+  geom geometry(LineString,4326) NOT NULL,
   duration int NOT NULL DEFAULT 0,
   brushColor character varying(20) NOT NULL,
   brushWidth double precision NOT NULL,

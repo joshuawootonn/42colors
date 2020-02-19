@@ -25,7 +25,7 @@ namespace backend
             services.AddControllers();
             services.addCors(MYCORSPOLICY);
             services.addMvc();
-            
+
             services.addDbConnection(configuration["color:connectionString"]);
         }
 
@@ -35,9 +35,8 @@ namespace backend
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                
-            } 
-                
+            }
+
             app.UseRouting();
             app.UseCors(MYCORSPOLICY);
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
