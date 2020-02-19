@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using backend.Repositories;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using NUnit.Framework;
@@ -45,14 +46,23 @@ namespace backend.unit
                     disposeResources();
                 }
             }
+            
+            
+            private static void cleanDatabase
             private static IConfiguration Configuration { get; set; }
             protected static IDbConnection _colorDbConnection;
+            protected static PlayerRepository _playerRepository { get; set; }
+            protected static LineRepository _lineRepository { get; set; }
 
             protected static void createResources()
             {
                 var connectionString = Environment.GetEnvironmentVariable("COLOR_CONNECTIONSTRING");
                 _colorDbConnection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString).ConnectionString);
                 _colorDbConnection.Open();
+
+                
+                _playerRepository = new PlayerRepository(_colorDbConnection);
+                _lineRepository = new LineRepository(_colorDbConnection);
             }
 
             protected static void disposeResources()

@@ -14,5 +14,11 @@ namespace backend.integration.Good
             brushRadius = 10,
             points = Enumerable.Repeat(Good.Models.point, 1000).ToArray()
         };
+
+        public static CreatePlayerRequest createPlayerRequest => new CreatePlayerRequest
+        {
+            name = "asdf1234"
+        };
+
     }
 }

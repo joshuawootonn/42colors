@@ -6,11 +6,16 @@
     <UserSecretsId>efff4d94-be14-492d-971a-59e2c63d2a41</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.0.30" />
     <PackageReference Include="FluentAssertions" Version="5.10.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.1" />
     <PackageReference Include="Npgsql" Version="4.1.3" />
     <PackageReference Include="nunit" Version="3.12.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.15.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\backend.integration\backend.integration.csproj" />
+    <ProjectReference Include="..\backend\backend.csproj" />
   </ItemGroup>
 </Project>

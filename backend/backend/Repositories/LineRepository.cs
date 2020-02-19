@@ -15,7 +15,7 @@ namespace backend.Repositories
             _colorDbConnection = colorDbConnection;
         }
 
-        public IEnumerable<Line> insert(Line line)
+        public void insert(Line line)
         {
             if ((_colorDbConnection.State & ConnectionState.Open) == 0)
                 _colorDbConnection.Open();

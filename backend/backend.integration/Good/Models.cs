@@ -12,5 +12,12 @@ namespace backend.integration.Good
             x = rand.Next(1, 1000),
             y = rand.Next(1, 1000)
         };
+
+        public static Player player => new Player
+        {
+            player_id = 1,
+            name = "asdf1234"
+        };
     }
+    
 }
