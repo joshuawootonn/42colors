@@ -1,4 +1,5 @@
 using System.Linq;
+using backend.test.core;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -16,15 +17,21 @@ namespace backend.unit
         [TestCase(TestName = "WHEN insert THEN inserted value is returned")]
         public void Test2()
         {
-            var createPlayerRequest = integration.Good.Requests.createPlayerRequest;
-            _playerRepository.insert(createPlayerRequest).Should().Be(integration.Good.Models.player);
+            _playerRepository.insert(Good.createPlayerRequest).Should().BeEquivalentTo(Good.player);
         }
         
         [TestCase(TestName = "WHEN getAll THEN all are retreived")]
         public void Test3()
         {
-            var enumerable = _playerRepository.getAll();
-            enumerable.ToArray().Length.Should().Be(4);
+            _playerRepository.getAll().ToArray().Length.Should().Be(0);
+            _playerRepository.insert(Good.createPlayerRequest);
+            _playerRepository.getAll().ToArray().Length.Should().Be(1);
+            _playerRepository.insert(Good.createPlayerRequest);
+            _playerRepository.insert(Good.createPlayerRequest);
+            _playerRepository.getAll().ToArray().Length.Should().Be(3);
         }
+        
+        
+        
     }
 }
