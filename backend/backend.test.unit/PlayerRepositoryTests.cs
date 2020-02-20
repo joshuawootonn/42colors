@@ -31,6 +31,15 @@ namespace backend.unit
             _playerRepository.getAll().ToArray().Length.Should().Be(3);
         }
         
+        [TestCase(TestName = "WHEN getOne THEN gets that lad")]
+        public void Test4()
+        {
+            _playerRepository.getById(1).Should().BeNull();
+            _playerRepository.insert(Good.createPlayerRequest);
+            _playerRepository.getById(1).Should().BeEquivalentTo(Good.player);
+        }
+        
+        
         
         
     }

@@ -27,7 +27,11 @@ namespace backend.Repositories
 
         public Player getById(int id)
         {
-            throw new NotImplementedException();
+            return _colorDbConnection.QueryFirstOrDefault<Player>(@"
+SELECT * 
+FROM player
+WHERE player_id = @playerId;
+", new {playerId = id});
         }
 
         public Player insert(CreatePlayerRequest player)
@@ -37,12 +41,7 @@ INSERT INTO player (name)
 VALUES (@name)
 RETURNING player_id
 ", player);
-
-            return _colorDbConnection.QueryFirstOrDefault<Player>(@"
-SELECT * 
-FROM player
-WHERE player_id = @playerId;
-", new {playerId});
+            return getById(playerId);
         }
 
         public IEnumerable<Player> getAll()
