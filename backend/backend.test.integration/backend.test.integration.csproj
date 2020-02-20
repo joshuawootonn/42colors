@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <IsPackable>false</IsPackable>
     <UserSecretsId>93ab35c7-2003-44fe-a6c5-86ae21688833</UserSecretsId>
+    <RootNamespace>backend.integration</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.0.30" />
@@ -16,6 +17,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\backend\backend.csproj" />
+    <ProjectReference Include="..\backend.test.core\backend.test.core.csproj" />
+    <ProjectReference Include="..\backend.webapp\backend.webapp.csproj" />
   </ItemGroup>
 </Project>

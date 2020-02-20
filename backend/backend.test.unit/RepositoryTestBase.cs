@@ -1,6 +1,8 @@
 using System;
 using System.Data;
+using backend.integration.Services;
 using backend.Repositories;
+using backend.test.core;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using NUnit.Framework;
@@ -47,8 +49,6 @@ namespace backend.unit
                 }
             }
             
-            
-            private static void cleanDatabase
             private static IConfiguration Configuration { get; set; }
             protected static IDbConnection _colorDbConnection;
             protected static PlayerRepository _playerRepository { get; set; }
@@ -60,6 +60,7 @@ namespace backend.unit
                 _colorDbConnection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString).ConnectionString);
                 _colorDbConnection.Open();
 
+                new ColorDatabase(_colorDbConnection).clean();
                 
                 _playerRepository = new PlayerRepository(_colorDbConnection);
                 _lineRepository = new LineRepository(_colorDbConnection);

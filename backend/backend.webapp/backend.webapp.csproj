@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UserSecretsId>a20d4c48-d43d-4291-a5eb-1fcd1579820d</UserSecretsId>
+    <RootNamespace>backend</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AspNetCoreRateLimit" Version="3.0.5" />
@@ -17,5 +18,8 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Controllers\Requests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\backend.core\backend.core.csproj" />
   </ItemGroup>
 </Project>

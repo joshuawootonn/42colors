@@ -1,5 +1,7 @@
+using System.Drawing;
 using backend.Models;
 using FluentValidation;
+using Point = backend.Models.Point;
 
 namespace backend.Requests
 {
