@@ -1,11 +1,14 @@
 using System.Data;
 using AspNetCoreRateLimit;
+using backend.core.Utils;
 using backend.Infrastructure;
 using backend.Requests;
+using Dapper;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NetTopologySuite.Geometries;
 using Npgsql;
 
 namespace backend
@@ -63,6 +66,8 @@ namespace backend
             {
                 var connection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString).ConnectionString);
                 connection.Open();
+                // TODO: maybe break this out into it's own extension if there are more
+                SqlMapper.AddTypeHandler(new GeometryHandler<LineString>());
                 return connection;
             });
             return services;

@@ -1,9 +1,12 @@
 using System;
 using System.Data;
+using backend.core.Utils;
 using backend.integration.Services;
 using backend.Repositories;
 using backend.test.core;
+using Dapper;
 using Microsoft.Extensions.Configuration;
+using NetTopologySuite.Geometries;
 using Npgsql;
 using NUnit.Framework;
 
@@ -62,6 +65,7 @@ namespace backend.unit
                 _colorDbConnection.TypeMapper.UseNetTopologySuite();
 
                 new ColorDatabase(_colorDbConnection).clean();
+                SqlMapper.AddTypeHandler(new GeometryHandler<LineString>());
                 
                 _playerRepository = new PlayerRepository(_colorDbConnection);
                 _lineRepository = new LineRepository(_colorDbConnection);
