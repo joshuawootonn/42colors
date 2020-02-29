@@ -15,8 +15,8 @@ create table line
   line_id SERIAL PRIMARY KEY,  
   geom geometry(LineString,4326) NOT NULL,
   duration int NOT NULL DEFAULT 0,
-  brushColor character varying(20) NOT NULL,
-  brushWidth double precision NOT NULL,
+  brush_color character varying(20) NOT NULL,
+  brush_width int precision NOT NULL,
   
   created_at timestamp NOT NULL DEFAULT NOW(),
 
