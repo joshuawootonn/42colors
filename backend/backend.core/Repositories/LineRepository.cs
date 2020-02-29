@@ -24,51 +24,37 @@ namespace backend.Repositories
 
         public LineRepository(NpgsqlConnection colorDbConnection)
         {
-            SqlMapper.AddTypeHandler(new GeometryHandler<LineString>(geography: false));
+            SqlMapper.AddTypeHandler(new GeometryHandler<LineString>());
             _colorDbConnection = colorDbConnection;
         }
 
         public Line2 getById(int id)
         {
-            // SELECT 
-            using (var cmd = new NpgsqlCommand(@"
-            SELECT line_id as lineId, geom, brush_color as brushColor, brush_width as brushWidth
-            FROM line", _colorDbConnection))
-            using (var reader = cmd.ExecuteReader())
-            {
-                reader.Read();
-                // var stringLineString = (string) reader[1];
-                // var geometry = new WKTReader().Read(stringLineString);
-                // var lineString = new LineString(geometry.Coordinates);
-
-                return new Line2
+            return _colorDbConnection.QueryFirstOrDefault<Line2>(
+                @"
+                    SELECT line_id as lineId, geom, brush_color as brushColor, brush_width as brushWidth
+                    FROM line
+                    WHERE line_id = @id;
+                ",
+                new
                 {
-                    lineId = (int) reader[0],
-                    geom = (LineString) reader[1],
-                    brushColor = (string) reader[2],
-                    brushWidth = (int) reader[3]
-                };
-            }
+                    id
+                });
         }
 
         public Line2 insert(Line2 line)
         {
-            var cmd = new NpgsqlCommand(@"
+            var insertedId = _colorDbConnection.QueryFirstOrDefault(@"
             INSERT INTO line (geom, brush_width, brush_color)
-            VALUES (ST_SetSRID(@geom, 4326), @brushWidth,@brushColor)
-            RETURNING line_id;
-            ", _colorDbConnection);
-            cmd.Parameters.AddWithValue("@geom", line.geom);
-            cmd.Parameters.AddWithValue("@brushWidth", line.brushWidth);
-            cmd.Parameters.AddWithValue("@brushColor", line.brushColor);
-            var aaa = cmd.ExecuteReader();
-            aaa.Read();
-            var bbb = (int) aaa[0];
-            var insertedId = bbb;
-            cmd.Cancel();
-            cmd.Dispose();
-            aaa.Dispose();
-            return getById(insertedId);
+            VALUES (ST_SetSRID(@geom, 4326),@brushWidth,@brushColor)            
+", new
+            {
+                geom = line.geom.ToString(),
+                line.brushColor,
+                line.brushWidth
+            });
+
+            return getById(1);
         }
 
         public IEnumerable<Line2> getAll()
@@ -82,26 +68,26 @@ FROM line;
         private class GeometryHandler<T> : SqlMapper.TypeHandler<T>
             where T : Geometry
         {
-            private readonly bool _geography;
-            private readonly PostGisWriter _writer;
             private readonly PostGisReader _reader;
+            private readonly PostGisWriter _writer;
 
-            public GeometryHandler(bool geography = false)
+            public GeometryHandler()
             {
-                _geography = geography;
-                _writer = new PostGisWriter { HandleOrdinates = Ordinates.XY };
-                _reader = new PostGisReader { HandleOrdinates = Ordinates.XY };
+                _writer = new PostGisWriter {HandleOrdinates = Ordinates.XY};
+                _reader = new PostGisReader {HandleOrdinates = Ordinates.XY};
             }
 
             public override T Parse(object value)
-                => (T)_reader.Read(((T)value).AsBinary());
+            {
+                return (T) _reader.Read(((T) value).AsBinary());
+            }
 
             public override void SetValue(IDbDataParameter parameter, T value)
             {
                 parameter.Value = _writer.Write(value);
 
-                ((SqlParameter)parameter).SqlDbType = SqlDbType.Udt;
-                ((SqlParameter)parameter).UdtTypeName = _geography ? "geography" : "geometry";
+                ((SqlParameter) parameter).SqlDbType = SqlDbType.Udt;
+                ((SqlParameter) parameter).UdtTypeName = "geometry";
             }
         }
     }

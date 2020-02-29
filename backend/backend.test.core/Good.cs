@@ -13,7 +13,7 @@ namespace backend.test.core
 
         public static Line2 line2 = new Line2
         {
-            geom = new LineString(new[] {new Coordinate(1, 1), new Coordinate(2, 2)}),
+            geom = new LineString(new[] {new Coordinate(1, 1), new Coordinate(2, 2)}) { SRID = 4326},
             brushColor = "#000",
             brushWidth = 10,
             lineId = 1,
