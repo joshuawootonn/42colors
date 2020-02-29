@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using backend.Models;
 using Dapper;
 using NetTopologySuite.Geometries;
@@ -22,6 +24,7 @@ namespace backend.Repositories
 
         public LineRepository(NpgsqlConnection colorDbConnection)
         {
+            SqlMapper.AddTypeHandler(new GeometryHandler<LineString>(geography: false));
             _colorDbConnection = colorDbConnection;
         }
 
@@ -71,9 +74,35 @@ namespace backend.Repositories
         public IEnumerable<Line2> getAll()
         {
             return _colorDbConnection.Query<Line2>(@"
-SELECT line_id as lineId, geom, brushwidth as brushWidth, brushradius as brushRadius
+SELECT line_id as lineId, geom, brush_color as brushColor, brush_width as brushWidth
 FROM line;
 ");
+        }
+
+        private class GeometryHandler<T> : SqlMapper.TypeHandler<T>
+            where T : Geometry
+        {
+            private readonly bool _geography;
+            private readonly PostGisWriter _writer;
+            private readonly PostGisReader _reader;
+
+            public GeometryHandler(bool geography = false)
+            {
+                _geography = geography;
+                _writer = new PostGisWriter { HandleOrdinates = Ordinates.XY };
+                _reader = new PostGisReader { HandleOrdinates = Ordinates.XY };
+            }
+
+            public override T Parse(object value)
+                => (T)_reader.Read(((T)value).AsBinary());
+
+            public override void SetValue(IDbDataParameter parameter, T value)
+            {
+                parameter.Value = _writer.Write(value);
+
+                ((SqlParameter)parameter).SqlDbType = SqlDbType.Udt;
+                ((SqlParameter)parameter).UdtTypeName = _geography ? "geography" : "geometry";
+            }
         }
     }
 }
