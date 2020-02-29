@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace backend.unit
 {
     [TestFixture]
-    public class Tests: RepositoryTestBase.UnitTestBase.SetUp
+    public class PlayerRepositoryTests: RepositoryTestBase.UnitTestBase.SetUp
     {
         [TestCase(TestName = "WHEN connection open successfully THEN connection.state = 1")]
         public void Test1()
@@ -38,9 +38,5 @@ namespace backend.unit
             _playerRepository.insert(Good.createPlayerRequest);
             _playerRepository.getById(1).Should().BeEquivalentTo(Good.player);
         }
-        
-        
-        
-        
     }
 }

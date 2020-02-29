@@ -50,7 +50,7 @@ namespace backend.unit
             }
             
             private static IConfiguration Configuration { get; set; }
-            protected static IDbConnection _colorDbConnection;
+            protected static NpgsqlConnection _colorDbConnection;
             protected static PlayerRepository _playerRepository { get; set; }
             protected static LineRepository _lineRepository { get; set; }
 
@@ -59,6 +59,7 @@ namespace backend.unit
                 var connectionString = Environment.GetEnvironmentVariable("COLOR_CONNECTIONSTRING");
                 _colorDbConnection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString).ConnectionString);
                 _colorDbConnection.Open();
+                _colorDbConnection.TypeMapper.UseNetTopologySuite();
 
                 new ColorDatabase(_colorDbConnection).clean();
                 
