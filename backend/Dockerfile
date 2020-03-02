@@ -20,5 +20,5 @@ RUN dotnet publish -c Release -o out
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
 WORKDIR /app
 EXPOSE 80
-COPY --from=build-env /app/out .      # change this
-ENTRYPOINT ["dotnet", "backend.dll"]  # and this
+COPY --from=build-env /app/out .     
+ENTRYPOINT ["dotnet", "backend.webapp.dll"]  
