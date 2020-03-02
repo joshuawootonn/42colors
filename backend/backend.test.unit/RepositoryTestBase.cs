@@ -63,9 +63,9 @@ namespace backend.unit
                 _colorDbConnection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString).ConnectionString);
                 _colorDbConnection.Open();
                 _colorDbConnection.TypeMapper.UseNetTopologySuite();
+                SqlMapper.AddTypeHandler(new GeometryHandler<LineString>());
 
                 new ColorDatabase(_colorDbConnection).clean();
-                SqlMapper.AddTypeHandler(new GeometryHandler<LineString>());
                 
                 _playerRepository = new PlayerRepository(_colorDbConnection);
                 _lineRepository = new LineRepository(_colorDbConnection);

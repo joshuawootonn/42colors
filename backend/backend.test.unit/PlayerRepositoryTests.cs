@@ -17,17 +17,17 @@ namespace backend.unit
         [TestCase(TestName = "WHEN insert THEN inserted value is returned")]
         public void Test2()
         {
-            _playerRepository.insert(Good.createPlayerRequest).Should().BeEquivalentTo(Good.player);
+            _playerRepository.insert(Good.playerRequest.toCmd()).Should().BeEquivalentTo(Good.player);
         }
         
         [TestCase(TestName = "WHEN getAll THEN all are retreived")]
         public void Test3()
         {
             _playerRepository.getAll().ToArray().Length.Should().Be(0);
-            _playerRepository.insert(Good.createPlayerRequest);
+            _playerRepository.insert(Good.playerRequest.toCmd());
             _playerRepository.getAll().ToArray().Length.Should().Be(1);
-            _playerRepository.insert(Good.createPlayerRequest);
-            _playerRepository.insert(Good.createPlayerRequest);
+            _playerRepository.insert(Good.playerRequest.toCmd());
+            _playerRepository.insert(Good.playerRequest.toCmd());
             _playerRepository.getAll().ToArray().Length.Should().Be(3);
         }
         
@@ -35,7 +35,7 @@ namespace backend.unit
         public void Test4()
         {
             _playerRepository.getById(1).Should().BeNull();
-            _playerRepository.insert(Good.createPlayerRequest);
+            _playerRepository.insert(Good.playerRequest.toCmd());
             _playerRepository.getById(1).Should().BeEquivalentTo(Good.player);
         }
     }
