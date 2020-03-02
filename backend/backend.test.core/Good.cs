@@ -11,36 +11,38 @@ namespace backend.test.core
     {
         private static readonly Random rand = new Random();
 
-        public static Line2 line2 = new Line2
-        {
-            geom = new LineString(new[] {new Coordinate(1, 1), new Coordinate(2, 2)}) { SRID = 4326},
-            brushColor = "#000",
-            brushWidth = 10,
-            lineId = 1,
-        };
-
-        public static Point point => new Point
+        public static readonly Point[] points = Enumerable.Range(1, 100).Select(_ => new Point
         {
             x = rand.Next(1, 1000),
             y = rand.Next(1, 1000)
+        }).ToArray();
+
+
+        public static LineRequest lineRequest => new LineRequest
+        {
+            brushColor = "#000",
+            brushWidth = 10,
+            points = points
+        };
+
+        public static Line line => new Line
+        {
+            geom = new LineString(lineRequest.points.Select(point => point.toCoordinate()).ToArray()) {SRID = 4326},
+            brushColor = lineRequest.brushColor,
+            brushWidth = lineRequest.brushWidth,
+            lineId = 1
+        };
+
+
+        public static CreatePlayerRequest playerRequest => new CreatePlayerRequest
+        {
+            name = "name"
         };
 
         public static Player player => new Player
         {
             player_id = 1,
-            name = "asdf1234"
-        };
-
-        public static CreateLineRequest line => new CreateLineRequest
-        {
-            brushColor = "#000",
-            brushRadius = 10,
-            points = Enumerable.Repeat(point, 1000).ToArray()
-        };
-
-        public static CreatePlayerRequest createPlayerRequest => new CreatePlayerRequest
-        {
-            name = "asdf1234"
+            name = playerRequest.name
         };
     }
 }
