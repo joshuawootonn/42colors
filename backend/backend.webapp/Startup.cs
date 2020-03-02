@@ -25,17 +25,17 @@ namespace backend
             services.AddControllers();
             services.addCors(MYCORSPOLICY);
             services.addMvc();
-
-            services.addDbConnection(configuration["color:connectionString"]);
+            services.addDbConnection(configuration["connectionString"]);
+            services.addRepositories();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseIpRateLimiting();
-            if (env.IsDevelopment())
-            {
+            // if (env.IsDevelopment())
+            // {
                 app.UseDeveloperExceptionPage();
-            }
+            // }
 
             app.UseRouting();
             app.UseCors(MYCORSPOLICY);

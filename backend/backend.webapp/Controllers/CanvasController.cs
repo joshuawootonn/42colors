@@ -1,28 +1,29 @@
-﻿using System.Collections.Generic;
-using backend.Models;
+﻿using System.Linq;
+using backend.Repositories;
 using backend.Requests;
 using backend.Views;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using ILogger = NLog.ILogger;
 
 namespace backend.Controllers
 {
     [ApiController]
     public class CanvasController : ControllerBase
     {
-        private static readonly List<Line> _lines = new List<Line>();
-
         private readonly ILogger<CanvasController> _logger;
+        private readonly ILineRepository _lineRepository;
 
-        public CanvasController(ILogger<CanvasController> logger)
+        public CanvasController(ILogger<CanvasController> logger,  ILineRepository lineRepository)
         {
             _logger = logger;
+            _lineRepository = lineRepository;
         }
 
         [HttpPost("api/line")]
-        public IActionResult postLine([FromBody] CreateLineRequest lineRequest)
+        public IActionResult postLine([FromBody] LineRequest lineRequest)
         {
-            _lines.Add(lineRequest.toLine());
+            _lineRepository.insert(lineRequest.toCmd());
             return Ok();
         }
 
@@ -30,7 +31,9 @@ namespace backend.Controllers
         [Route("/api/lines")]
         public IActionResult getAllLines()
         {
-            return Ok(new GetLinesView(_lines));
+            var lines = _lineRepository.getAll().ToArray();
+            _logger.LogInformation($"found {lines.Length} lines");
+            return Ok(new LinesViewModel(lines));
         }
     }
 }

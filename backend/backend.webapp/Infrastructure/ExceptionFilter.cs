@@ -7,7 +7,7 @@ namespace backend.Infrastructure
     // ReSharper disable once ClassNeverInstantiated.Global
     public class ExceptionFilter : IExceptionFilter
     {
-        private static readonly Logger logger = LogManager.GetLogger(nameof(ExceptionFilter));
+        private static readonly Logger logger = LogManager.GetLogger(nameof(Program));
 
         public void OnException(ExceptionContext context)
         {

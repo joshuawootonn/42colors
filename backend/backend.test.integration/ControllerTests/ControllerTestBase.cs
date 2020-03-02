@@ -1,4 +1,7 @@
+using System;
 using backend.integration.Services;
+using backend.test.core;
+using Npgsql;
 using NUnit.Framework;
 
 namespace backend.integration.ControllerTests
@@ -44,11 +47,16 @@ namespace backend.integration.ControllerTests
             }
 
             private static TestApplicationFactory _testApplicationFactory;
+            private static NpgsqlConnection _colorDbConnection;
 
             protected static void createResources()
             {
                 _testApplicationFactory = new TestApplicationFactory();
                 backendClient = BackendClient.create(_testApplicationFactory.CreateClient());
+                var connectionString = Environment.GetEnvironmentVariable("COLOR_CONNECTIONSTRING");
+                _colorDbConnection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString).ConnectionString);
+                _colorDbConnection.Open();
+                new ColorDatabase(_colorDbConnection).clean();
             }
 
             protected static void disposeResources()

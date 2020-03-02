@@ -30,13 +30,19 @@ namespace backend.integration.Services
             return new BackendClient(flurlClient);
         }
 
+        public async Task<IFlurlResponse> getOk()
+        {
+            return await _flurlClient
+                .Request("api/diagnostic/ok").GetAsync();
+        }
+        
         public async Task<IFlurlResponse> getLines()
         {
             return await _flurlClient
                 .Request("api/lines").GetAsync();
         }
 
-        public async Task<Response<Empty>> postLine(CreateLineRequest lineRequest)
+        public async Task<Response<Empty>> postLine(LineRequest lineRequest)
         {
             return await _flurlClient
                 .Request("api/line")

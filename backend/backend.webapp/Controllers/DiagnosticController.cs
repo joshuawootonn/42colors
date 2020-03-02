@@ -1,12 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Net;
-using backend.Models;
-using backend.Requests;
-using backend.Views;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using ILogger = NLog.ILogger;
 
 namespace backend.Controllers
 {
@@ -17,8 +13,9 @@ namespace backend.Controllers
         
         private readonly ILogger<CanvasController> _logger;
 
-        public DiagnosticController(IDbConnection colorConnection)
+        public DiagnosticController(ILogger<CanvasController> logger, IDbConnection colorConnection)
         {
+            _logger = logger;
             _colorConnection = colorConnection;
         }
 

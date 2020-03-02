@@ -22,4 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\backend.core\backend.core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Update="nlog.config" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

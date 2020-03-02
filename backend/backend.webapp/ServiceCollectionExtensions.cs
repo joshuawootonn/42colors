@@ -2,6 +2,7 @@ using System.Data;
 using AspNetCoreRateLimit;
 using backend.core.Utils;
 using backend.Infrastructure;
+using backend.Repositories;
 using backend.Requests;
 using Dapper;
 using FluentValidation.AspNetCore;
@@ -55,8 +56,15 @@ namespace backend
                     options.Filters.Add<RequestLoggingFilter>();
                     options.Filters.Add<ExceptionFilter>();
                 }).AddFluentValidation(fv => fv
-                    .RegisterValidatorsFromAssemblyContaining<CreateLineRequestValidator>())
+                    .RegisterValidatorsFromAssemblyContaining<LineRequestValidator>())
                 .AddNewtonsoftJson();
+            return services;
+        }
+        
+        public static IServiceCollection addRepositories(this IServiceCollection services)
+        {
+            services.AddTransient<IPlayerRepository, PlayerRepository>();
+            services.AddTransient<ILineRepository, LineRepository>();
             return services;
         }
         
@@ -66,12 +74,11 @@ namespace backend
             {
                 var connection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString).ConnectionString);
                 connection.Open();
-                // TODO: maybe break this out into it's own extension if there are more
+                connection.TypeMapper.UseNetTopologySuite();
                 SqlMapper.AddTypeHandler(new GeometryHandler<LineString>());
                 return connection;
             });
             return services;
         }
-        
     }
 }

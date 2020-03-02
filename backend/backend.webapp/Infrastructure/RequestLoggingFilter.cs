@@ -13,8 +13,7 @@ namespace backend.Infrastructure
             var httpContext = context.HttpContext;
             var request = httpContext.Request;
 
-            logger.Log(
-                LogLevel.Info,
+            logger.Info(
                 $@"{request.Method} {request.Path} {httpContext.formatQueryString()}");
 
             logger.Debug($@"{httpContext.TraceIdentifier}
@@ -25,8 +24,7 @@ query: {httpContext.formatQueryString()}");
         public void OnResourceExecuted(ResourceExecutedContext context)
         {
             var httpContext = context.HttpContext;
-            logger.Log(
-                LogLevel.Info,
+            logger.Info(
                 $@"<-- {httpContext.Response.StatusCode}");
         }
     }
