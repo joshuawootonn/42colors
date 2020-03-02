@@ -1,31 +1,32 @@
 using System.Collections.Generic;
+using System.Data;
+using backend.core.Commands;
 using backend.Models;
 using Dapper;
-using Npgsql;
 
 namespace backend.Repositories
 {
     public interface ILineRepository
     {
-        Line2 getById(int id);
+        Line getById(int id);
 
-        Line2 insert(Line2 line);
+        Line insert(LineCmd line);
 
-        IEnumerable<Line2> getAll();
+        IEnumerable<Line> getAll();
     }
 
     public class LineRepository : ILineRepository
     {
-        private readonly NpgsqlConnection _colorDbConnection;
+        private readonly IDbConnection _colorDbConnection;
 
-        public LineRepository(NpgsqlConnection colorDbConnection)
+        public LineRepository(IDbConnection colorDbConnection)
         {
             _colorDbConnection = colorDbConnection;
         }
 
-        public Line2 getById(int id)
+        public Line getById(int id)
         {
-            return _colorDbConnection.QueryFirstOrDefault<Line2>(
+            return _colorDbConnection.QueryFirstOrDefault<Line>(
                 @"
                     SELECT line_id as lineId, geom, brush_color as brushColor, brush_width as brushWidth
                     FROM line
@@ -37,7 +38,7 @@ namespace backend.Repositories
                 });
         }
 
-        public Line2 insert(Line2 line)
+        public Line insert(LineCmd line)
         {
             var insertedId = _colorDbConnection.QueryFirst<int>(
                 @"
@@ -55,9 +56,9 @@ namespace backend.Repositories
             return getById(insertedId);
         }
 
-        public IEnumerable<Line2> getAll()
+        public IEnumerable<Line> getAll()
         {
-            return _colorDbConnection.Query<Line2>(
+            return _colorDbConnection.Query<Line>(
                 @"
                     SELECT line_id as lineId, geom, brush_color as brushColor, brush_width as brushWidth
                     FROM line;
