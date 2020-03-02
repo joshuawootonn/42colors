@@ -33,12 +33,12 @@ export const Control: React.FC<ControlProps> = ({ canvasSettings, setCanvasSetti
         <Wrapper>
             <Text>Brush Length</Text>
             <input
-                name="brushRadius"
+                name="brushWidth"
                 type="range"
                 min="1"
                 max="100"
-                value={canvasSettings.brushRadius}
-                onChange={event => setCanvasSettings({ ...canvasSettings, brushRadius: parseInt(event.target.value) })}
+                value={canvasSettings.brushWidth}
+                onChange={event => setCanvasSettings({ ...canvasSettings, brushWidth: parseInt(event.target.value) })}
             />
             <Text>Leash Length</Text>
             <input

@@ -94,7 +94,7 @@ export interface Point {
 export interface Line {
     points: Point[];
     brushColor: string;
-    brushRadius: number;
+    brushWidth: number;
 }
 
 const CanvasTodo: React.FC<CanvasProps> = ({ brushColor, brushRadius }) => {
@@ -134,7 +134,7 @@ const CanvasTodo: React.FC<CanvasProps> = ({ brushColor, brushRadius }) => {
             {
                 points: [...points],
                 brushColor,
-                brushRadius,
+                brushWidth: brushRadius,
             },
         ]);
 
@@ -219,7 +219,7 @@ const CanvasTodo: React.FC<CanvasProps> = ({ brushColor, brushRadius }) => {
         };
     };
 
-    const drawPoints = ({ points, brushColor, brushRadius }: Line) => {
+    const drawPoints = ({ points, brushColor, brushWidth }: Line) => {
         if (!context) return;
 
         console.log('DRAWING');
@@ -228,7 +228,7 @@ const CanvasTodo: React.FC<CanvasProps> = ({ brushColor, brushRadius }) => {
         context.temp.strokeStyle = brushColor;
 
         // context.temp.clearRect(0, 0, context.temp.canvas.width, context.temp.canvas.height);
-        context.temp.lineWidth = brushRadius * 2;
+        context.temp.lineWidth = brushWidth * 2;
 
         let p1 = points[0];
         let p2 = points[1];
@@ -269,7 +269,7 @@ const CanvasTodo: React.FC<CanvasProps> = ({ brushColor, brushRadius }) => {
             drawPoints({
                 points,
                 brushColor,
-                brushRadius,
+                brushWidth: brushRadius,
             });
         }
         setMouseHasMoved(true);

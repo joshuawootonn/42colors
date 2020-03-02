@@ -37,10 +37,10 @@ const Drawing: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, 
     const simulateDrawingLines = (lines: Line[]) => {
         clear();
         lines.forEach(line => {
-            const { points, brushColor, brushRadius } = line;
+            const { points, brushColor, brushWidth } = line;
             console.log(line);
 
-            drawPoints(drawingCanvas, points, brushColor, brushRadius);
+            drawPoints(drawingCanvas, points, brushColor, brushWidth);
         });
     };
 
