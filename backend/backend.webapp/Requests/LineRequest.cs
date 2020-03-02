@@ -2,7 +2,7 @@ using System.Linq;
 using backend.core.Commands;
 using FluentValidation;
 using NetTopologySuite.Geometries;
-using Point = backend.Models.Point;
+using Point = backend.core.Models.Point;
 
 namespace backend.Requests
 {

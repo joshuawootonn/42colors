@@ -52,7 +52,8 @@ namespace backend.integration.Services
                 .ConfigureLogging(logging => logging
                     .ClearProviders()
                     .AddNLog(_loggingConfiguration))
-                .ConfigureAppConfiguration(configurationBuilder => configurationBuilder.AddEnvironmentVariables(prefix: "COLOR_"));
+                .ConfigureAppConfiguration(configurationBuilder =>
+                    configurationBuilder.AddEnvironmentVariables("COLOR_"));
         }
 
         private enum Console

@@ -1,20 +1,19 @@
 ﻿using System.Linq;
-using backend.Repositories;
+using backend.core.Repositories;
 using backend.Requests;
 using backend.Views;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using ILogger = NLog.ILogger;
 
 namespace backend.Controllers
 {
     [ApiController]
     public class CanvasController : ControllerBase
     {
-        private readonly ILogger<CanvasController> _logger;
         private readonly ILineRepository _lineRepository;
+        private readonly ILogger<CanvasController> _logger;
 
-        public CanvasController(ILogger<CanvasController> logger,  ILineRepository lineRepository)
+        public CanvasController(ILogger<CanvasController> logger, ILineRepository lineRepository)
         {
             _logger = logger;
             _lineRepository = lineRepository;

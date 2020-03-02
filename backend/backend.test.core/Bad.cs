@@ -1,11 +1,10 @@
-using backend.Models;
+using backend.core.Models;
 using backend.Requests;
 
 namespace backend.test.core
 {
     public static class Bad
     {
-
         public static LineRequest lineWithInvalidHex => new LineRequest
         {
             brushColor = "000",

@@ -1,7 +1,6 @@
-﻿using System.Collections.Generic;
-using NetTopologySuite.Geometries;
+﻿using NetTopologySuite.Geometries;
 
-namespace backend.Models
+namespace backend.core.Models
 {
     public class Line
     {

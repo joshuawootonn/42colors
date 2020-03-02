@@ -1,8 +1,6 @@
 using System;
-using System.Data;
+using backend.core.Repositories;
 using backend.core.Utils;
-using backend.integration.Services;
-using backend.Repositories;
 using backend.test.core;
 using Dapper;
 using Microsoft.Extensions.Configuration;
@@ -51,7 +49,7 @@ namespace backend.unit
                     disposeResources();
                 }
             }
-            
+
             private static IConfiguration Configuration { get; set; }
             protected static NpgsqlConnection _colorDbConnection;
             protected static PlayerRepository _playerRepository { get; set; }
@@ -60,13 +58,14 @@ namespace backend.unit
             protected static void createResources()
             {
                 var connectionString = Environment.GetEnvironmentVariable("COLOR_CONNECTIONSTRING");
-                _colorDbConnection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString).ConnectionString);
+                _colorDbConnection =
+                    new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString).ConnectionString);
                 _colorDbConnection.Open();
                 _colorDbConnection.TypeMapper.UseNetTopologySuite();
                 SqlMapper.AddTypeHandler(new GeometryHandler<LineString>());
 
                 new ColorDatabase(_colorDbConnection).clean();
-                
+
                 _playerRepository = new PlayerRepository(_colorDbConnection);
                 _lineRepository = new LineRepository(_colorDbConnection);
             }

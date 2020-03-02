@@ -2,7 +2,6 @@ using System;
 using System.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using ILogger = NLog.ILogger;
 
 namespace backend.Controllers
 {
@@ -10,7 +9,7 @@ namespace backend.Controllers
     public class DiagnosticController : ControllerBase
     {
         private readonly IDbConnection _colorConnection;
-        
+
         private readonly ILogger<CanvasController> _logger;
 
         public DiagnosticController(ILogger<CanvasController> logger, IDbConnection colorConnection)
@@ -32,8 +31,8 @@ namespace backend.Controllers
             throw new Exception("oops");
             // return StatusCode((int) HttpStatusCode.ServiceUnavailable);
         }
-        
-        
+
+
         [HttpGet]
         [Route("api/diagnostic/database")]
         public IActionResult getDatabaseStatus()

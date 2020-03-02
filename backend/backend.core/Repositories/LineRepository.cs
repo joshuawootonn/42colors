@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Data;
 using backend.core.Commands;
-using backend.Models;
+using backend.core.Models;
 using Dapper;
 
-namespace backend.Repositories
+namespace backend.core.Repositories
 {
     public interface ILineRepository
     {
@@ -64,6 +64,5 @@ namespace backend.Repositories
                     FROM line;
                 ");
         }
-
     }
 }

@@ -1,4 +1,4 @@
-namespace backend.Models
+namespace backend.core.Models
 {
     public class Player
     {

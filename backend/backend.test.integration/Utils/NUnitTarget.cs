@@ -10,16 +10,16 @@ namespace backend.integration.Utils
         private readonly TextWriter _textWriter;
 
         private readonly object _writeLock = new object();
-        
+
         public NUnitTarget(string name)
         {
-            this._textWriter = TestExecutionContext.CurrentContext.OutWriter;
-            this.Name = name;
+            _textWriter = TestExecutionContext.CurrentContext.OutWriter;
+            Name = name;
         }
-        
+
         protected override void Write(LogEventInfo logEvent)
         {
-            var renderedLogEvent = this.RenderLogEvent(this.Layout, logEvent);
+            var renderedLogEvent = RenderLogEvent(Layout, logEvent);
             lock (_writeLock)
             {
                 _textWriter.WriteLine(renderedLogEvent);

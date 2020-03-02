@@ -1,8 +1,8 @@
 using System.Data;
 using AspNetCoreRateLimit;
+using backend.core.Repositories;
 using backend.core.Utils;
 using backend.Infrastructure;
-using backend.Repositories;
 using backend.Requests;
 using Dapper;
 using FluentValidation.AspNetCore;
@@ -60,19 +60,20 @@ namespace backend
                 .AddNewtonsoftJson();
             return services;
         }
-        
+
         public static IServiceCollection addRepositories(this IServiceCollection services)
         {
             services.AddTransient<IPlayerRepository, PlayerRepository>();
             services.AddTransient<ILineRepository, LineRepository>();
             return services;
         }
-        
+
         public static IServiceCollection addDbConnection(this IServiceCollection services, string connectionString)
         {
             services.AddScoped<IDbConnection>(_ =>
             {
-                var connection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString).ConnectionString);
+                var connection =
+                    new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString).ConnectionString);
                 connection.Open();
                 connection.TypeMapper.UseNetTopologySuite();
                 SqlMapper.AddTypeHandler(new GeometryHandler<LineString>());

@@ -1,6 +1,6 @@
 using System.Linq;
 using NetTopologySuite.Geometries;
-using Point = backend.Models.Point;
+using Point = backend.core.Models.Point;
 
 namespace backend.Utils.Extensions
 {

@@ -54,7 +54,8 @@ namespace backend.integration.ControllerTests
                 _testApplicationFactory = new TestApplicationFactory();
                 backendClient = BackendClient.create(_testApplicationFactory.CreateClient());
                 var connectionString = Environment.GetEnvironmentVariable("COLOR_CONNECTIONSTRING");
-                _colorDbConnection = new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString).ConnectionString);
+                _colorDbConnection =
+                    new NpgsqlConnection(new NpgsqlConnectionStringBuilder(connectionString).ConnectionString);
                 _colorDbConnection.Open();
                 new ColorDatabase(_colorDbConnection).clean();
             }

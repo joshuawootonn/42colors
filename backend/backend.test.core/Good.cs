@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
-using backend.Models;
+using backend.core.Models;
 using backend.Requests;
 using NetTopologySuite.Geometries;
-using Point = backend.Models.Point;
+using Point = backend.core.Models.Point;
 
 namespace backend.test.core
 {

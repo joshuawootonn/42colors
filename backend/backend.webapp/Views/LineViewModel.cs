@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using backend.Models;
+using backend.core.Models;
 using backend.Utils.Extensions;
 using Newtonsoft.Json;
 
@@ -8,7 +8,7 @@ namespace backend.Views
 {
     public class LinesViewModel
     {
-        [JsonConstructor] 
+        [JsonConstructor]
         public LinesViewModel(LineViewModel[] lines)
         {
             this.lines = lines;
@@ -16,7 +16,9 @@ namespace backend.Views
 
         public LinesViewModel(IReadOnlyCollection<Line> lines)
         {
-            this.lines = lines.Count > 0 ? lines.Select(line => new LineViewModel(line)).ToArray() : new LineViewModel[] { };
+            this.lines = lines.Count > 0
+                ? lines.Select(line => new LineViewModel(line)).ToArray()
+                : new LineViewModel[] { };
         }
 
         public LineViewModel[] lines { get; }

@@ -28,7 +28,7 @@ namespace backend
 
                     logger.Info("Welcome to 42Colors!");
                 }).UseNLog().ConfigureAppConfiguration(configurationBuilder =>
-                    configurationBuilder.AddEnvironmentVariables(prefix: "COLOR_"));
+                    configurationBuilder.AddEnvironmentVariables("COLOR_"));
             ;
         }
     }

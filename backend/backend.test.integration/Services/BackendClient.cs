@@ -3,7 +3,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using backend.integration.Utils;
 using backend.Requests;
-using backend.Views;
 using Flurl.Http;
 
 namespace backend.integration.Services
@@ -35,7 +34,7 @@ namespace backend.integration.Services
             return await _flurlClient
                 .Request("api/diagnostic/ok").GetAsync();
         }
-        
+
         public async Task<IFlurlResponse> getLines()
         {
             return await _flurlClient

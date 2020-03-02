@@ -10,7 +10,7 @@ namespace backend.Requests
         {
             return new PlayerCmd
             {
-                name = this.name
+                name = name
             };
         }
     }
