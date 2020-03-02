@@ -16,7 +16,7 @@ create table line
   geom geometry(LineString,4326) NOT NULL,
   duration int NOT NULL DEFAULT 0,
   brush_color character varying(20) NOT NULL,
-  brush_width int precision NOT NULL,
+  brush_width int NOT NULL,
   
   created_at timestamp NOT NULL DEFAULT NOW(),
 
