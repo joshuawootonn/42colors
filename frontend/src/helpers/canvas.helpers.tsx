@@ -45,7 +45,7 @@ export const drawBrush = (
         // Draw brush preview
         c.beginPath();
         c.fillStyle = canvasSettings.brushColor;
-        c.arc(brush.x, brush.y, canvasSettings.brushRadius, 0, Math.PI * 2, true);
+        c.arc(brush.x, brush.y, canvasSettings.brushWidth, 0, Math.PI * 2, true);
         c.fill();
 
         // Draw mouse point (the one directly at the cursor)
@@ -78,14 +78,14 @@ function midPointBtw(p1: Point, p2: Point) {
         y: p1.y + (p2.y - p1.y) / 2,
     };
 }
-export const drawPoints = (canvas: RefObject<HTMLCanvasElement>, points: Point[], brushColor: string, brushRadius: number) => {
+export const drawPoints = (canvas: RefObject<HTMLCanvasElement>, points: Point[], brushColor: string, brushWidth: number) => {
     if (canvas.current && canvas.current.getContext('2d')) {
         const c = canvas.current.getContext('2d') as any;
         c.lineJoin = 'round';
         c.lineCap = 'round';
         c.strokeStyle = brushColor;
 
-        c.lineWidth = brushRadius * 2;
+        c.lineWidth = brushWidth * 2;
         console.log(points.length)
         if (points.length === 1) {
             c.beginPath();

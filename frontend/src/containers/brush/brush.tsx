@@ -117,7 +117,7 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
         props.onNewLine({
             points,
             brushColor: canvasSettings.brushColor,
-            brushRadius: canvasSettings.brushRadius,
+            brushWidth: canvasSettings.brushWidth,
         });
         setPoints([]);
     };
@@ -156,7 +156,7 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
             if (points.length > 0) {
                 console.log(points);
 
-                drawPoints(tempCanvas, points, canvasSettings.brushColor, canvasSettings.brushRadius);
+                drawPoints(tempCanvas, points, canvasSettings.brushColor, canvasSettings.brushWidth);
             }
         }
 

@@ -22,3 +22,5 @@ jobs:
     - name: Run tests
       working-directory: backend
       run: dotnet test
+      env: # Or as an environment variable
+        COLOR_CONNECTIONSTRING: ${{ secrets.COLOR_CONNECTIONSTRING }}

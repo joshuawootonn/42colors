@@ -103,7 +103,7 @@
       }
     ],
     "brushColor": "#000000",
-    "brushRadius": 10
+    "brushWidth": 10
   },
   {
     "points": [
@@ -293,7 +293,7 @@
       }
     ],
     "brushColor": "#000000",
-    "brushRadius": 10
+    "brushWidth": 10
   },
   {
     "points": [
@@ -531,7 +531,7 @@
       }
     ],
     "brushColor": "#000000",
-    "brushRadius": 10
+    "brushWidth": 10
   },
   {
     "points": [
@@ -757,6 +757,6 @@
       }
     ],
     "brushColor": "#000000",
-    "brushRadius": 10
+    "brushWidth": 10
   }
 ]

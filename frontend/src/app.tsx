@@ -21,7 +21,7 @@ const App: React.FC = () => {
     const [canvasSettings, setCanvasSettings] = useState<CanvasSettings>({
         lazyRadius: 0,
         brushColor: '#ffff00',
-        brushRadius: 10,
+        brushWidth: 10,
         catenaryColor: '#000000',
     });
 
