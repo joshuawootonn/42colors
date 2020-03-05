@@ -16,7 +16,7 @@ const Wrapper = styled.div`
 export const Warning: React.FC = () => {
     return (
         <Wrapper>
-            <p> warning.. this data is not persisted. don't try hard yet </p>
+            <p> oop </p>
         </Wrapper>
     );
 };
