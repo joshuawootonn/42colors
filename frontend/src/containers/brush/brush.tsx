@@ -35,7 +35,7 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
 
     const lazy = useRef(
         new LazyBrush({
-            radius: canvasSettings.lazyRadius * window.devicePixelRatio,
+            radius: window.devicePixelRatio,
             enabled: true,
             initialPoint: {
                 x: width / 2,

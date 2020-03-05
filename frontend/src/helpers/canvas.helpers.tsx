@@ -48,6 +48,7 @@ function midPointBtw(p1: Point, p2: Point) {
         y: p1.y + (p2.y - p1.y) / 2,
     };
 }
+
 export const drawPoints = (canvas: RefObject<HTMLCanvasElement>, points: Point[], brushColor: string, brushWidth: number) => {
     if (canvas.current && canvas.current.getContext('2d')) {
         const c = canvas.current.getContext('2d') as any;

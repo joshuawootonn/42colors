@@ -31,7 +31,7 @@ const colors = ['#0000FF', '#FF0000', '#ffff00'];
 export const Control: React.FC<ControlProps> = ({ canvasSettings, setCanvasSettings }) => {
     return (
         <Wrapper>
-            <Text>Brush Length</Text>
+            <Text>Brush Width</Text>
             <input
                 name="brushWidth"
                 type="range"
@@ -39,15 +39,6 @@ export const Control: React.FC<ControlProps> = ({ canvasSettings, setCanvasSetti
                 max="100"
                 value={canvasSettings.brushWidth}
                 onChange={event => setCanvasSettings({ ...canvasSettings, brushWidth: parseInt(event.target.value) })}
-            />
-            <Text>Leash Length</Text>
-            <input
-                name="lazyRadius"
-                type="range"
-                min="0"
-                max="100"
-                value={canvasSettings.lazyRadius}
-                onChange={event => setCanvasSettings({ ...canvasSettings, lazyRadius: parseInt(event.target.value) })}
             />
             <Text>Color</Text>
             <ColorInput
