@@ -1,8 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { LazyBrush } from 'lazy-brush';
-import { Catenary } from 'catenary-curve';
+import React, { useEffect, useRef} from 'react';
 
-import { Point, Line } from '../../.old/canvas.todo';
+import { Line } from '../../.old/canvas.todo';
 import { CanvasSettings } from '../../models/canvas';
 import { useWindowSize } from 'react-use';
 import styled from 'styled-components';

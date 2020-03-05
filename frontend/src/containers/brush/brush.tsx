@@ -175,6 +175,7 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
 
     const handleMouseUp = (e: React.MouseEvent) => {
         e.preventDefault();
+        handleMouseMove(e);
         isDrawing.current = false;
         isPressing.current = false;
 
@@ -184,6 +185,7 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
     return (
         <>
             <BrushCanvas
+                data-test="brush canvas"
                 ref={brushCanvas}
                 onMouseDown={handleMouseDown}
                 onMouseOut={handleMouseUp}
@@ -191,6 +193,7 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
                 onMouseMove={handleMouseMove}
             />
             <TempCanvas
+                data-test="temp canvas"
                 ref={tempCanvas}
                 onMouseDown={handleMouseDown}
                 onMouseOut={handleMouseUp}

@@ -17,7 +17,7 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasSettings
     useInterval(async () => {
         const fetchedLines = await getAllLines();
         if (fetchedLines && fetchedLines.length !== lines.length) setLines(fetchedLines);
-    }, 333);
+    }, 500);
 
     const onNewLine = useCallback(
         (line: Line) => {
