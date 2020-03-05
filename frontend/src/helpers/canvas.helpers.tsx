@@ -57,7 +57,6 @@ export const drawPoints = (canvas: RefObject<HTMLCanvasElement>, points: Point[]
         c.strokeStyle = brushColor;
 
         c.lineWidth = brushWidth * 2;
-        console.log(points.length);
         if (points.length === 1) {
             c.beginPath();
             c.arc(points[0].x, points[0].y, 1, 0, 2 * Math.PI, true);

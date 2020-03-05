@@ -21,14 +21,12 @@ const TempCanvas = styled.canvas`
 
 interface BrushProps {
     onNewLine: (line: Line) => void;
-    canvasWidth: number | string;
-    canvasHeight: number | string;
     style?: any;
     className?: any;
     canvasSettings: CanvasSettings;
 }
 
-const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, canvasSettings, ...props }) => {
+const Brush: React.FC<BrushProps> = ({  canvasSettings, ...props }) => {
     const brushCanvas = useRef<HTMLCanvasElement>(null);
     const tempCanvas = useRef<HTMLCanvasElement>(null);
     const { width, height } = useWindowSize();

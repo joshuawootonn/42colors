@@ -8,5 +8,5 @@ export default {
 };
 
 export const Default = () => (
-    <Control setCanvasSettings={action('setCanvasSettings')} canvasSettings={{ brushWidth: 10, brushColor: '#000000' }} />
+    <Control isPanning={false} setCanvasSettings={action('setCanvasSettings')} canvasSettings={{ brushWidth: 10, brushColor: '#000000' }} />
 );

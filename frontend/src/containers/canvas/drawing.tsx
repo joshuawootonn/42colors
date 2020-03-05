@@ -1,4 +1,4 @@
-import React, { useEffect, useRef} from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { Line } from '../../.old/canvas.todo';
 import { CanvasSettings } from '../../models/canvas';
@@ -14,14 +14,13 @@ const DrawingCanvas = styled.canvas`
 
 interface BrushProps {
     lines: Line[];
-    canvasWidth: number | string;
-    canvasHeight: number | string;
     style?: any;
     className?: any;
     canvasSettings: CanvasSettings;
+    isPanning: boolean;
 }
 
-const Drawing: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, canvasSettings, ...props }) => {
+const Drawing: React.FC<BrushProps> = ({ isPanning, canvasSettings, ...props }) => {
     const drawingCanvas = useRef<HTMLCanvasElement>(null);
     const { width, height } = useWindowSize();
 

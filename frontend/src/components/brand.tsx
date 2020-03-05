@@ -1,28 +1,27 @@
 import React, { FC } from 'react';
 import styled from 'styled-components';
+import { EdgeRoot } from './edgeRoot';
 
-const Wrapper = styled.div`
-    position: absolute;
-    bottom: 16px;
-    left: 16px;
-    display: flex;
+const Root = styled(EdgeRoot)`
+    bottom: ${props => (props.isPanning ? '20vh' : '16px')};
+    left: ${props => (props.isPanning ? '20vh' : '16px')};
     flex-direction: row;
-    z-index: 15;
     span,
     a {
         margin-right: 16px;
     }
 `;
 
-export interface BrandProps {}
+export interface BrandProps {
+    isPanning: boolean;
+}
 
-export const Brand: React.FC<BrandProps> = props => {
+export const Brand: React.FC<BrandProps> = ({ isPanning }) => {
     return (
-        <Wrapper>
-            <span> Joshua Wootonn</span>{' '}
-            <a href="http://www.joshuawootonn.com">website</a>
+        <Root isPanning={isPanning}>
+            <span> Joshua Wootonn</span> <a href="http://www.joshuawootonn.com">website</a>
             <a href="https://github.com/joshuawootonn/42colors">github</a>
-        </Wrapper>
+        </Root>
     );
 };
 

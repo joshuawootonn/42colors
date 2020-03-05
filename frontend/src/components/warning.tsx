@@ -1,23 +1,23 @@
 import React from 'react';
 import styled from 'styled-components';
+import { EdgeRoot } from './edgeRoot';
 
-const Wrapper = styled.div`
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    display: flex;
-    flex-direction: column;
-    z-index: 15;
+const Root = styled(EdgeRoot)`
+    top: ${props => (props.isPanning ? '20vh' : '16px')};
+    right: ${props => (props.isPanning ? '20vh' : '16px')};
     p {
         margin: 0;
     }
 `;
 
-export const Warning: React.FC = () => {
+export interface WarningProps {
+    isPanning: boolean;
+}
+export const Warning: React.FC<WarningProps> = ({ isPanning }) => {
     return (
-        <Wrapper>
+        <Root isPanning={isPanning}>
             <p> oop </p>
-        </Wrapper>
+        </Root>
     );
 };
 

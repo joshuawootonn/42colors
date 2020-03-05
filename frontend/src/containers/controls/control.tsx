@@ -2,14 +2,11 @@ import React, { FC } from 'react';
 import styled from 'styled-components';
 import { CanvasSettings } from '../../models/canvas';
 import ColorInput from './colorInput';
+import { EdgeRoot } from '../../components/edgeRoot';
 
-const Wrapper = styled.div`
-    position: absolute;
-    bottom: 16px;
-    right: 16px;
-    display: flex;
-    flex-direction: column;
-    z-index: 15;
+const Root = styled(EdgeRoot)`
+    bottom: ${props => (props.isPanning ? '20vh' : '16px')};
+    right: ${props => (props.isPanning ? '20vh' : '16px')};
     span,
     a {
         margin-right: 16px;
@@ -24,13 +21,14 @@ const Text = styled.p`
 export interface ControlProps {
     canvasSettings: CanvasSettings;
     setCanvasSettings: (canvasSettings: CanvasSettings) => void;
+    isPanning: boolean;
 }
 
 const colors = ['#0000FF', '#FF0000', '#ffff00'];
 
-export const Control: React.FC<ControlProps> = ({ canvasSettings, setCanvasSettings }) => {
+export const Control: React.FC<ControlProps> = ({ canvasSettings, setCanvasSettings, isPanning }) => {
     return (
-        <Wrapper>
+        <Root isPanning={isPanning}>
             <Text>Brush Width</Text>
             <input
                 name="brushWidth"
@@ -47,7 +45,7 @@ export const Control: React.FC<ControlProps> = ({ canvasSettings, setCanvasSetti
                 options={colors}
                 onChange={color => setCanvasSettings({ ...canvasSettings, brushColor: color })}
             />
-        </Wrapper>
+        </Root>
     );
 };
 

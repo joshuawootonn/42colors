@@ -9,9 +9,10 @@ import Drawing from './drawing';
 
 interface CanvasContainerProps {
     canvasSettings: CanvasSettings;
+    isPanning: boolean;
 }
 
-export const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasSettings }) => {
+export const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasSettings, isPanning }) => {
     const [lines, setLines] = useState<Line[]>([]);
 
     useInterval(async () => {
@@ -28,8 +29,8 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasSettings
 
     return (
         <CanvasWrapper>
-            <Brush onNewLine={onNewLine} canvasWidth="100vw" canvasHeight="100vh" canvasSettings={canvasSettings} />
-            <Drawing lines={lines} canvasWidth="100vw" canvasHeight="100vh" canvasSettings={canvasSettings} />
+            <Brush onNewLine={onNewLine} canvasSettings={canvasSettings} />
+            <Drawing isPanning={isPanning} lines={lines} canvasSettings={canvasSettings} />
         </CanvasWrapper>
     );
 };
