@@ -3,7 +3,7 @@ import { LazyBrush } from 'lazy-brush';
 
 import { Point, Line } from '../../.old/canvas.todo';
 import { CanvasSettings } from '../../models/canvas';
-import { useMouse, useWindowSize } from 'react-use';
+import { useWindowSize } from 'react-use';
 import styled from 'styled-components';
 import { drawBrush, drawPoints } from '../../helpers/canvas.helpers';
 
@@ -133,10 +133,13 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
             isDrawing.current = true;
         }
 
-        if (isDrawing.current && lazy.current.brushHasMoved()) {
-            if (points.length > 0) {
-                drawPoints(tempCanvas, newLine, canvasSettings.brushColor, canvasSettings.brushWidth);
-            }
+        if (isDrawing.current && lazy.current.brushHasMoved() && points.length > 0) {
+            drawPoints(
+                tempCanvas,
+                [points[points.length - 1], lazy.current.brush.toObject()],
+                canvasSettings.brushColor,
+                canvasSettings.brushWidth
+            );
         }
 
         mouseHasMoved.current = true;
