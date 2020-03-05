@@ -30,44 +30,14 @@ export const drawGrid = (ctx: CanvasRenderingContext2D) => {
     ctx.stroke();
 };
 
-export const drawBrush = (
-    canvas: RefObject<HTMLCanvasElement>,
-    lazy: any,
-    catenary: any,
-    pointer: Point,
-    brush: Point,
-    canvasSettings: CanvasSettings
-) => {
+export const drawBrush = (canvas: RefObject<HTMLCanvasElement>, pointer: Point, canvasSettings: CanvasSettings) => {
     if (canvas.current && canvas.current.getContext('2d')) {
         const c = canvas.current.getContext('2d') as any;
         c.clearRect(0, 0, c.canvas.width, c.canvas.height);
 
-        // Draw brush preview
         c.beginPath();
         c.fillStyle = canvasSettings.brushColor;
-        c.arc(brush.x, brush.y, canvasSettings.brushWidth, 0, Math.PI * 2, true);
-        c.fill();
-
-        // Draw mouse point (the one directly at the cursor)
-        c.beginPath();
-        c.fillStyle = canvasSettings.catenaryColor;
-        c.arc(pointer.x, pointer.y, 4, 0, Math.PI * 2, true);
-        c.fill();
-
-        if (lazy.isEnabled()) {
-            c.beginPath();
-
-            c.lineWidth = 2;
-            c.lineCap = 'round';
-            c.setLineDash([2, 4]);
-            c.strokeStyle = canvasSettings.catenaryColor;
-            catenary.drawToCanvas(c, brush, pointer, canvasSettings.lazyRadius);
-            c.stroke();
-        }
-        // Draw brush point (the one in the middle of the brush preview)
-        c.beginPath();
-        c.fillStyle = canvasSettings.catenaryColor;
-        c.arc(brush.x, brush.y, 2, 0, Math.PI * 2, true);
+        c.arc(pointer.x, pointer.y, canvasSettings.brushWidth, 0, Math.PI * 2, true);
         c.fill();
     }
 };
@@ -86,7 +56,7 @@ export const drawPoints = (canvas: RefObject<HTMLCanvasElement>, points: Point[]
         c.strokeStyle = brushColor;
 
         c.lineWidth = brushWidth * 2;
-        console.log(points.length)
+        console.log(points.length);
         if (points.length === 1) {
             c.beginPath();
             c.arc(points[0].x, points[0].y, 1, 0, 2 * Math.PI, true);

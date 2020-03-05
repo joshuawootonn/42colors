@@ -1,13 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { LazyBrush } from 'lazy-brush';
-import { Catenary } from 'catenary-curve';
 
 import { Point, Line } from '../../.old/canvas.todo';
 import { CanvasSettings } from '../../models/canvas';
-import { useWindowSize } from 'react-use';
+import { useMouse, useWindowSize } from 'react-use';
 import styled from 'styled-components';
 import { drawBrush, drawPoints } from '../../helpers/canvas.helpers';
-import canvas from '../../.old/canvas';
 
 const BrushCanvas = styled.canvas`
     display: block;
@@ -35,7 +33,7 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
     const tempCanvas = useRef<HTMLCanvasElement>(null);
     const { width, height } = useWindowSize();
 
-    const [lazy, setLazy] = useState(
+    const lazy = useRef(
         new LazyBrush({
             radius: canvasSettings.lazyRadius * window.devicePixelRatio,
             enabled: true,
@@ -45,11 +43,9 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
             },
         })
     );
-    const [catenary, setCatenary] = useState(new Catenary());
     const mouseHasMoved = useRef(false);
     const isPressing = useRef(false);
     const isDrawing = useRef(false);
-    const [chainLength, setChainLength] = useState(0);
     const [points, setPoints] = useState<Point[]>([]);
 
     useEffect(() => {
@@ -58,36 +54,23 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
             animationFrame = requestAnimationFrame(onFrame);
         }
         function onFrame() {
-            if (mouseHasMoved && mouseHasMoved.current) {
-                const pointer = lazy.getPointerCoordinates();
-                const brush = lazy.getBrushCoordinates();
-
-                drawBrush(brushCanvas, lazy, catenary, pointer, brush, canvasSettings);
-                mouseHasMoved.current = false;
-            }
+            const pointer = lazy.current.getPointerCoordinates();
+            drawBrush(brushCanvas, pointer, canvasSettings);
+            mouseHasMoved.current = false;
             loop();
         }
         loop();
-        if (canvasSettings.lazyRadius === 0) {
-            lazy.disable();
-        } else {
-            lazy.enable();
-            lazy.setRadius(canvasSettings.lazyRadius * window.devicePixelRatio);
-        }
-
         return () => {
             cancelAnimationFrame(animationFrame);
         };
     }, [canvasSettings]);
 
     useEffect(() => {
-        setChainLength(canvasSettings.lazyRadius * window.devicePixelRatio);
-
         window.setTimeout(() => {
-            const initX = window.innerWidth / 2;
-            const initY = window.innerHeight / 2;
-            lazy.update({ x: initX - chainLength / 4, y: initY }, { both: true });
-            lazy.update({ x: initX + chainLength / 4, y: initY }, { both: false });
+            const x = window.innerWidth / 2;
+            const y = window.innerHeight / 2;
+            lazy.current.update({ x, y }, { both: true });
+            lazy.current.update({ x, y }, { both: false });
 
             mouseHasMoved.current = true;
             // this.valuesChanged = true;
@@ -141,22 +124,18 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
     };
 
     const handlePointerMove = (x: number, y: number) => {
-        lazy.update({ x, y });
+        lazy.current.update({ x, y });
 
-        if ((isPressing.current && mouseHasMoved.current) || (!lazy.isEnabled() && isPressing.current)) {
-            // Start drawing and add point
+        const newLine = [...points, lazy.current.brush.toObject()];
+
+        if (isPressing.current) {
+            setPoints(newLine);
             isDrawing.current = true;
-            setPoints([...points, lazy.brush.toObject()]);
         }
 
-        if (isDrawing.current && (lazy.brushHasMoved() || !lazy.isEnabled())) {
-            // Add new point
-            setPoints([...points, lazy.brush.toObject()]);
-
+        if (isDrawing.current && lazy.current.brushHasMoved()) {
             if (points.length > 0) {
-                console.log(points);
-
-                drawPoints(tempCanvas, points, canvasSettings.brushColor, canvasSettings.brushWidth);
+                drawPoints(tempCanvas, newLine, canvasSettings.brushColor, canvasSettings.brushWidth);
             }
         }
 
@@ -175,7 +154,6 @@ const Brush: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, ca
 
     const handleMouseUp = (e: React.MouseEvent) => {
         e.preventDefault();
-        handleMouseMove(e);
         isDrawing.current = false;
         isPressing.current = false;
 
