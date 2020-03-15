@@ -6,7 +6,7 @@ import Control from './containers/controls/control';
 import useKeyboardJs from 'react-use/lib/useKeyboardJs';
 import CanvasContainer from './containers/canvas/canvas.container';
 import Warning from './components/warning';
-import { useKeyPress } from './aaa';
+import { useMapPosition } from './context/mapPosition.context';
 
 const Container = styled.div`
     height: 100vh;
@@ -19,17 +19,14 @@ const Container = styled.div`
 `;
 
 const App: React.FC = () => {
-    const isPressed = useKeyPress('Space');
+    const [isPressed] = useMapPosition();
     const [canvasSettings, setCanvasSettings] = useState<CanvasSettings>({
         brushColor: '#ffff00',
         brushWidth: 10,
     });
-    console.log(isPressed);
-
-
     return (
         <Container>
-            <CanvasContainer isPanning={isPressed} canvasSettings={canvasSettings} />
+            <CanvasContainer canvasSettings={canvasSettings} />
             <Brand isPanning={isPressed} />
             <Control isPanning={isPressed} canvasSettings={canvasSettings} setCanvasSettings={setCanvasSettings} />
             <Warning isPanning={isPressed} />

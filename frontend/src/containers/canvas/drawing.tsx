@@ -4,7 +4,8 @@ import { Line } from '../../.old/canvas.todo';
 import { CanvasSettings } from '../../models/canvas';
 import { useWindowSize } from 'react-use';
 import styled from 'styled-components';
-import { drawPoints } from '../../helpers/canvas.helpers';
+import { clear, drawPoints } from '../../helpers/canvas.helpers';
+import { useMapPosition } from '../../context/mapPosition.context';
 
 const DrawingCanvas = styled.canvas`
     display: block;
@@ -17,33 +18,24 @@ interface BrushProps {
     style?: any;
     className?: any;
     canvasSettings: CanvasSettings;
-    isPanning: boolean;
 }
 
-const Drawing: React.FC<BrushProps> = ({ isPanning, canvasSettings, ...props }) => {
+const Drawing: React.FC<BrushProps> = ({ canvasSettings, ...props }) => {
     const drawingCanvas = useRef<HTMLCanvasElement>(null);
     const { width, height } = useWindowSize();
-
-    const clear = () => {
-        if (drawingCanvas.current && drawingCanvas.current.getContext('2d')) {
-            const c = drawingCanvas.current.getContext('2d') as any;
-            c.clearRect(0, 0, width, height);
-        }
-    };
+    const [_, mapPosition] = useMapPosition();
 
     const simulateDrawingLines = (lines: Line[]) => {
-        clear();
         lines.forEach(line => {
             const { points, brushColor, brushWidth } = line;
-            console.log(line);
-
-            drawPoints(drawingCanvas, points, brushColor, brushWidth);
+            drawPoints(drawingCanvas, points, mapPosition, brushColor, brushWidth);
         });
     };
 
     useEffect(() => {
+        clear(drawingCanvas);
         simulateDrawingLines(props.lines);
-    }, [props.lines]);
+    }, [props.lines, mapPosition]);
 
     useEffect(() => {
         if (drawingCanvas.current) {

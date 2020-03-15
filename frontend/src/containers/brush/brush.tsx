@@ -5,7 +5,8 @@ import { Point, Line } from '../../.old/canvas.todo';
 import { CanvasSettings } from '../../models/canvas';
 import { useWindowSize } from 'react-use';
 import styled from 'styled-components';
-import { drawBrush, drawPoints } from '../../helpers/canvas.helpers';
+import { clear, drawBrush, drawPoints, toAbsolute, toRelative } from '../../helpers/canvas.helpers';
+import { useMapPosition } from '../../context/mapPosition.context';
 
 const BrushCanvas = styled.canvas`
     display: block;
@@ -26,10 +27,11 @@ interface BrushProps {
     canvasSettings: CanvasSettings;
 }
 
-const Brush: React.FC<BrushProps> = ({  canvasSettings, ...props }) => {
+const Brush: React.FC<BrushProps> = ({ canvasSettings, ...props }) => {
     const brushCanvas = useRef<HTMLCanvasElement>(null);
     const tempCanvas = useRef<HTMLCanvasElement>(null);
     const { width, height } = useWindowSize();
+    const [isPanning, mapPosition] = useMapPosition();
 
     const lazy = useRef(
         new LazyBrush({
@@ -92,6 +94,10 @@ const Brush: React.FC<BrushProps> = ({  canvasSettings, ...props }) => {
         }
     }, [width, height]);
 
+    useEffect(() => {
+        clear(tempCanvas);
+    }, [mapPosition]);
+
     const saveLine = () => {
         if (points.length < 2) return;
 
@@ -124,7 +130,10 @@ const Brush: React.FC<BrushProps> = ({  canvasSettings, ...props }) => {
     const handlePointerMove = (x: number, y: number) => {
         lazy.current.update({ x, y });
 
-        const newLine = [...points, lazy.current.brush.toObject()];
+        const newRelativePoint = lazy.current.brush.toObject();
+        const newAbsolutePoint = toAbsolute(newRelativePoint, mapPosition);
+
+        const newLine = [...points, newAbsolutePoint];
 
         if (isPressing.current) {
             setPoints(newLine);
@@ -134,7 +143,8 @@ const Brush: React.FC<BrushProps> = ({  canvasSettings, ...props }) => {
         if (isDrawing.current && lazy.current.brushHasMoved() && points.length > 0) {
             drawPoints(
                 tempCanvas,
-                [points[points.length - 1], lazy.current.brush.toObject()],
+                [points[points.length - 1], newAbsolutePoint],
+                mapPosition,
                 canvasSettings.brushColor,
                 canvasSettings.brushWidth
             );
