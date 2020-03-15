@@ -1,8 +1,6 @@
 export interface CanvasSettings {
-    lazyRadius: number;
     brushWidth: number;
     brushColor: string;
-    catenaryColor: string;
 }
 
 export interface CanvasProps extends CanvasSettings {

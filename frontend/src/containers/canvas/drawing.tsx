@@ -1,12 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { LazyBrush } from 'lazy-brush';
-import { Catenary } from 'catenary-curve';
+import React, { useEffect, useRef } from 'react';
 
-import { Point, Line } from '../../.old/canvas.todo';
-import { CanvasSettings } from '../../models/canvas';
+import { CanvasSettings, Line } from '../../models';
 import { useWindowSize } from 'react-use';
 import styled from 'styled-components';
-import { drawPoints } from '../../helpers/canvas.helpers';
+import { clear, drawPoints } from '../../helpers/canvas.helpers';
+import { useMapPosition } from '../../context/mapPosition.context';
 
 const DrawingCanvas = styled.canvas`
     display: block;
@@ -16,37 +14,27 @@ const DrawingCanvas = styled.canvas`
 
 interface BrushProps {
     lines: Line[];
-    canvasWidth: number | string;
-    canvasHeight: number | string;
     style?: any;
     className?: any;
     canvasSettings: CanvasSettings;
 }
 
-const Drawing: React.FC<BrushProps> = ({ canvasWidth = 400, canvasHeight = 400, canvasSettings, ...props }) => {
+const Drawing: React.FC<BrushProps> = ({ canvasSettings, ...props }) => {
     const drawingCanvas = useRef<HTMLCanvasElement>(null);
     const { width, height } = useWindowSize();
-
-    const clear = () => {
-        if (drawingCanvas.current && drawingCanvas.current.getContext('2d')) {
-            const c = drawingCanvas.current.getContext('2d') as any;
-            c.clearRect(0, 0, width, height);
-        }
-    };
+    const [_, mapPosition] = useMapPosition();
 
     const simulateDrawingLines = (lines: Line[]) => {
-        clear();
         lines.forEach(line => {
             const { points, brushColor, brushWidth } = line;
-            console.log(line);
-
-            drawPoints(drawingCanvas, points, brushColor, brushWidth);
+            drawPoints(drawingCanvas, points, mapPosition, brushColor, brushWidth);
         });
     };
 
     useEffect(() => {
+        clear(drawingCanvas);
         simulateDrawingLines(props.lines);
-    }, [props.lines]);
+    }, [props.lines, mapPosition]);
 
     useEffect(() => {
         if (drawingCanvas.current) {

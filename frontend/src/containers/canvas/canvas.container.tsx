@@ -1,9 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import { useInterval } from 'react-use';
 import { getAllLines, postLine } from '../../repositories/canvas.repositories';
-import { Line } from '../../.old/canvas.todo';
 import Brush from '../brush/brush';
-import { CanvasSettings } from '../../models/canvas';
+import { CanvasSettings, Line } from '../../models';
 import CanvasWrapper from './canvasWrapper';
 import Drawing from './drawing';
 
@@ -17,7 +16,7 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasSettings
     useInterval(async () => {
         const fetchedLines = await getAllLines();
         if (fetchedLines && fetchedLines.length !== lines.length) setLines(fetchedLines);
-    }, 333);
+    }, 500);
 
     const onNewLine = useCallback(
         (line: Line) => {
@@ -28,8 +27,8 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasSettings
 
     return (
         <CanvasWrapper>
-            <Brush onNewLine={onNewLine} canvasWidth="100vw" canvasHeight="100vh" canvasSettings={canvasSettings} />
-            <Drawing lines={lines} canvasWidth="100vw" canvasHeight="100vh" canvasSettings={canvasSettings} />
+            <Brush onNewLine={onNewLine} canvasSettings={canvasSettings} />
+            <Drawing lines={lines} canvasSettings={canvasSettings} />
         </CanvasWrapper>
     );
 };

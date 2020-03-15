@@ -8,8 +8,5 @@ export default {
 };
 
 export const Default = () => (
-    <Control
-        setCanvasSettings={action('setCanvasSettings')}
-        canvasSettings={{ brushWidth: 10, brushColor: '#000000', lazyRadius: 10, catenaryColor: '#000000' }}
-    />
+    <Control setCanvasSettings={action('setCanvasSettings')} canvasSettings={{ brushWidth: 10, brushColor: '#000000' }} />
 );

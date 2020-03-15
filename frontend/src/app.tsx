@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import Brand from './components/brand';
-import { CanvasSettings } from './models/canvas';
+import { CanvasSettings } from './models';
 import Control from './containers/controls/control';
-
 import CanvasContainer from './containers/canvas/canvas.container';
 import Warning from './components/warning';
+import { useMapPosition } from './context/mapPosition.context';
 
 const Container = styled.div`
     height: 100vh;
@@ -18,13 +18,11 @@ const Container = styled.div`
 `;
 
 const App: React.FC = () => {
+    const [isPressed] = useMapPosition();
     const [canvasSettings, setCanvasSettings] = useState<CanvasSettings>({
-        lazyRadius: 0,
         brushColor: '#ffff00',
         brushWidth: 10,
-        catenaryColor: '#000000',
     });
-
     return (
         <Container>
             <CanvasContainer canvasSettings={canvasSettings} />

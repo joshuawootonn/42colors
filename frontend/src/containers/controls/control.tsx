@@ -1,15 +1,13 @@
-import React, { FC } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-import { CanvasSettings } from '../../models/canvas';
+import { CanvasSettings } from '../../models';
 import ColorInput from './colorInput';
+import { EdgeRoot } from '../../components/edgeRoot';
+import { useMapPosition } from '../../context/mapPosition.context';
 
-const Wrapper = styled.div`
-    position: absolute;
-    bottom: 16px;
-    right: 16px;
-    display: flex;
-    flex-direction: column;
-    z-index: 15;
+const Root = styled(EdgeRoot)`
+    bottom: ${props => (props.isPanning ? '24px' : '16px')};
+    right: ${props => (props.isPanning ? '24px' : '16px')};
     span,
     a {
         margin-right: 16px;
@@ -29,9 +27,10 @@ export interface ControlProps {
 const colors = ['#0000FF', '#FF0000', '#ffff00'];
 
 export const Control: React.FC<ControlProps> = ({ canvasSettings, setCanvasSettings }) => {
+    const [isPanning] = useMapPosition();
     return (
-        <Wrapper>
-            <Text>Brush Length</Text>
+        <Root isPanning={isPanning}>
+            <Text>Brush Width</Text>
             <input
                 name="brushWidth"
                 type="range"
@@ -40,15 +39,6 @@ export const Control: React.FC<ControlProps> = ({ canvasSettings, setCanvasSetti
                 value={canvasSettings.brushWidth}
                 onChange={event => setCanvasSettings({ ...canvasSettings, brushWidth: parseInt(event.target.value) })}
             />
-            <Text>Leash Length</Text>
-            <input
-                name="lazyRadius"
-                type="range"
-                min="0"
-                max="100"
-                value={canvasSettings.lazyRadius}
-                onChange={event => setCanvasSettings({ ...canvasSettings, lazyRadius: parseInt(event.target.value) })}
-            />
             <Text>Color</Text>
             <ColorInput
                 name="brushColor"
@@ -56,7 +46,7 @@ export const Control: React.FC<ControlProps> = ({ canvasSettings, setCanvasSetti
                 options={colors}
                 onChange={color => setCanvasSettings({ ...canvasSettings, brushColor: color })}
             />
-        </Wrapper>
+        </Root>
     );
 };
 

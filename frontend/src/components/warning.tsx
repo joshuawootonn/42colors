@@ -1,23 +1,23 @@
 import React from 'react';
 import styled from 'styled-components';
+import { EdgeRoot } from './edgeRoot';
+import { useMapPosition } from '../context/mapPosition.context';
 
-const Wrapper = styled.div`
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    display: flex;
-    flex-direction: column;
-    z-index: 15;
+const Root = styled(EdgeRoot)`
+    top: ${props => (props.isPanning ? '24px' : '16px')};
+    right: ${props => (props.isPanning ? '24px' : '16px')};
     p {
         margin: 0;
     }
 `;
 
-export const Warning: React.FC = () => {
+export interface WarningProps {}
+export const Warning: React.FC<WarningProps> = () => {
+    const [isPanning] = useMapPosition();
     return (
-        <Wrapper>
-            <p> warning.. this data is not persisted. don't try hard yet </p>
-        </Wrapper>
+        <Root isPanning={isPanning}>
+            <p> oop </p>
+        </Root>
     );
 };
 
