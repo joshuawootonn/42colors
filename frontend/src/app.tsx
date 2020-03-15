@@ -26,9 +26,9 @@ const App: React.FC = () => {
     return (
         <Container>
             <CanvasContainer canvasSettings={canvasSettings} />
-            <Brand isPanning={isPressed} />
-            <Control isPanning={isPressed} canvasSettings={canvasSettings} setCanvasSettings={setCanvasSettings} />
-            <Warning isPanning={isPressed} />
+            <Brand />
+            <Control canvasSettings={canvasSettings} setCanvasSettings={setCanvasSettings} />
+            <Warning />
         </Container>
     );
 };

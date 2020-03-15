@@ -3,10 +3,11 @@ import styled from 'styled-components';
 import { CanvasSettings } from '../../models';
 import ColorInput from './colorInput';
 import { EdgeRoot } from '../../components/edgeRoot';
+import { useMapPosition } from '../../context/mapPosition.context';
 
 const Root = styled(EdgeRoot)`
-    bottom: ${props => (props.isPanning ? '20vh' : '16px')};
-    right: ${props => (props.isPanning ? '20vh' : '16px')};
+    bottom: ${props => (props.isPanning ? '24px' : '16px')};
+    right: ${props => (props.isPanning ? '24px' : '16px')};
     span,
     a {
         margin-right: 16px;
@@ -21,12 +22,12 @@ const Text = styled.p`
 export interface ControlProps {
     canvasSettings: CanvasSettings;
     setCanvasSettings: (canvasSettings: CanvasSettings) => void;
-    isPanning: boolean;
 }
 
 const colors = ['#0000FF', '#FF0000', '#ffff00'];
 
-export const Control: React.FC<ControlProps> = ({ canvasSettings, setCanvasSettings, isPanning }) => {
+export const Control: React.FC<ControlProps> = ({ canvasSettings, setCanvasSettings }) => {
+    const [isPanning] = useMapPosition();
     return (
         <Root isPanning={isPanning}>
             <Text>Brush Width</Text>
