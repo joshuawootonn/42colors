@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { LazyBrush } from 'lazy-brush';
 
-import { Point, Line } from '../../.old/canvas.todo';
-import { CanvasSettings } from '../../models/canvas';
+import { CanvasSettings, Line, Point } from '../../models';
 import { useWindowSize } from 'react-use';
 import styled from 'styled-components';
 import { clear, drawBrush, drawPoints, toAbsolute, toRelative } from '../../helpers/canvas.helpers';

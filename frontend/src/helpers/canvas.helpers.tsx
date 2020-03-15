@@ -1,5 +1,5 @@
-import { Point } from '../.old/canvas.todo';
-import { lazy, MutableRefObject, RefObject } from 'react';
+import { Point } from '../models';
+import { RefObject } from 'react';
 import { CanvasSettings } from '../models/canvas';
 
 export const drawGrid = (ctx: CanvasRenderingContext2D) => {

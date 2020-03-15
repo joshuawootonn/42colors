@@ -1,6 +1,6 @@
-import React, { FC } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-import { CanvasSettings } from '../../models/canvas';
+import { CanvasSettings } from '../../models';
 import ColorInput from './colorInput';
 import { EdgeRoot } from '../../components/edgeRoot';
 

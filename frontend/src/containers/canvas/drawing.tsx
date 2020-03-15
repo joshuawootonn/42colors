@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-import { Line } from '../../.old/canvas.todo';
-import { CanvasSettings } from '../../models/canvas';
+import { CanvasSettings, Line } from '../../models';
 import { useWindowSize } from 'react-use';
 import styled from 'styled-components';
 import { clear, drawPoints } from '../../helpers/canvas.helpers';

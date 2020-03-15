@@ -1,9 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import { useInterval } from 'react-use';
 import { getAllLines, postLine } from '../../repositories/canvas.repositories';
-import { Line } from '../../.old/canvas.todo';
 import Brush from '../brush/brush';
-import { CanvasSettings } from '../../models/canvas';
+import { CanvasSettings, Line } from '../../models';
 import CanvasWrapper from './canvasWrapper';
 import Drawing from './drawing';
 

@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import Brand from './components/brand';
-import { CanvasSettings } from './models/canvas';
+import { CanvasSettings } from './models';
 import Control from './containers/controls/control';
-import useKeyboardJs from 'react-use/lib/useKeyboardJs';
 import CanvasContainer from './containers/canvas/canvas.container';
 import Warning from './components/warning';
 import { useMapPosition } from './context/mapPosition.context';

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
-import { Point } from '../.old/canvas.todo';
+import { Point } from '../models';
 
 function useKeyPress(targetKey: string) {
     const [isKeyPressed, setIsKeyPressed] = useState(false);
