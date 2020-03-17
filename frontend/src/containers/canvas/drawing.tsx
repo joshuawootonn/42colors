@@ -12,14 +12,12 @@ const DrawingCanvas = styled.canvas`
     z-index: 11;
 `;
 
-interface BrushProps {
+interface DrawingProps {
     lines: Line[];
-    style?: any;
-    className?: any;
     canvasSettings: CanvasSettings;
 }
 
-const Drawing: React.FC<BrushProps> = ({ canvasSettings, ...props }) => {
+const Drawing: React.FC<DrawingProps> = ({ canvasSettings, ...props }) => {
     const drawingCanvas = useRef<HTMLCanvasElement>(null);
     const { width, height } = useWindowSize();
     const [_, mapPosition] = useMapPosition();
@@ -48,4 +46,5 @@ const Drawing: React.FC<BrushProps> = ({ canvasSettings, ...props }) => {
 
     return <DrawingCanvas ref={drawingCanvas} />;
 };
+
 export default Drawing;

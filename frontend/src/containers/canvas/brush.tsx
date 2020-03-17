@@ -21,8 +21,6 @@ const TempCanvas = styled.canvas`
 
 interface BrushProps {
     onNewLine: (line: Line) => void;
-    style?: any;
-    className?: any;
     canvasSettings: CanvasSettings;
 }
 
