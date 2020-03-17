@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 import { Point } from '../models';
 
@@ -51,7 +51,7 @@ const useMousePosition = () => {
     return mousePosition;
 };
 
-const MapPositionContext = createContext<[boolean, Point]>([false, { x: 0, y: 0 }]);
+const MapPositionContext = createContext<[boolean, Point, (point: Point) => void]>([false, { x: 0, y: 0 }, () => {}]);
 
 export const useMapPosition = () => useContext(MapPositionContext);
 
@@ -61,11 +61,15 @@ export const MapPositionProvider: React.FC = props => {
     const prevMouse = usePrevious(mouse);
     const isPanning = useKeyPress('Space');
 
+    const setCurrentMapValue = useCallback((point: Point) => {
+        setCurrentMap(point);
+    }, []);
+
     useEffect(() => {
         if (isPanning && prevMouse !== undefined && mouse !== undefined) {
             const changeInMousePosition = { x: prevMouse.x - mouse.x, y: prevMouse.y - mouse.y };
             setCurrentMap({ x: currentMap.x + changeInMousePosition.x, y: currentMap.y + changeInMousePosition.y });
         }
     }, [isPanning, mouse]);
-    return <MapPositionContext.Provider value={[isPanning, currentMap]}>{props.children}</MapPositionContext.Provider>;
+    return <MapPositionContext.Provider value={[isPanning, currentMap, setCurrentMapValue]}>{props.children}</MapPositionContext.Provider>;
 };
