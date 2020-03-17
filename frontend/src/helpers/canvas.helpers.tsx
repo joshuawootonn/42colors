@@ -2,6 +2,9 @@ import { Point } from '../models';
 import { RefObject } from 'react';
 import { CanvasSettings } from '../models/canvas';
 
+import pan from '../assets/cursors/pan.svg';
+import pen from '../assets/cursors/pen.svg';
+
 export const drawGrid = (canvas: RefObject<HTMLCanvasElement>, mapPosition: Point) => {
     if (canvas.current && canvas.current.getContext('2d')) {
         const c = canvas.current.getContext('2d') as any;
@@ -31,15 +34,33 @@ export const drawGrid = (canvas: RefObject<HTMLCanvasElement>, mapPosition: Poin
     }
 };
 
-export const drawBrush = (canvas: RefObject<HTMLCanvasElement>, pointer: Point, canvasSettings: CanvasSettings) => {
+export const drawBrush = (canvas: RefObject<HTMLCanvasElement>, pointer: Point, canvasSettings: CanvasSettings, isPanning: boolean) => {
     if (canvas.current && canvas.current.getContext('2d')) {
-        const c = canvas.current.getContext('2d') as any;
-        c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+        const c = canvas.current.getContext('2d') as CanvasRenderingContext2D;
 
-        c.beginPath();
-        c.fillStyle = canvasSettings.brushColor;
-        c.arc(pointer.x, pointer.y, canvasSettings.brushWidth, 0, Math.PI * 2, true);
-        c.fill();
+        if (isPanning) {
+            const img = new Image();
+            img.src = pan;
+
+            img.onload = function() {
+                c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+                c.drawImage(img, pointer.x, pointer.y, 40, 40);
+            };
+            return;
+        }
+
+        const img = new Image();
+        img.src = pen;
+
+        img.onload = function() {
+            c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+            c.drawImage(img, pointer.x, pointer.y, 40, 40);
+            c.beginPath();
+            c.fillStyle = canvasSettings.brushColor;
+            c.arc(pointer.x, pointer.y, canvasSettings.brushWidth, 0, Math.PI * 2, true);
+            c.fill();
+        };
+
     }
 };
 
