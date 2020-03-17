@@ -1,10 +1,16 @@
 import React, { useCallback, useState } from 'react';
 import { useInterval } from 'react-use';
 import { getAllLines, postLine } from '../../repositories/canvas.repositories';
-import Brush from '../brush/brush';
+import Brush from './brush';
 import { CanvasSettings, Line } from '../../models';
-import CanvasWrapper from './canvasWrapper';
 import Drawing from './drawing';
+import styled from 'styled-components';
+import Grid from './grid';
+
+const Root = styled.div`
+    height: 100vh;
+    width: 100vw;
+`;
 
 interface CanvasContainerProps {
     canvasSettings: CanvasSettings;
@@ -26,10 +32,11 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasSettings
     );
 
     return (
-        <CanvasWrapper>
+        <Root>
             <Brush onNewLine={onNewLine} canvasSettings={canvasSettings} />
             <Drawing lines={lines} canvasSettings={canvasSettings} />
-        </CanvasWrapper>
+            <Grid />
+        </Root>
     );
 };
 

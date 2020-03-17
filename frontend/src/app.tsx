@@ -6,6 +6,7 @@ import Control from './containers/controls/control';
 import CanvasContainer from './containers/canvas/canvas.container';
 import Warning from './components/warning';
 import { useMapPosition } from './context/mapPosition.context';
+import ManualMapNavigation from './containers/controls/mapNavigation';
 
 const Container = styled.div`
     height: 100vh;
@@ -26,6 +27,7 @@ const App: React.FC = () => {
     return (
         <Container>
             <CanvasContainer canvasSettings={canvasSettings} />
+            <ManualMapNavigation canvasSettings={canvasSettings} />
             <Brand />
             <Control canvasSettings={canvasSettings} setCanvasSettings={setCanvasSettings} />
             <Warning />

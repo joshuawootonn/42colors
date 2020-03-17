@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { LazyBrush } from 'lazy-brush';
 
-import { CanvasSettings, Line,  Point } from '../../models';
+import { CanvasSettings, Line, Point } from '../../models';
 import { useWindowSize } from 'react-use';
 import styled from 'styled-components';
 import { clear, drawBrush, drawPoints, toAbsolute, toRelative } from '../../helpers/canvas.helpers';
@@ -11,6 +11,7 @@ const BrushCanvas = styled.canvas`
     display: block;
     position: absolute;
     z-index: 15;
+    cursor: none;
 `;
 
 const TempCanvas = styled.canvas`
@@ -21,8 +22,6 @@ const TempCanvas = styled.canvas`
 
 interface BrushProps {
     onNewLine: (line: Line) => void;
-    style?: any;
-    className?: any;
     canvasSettings: CanvasSettings;
 }
 
@@ -54,7 +53,7 @@ const Brush: React.FC<BrushProps> = ({ canvasSettings, ...props }) => {
         }
         function onFrame() {
             const pointer = lazy.current.getPointerCoordinates();
-            drawBrush(brushCanvas, pointer, canvasSettings);
+            drawBrush(brushCanvas, pointer, canvasSettings, isPanning);
             mouseHasMoved.current = false;
             loop();
         }
@@ -62,7 +61,7 @@ const Brush: React.FC<BrushProps> = ({ canvasSettings, ...props }) => {
         return () => {
             cancelAnimationFrame(animationFrame);
         };
-    }, [canvasSettings]);
+    }, [canvasSettings, isPanning]);
 
     useEffect(() => {
         window.setTimeout(() => {

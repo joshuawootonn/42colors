@@ -2,43 +2,65 @@ import { Point } from '../models';
 import { RefObject } from 'react';
 import { CanvasSettings } from '../models/canvas';
 
-export const drawGrid = (ctx: CanvasRenderingContext2D) => {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+import pan from '../assets/cursors/pan.svg';
+import pen from '../assets/cursors/pen.svg';
 
-    ctx.beginPath();
-    ctx.setLineDash([5, 1]);
-    ctx.setLineDash([]);
-    ctx.strokeStyle = 'rgba(150,150,150,0.17)';
-    ctx.lineWidth = 0.5;
-
-    const gridSize = 25;
-
-    let countX = 0;
-    while (countX < ctx.canvas.width) {
-        countX += gridSize;
-        ctx.moveTo(countX, 0);
-        ctx.lineTo(countX, ctx.canvas.height);
-    }
-    ctx.stroke();
-
-    let countY = 0;
-    while (countY < ctx.canvas.height) {
-        countY += gridSize;
-        ctx.moveTo(0, countY);
-        ctx.lineTo(ctx.canvas.width, countY);
-    }
-    ctx.stroke();
-};
-
-export const drawBrush = (canvas: RefObject<HTMLCanvasElement>, pointer: Point, canvasSettings: CanvasSettings) => {
+export const drawGrid = (canvas: RefObject<HTMLCanvasElement>, mapPosition: Point) => {
     if (canvas.current && canvas.current.getContext('2d')) {
         const c = canvas.current.getContext('2d') as any;
         c.clearRect(0, 0, c.canvas.width, c.canvas.height);
 
         c.beginPath();
-        c.fillStyle = canvasSettings.brushColor;
-        c.arc(pointer.x, pointer.y, canvasSettings.brushWidth, 0, Math.PI * 2, true);
-        c.fill();
+        c.strokeStyle = 'rgba(150,150,150,.3)';
+        c.lineWidth = 0.2;
+
+        const gridSize = 25;
+
+        let countX = -(mapPosition.x % gridSize);
+        while (countX < c.canvas.width) {
+            countX += gridSize;
+            c.moveTo(countX, 0);
+            c.lineTo(countX, c.canvas.height);
+        }
+        c.stroke();
+
+        let countY = -(mapPosition.y % gridSize);
+        while (countY < c.canvas.height) {
+            countY += gridSize;
+            c.moveTo(0, countY);
+            c.lineTo(c.canvas.width, countY);
+        }
+        c.stroke();
+    }
+};
+
+export const drawBrush = (canvas: RefObject<HTMLCanvasElement>, pointer: Point, canvasSettings: CanvasSettings, isPanning: boolean) => {
+    if (canvas.current && canvas.current.getContext('2d')) {
+        const c = canvas.current.getContext('2d') as CanvasRenderingContext2D;
+
+        if (isPanning) {
+            const img = new Image();
+            img.src = pan;
+
+            img.onload = function() {
+                c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+                c.drawImage(img, pointer.x, pointer.y, 40, 40);
+            };
+            return;
+        }
+
+        const img = new Image();
+        img.src = pen;
+
+        img.onload = function() {
+            c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+            c.drawImage(img, pointer.x, pointer.y, 40, 40);
+            c.beginPath();
+            c.fillStyle = canvasSettings.brushColor;
+            c.arc(pointer.x, pointer.y, canvasSettings.brushWidth, 0, Math.PI * 2, true);
+            c.fill();
+        };
+
     }
 };
 
