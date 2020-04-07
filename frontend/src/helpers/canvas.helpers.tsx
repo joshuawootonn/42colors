@@ -42,25 +42,20 @@ export const drawBrush = (canvas: RefObject<HTMLCanvasElement>, pointer: Point, 
             const img = new Image();
             img.src = pan;
 
-            img.onload = function() {
-                c.clearRect(0, 0, c.canvas.width, c.canvas.height);
-                c.drawImage(img, pointer.x, pointer.y, 40, 40);
-            };
+            c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+            c.drawImage(img, pointer.x, pointer.y, 40, 40);
             return;
         }
 
         const img = new Image();
         img.src = pen;
 
-        img.onload = function() {
-            c.clearRect(0, 0, c.canvas.width, c.canvas.height);
-            c.drawImage(img, pointer.x, pointer.y, 40, 40);
-            c.beginPath();
-            c.fillStyle = canvasSettings.brushColor;
-            c.arc(pointer.x, pointer.y, canvasSettings.brushWidth, 0, Math.PI * 2, true);
-            c.fill();
-        };
-
+        c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+        c.beginPath();
+        c.fillStyle = canvasSettings.brushColor;
+        c.arc(pointer.x, pointer.y, canvasSettings.brushWidth, 0, Math.PI * 2, true);
+        c.fill();
+        c.drawImage(img, pointer.x, pointer.y, 40, 40);
     }
 };
 
