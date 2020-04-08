@@ -34,5 +34,14 @@ namespace backend.Controllers
             _logger.LogInformation($"found {lines.Length} lines");
             return Ok(new LinesViewModel(lines));
         }
+
+        private class PositionQuery
+        {
+            private int x { get; set; }
+            private int y { get; set; }
+            private int w { get; set; }
+            private int h { get; set; }
+        }
+        
     }
 }
