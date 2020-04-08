@@ -25,9 +25,9 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasSettings
         <Root>Loading...</Root>
     ) : (
         <Root>
-            {/*<Brush onNewLine={createLine} canvasSettings={canvasSettings} />*/}
+            <Brush onNewLine={createLine} canvasSettings={canvasSettings} />
             <Drawing lines={lines} canvasSettings={canvasSettings} />
-            {/*<Grid />*/}
+            <Grid />
         </Root>
     );
 };
