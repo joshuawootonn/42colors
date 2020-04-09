@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 
 import { useWindowSize } from 'react-use';
 import styled from 'styled-components';
-import { clear2, copyFromCanvasToContext, drawLines, drawPoints2, resizeCanvas } from '../../helpers/canvas.helpers';
+import { clear2, copyFromCanvasToContext, drawLines, resizeCanvas } from '../../helpers/canvas.helpers';
 import { useMapPosition } from '../../context/mapPosition.context';
 
 const DrawingCanvas = styled.canvas`
@@ -14,7 +14,7 @@ const TempCanvas = styled.canvas`
     display: none;
 `;
 
-const Drawing = ({ canvasSettings, ...props }) => {
+const Drawing = props => {
     const drawingCanvas = useRef();
     const drawingContext = useRef();
     const tempCanvas = useRef();
@@ -24,22 +24,14 @@ const Drawing = ({ canvasSettings, ...props }) => {
     const [isPanning, mapPosition] = useMapPosition();
     const panOffset = useRef({ x: 0, y: 0 });
 
-    const redraw = () => {
-        clear2(drawingContext.current, drawingCanvas.current.width, drawingCanvas.current.height);
-        drawLines(drawingContext.current, props.lines, mapPosition);
-    };
-
-    const reContext = () => {
+    useEffect(() => {
         drawingContext.current = drawingCanvas.current.getContext('2d');
         tempContext.current = tempCanvas.current.getContext('2d');
-    };
-
-    useEffect(() => {
-        reContext();
     }, []);
 
     useEffect(() => {
-        redraw();
+        clear2(drawingContext.current);
+        drawLines(drawingContext.current, props.lines, mapPosition);
     }, [props.lines]);
 
     useEffect(() => {
@@ -47,12 +39,12 @@ const Drawing = ({ canvasSettings, ...props }) => {
             copyFromCanvasToContext(tempContext.current, drawingCanvas.current, 0, 0);
             panOffset.current = { ...mapPosition };
         } else {
-            clear2(tempContext.current, tempCanvas.current.width, tempCanvas.current.height);
+            clear2(tempContext.current);
         }
     }, [isPanning]);
 
     useEffect(() => {
-        clear2(drawingContext.current, drawingCanvas.current.width, drawingCanvas.current.height);
+        clear2(drawingContext.current);
         copyFromCanvasToContext(
             drawingContext.current,
             tempCanvas.current,
@@ -64,8 +56,10 @@ const Drawing = ({ canvasSettings, ...props }) => {
     useEffect(() => {
         resizeCanvas(drawingCanvas.current, width, height);
         resizeCanvas(tempCanvas.current, width, height);
-        reContext();
-        redraw();
+        drawingContext.current = drawingCanvas.current.getContext('2d');
+        tempContext.current = tempCanvas.current.getContext('2d');
+        clear2(drawingContext.current);
+        drawLines(drawingContext.current, props.lines, mapPosition);
     }, [width, height]);
 
     return (

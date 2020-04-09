@@ -173,8 +173,8 @@ export const drawLines = (context: CanvasRenderingContext2D, lines: Line[], mapP
     });
 };
 
-export const clear2 = (context: CanvasRenderingContext2D, width: number, height: number) => {
-    context.clearRect(0, 0, width, height);
+export const clear2 = (context: CanvasRenderingContext2D) => {
+    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 };
 
 export const copyFromCanvasToContext = (to: CanvasRenderingContext2D, from: HTMLCanvasElement, xOffset: number, yOffset: number) => {
