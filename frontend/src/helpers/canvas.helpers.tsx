@@ -5,33 +5,28 @@ import { CanvasSettings } from '../models/canvas';
 import pan from '../assets/cursors/pan.svg';
 import pen from '../assets/cursors/pen.svg';
 
-export const drawGrid = (canvas: RefObject<HTMLCanvasElement>, mapPosition: Point) => {
-    if (canvas.current && canvas.current.getContext('2d')) {
-        const c = canvas.current.getContext('2d') as any;
-        c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+export const drawGrid = (context: CanvasRenderingContext2D, mapPosition: Point) => {
+    context.beginPath();
+    context.strokeStyle = 'rgba(150,150,150,.3)';
+    context.lineWidth = 0.2;
 
-        c.beginPath();
-        c.strokeStyle = 'rgba(150,150,150,.3)';
-        c.lineWidth = 0.2;
+    const gridSize = 25;
 
-        const gridSize = 25;
-
-        let countX = -(mapPosition.x % gridSize);
-        while (countX < c.canvas.width) {
-            countX += gridSize;
-            c.moveTo(countX, 0);
-            c.lineTo(countX, c.canvas.height);
-        }
-        c.stroke();
-
-        let countY = -(mapPosition.y % gridSize);
-        while (countY < c.canvas.height) {
-            countY += gridSize;
-            c.moveTo(0, countY);
-            c.lineTo(c.canvas.width, countY);
-        }
-        c.stroke();
+    let countX = -(mapPosition.x % gridSize);
+    while (countX < context.canvas.width) {
+        countX += gridSize;
+        context.moveTo(countX, 0);
+        context.lineTo(countX, context.canvas.height);
     }
+    context.stroke();
+
+    let countY = -(mapPosition.y % gridSize);
+    while (countY < context.canvas.height) {
+        countY += gridSize;
+        context.moveTo(0, countY);
+        context.lineTo(context.canvas.width, countY);
+    }
+    context.stroke();
 };
 
 export const drawBrush = (canvas: RefObject<HTMLCanvasElement>, pointer: Point, canvasSettings: CanvasSettings, isPanning: boolean) => {
