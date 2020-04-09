@@ -1,7 +1,7 @@
 import React, { createContext, FC, useCallback, useContext, useEffect, useState } from 'react';
-import { useInterval, usePrevious } from 'react-use';
+import { useInterval } from 'react-use';
 import { getAllLines, postLine } from '../repositories/canvas.repositories';
-import { Line, Point } from '../models';
+import { Line } from '../models';
 import { useMapPosition } from './mapPosition.context';
 
 interface LineContextState {

@@ -1,6 +1,6 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import Brush from './brush';
-import { CanvasSettings, Line } from '../../models';
+import { CanvasSettings } from '../../models';
 import Drawing from './drawing';
 import styled from 'styled-components';
 import Grid from './grid';

@@ -19,7 +19,6 @@ const Container = styled.div`
 `;
 
 const App: React.FC = () => {
-    const [isPressed] = useMapPosition();
     const [canvasSettings, setCanvasSettings] = useState<CanvasSettings>({
         brushColor: '#ffff00',
         brushWidth: 10,
