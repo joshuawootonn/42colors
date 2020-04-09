@@ -35,7 +35,7 @@
     "test": "react-scripts test",
     "test:ci": "react-scripts test --ci --runInBand --watchAll=false",
     "eject": "react-scripts eject",
-    "lint": "./node_modules/.bin/eslint ./src/**/* --fix",
+    "lint": "./node_modules/.bin/eslint ./src/**/*.{tsx,ts,js,jsx} --fix",
     "lint:fix": "yarn lint --fix",
     "predeploy": "npm run build",
     "storybook": "start-storybook -p 9009 -s public",

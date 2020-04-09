@@ -4,3 +4,5 @@
 .idea/
 [Oo]ut/
 database/.vscode/
+
+frontend/.env
