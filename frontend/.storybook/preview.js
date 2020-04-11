@@ -1,10 +1,8 @@
-import { addDecorator, addParameters } from '@storybook/react';
+import { addParameters } from '@storybook/react';
 import { INITIAL_VIEWPORTS } from '@storybook/addon-viewport';
 import '../src/assets/styles/reset.css'
 
 import React from 'react';
-import styled from 'styled-components'
-
 const viewports = {
     720: {
         name: '720p',
@@ -28,6 +26,6 @@ const viewports = {
 addParameters({
     viewport: {
         viewports,
-        defaultViewport: '720p',
+        defaultViewport: '720',
     },
 });

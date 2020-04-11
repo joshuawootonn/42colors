@@ -369,3 +369,6 @@ textarea {
 /* The above reset can be found here: https://gist.github.com/DavidWells/18e73022e723037a50d6 */
 /* anything below this point is my modification */
 
+body {
+    overflow: hidden;
+}
