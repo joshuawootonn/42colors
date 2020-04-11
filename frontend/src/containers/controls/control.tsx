@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { CanvasSettings } from '../../models';
-import ColorInput from './colorInput';
+import ColorInput from './color';
 import { EdgeRoot } from '../../components/edgeRoot';
 import { useMapPosition } from '../../context/mapPosition.context';
 import { useTool } from '../../context/tool.context';

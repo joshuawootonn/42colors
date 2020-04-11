@@ -4,9 +4,11 @@ import ColorInput from './colorInput';
 import styled from 'styled-components';
 
 const Wrapper = styled.div`
-    width: 300px;
-    height: 200px;
-    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
 `;
 
 export default {
@@ -15,7 +17,7 @@ export default {
     decorators: [(storyFn: any) => <Wrapper>{storyFn()}</Wrapper>],
 };
 
-const colors = ['#0000FF', '#FF0000', '#ffff00'];
+const colors = ['#223343', '#cecece', '#9e7b51', '#ef3f3f', '#feb949', '#fffb97', '#8cf28c', '#6dffff', '#ff87c4', '#b75fe6'];
 
 const WrapperColorInputForm: FC = props => {
     const [currentColor, setCurrentColor] = useState(colors[0]);
