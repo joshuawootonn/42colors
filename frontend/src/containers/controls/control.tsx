@@ -4,6 +4,7 @@ import { CanvasSettings } from '../../models';
 import ColorInput from './colorInput';
 import { EdgeRoot } from '../../components/edgeRoot';
 import { useMapPosition } from '../../context/mapPosition.context';
+import { useTool } from '../../context/tool.context';
 
 const Root = styled(EdgeRoot)`
     bottom: ${props => (props.isPanning ? '24px' : '16px')};
@@ -28,6 +29,7 @@ const colors = ['#0000FF', '#FF0000', '#ffff00'];
 
 export const Control: React.FC<ControlProps> = ({ canvasSettings, setCanvasSettings }) => {
     const [isPanning] = useMapPosition();
+    const { setToolType, toolType } = useTool();
     return (
         <Root isPanning={isPanning}>
             <Text>Brush Width</Text>
@@ -46,6 +48,14 @@ export const Control: React.FC<ControlProps> = ({ canvasSettings, setCanvasSetti
                 options={colors}
                 onChange={color => setCanvasSettings({ ...canvasSettings, brushColor: color })}
             />
+            <div>
+                <button style={{ backgroundColor: toolType === 'brush' ? 'white' : 'grey' }} onClick={() => setToolType('brush')}>
+                    Brush
+                </button>
+                <button style={{ backgroundColor: toolType === 'eraser' ? 'white' : 'grey' }} onClick={() => setToolType('eraser')}>
+                    Eraser
+                </button>
+            </div>
         </Root>
     );
 };
