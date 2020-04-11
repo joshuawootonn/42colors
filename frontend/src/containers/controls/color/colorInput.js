@@ -1,53 +1,54 @@
-import React, { useEffect, useState } from 'react';
-import styled, { keyframes } from 'styled-components';
+import React, { useEffect } from 'react';
+import { keyframes, css } from 'styled-components/macro';
 import anime from 'animejs';
 import { useBoolean } from 'react-use';
 
-const Wrapper = styled.div`
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    button {
-        margin-right: 6px;
-    }
-    button:last-child {
-        margin-right: 0px;
-    }
-`;
-
 const wiggle = keyframes`
- 0% {
-    transform: scale(1.05) 
-  }
-  50% {
-    transform: scale(1) 
-  }
-  100% {
-    transform: scale(1.05) 
-  }
-`;
-
-const ColorBlock = styled.button`
-    opacity: 0;
-    background-color: ${props => props.color};
-    display: inline-block;
-    border-radius: 12px;
-    outline: none;
-    border: none;
-
-    height: 48px;
-    width: 48px;
-
-    transition: all 100ms;
-
-    &:hover,
-    &:active {
-        transform-origin: center;
-        animation: 400ms ${wiggle} ease infinite;
+    0% {
+        transform: scale(1.05) 
+    }
+    50% {
+        transform: scale(1) 
+    }
+    100% {
+        transform: scale(1.05) 
     }
 `;
+
+const styles = {
+    root: css`
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        button {
+            margin-right: 6px;
+        }
+        button:last-child {
+            margin-right: 0px;
+        }
+    `,
+    button: css`
+        opacity: 0;
+        background-color: ${props => props.color};
+        display: inline-block;
+        border-radius: 12px;
+        outline: none;
+        border: none;
+
+        height: 48px;
+        width: 48px;
+
+        transition: all 100ms;
+
+        &:hover,
+        &:active {
+            transform-origin: center;
+            animation: 400ms ${wiggle} ease infinite;
+        }
+    `,
+};
 
 const animation = {
     targets: '[data-animate=colorBlock]',
@@ -70,10 +71,11 @@ const ColorInput = ({ value, name, onChange, options }) => {
     };
 
     return (
-        <Wrapper>
+        <div css={styles.root}>
             {isActive ? (
                 options.map((color, i) => (
-                    <ColorBlock
+                    <button
+                        css={styles.button}
                         data-animate="colorBlock"
                         key={i}
                         onClick={onClick}
@@ -82,14 +84,15 @@ const ColorInput = ({ value, name, onChange, options }) => {
                     />
                 ))
             ) : (
-                <ColorBlock
+                <button
+                    css={styles.button}
                     data-animate="colorBlock"
                     onClick={onClick}
                     value={value}
                     color={value}
                 />
             )}
-        </Wrapper>
+        </div>
     );
 };
 export default ColorInput;
