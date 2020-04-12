@@ -32,12 +32,9 @@ const styles = {
     button: css`
         opacity: 0;
         display: inline-block;
-        border-radius: 12px;
+        border-radius: 50%;
         outline: none;
         border: none;
-
-        height: 48px;
-        width: 48px;
 
         transition: all 100ms;
 
@@ -50,26 +47,15 @@ const styles = {
 };
 
 const animation = {
-    targets: '[data-animate=colorBlock]',
+    targets: '[data-animate=sizeBlock]',
     translateX: [270, 0],
     opacity: [0, 1],
     duration: 400,
 };
 
-export const colors = [
-    '#223343',
-    '#cecece',
-    '#9e7b51',
-    '#ef3f3f',
-    '#feb949',
-    '#fffb97',
-    '#8cf28c',
-    '#6dffff',
-    '#ff87c4',
-    '#b75fe6',
-];
+export const sizes = [20, 25, 30, 40, 50];
 
-const ColorInput = ({ value, onChange }) => {
+const SizeInput = ({ value, onChange, color }) => {
     const [isActive, toggleActive] = useBoolean(false);
 
     useEffect(() => {
@@ -85,32 +71,34 @@ const ColorInput = ({ value, onChange }) => {
     return (
         <div css={styles.root}>
             {isActive ? (
-                colors.map((color, i) => (
+                sizes.map((size, i) => (
                     <button
                         css={styles.button}
                         style={{
+                            height: `${size}px`,
+                            width: `${size}px`,
                             backgroundColor: color,
                         }}
-                        data-animate="colorBlock"
+                        data-animate="sizeBlock"
                         key={i}
                         onClick={onClick}
-                        value={color}
-                        color={color}
+                        value={size / 2}
                     />
                 ))
             ) : (
                 <button
                     css={styles.button}
                     style={{
-                        backgroundColor: value,
+                        height: `${value * 2}px`,
+                        width: `${value * 2}px`,
+                        backgroundColor: color,
                     }}
-                    data-animate="colorBlock"
+                    data-animate="sizeBlock"
                     onClick={onClick}
-                    value={value}
-                    color={value}
+                    value={value / 2}
                 />
             )}
         </div>
     );
 };
-export default ColorInput;
+export default SizeInput;
