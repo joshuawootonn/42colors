@@ -1,19 +1,8 @@
 import React, { useEffect } from 'react';
-import { keyframes, css } from 'styled-components/macro';
+import { css } from 'styled-components/macro';
 import anime from 'animejs';
 import { useBoolean } from 'react-use';
-
-const wiggle = keyframes`
-    0% {
-        transform: scale(1.05) 
-    }
-    50% {
-        transform: scale(1) 
-    }
-    100% {
-        transform: scale(1.05) 
-    }
-`;
+import { wiggle } from '../../../assets/keyframes/wiggle';
 
 const styles = {
     root: css`
@@ -50,7 +39,7 @@ const styles = {
 };
 
 const animation = {
-    targets: '[data-animate=colorBlock]',
+    targets: '[data-animate=color-block]',
     translateX: [270, 0],
     opacity: [0, 1],
     duration: 400,
@@ -91,7 +80,7 @@ const ColorInput = ({ value, onChange }) => {
                         style={{
                             backgroundColor: color,
                         }}
-                        data-animate="colorBlock"
+                        data-animate="color-block"
                         key={i}
                         onClick={onClick}
                         value={color}
@@ -104,7 +93,7 @@ const ColorInput = ({ value, onChange }) => {
                     style={{
                         backgroundColor: value,
                     }}
-                    data-animate="colorBlock"
+                    data-animate="color-block"
                     onClick={onClick}
                     value={value}
                     color={value}

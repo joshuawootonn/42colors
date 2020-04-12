@@ -72,11 +72,9 @@ export const Brand = () => {
     const [isHovered, setIsHovered] = useState(false);
 
     useEffect(() => {
-        if (isHovered) {
-            anime({ ...contentAnimation, delay: anime.stagger(200, { start: 100 }) });
-        } else {
-            anime({ ...contentAnimation });
-        }
+        isHovered
+            ? anime({ ...contentAnimation, delay: anime.stagger(200, { start: 100 }) })
+            : anime({ ...contentAnimation });
     }, [isHovered]);
 
     return (

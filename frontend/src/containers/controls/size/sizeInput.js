@@ -1,19 +1,8 @@
 import React, { useEffect } from 'react';
-import { keyframes, css } from 'styled-components/macro';
+import { css } from 'styled-components/macro';
 import anime from 'animejs';
 import { useBoolean } from 'react-use';
-
-const wiggle = keyframes`
-    0% {
-        transform: scale(1.05) 
-    }
-    50% {
-        transform: scale(1) 
-    }
-    100% {
-        transform: scale(1.05) 
-    }
-`;
+import { wiggle } from '../../../assets/keyframes/wiggle';
 
 const styles = {
     root: css`
@@ -21,6 +10,7 @@ const styles = {
         flex-direction: row;
         align-items: center;
         justify-content: center;
+        min-width: 48px;
         padding: 16px;
         button {
             margin-right: 6px;
@@ -47,7 +37,7 @@ const styles = {
 };
 
 const animation = {
-    targets: '[data-animate=sizeBlock]',
+    targets: '[data-animate=size-block]',
     translateX: [270, 0],
     opacity: [0, 1],
     duration: 400,
@@ -79,7 +69,7 @@ const SizeInput = ({ value, onChange, color }) => {
                             width: `${size}px`,
                             backgroundColor: color,
                         }}
-                        data-animate="sizeBlock"
+                        data-animate="size-block"
                         key={i}
                         onClick={onClick}
                         value={size / 2}
@@ -93,7 +83,7 @@ const SizeInput = ({ value, onChange, color }) => {
                         width: `${value * 2}px`,
                         backgroundColor: color,
                     }}
-                    data-animate="sizeBlock"
+                    data-animate="size-block"
                     onClick={onClick}
                     value={value / 2}
                 />
