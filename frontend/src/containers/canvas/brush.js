@@ -3,7 +3,13 @@ import { LazyBrush } from 'lazy-brush';
 
 import { useWindowSize } from 'react-use';
 import styled from 'styled-components';
-import { clear2, drawBrush, drawPoints2, resizeCanvas, toAbsolute } from '../../helpers/canvas.helpers';
+import {
+    clear2,
+    drawBrush,
+    drawPoints2,
+    resizeCanvas,
+    toAbsolute,
+} from '../../helpers/canvas.helpers';
 import { useMapPosition } from '../../context/mapPosition.context';
 
 const BrushCanvas = styled.canvas`
@@ -40,6 +46,7 @@ const Brush = ({ canvasSettings, ...props }) => {
     const mouseHasMoved = useRef(false);
     const isPressing = useRef(false);
     const isDrawing = useRef(false);
+    const isOut = useRef(false);
     const [points, setPoints] = useState([]);
 
     useEffect(() => {
@@ -53,16 +60,18 @@ const Brush = ({ canvasSettings, ...props }) => {
             animationFrame = requestAnimationFrame(onFrame);
         }
         function onFrame() {
-            const pointer = lazy.current.getPointerCoordinates();
-            drawBrush(brushContext.current, pointer, canvasSettings, isPanning);
-            mouseHasMoved.current = false;
+            if (!isOut.current) {
+                const pointer = lazy.current.getPointerCoordinates();
+                drawBrush(brushContext.current, pointer, canvasSettings, isPanning);
+                mouseHasMoved.current = false;
+            }
             loop();
         }
         loop();
         return () => {
             cancelAnimationFrame(animationFrame);
         };
-    }, [canvasSettings, isPanning]);
+    }, [canvasSettings, isPanning, isOut.current]);
 
     useEffect(() => {
         window.setTimeout(() => {
@@ -145,6 +154,7 @@ const Brush = ({ canvasSettings, ...props }) => {
 
     const handleMouseMove = e => {
         const { x, y } = getPointerPos(e);
+        isOut.current = false;
         handlePointerMove(x, y);
     };
 
@@ -161,13 +171,20 @@ const Brush = ({ canvasSettings, ...props }) => {
         saveLine();
     };
 
+    const handleMouseOut = e => {
+        e.preventDefault();
+        handleMouseUp(e);
+        isOut.current = true;
+        clear2(brushContext.current);
+    };
+
     return (
         <>
             <BrushCanvas
                 data-test="brush canvas"
                 ref={brushCanvas}
                 onMouseDown={handleMouseDown}
-                onMouseOut={handleMouseUp}
+                onMouseOut={handleMouseOut}
                 onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
             />
@@ -175,7 +192,7 @@ const Brush = ({ canvasSettings, ...props }) => {
                 data-test="temp canvas"
                 ref={tempCanvas}
                 onMouseDown={handleMouseDown}
-                onMouseOut={handleMouseUp}
+                onMouseOut={handleMouseOut}
                 onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
             />
