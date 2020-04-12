@@ -85,7 +85,7 @@ export const Brand = () => {
             ref={brandRef}
             css={[styles.root, isHovered && styles.expanded]}
         >
-            <h1 data-animate="brand-content">Josh Wootonn</h1>
+            <h1 data-animate="brand-content">42Colors</h1>
             {isHovered && (
                 <>
                     <p data-animate="brand-content">
@@ -96,6 +96,7 @@ export const Brand = () => {
                         The idea came from a combination of a bunch of curiosity, but Figma was a
                         big inspiration! I would love any feedback you have :)
                     </p>
+                    <p data-animate="brand-content">-Josh</p>
                     <div css={styles.linkBox}>
                         <a
                             data-animate="brand-content"

@@ -1,6 +1,7 @@
 import { addParameters } from '@storybook/react';
 import { INITIAL_VIEWPORTS } from '@storybook/addon-viewport';
 import '../src/assets/styles/reset.css'
+import '../src/assets/styles/base.css'
 
 import React from 'react';
 const viewports = {

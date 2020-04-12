@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import SizeInput, { sizes } from './sizeInput';
-import { StoryRoot } from '../storyHelpers';
+import { StoryRoot } from '../../../components/storyHelpers';
 
 export default {
     title: 'Containers.Control.Size Input',

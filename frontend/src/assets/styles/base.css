@@ -1,7 +1,14 @@
 body{
     margin: 0;
 }
-p, span, h1,h2,h3,h4,h5, button, a{
+p, span, h1,h2,h3,h4,h5, button, a, input{
 @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600;700&display=swap');
     font-family: 'Source Code Pro', monospace;
+}
+
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
