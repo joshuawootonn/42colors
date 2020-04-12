@@ -1,0 +1,7 @@
+body{
+    margin: 0;
+}
+p, span, h1,h2,h3,h4,h5, button, a{
+@import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600;700&display=swap');
+    font-family: 'Source Code Pro', monospace;
+}
