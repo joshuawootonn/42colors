@@ -1,47 +1,45 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css } from 'styled-components/macro';
-import anime from 'animejs';
+import { wiggle } from '../../assets/keyframes/wiggle';
+import { buttonAnimationTag, buttonTarget } from './animations';
 
 const styles = {
-    button: css`
+    root: css`
         border: none;
         background-color: white;
         border-radius: 12px;
         padding: 8px;
+        position: absolute;
+        &:hover,
+        &:active {
+            transform-origin: center;
+            animation: 400ms ${wiggle} ease infinite;
+        }
+    `,
+    left: css`
+        left: 0;
+    `,
+    right: css`
+        right: 0;
     `,
 };
 
-const Button = ({ onClick, children, ...props }) => {
+const Button = ({ type, onClick, children, ...props }) => {
     const [startLongPress, setStartLongPress] = useState(false);
-
-    const animateTarget = `navigation-button-${props.target}`;
 
     useEffect(() => {
         let timerId;
         if (startLongPress) {
-            timerId = setTimeout(() => {
-                onClick();
-                anime({
-                    targets: `[data-animate=${animateTarget}]`,
-                    duration: 100,
-                    keyframes: [{ scale: 1.05 }, { scale: 1 }, { scale: 1.05 }],
-                });
-            }, 200);
+            timerId = setTimeout(onClick, 200);
         } else {
             clearTimeout(timerId);
         }
-
-        return () => {
-            clearTimeout(timerId);
-        };
+        return () => clearTimeout(timerId);
     }, [onClick, startLongPress, children]);
 
-    const start = useCallback(() => {
-        setStartLongPress(true);
-    }, []);
-    const stop = useCallback(() => {
-        setStartLongPress(false);
-    }, []);
+    const start = () => setStartLongPress(true);
+
+    const stop = () => setStartLongPress(false);
 
     const listeners = {
         onMouseDown: start,
@@ -53,8 +51,8 @@ const Button = ({ onClick, children, ...props }) => {
 
     return (
         <button
-            data-animate={animateTarget}
-            css={styles.button}
+            data-animate={buttonAnimationTag}
+            css={[styles.root, type === 'left' ? styles.left : styles.right]}
             onClick={onClick}
             {...props}
             {...listeners}

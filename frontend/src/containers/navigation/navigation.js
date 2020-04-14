@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css } from 'styled-components/macro';
-import { useInterval } from 'react-use';
-import { wiggle } from '../../assets/keyframes/wiggle';
 import Button from './button';
+import Input from './input';
+import { animateNavigationIn, animateNavigationOut } from './animations';
 
 const styles = {
     root: css`
@@ -38,58 +38,57 @@ const styles = {
             }
         }
     `,
-    input: css`
-        width: 65px;
-        border: none;
-        border-radius: 12px;
-        padding: 8px;
+    root2: css`
+        position: relative;
     `,
 };
 
 export const Navigation = ({ currentMapPosition, setMapPosition }) => {
+    const [isHovered, setIsHovered] = useState(false);
+
+    useEffect(() => {
+        isHovered ? animateNavigationIn() : animateNavigationOut();
+    }, [isHovered]);
+
     const change = (key, delta) => {
+        if (!delta && delta !== 0) return;
         setMapPosition({ ...currentMapPosition, [key]: currentMapPosition[key] + delta });
     };
+
     const set = (key, value) => {
+        if (!value && value !== 0) return;
         setMapPosition({ ...currentMapPosition, [key]: value });
     };
+
     return (
-        <div css={styles.root}>
-            <div>
-                <Button target={'subX'} onClick={() => change('x', -100)}>
+        <div
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            css={styles.root}
+        >
+            <div css={styles.root2}>
+                <Button type="left" onClick={() => change('x', -100)}>
                     -
                 </Button>
-                <input
-                    css={styles.input}
+                <Input
                     name="x"
-                    type="number"
-                    min="-1000000"
-                    max="1000000"
-                    step={100}
                     value={currentMapPosition.x}
                     onChange={event => set('x', parseInt(event.target.value))}
                 />
-                <Button target={'addX'} onClick={() => change('x', 100)}>
+                <Button type="right" onClick={() => change('x', 100)}>
                     +
                 </Button>
             </div>
-            <div>
-                <Button target={'subY'} onClick={() => change('y', -100)}>
+            <div css={styles.root2}>
+                <Button type="left" onClick={() => change('y', -100)}>
                     -
                 </Button>
-                <input
-                    css={styles.input}
+                <Input
                     name="y"
-                    type="number"
-                    min="-1000000"
-                    max="1000000"
-                    step={100}
                     value={currentMapPosition.y}
-                    onChange={event =>
-                        setMapPosition({ ...currentMapPosition, y: parseInt(event.target.value) })
-                    }
+                    onChange={event => set('y', parseInt(event.target.value))}
                 />
-                <Button target={'addY'} onClick={() => change('y', 100)}>
+                <Button type="right" onClick={() => change('y', 100)}>
                     +
                 </Button>
             </div>
