@@ -6,9 +6,10 @@ import SizeInput from './size';
 const styles = {
     root: css`
         position: absolute;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
-        overflow: hidden;
+        align-items: flex-end;
         z-index: 15;
         right: 16px;
         bottom: 16px;
@@ -16,14 +17,22 @@ const styles = {
         a {
             margin-right: 16px;
         }
-        border-radius: 24px;
-        background-color: rgba(240, 240, 240, 0.7);
     `,
     row: css`
         display: flex;
         justify-content: flex-end;
         align-items: center;
         flex-direction: row;
+        width: min-content;
+
+        border-radius: 24px;
+        background-color: rgba(240, 240, 240, 0.7);
+
+        margin-bottom: 16px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
     `,
     text: css`
         margin-top: 0;

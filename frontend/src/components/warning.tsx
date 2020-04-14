@@ -15,7 +15,7 @@ const Root = styled.div`
 
 export const Warning: React.FC = () => (
     <Root>
-        <p> oop </p>
+        <p> </p>
     </Root>
 );
 

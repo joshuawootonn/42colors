@@ -10,6 +10,7 @@ const styles = {
         flex-direction: row;
         align-items: center;
         justify-content: center;
+        min-height: 48px;
         min-width: 48px;
         padding: 16px;
         button {

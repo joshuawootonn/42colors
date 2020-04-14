@@ -6,6 +6,8 @@ import Control from './containers/controls/control';
 import CanvasContainer from './containers/canvas/canvas.container';
 import Warning from './components/warning';
 import Navigation from './containers/navigation';
+import { colors } from './containers/controls/color/colorInput';
+import { sizes } from './containers/controls/size/sizeInput';
 
 const Container = styled.div`
     height: 100vh;
@@ -19,8 +21,8 @@ const Container = styled.div`
 
 const App: React.FC = () => {
     const [canvasSettings, setCanvasSettings] = useState<CanvasSettings>({
-        brushColor: '#ffff00',
-        brushWidth: 10,
+        brushColor: colors[0],
+        brushWidth: sizes[0],
     });
     return (
         <Container>

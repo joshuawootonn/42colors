@@ -8,7 +8,7 @@ export const inputTarget = `[data-animate=navigation-input]`;
 
 export const animateNavigationIn = () => {
     const timeline = anime.timeline({
-        duration: 400,
+        duration: 200,
     });
 
     timeline
@@ -19,8 +19,8 @@ export const animateNavigationIn = () => {
         })
         .add({
             targets: buttonTarget,
-            duration: 200,
-            delay: 200,
+            duration: 100,
+            delay: 100,
             scale: [0, 1],
             opacity: [0, 1],
         });
@@ -28,20 +28,20 @@ export const animateNavigationIn = () => {
 
 export const animateNavigationOut = () => {
     const timeline = anime.timeline({
-        duration: 400,
+        duration: 200,
     });
 
     timeline
         .add({
             targets: buttonTarget,
-            duration: 200,
+            duration: 100,
             scale: [1, 0],
             opacity: [1, 0],
         })
         .add({
             targets: inputTarget,
             duration: 100,
-            delay: 200,
+            delay: 100,
             margin: ['0px 30px', '0px 0px'],
         });
 };
