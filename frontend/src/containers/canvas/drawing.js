@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { useWindowSize } from 'react-use';
 import styled from 'styled-components';
 import { clear2, copyFromCanvasToContext, drawLines, resizeCanvas } from '../../helpers/canvas.helpers';
-import { useMapPosition } from '../../context/mapPosition.context';
+import { useMapPosition } from '../../context/mapPosition/mapPosition.context';
 
 const DrawingCanvas = styled.canvas`
     display: block;

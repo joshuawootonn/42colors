@@ -3,7 +3,7 @@ import SizeInput, { sizes } from './sizeInput';
 import { StoryRoot } from '../../../components/storyHelpers';
 
 export default {
-    title: 'Containers.Control.Size Input',
+    title: 'Containers.Control.Size Text',
     decorators: [storyFn => <StoryRoot>{storyFn()}</StoryRoot>],
 };
 

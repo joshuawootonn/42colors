@@ -3,7 +3,7 @@ import ColorInput, { colors } from './colorInput';
 import { StoryRoot } from '../../../components/storyHelpers';
 
 export default {
-    title: 'Containers.Control.Color Input',
+    title: 'Containers.Control.Color Text',
     decorators: [storyFn => <StoryRoot>{storyFn()}</StoryRoot>],
 };
 

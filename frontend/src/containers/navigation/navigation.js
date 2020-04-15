@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { css } from 'styled-components/macro';
-import Button from './button';
-import Input from './input';
-import { animateNavigationIn, animateNavigationOut } from './animations';
+import Text from './text';
 
 const styles = {
     root: css`
@@ -42,58 +40,15 @@ const styles = {
         position: relative;
     `,
 };
-
-export const Navigation = ({ currentMapPosition, setMapPosition }) => {
-    const [isHovered, setIsHovered] = useState(false);
-
-    useEffect(() => {
-        isHovered ? animateNavigationIn() : animateNavigationOut();
-    }, [isHovered]);
-
-    const change = (key, delta) => {
-        if (!delta && delta !== 0) return;
-        setMapPosition({ ...currentMapPosition, [key]: currentMapPosition[key] + delta });
-    };
-
-    const set = (key, value) => {
-        if (!value && value !== 0) return;
-        setMapPosition({ ...currentMapPosition, [key]: value });
-    };
-
-    return (
-        <div
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-            css={styles.root}
-        >
-            <div css={styles.root2}>
-                <Button type="left" onClick={() => change('x', -100)}>
-                    -
-                </Button>
-                <Input
-                    name="x"
-                    value={currentMapPosition.x}
-                    onChange={event => set('x', parseInt(event.target.value))}
-                />
-                <Button type="right" onClick={() => change('x', 100)}>
-                    +
-                </Button>
-            </div>
-            <div css={styles.root2}>
-                <Button type="left" onClick={() => change('y', -100)}>
-                    -
-                </Button>
-                <Input
-                    name="y"
-                    value={currentMapPosition.y}
-                    onChange={event => set('y', parseInt(event.target.value))}
-                />
-                <Button type="right" onClick={() => change('y', 100)}>
-                    +
-                </Button>
-            </div>
+export const Navigation = ({ currentMapPosition }) => (
+    <div css={styles.root}>
+        <div css={styles.root2}>
+            <Text>x: {currentMapPosition.x}</Text>
         </div>
-    );
-};
+        <div css={styles.root2}>
+            <Text>y: {currentMapPosition.y}</Text>
+        </div>
+    </div>
+);
 
 export default Navigation;
