@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState, FC } from 'react';
 import { usePrevious } from 'react-use';
 import { Point } from '../models';
 
@@ -59,7 +59,7 @@ const MapPositionContext = createContext<[boolean, Point, (point: Point) => void
 
 export const useMapPosition = () => useContext(MapPositionContext);
 
-export const MapPositionProvider: React.FC = props => {
+export const MapPositionProvider: FC = ({ children }) => {
     const [currentMap, setCurrentMap] = useState({ x: 0, y: 0 });
     const mouse = useMousePosition();
     const prevMouse = usePrevious(mouse);
@@ -86,7 +86,7 @@ export const MapPositionProvider: React.FC = props => {
 
     return (
         <MapPositionContext.Provider value={[isPanning, currentMap, setCurrentMapValue]}>
-            {props.children}
+            {children}
         </MapPositionContext.Provider>
     );
 };

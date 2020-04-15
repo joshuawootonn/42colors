@@ -4,7 +4,7 @@ import Navigation from './navigation';
 
 export const NavigationContainer = () => {
     const [isPanning, currentMapPosition, setMapPosition] = useMapPosition();
-    return <Navigation currentMapPosition={currentMapPosition} setMapPosition={setMapPosition} />;
+    return <Navigation currentMapPosition={currentMapPosition} />;
 };
 
 export default NavigationContainer;
