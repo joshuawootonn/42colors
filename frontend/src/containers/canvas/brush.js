@@ -70,7 +70,6 @@ const Brush = ({ canvasSettings, ...props }) => {
             const y = window.innerHeight / 2;
             lazy.current.update({ x, y }, { both: true });
             lazy.current.update({ x, y }, { both: false });
-
             mouseHasMoved.current = true;
             // this.valuesChanged = true;
             // this.clear();
