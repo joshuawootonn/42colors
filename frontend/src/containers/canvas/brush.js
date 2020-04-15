@@ -10,7 +10,7 @@ import {
     resizeCanvas,
     toAbsolute,
 } from '../../helpers/canvas.helpers';
-import { useMapPosition } from '../../context/mapPosition.context';
+import { useMapPosition } from '../../context/mapPosition/mapPosition.context';
 
 const BrushCanvas = styled.canvas`
     display: block;

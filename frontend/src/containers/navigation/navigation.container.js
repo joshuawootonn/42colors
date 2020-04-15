@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMapPosition } from '../../context/mapPosition.context';
+import { useMapPosition } from '../../context/mapPosition/mapPosition.context';
 import Navigation from './navigation';
 
 export const NavigationContainer = () => {

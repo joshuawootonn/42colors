@@ -1,60 +1,15 @@
 import React, { createContext, useCallback, useContext, useEffect, useState, FC } from 'react';
 import { usePrevious } from 'react-use';
-import { Point } from '../models';
-
-function useKeyPress(targetKey: string) {
-    const [isKeyPressed, setIsKeyPressed] = useState(false);
-    function handleKeyDown({ code }: KeyboardEvent) {
-        if (code === targetKey) {
-            setIsKeyPressed(true);
-        }
-    }
-    const handleKeyUp = ({ code }: KeyboardEvent) => {
-        if (code === targetKey) {
-            setIsKeyPressed(false);
-        }
-    };
-    useEffect(() => {
-        window.addEventListener('keydown', handleKeyDown);
-        window.addEventListener('keyup', handleKeyUp);
-        // Remove event listeners on cleanup
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-            window.removeEventListener('keyup', handleKeyUp);
-        };
-    }, []);
-    return isKeyPressed;
-}
-
-/**
- * stole from here:
- * https://github.com/rehooks/window-mouse-position/blob/master/index.js
- */
-const useMousePosition = () => {
-    const [mousePosition, setMousePosition] = useState<Point>({
-        x: 0,
-        y: 0,
-    });
-
-    function handleMouseMove(e: MouseEvent) {
-        setMousePosition({
-            x: e.pageX,
-            y: e.pageY,
-        });
-    }
-    useEffect(() => {
-        window.addEventListener('mousemove', handleMouseMove);
-        return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
-        };
-    }, []);
-    return mousePosition;
-};
+import { Point } from '../../models';
+import { useHistory } from 'react-router-dom';
+import { useMapPositionQueryString } from './useMapPositionQueryString';
+import { useMousePosition } from './useMousePosition';
+import { useKeyPress } from './useKeyPress';
 
 const MapPositionContext = createContext<[boolean, Point, (point: Point) => void]>([
     false,
     { x: 0, y: 0 },
-    () => {},
+    () => console.log('Map Position Context hasnt mounted yet'),
 ]);
 
 export const useMapPosition = () => useContext(MapPositionContext);
@@ -64,6 +19,21 @@ export const MapPositionProvider: FC = ({ children }) => {
     const mouse = useMousePosition();
     const prevMouse = usePrevious(mouse);
     const isPanning = useKeyPress('Space');
+    const history = useHistory();
+
+    const mapPositionQueryString = useMapPositionQueryString();
+
+    useEffect(() => {
+        if (mapPositionQueryString.isValid) {
+            setCurrentMap(mapPositionQueryString.mapPosition);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!isPanning) {
+            history.push(`/?x=${currentMap.x}&y=${currentMap.y}`);
+        }
+    }, [isPanning, JSON.stringify(currentMap)]);
 
     const setCurrentMapValue = useCallback((point: Point) => {
         setCurrentMap(point);

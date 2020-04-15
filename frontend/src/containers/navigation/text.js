@@ -8,7 +8,7 @@ const styles = {
         padding: 8px;
         background-color: white;
         text-align: center;
-        width: 85px;
+        width: 95px;
         user-select: none;
     `,
 };

@@ -2,7 +2,7 @@ import React, { createContext, FC, useCallback, useContext, useEffect, useState 
 import { useInterval } from 'react-use';
 import { getAllLines, postLine } from '../repositories/canvas.repositories';
 import { Line } from '../models';
-import { useMapPosition } from './mapPosition.context';
+import { useMapPosition } from './mapPosition/mapPosition.context';
 
 interface LineContextState {
     isInitializing: boolean;
