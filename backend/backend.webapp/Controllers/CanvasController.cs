@@ -22,8 +22,8 @@ namespace backend.Controllers
         [HttpPost("api/line")]
         public IActionResult postLine([FromBody] LineRequest lineRequest)
         {
-            _lineRepository.insert(lineRequest.toCmd());
-            return Ok();
+            var line = _lineRepository.insert(lineRequest.toCmd());
+            return Ok(new LineViewModel(line));
         }
 
         [HttpGet]

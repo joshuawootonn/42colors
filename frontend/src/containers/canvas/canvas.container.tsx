@@ -1,36 +1,50 @@
 import React from 'react';
 import Brush from './brush';
 import { CanvasSettings } from '../../models';
-import Drawing from './drawing';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components/macro';
 import Grid from './grid';
 import { useLines } from '../../context/line.context';
-import Drawing2 from './drawing2';
+import useCamera from './useCamera';
 
-const Root = styled.div`
-    height: 100vh;
-    width: 100vw;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-`;
+import LineRenderer from './lineRenderer';
+
+const styles = {
+    root: css`
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    `,
+    temp: css`
+        z-index: 12;
+    `,
+    main: css`
+        z-index: 11;
+    `,
+};
+
+const Root = styled.div``;
 
 interface CanvasContainerProps {
     canvasSettings: CanvasSettings;
 }
 
+// TODO: find out what is causing this to rerender so much
 export const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasSettings }) => {
-    const { lines, isInitializing, createLine } = useLines();
+    const { lines, tempLines, isInitializing, createLine } = useLines();
+
+    const camera = useCamera();
 
     return isInitializing ? (
-        <Root>Loading...</Root>
+        <div css={styles.root}>Loading...</div>
     ) : (
-        <Root>
-            {/*<Drawing lines={lines} canvasSettings={canvasSettings} />*/}
-            {lines.length > 0 && <Drawing2 lines={lines} />}
-            <Brush onNewLine={createLine} canvasSettings={canvasSettings} />
+        <div css={styles.root}>
+            <LineRenderer css={styles.main} camera={camera} lines={lines} />
+            <LineRenderer css={styles.temp} camera={camera} lines={tempLines} />
+            <Brush camera={camera} onNewLine={createLine} canvasSettings={canvasSettings} />
             <Grid />
-        </Root>
+        </div>
     );
 };
 

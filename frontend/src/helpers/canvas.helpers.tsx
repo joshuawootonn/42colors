@@ -29,7 +29,12 @@ export const drawGrid = (context: CanvasRenderingContext2D, mapPosition: Point) 
     context.stroke();
 };
 
-export const drawBrush = (context: CanvasRenderingContext2D, pointer: Point, canvasSettings: CanvasSettings, isPanning: boolean) => {
+export const drawBrush = (
+    context: CanvasRenderingContext2D,
+    pointer: Point,
+    canvasSettings: CanvasSettings,
+    isPanning: boolean
+) => {
     if (isPanning) {
         const img = new Image();
         img.src = pan;
@@ -45,8 +50,7 @@ export const drawBrush = (context: CanvasRenderingContext2D, pointer: Point, can
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
     context.beginPath();
     context.fillStyle = canvasSettings.brushColor;
-    // context.arc(pointer.x, pointer.y, canvasSettings.brushWidth, 0, Math.PI * 2, true);
-    context.arc(pointer.x, pointer.y, 2, 0, Math.PI * 2, true);
+    context.arc(pointer.x, pointer.y, canvasSettings.brushWidth, 0, Math.PI * 2, true);
     context.fill();
     context.drawImage(img, pointer.x, pointer.y, 40, 40);
 };
@@ -65,14 +69,14 @@ export const toAbsolute = (point: Point, mapPosition: Point): Point => {
     return { x: point.x + mapPosition.x, y: point.y + mapPosition.y };
 };
 
-export const drawPoints2 = (
+export const drawPoints = (
     context: CanvasRenderingContext2D,
     points: Point[],
     mapPosition: Point,
     brushColor: string,
     brushWidth: number
 ) => {
-    context.lineJoin = 'round';
+    context.lineJoin = 'bevel';
     context.lineCap = 'round';
     context.strokeStyle = brushColor;
     context.lineWidth = brushWidth * 2;
@@ -109,15 +113,20 @@ export const drawPoints2 = (
 export const drawLines = (context: CanvasRenderingContext2D, lines: Line[], mapPosition: Point) => {
     lines.forEach(line => {
         const { points, brushColor, brushWidth } = line;
-        drawPoints2(context, points, mapPosition, brushColor, brushWidth);
+        drawPoints(context, points, mapPosition, brushColor, brushWidth);
     });
 };
 
-export const clear2 = (context: CanvasRenderingContext2D) => {
+export const clear = (context: CanvasRenderingContext2D) => {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 };
 
-export const copyFromCanvasToContext = (to: CanvasRenderingContext2D, from: HTMLCanvasElement, xOffset: number, yOffset: number) => {
+export const copyFromCanvasToContext = (
+    to: CanvasRenderingContext2D,
+    from: HTMLCanvasElement,
+    xOffset: number,
+    yOffset: number
+) => {
     to.drawImage(from, xOffset, yOffset);
 };
 

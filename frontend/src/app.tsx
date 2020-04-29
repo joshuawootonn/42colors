@@ -27,9 +27,9 @@ const App: React.FC = () => {
     return (
         <Container>
             <CanvasContainer canvasSettings={canvasSettings} />
-            {/*<Navigation />*/}
-            {/*<Brand />*/}
-            {/*<Control canvasSettings={canvasSettings} setCanvasSettings={setCanvasSettings} />*/}
+            <Navigation />
+            <Brand />
+            <Control canvasSettings={canvasSettings} setCanvasSettings={setCanvasSettings} />
             {/*<Warning />*/}
         </Container>
     );

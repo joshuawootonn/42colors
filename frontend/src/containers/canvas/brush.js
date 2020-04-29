@@ -4,9 +4,9 @@ import { LazyBrush } from 'lazy-brush';
 import { useWindowSize } from 'react-use';
 import styled from 'styled-components';
 import {
-    clear2,
+    clear,
     drawBrush,
-    drawPoints2,
+    drawPoints,
     resizeCanvas,
     toAbsolute,
 } from '../../helpers/canvas.helpers';
@@ -20,19 +20,9 @@ const BrushCanvas = styled.canvas`
     background-color: transparent;
 `;
 
-const TempCanvas = styled.canvas`
-    display: block;
-    position: absolute;
-    z-index: 12;
-
-    background-color: transparent;
-`;
-
 const Brush = ({ canvasSettings, ...props }) => {
     const brushCanvas = useRef();
     const brushContext = useRef();
-    const tempCanvas = useRef();
-    const tempContext = useRef();
     const { width, height } = useWindowSize();
     const [isPanning, mapPosition] = useMapPosition();
 
@@ -50,11 +40,10 @@ const Brush = ({ canvasSettings, ...props }) => {
     const isPressing = useRef(false);
     const isDrawing = useRef(false);
     const isOut = useRef(false);
-    const [points, setPoints] = useState([]);
+    const points = useRef([]);
 
     useEffect(() => {
         brushContext.current = brushCanvas.current.getContext('2d');
-        tempContext.current = tempCanvas.current.getContext('2d');
     }, []);
 
     useEffect(() => {
@@ -66,6 +55,15 @@ const Brush = ({ canvasSettings, ...props }) => {
             if (!isOut.current) {
                 const pointer = lazy.current.getPointerCoordinates();
                 drawBrush(brushContext.current, pointer, canvasSettings, isPanning);
+                if (points.current.length > 1) {
+                    drawPoints(
+                        brushContext.current,
+                        points.current,
+                        mapPosition,
+                        canvasSettings.brushColor,
+                        canvasSettings.brushWidth
+                    );
+                }
                 mouseHasMoved.current = false;
             }
             loop();
@@ -84,31 +82,23 @@ const Brush = ({ canvasSettings, ...props }) => {
             lazy.current.update({ x, y }, { both: false });
 
             mouseHasMoved.current = true;
-            // this.valuesChanged = true;
-            // this.clear();
         }, 100);
     }, []);
 
     useEffect(() => {
         resizeCanvas(brushCanvas.current, width, height);
-        resizeCanvas(tempCanvas.current, width, height);
         brushContext.current = brushCanvas.current.getContext('2d');
-        tempContext.current = tempCanvas.current.getContext('2d');
     }, [width, height]);
 
-    useEffect(() => {
-        clear2(tempContext.current);
-    }, [mapPosition]);
-
     const saveLine = () => {
-        if (points.length < 2) return;
+        if (points.current.length < 2) return;
 
         props.onNewLine({
-            points,
+            points: points.current,
             brushColor: canvasSettings.brushColor,
             brushWidth: canvasSettings.brushWidth,
         });
-        setPoints([]);
+        points.current = [];
     };
 
     const getPointerPos = e => {
@@ -135,21 +125,12 @@ const Brush = ({ canvasSettings, ...props }) => {
         const newRelativePoint = lazy.current.brush.toObject();
         const newAbsolutePoint = toAbsolute(newRelativePoint, mapPosition);
 
-        const newLine = [...points, newAbsolutePoint];
+        const newLine = [...points.current, newAbsolutePoint];
 
         if (isPressing.current) {
-            setPoints(newLine);
+            //TODO: DO I need this thing??
+            points.current = newLine;
             isDrawing.current = true;
-        }
-
-        if (isDrawing.current && lazy.current.brushHasMoved() && points.length > 0) {
-            drawPoints2(
-                tempContext.current,
-                [points[points.length - 1], newAbsolutePoint],
-                mapPosition,
-                canvasSettings.brushColor,
-                canvasSettings.brushWidth
-            );
         }
 
         mouseHasMoved.current = true;
@@ -170,7 +151,6 @@ const Brush = ({ canvasSettings, ...props }) => {
         e.preventDefault();
         isDrawing.current = false;
         isPressing.current = false;
-
         saveLine();
     };
 
@@ -178,28 +158,18 @@ const Brush = ({ canvasSettings, ...props }) => {
         e.preventDefault();
         handleMouseUp(e);
         isOut.current = true;
-        clear2(brushContext.current);
+        clear(brushContext.current);
     };
 
     return (
-        <>
-            <BrushCanvas
-                data-test="brush canvas"
-                ref={brushCanvas}
-                onMouseDown={handleMouseDown}
-                onMouseOut={handleMouseOut}
-                onMouseUp={handleMouseUp}
-                onMouseMove={handleMouseMove}
-            />
-            <TempCanvas
-                data-test="temp canvas"
-                ref={tempCanvas}
-                onMouseDown={handleMouseDown}
-                onMouseOut={handleMouseOut}
-                onMouseUp={handleMouseUp}
-                onMouseMove={handleMouseMove}
-            />
-        </>
+        <BrushCanvas
+            data-test="brush canvas"
+            ref={brushCanvas}
+            onMouseDown={handleMouseDown}
+            onMouseOut={handleMouseOut}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
+        />
     );
 };
 export default Brush;
