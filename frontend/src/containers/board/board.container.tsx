@@ -1,12 +1,13 @@
 import React from 'react';
 import Brush from './brush';
 import { CanvasSettings } from '../../models';
-import styled, { css } from 'styled-components/macro';
+import { css } from 'styled-components/macro';
 import Grid from './grid';
 import { useLines } from '../../context/line.context';
 import useCamera from './components/useCamera';
 import Drawing from './drawing';
 import Temp from './temp';
+
 const styles = {
     root: css`
         height: 100vh;
@@ -16,8 +17,6 @@ const styles = {
         align-items: center;
     `,
 };
-
-const Root = styled.div``;
 
 interface CanvasContainerProps {
     canvasSettings: CanvasSettings;

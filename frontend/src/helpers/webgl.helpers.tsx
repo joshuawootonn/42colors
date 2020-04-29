@@ -2,19 +2,19 @@ import { Line } from '../models';
 import * as THREE from 'three';
 import { MeshLine, MeshLineMaterial } from './three.meshline';
 
-import { Scene } from 'three';
+import { Material, Scene } from 'three';
 
 interface LineMeta {
     meshLine: MeshLine;
     material: MeshLineMaterial;
 }
 
-const generateLineMeta = (line: Line): LineMeta => {
+const generateLineMeta = (line: Line): any => {
     const ml = new THREE.Geometry();
     const aaa = [];
     for (let j = 0; j < line.points.length - 1; j++) {
-        const x1 = -parseInt(line.points[j].x, 10);
-        const y1 = parseInt(line.points[j].y, 10);
+        const x1 = -parseInt(String(line.points[j].x), 10);
+        const y1 = parseInt(String(line.points[j].y), 10);
         aaa.push(new THREE.Vector3(x1, y1, 0));
     }
 
@@ -56,6 +56,6 @@ export const clearScene = (scene: Scene) => {
 
 export const drawScene = (scene: Scene, linesMeta: LineMeta[]) => {
     return linesMeta.map(lineMeta =>
-        scene.add(new THREE.Mesh(lineMeta.meshLine.geometry, lineMeta.material))
+        scene.add(new THREE.Mesh(lineMeta.meshLine.geometry, lineMeta.material as any))
     );
 };
