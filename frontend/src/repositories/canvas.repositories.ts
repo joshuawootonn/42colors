@@ -14,7 +14,7 @@ export const getAllLines = async () => {
 
 export const postLine = async (line: Line) => {
     try {
-        await axiosClient.post('/api/line', line);
+        return await axiosClient.post('/api/line', line);
     } catch (e) {
         console.error('FAILED TO POST LINE');
     }

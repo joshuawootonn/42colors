@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import Brand from './components/brand';
 import { CanvasSettings } from './models';
 import Control from './containers/controls/control';
-import CanvasContainer from './containers/canvas/canvas.container';
+import BoardContainer from './containers/board';
 import Warning from './components/warning';
 import Navigation from './containers/navigation';
 import { colors } from './containers/controls/color/colorInput';
@@ -26,7 +26,7 @@ const App: React.FC = () => {
     });
     return (
         <Container>
-            <CanvasContainer canvasSettings={canvasSettings} />
+            <BoardContainer canvasSettings={canvasSettings} />
             <Navigation />
             <Brand />
             <Control canvasSettings={canvasSettings} setCanvasSettings={setCanvasSettings} />
