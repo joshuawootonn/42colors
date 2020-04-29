@@ -29,7 +29,7 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({ canvasSettings
             {/*<Drawing lines={lines} canvasSettings={canvasSettings} />*/}
             {lines.length > 0 && <Drawing2 lines={lines} />}
             <Brush onNewLine={createLine} canvasSettings={canvasSettings} />
-            {/*<Grid />*/}
+            <Grid />
         </Root>
     );
 };

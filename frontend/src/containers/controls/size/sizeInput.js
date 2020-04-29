@@ -44,7 +44,7 @@ const animation = {
     duration: 400,
 };
 
-export const sizes = [2, 20, 25, 30, 40, 50];
+export const sizes = [10, 20, 25, 30, 40, 50];
 
 const SizeInput = ({ value, onChange, color }) => {
     const [isActive, toggleActive] = useBoolean(false);

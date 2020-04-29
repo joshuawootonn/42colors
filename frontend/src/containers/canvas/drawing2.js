@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { MeshLine, MeshLineMaterial } from './three.meshline';
-import { midPointBtw, toRelative } from '../../helpers/canvas.helpers';
+import { useMapPosition } from '../../context/mapPosition/mapPosition.context';
 
 const Drawing2 = ({ lines }) => {
     const mount = useRef();
@@ -10,6 +10,7 @@ const Drawing2 = ({ lines }) => {
     const [camera] = useState(
         () => new THREE.PerspectiveCamera(255, window.innerWidth / window.innerHeight, 0.1, 2000)
     );
+    const [isPanning, mapPosition] = useMapPosition();
 
     const meshLines = useRef([]);
     const materials = useRef([]);
@@ -23,14 +24,17 @@ const Drawing2 = ({ lines }) => {
         mount.current.appendChild(renderer.domElement);
     }, []);
 
+    useEffect(() => {
+        camera.position.x = -window.innerWidth / 2 - mapPosition.x;
+        camera.position.y = window.innerHeight / 2 + mapPosition.y;
+    }, [mapPosition]);
+
     const generateMeta = lines => {
         if (!lines || lines.length === 0) return;
 
-        console.log(0x000000, lines[0].brushColor);
-
         let i, j;
-        const mls = [];
         const ms = [];
+        const mls = [];
         for (i = 0; i < lines.length; i++) {
             const currentLine = lines[i];
             const ml = new THREE.Geometry();
@@ -73,25 +77,25 @@ const Drawing2 = ({ lines }) => {
 
     const draw = lines => {
         if (!lines || lines.length === 0) return;
-        let i;
+        let i, j;
         scene.remove.apply(scene, scene.children);
         for (i = 0; i < lines.length, i < meshLines.current.length; i++) {
             const currentMeshLine = meshLines.current[i];
             const currentMaterial = materials.current[i];
             const mesh = new THREE.Mesh(currentMeshLine.geometry, currentMaterial);
-
-            // const curveObject = new THREE.Line(currentGeo, currentMaterial);
             scene.add(mesh);
         }
     };
 
     useEffect(() => {
         let animationFrame;
+
         function render() {
             draw(lines);
             renderer.render(scene, camera);
             animationFrame = requestAnimationFrame(render);
         }
+
         render();
         return () => {
             cancelAnimationFrame(animationFrame);
