@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import * as THREE from 'three';
-import { useMapPosition } from '../../context/mapPosition/mapPosition.context';
+import { useMapPosition } from '../../../context/mapPosition/mapPosition.context';
 import { useWindowSize } from 'react-use';
 
 const useCamera = () => {

@@ -1,8 +1,7 @@
 import React, { FC, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { useMapPosition } from '../../context/mapPosition/mapPosition.context';
 import { css } from 'styled-components/macro';
-import { clearScene, drawScene, generateLinesMeta } from '../../helpers/webgl.helpers';
+import { clearScene, drawScene, generateLinesMeta } from '../../../helpers/webgl.helpers';
 import { useWindowSize } from 'react-use';
 
 const styles = {

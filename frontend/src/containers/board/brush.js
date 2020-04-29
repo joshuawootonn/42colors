@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { LazyBrush } from 'lazy-brush';
-
 import { useWindowSize } from 'react-use';
-import styled from 'styled-components';
+import { css } from 'styled-components/macro';
 import {
     clear,
     drawBrush,
@@ -12,13 +11,15 @@ import {
 } from '../../helpers/canvas.helpers';
 import { useMapPosition } from '../../context/mapPosition/mapPosition.context';
 
-const BrushCanvas = styled.canvas`
-    display: block;
-    position: absolute;
-    z-index: 15;
-    cursor: none;
-    background-color: transparent;
-`;
+const styles = {
+    root: css`
+        display: block;
+        position: absolute;
+        z-index: 15;
+        cursor: none;
+        background-color: transparent;
+    `,
+};
 
 const Brush = ({ canvasSettings, ...props }) => {
     const brushCanvas = useRef();
@@ -38,7 +39,6 @@ const Brush = ({ canvasSettings, ...props }) => {
     );
     const mouseHasMoved = useRef(false);
     const isPressing = useRef(false);
-    const isDrawing = useRef(false);
     const isOut = useRef(false);
     const points = useRef([]);
 
@@ -105,11 +105,9 @@ const Brush = ({ canvasSettings, ...props }) => {
         if (brushCanvas.current) {
             const rect = brushCanvas.current.getBoundingClientRect();
 
-            // use cursor pos as default
             const clientX = e.clientX;
             const clientY = e.clientY;
 
-            // return mouse/touch position inside canvas
             return {
                 x: clientX - rect.left,
                 y: clientY - rect.top,
@@ -125,12 +123,8 @@ const Brush = ({ canvasSettings, ...props }) => {
         const newRelativePoint = lazy.current.brush.toObject();
         const newAbsolutePoint = toAbsolute(newRelativePoint, mapPosition);
 
-        const newLine = [...points.current, newAbsolutePoint];
-
         if (isPressing.current) {
-            //TODO: DO I need this thing??
-            points.current = newLine;
-            isDrawing.current = true;
+            points.current = [...points.current, newAbsolutePoint];
         }
 
         mouseHasMoved.current = true;
@@ -149,7 +143,6 @@ const Brush = ({ canvasSettings, ...props }) => {
 
     const handleMouseUp = e => {
         e.preventDefault();
-        isDrawing.current = false;
         isPressing.current = false;
         saveLine();
     };
@@ -162,7 +155,8 @@ const Brush = ({ canvasSettings, ...props }) => {
     };
 
     return (
-        <BrushCanvas
+        <canvas
+            css={styles.root}
             data-test="brush canvas"
             ref={brushCanvas}
             onMouseDown={handleMouseDown}

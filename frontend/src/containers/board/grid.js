@@ -1,15 +1,16 @@
 import React, { useEffect, useRef } from 'react';
-
 import { useWindowSize } from 'react-use';
-import styled from 'styled-components';
+import { css } from 'styled-components/macro';
 import { clear, drawGrid, resizeCanvas } from '../../helpers/canvas.helpers';
 import { useMapPosition } from '../../context/mapPosition/mapPosition.context';
 
-const GridCanvas = styled.canvas`
-    display: block;
-    position: absolute;
-    z-index: 10;
-`;
+const styles = {
+    root: css`
+        display: block;
+        position: absolute;
+        z-index: 10;
+    `,
+};
 
 const Grid = () => {
     const gridCanvas = useRef();
@@ -33,7 +34,7 @@ const Grid = () => {
         drawGrid(gridContext.current, mapPosition);
     }, [mapPosition]);
 
-    return <GridCanvas ref={gridCanvas} />;
+    return <canvas css={styles.root} ref={gridCanvas} />;
 };
 
 export default Grid;

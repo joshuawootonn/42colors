@@ -110,24 +110,8 @@ export const drawPoints = (
     context.stroke();
 };
 
-export const drawLines = (context: CanvasRenderingContext2D, lines: Line[], mapPosition: Point) => {
-    lines.forEach(line => {
-        const { points, brushColor, brushWidth } = line;
-        drawPoints(context, points, mapPosition, brushColor, brushWidth);
-    });
-};
-
 export const clear = (context: CanvasRenderingContext2D) => {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-};
-
-export const copyFromCanvasToContext = (
-    to: CanvasRenderingContext2D,
-    from: HTMLCanvasElement,
-    xOffset: number,
-    yOffset: number
-) => {
-    to.drawImage(from, xOffset, yOffset);
 };
 
 export const resizeCanvas = (canvas: HTMLCanvasElement, width: number, height: number) => {
