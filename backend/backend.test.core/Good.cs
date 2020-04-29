@@ -21,7 +21,7 @@ namespace backend.test.core
         public static LineRequest lineRequest => new LineRequest
         {
             brushColor = "#000",
-            brushWidth = 10,
+            brushWidth = 5,
             points = points
         };
 

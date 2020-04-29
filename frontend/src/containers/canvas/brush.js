@@ -17,12 +17,15 @@ const BrushCanvas = styled.canvas`
     position: absolute;
     z-index: 15;
     cursor: none;
+    background-color: transparent;
 `;
 
 const TempCanvas = styled.canvas`
     display: block;
     position: absolute;
     z-index: 12;
+
+    background-color: transparent;
 `;
 
 const Brush = ({ canvasSettings, ...props }) => {

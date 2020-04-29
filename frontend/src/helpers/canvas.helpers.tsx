@@ -45,12 +45,13 @@ export const drawBrush = (context: CanvasRenderingContext2D, pointer: Point, can
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
     context.beginPath();
     context.fillStyle = canvasSettings.brushColor;
-    context.arc(pointer.x, pointer.y, canvasSettings.brushWidth, 0, Math.PI * 2, true);
+    // context.arc(pointer.x, pointer.y, canvasSettings.brushWidth, 0, Math.PI * 2, true);
+    context.arc(pointer.x, pointer.y, 2, 0, Math.PI * 2, true);
     context.fill();
     context.drawImage(img, pointer.x, pointer.y, 40, 40);
 };
 
-function midPointBtw(p1: Point, p2: Point) {
+export function midPointBtw(p1: Point, p2: Point) {
     return {
         x: p1.x + (p2.x - p1.x) / 2,
         y: p1.y + (p2.y - p1.y) / 2,

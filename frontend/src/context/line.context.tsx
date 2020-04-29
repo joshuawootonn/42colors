@@ -3,6 +3,7 @@ import { useInterval } from 'react-use';
 import { getAllLines, postLine } from '../repositories/canvas.repositories';
 import { Line } from '../models';
 import { useMapPosition } from './mapPosition/mapPosition.context';
+import * as _ from 'lodash';
 
 interface LineContextState {
     isInitializing: boolean;
@@ -28,7 +29,7 @@ export const LineProvider: FC<LineProviderProps> = props => {
     const fetchLines = useCallback(async () => {
         const fetchedLines = await getAllLines();
         setIsInitializing(false);
-        if (fetchedLines && fetchedLines.length !== lines.length) setLines(fetchedLines);
+        if (fetchedLines && !_.isEqual(fetchedLines, lines)) setLines(fetchedLines);
     }, []);
 
     const createLine = useCallback((line: Line) => {
@@ -49,6 +50,10 @@ export const LineProvider: FC<LineProviderProps> = props => {
         fetchLines();
     }, props.interval);
 
-    return <LineContext.Provider value={{ isInitializing, lines, fetchLines, createLine }}>{props.children}</LineContext.Provider>;
+    return (
+        <LineContext.Provider value={{ isInitializing, lines, fetchLines, createLine }}>
+            {props.children}
+        </LineContext.Provider>
+    );
 };
 export default useLines;
