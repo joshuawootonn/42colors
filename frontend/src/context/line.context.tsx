@@ -3,7 +3,10 @@ import { useInterval } from 'react-use';
 import { getAllLines, postLine } from '../repositories/canvas.repositories';
 import { Line } from '../models';
 import { useMapPosition } from './mapPosition/mapPosition.context';
+
+import * as signalR from '@aspnet/signalr';
 import * as _ from 'lodash';
+import { configObj } from './config.context';
 
 interface LineContextState {
     isInitializing: boolean;
@@ -28,36 +31,39 @@ export const LineProvider: FC<LineProviderProps> = props => {
     const [lines, setLines] = useState<Line[]>([]);
     const [tempLines, setTempLines] = useState<Line[]>([]);
 
-    const fetchLines = useCallback(async () => {
-        const fetchedLines = await getAllLines();
-        setIsInitializing(false);
-        if (fetchedLines && !_.isEqual(fetchedLines, lines)) setLines(fetchedLines);
+    const [lineHub] = useState(
+        new signalR.HubConnectionBuilder()
+            .withUrl(`${configObj.API_HOST}/lineHub`)
+            .configureLogging(signalR.LogLevel.Error)
+            .build()
+    );
+
+    useEffect(() => {
+        (async () => {
+            lineHub.on('receiveLine', newLine => {
+                setLines(lines => [...lines, newLine]);
+                setTempLines(tempLines =>
+                    tempLines.filter(line => !_.isEqual(line.points, newLine.points))
+                );
+            });
+            lineHub.on('receiveLines', lines => {
+                console.log(lines);
+                setLines(_ => lines.lines);
+                setIsInitializing(false);
+            });
+            await lineHub.start();
+            await lineHub.invoke('getLines');
+        })();
     }, []);
 
-    const createLine = useCallback(async (line: Line) => {
+    const fetchLines = async () => {
+        await lineHub.invoke('getLines');
+    };
+
+    const createLine = async (line: Line) => {
         setTempLines([...tempLines, line]);
-        const response = await postLine(line);
-        if (!response || !response.data) return;
-
-        setLines(lines => [...lines, response.data]);
-        setTempLines(tempLines =>
-            tempLines.filter(line => !_.isEqual(line.points, response.data.points))
-        );
-    }, []);
-
-    useEffect(() => {
-        if (!isPanning) {
-            fetchLines();
-        }
-    }, [isPanning, mapPosition]);
-
-    useEffect(() => {
-        fetchLines();
-    }, []);
-
-    useInterval(() => {
-        fetchLines();
-    }, props.interval);
+        await lineHub.invoke('sendLine', line);
+    };
 
     return (
         <LineContext.Provider value={{ isInitializing, lines, tempLines, fetchLines, createLine }}>

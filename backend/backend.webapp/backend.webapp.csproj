@@ -17,9 +17,6 @@
     <PackageReference Include="Npgsql" Version="4.1.3" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Controllers\Requests" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\backend.core\backend.core.csproj" />
   </ItemGroup>
   <ItemGroup>

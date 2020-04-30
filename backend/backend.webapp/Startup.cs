@@ -1,4 +1,5 @@
 using AspNetCoreRateLimit;
+using backend.Hubs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -22,6 +23,7 @@ namespace backend
             services.AddOptions();
             services.addRateLimit(configuration);
             services.AddControllers();
+            services.addSignalR();
             services.addCors(MYCORSPOLICY);
             services.addMvc();
             services.addDbConnection(configuration["connectionString"]);
@@ -36,9 +38,13 @@ namespace backend
             app.UseDeveloperExceptionPage();
             // }
 
-            app.UseRouting();
             app.UseCors(MYCORSPOLICY);
-            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+            app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapHub<LineHub>("/lineHub");
+                endpoints.MapControllers();
+            });
         }
     }
 }
