@@ -4,10 +4,11 @@ import Brand from './components/brand';
 import { CanvasSettings } from './models';
 import Control from './containers/controls/control';
 import BoardContainer from './containers/board';
-import Warning from './components/warning';
+
 import Navigation from './containers/navigation';
 import { colors } from './containers/controls/color/colorInput';
 import { sizes } from './containers/controls/size/sizeInput';
+import Connection from './containers/connection';
 
 const Container = styled.div`
     height: 100vh;
@@ -30,7 +31,7 @@ const App: React.FC = () => {
             <Navigation />
             <Brand />
             <Control canvasSettings={canvasSettings} setCanvasSettings={setCanvasSettings} />
-            <Warning />
+            <Connection />
         </Container>
     );
 };

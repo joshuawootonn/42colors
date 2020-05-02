@@ -1,9 +1,14 @@
-import React, { createContext, FC, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, FC, useContext, useEffect, useState } from 'react';
 import { useInterval } from 'react-use';
-import { getAllLines, postLine } from '../repositories/canvas.repositories';
 import { Line } from '../models';
 import { useMapPosition } from './mapPosition/mapPosition.context';
+
+import * as signalR from '@aspnet/signalr';
+import { HubConnectionState } from '@aspnet/signalr';
 import * as _ from 'lodash';
+import { configObj } from './config.context';
+import { connected, Connection, disConnected, neverConnected } from '../models/connection';
+import line from '../models/line';
 
 interface LineContextState {
     isInitializing: boolean;
@@ -11,6 +16,7 @@ interface LineContextState {
     tempLines: Line[];
     fetchLines: () => Promise<void>;
     createLine: (line: Line) => Promise<void>;
+    connectionState: Connection;
 }
 
 // @ts-ignore
@@ -27,40 +33,62 @@ export const LineProvider: FC<LineProviderProps> = props => {
     const [isInitializing, setIsInitializing] = useState(true);
     const [lines, setLines] = useState<Line[]>([]);
     const [tempLines, setTempLines] = useState<Line[]>([]);
+    const [connectionState, setConnectionState] = useState<Connection>(neverConnected);
 
-    const fetchLines = useCallback(async () => {
-        const fetchedLines = await getAllLines();
-        setIsInitializing(false);
-        if (fetchedLines && !_.isEqual(fetchedLines, lines)) setLines(fetchedLines);
-    }, []);
+    const [lineHub] = useState(
+        new signalR.HubConnectionBuilder()
+            .withUrl(`${configObj.API_HOST}/lineHub`)
+            .configureLogging(signalR.LogLevel.Error)
+            .build()
+    );
 
-    const createLine = useCallback(async (line: Line) => {
-        setTempLines([...tempLines, line]);
-        const response = await postLine(line);
-        if (!response || !response.data) return;
-
-        setLines(lines => [...lines, response.data]);
-        setTempLines(tempLines =>
-            tempLines.filter(line => !_.isEqual(line.points, response.data.points))
-        );
-    }, []);
-
-    useEffect(() => {
-        if (!isPanning) {
-            fetchLines();
+    const attemptConnection = async () => {
+        try {
+            await lineHub.start();
+            setConnectionState(connected);
+            await lineHub.invoke('getLines');
+        } catch (error) {
+            setConnectionState({ ...disConnected, error });
         }
-    }, [isPanning, mapPosition]);
+    };
 
     useEffect(() => {
-        fetchLines();
+        (async () => {
+            lineHub.on('receiveLine', newLine => {
+                setLines(lines => [...lines, newLine]);
+                setTempLines(tempLines =>
+                    tempLines.filter(line => !_.isEqual(line.points, newLine.points))
+                );
+            });
+            lineHub.on('receiveLines', lines => {
+                console.log(lines);
+                setLines(_ => lines.lines);
+                setIsInitializing(false);
+            });
+            lineHub.onclose(error => setConnectionState({ ...disConnected, error }));
+            await attemptConnection();
+        })();
     }, []);
 
-    useInterval(() => {
-        fetchLines();
-    }, props.interval);
+    useInterval(async () => {
+        if (lineHub.state === HubConnectionState.Disconnected) {
+            await attemptConnection();
+        }
+    }, 5000);
+
+    const fetchLines = async () => {
+        await lineHub.invoke('getLines');
+    };
+
+    const createLine = async (line: Line) => {
+        setTempLines([...tempLines, line]);
+        await lineHub.invoke('sendLine', line);
+    };
 
     return (
-        <LineContext.Provider value={{ isInitializing, lines, tempLines, fetchLines, createLine }}>
+        <LineContext.Provider
+            value={{ isInitializing, connectionState, lines, tempLines, fetchLines, createLine }}
+        >
             {props.children}
         </LineContext.Provider>
     );

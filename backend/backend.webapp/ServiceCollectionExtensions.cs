@@ -1,3 +1,4 @@
+using System;
 using System.Data;
 using AspNetCoreRateLimit;
 using backend.core.Repositories;
@@ -40,9 +41,16 @@ namespace backend
                 options.AddPolicy(policy,
                     builder =>
                     {
-                        builder.AllowAnyOrigin()
+                        builder
+                            .WithOrigins(
+                                "http://localhost:3000",
+                                "https://localhost:3000",
+                                "http://42colors.site",
+                                "https://42colors.site"
+                                )
                             .AllowAnyHeader()
-                            .AllowAnyMethod();
+                            .AllowAnyMethod()
+                            .AllowCredentials();
                     });
             });
             return services;
@@ -78,6 +86,16 @@ namespace backend
                 connection.TypeMapper.UseNetTopologySuite();
                 SqlMapper.AddTypeHandler(new GeometryHandler<LineString>());
                 return connection;
+            });
+            return services;
+        }
+        
+        public static IServiceCollection addSignalR(this IServiceCollection services)
+        {
+            services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = true;
+                options.KeepAliveInterval = TimeSpan.FromMinutes(1);
             });
             return services;
         }
