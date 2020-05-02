@@ -1,12 +1,14 @@
-import React, { createContext, FC, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, FC, useContext, useEffect, useState } from 'react';
 import { useInterval } from 'react-use';
-import { getAllLines, postLine } from '../repositories/canvas.repositories';
 import { Line } from '../models';
 import { useMapPosition } from './mapPosition/mapPosition.context';
 
 import * as signalR from '@aspnet/signalr';
+import { HubConnectionState } from '@aspnet/signalr';
 import * as _ from 'lodash';
 import { configObj } from './config.context';
+import { connected, Connection, disConnected, neverConnected } from '../models/connection';
+import line from '../models/line';
 
 interface LineContextState {
     isInitializing: boolean;
@@ -14,6 +16,7 @@ interface LineContextState {
     tempLines: Line[];
     fetchLines: () => Promise<void>;
     createLine: (line: Line) => Promise<void>;
+    connectionState: Connection;
 }
 
 // @ts-ignore
@@ -30,6 +33,7 @@ export const LineProvider: FC<LineProviderProps> = props => {
     const [isInitializing, setIsInitializing] = useState(true);
     const [lines, setLines] = useState<Line[]>([]);
     const [tempLines, setTempLines] = useState<Line[]>([]);
+    const [connectionState, setConnectionState] = useState<Connection>(neverConnected);
 
     const [lineHub] = useState(
         new signalR.HubConnectionBuilder()
@@ -37,6 +41,16 @@ export const LineProvider: FC<LineProviderProps> = props => {
             .configureLogging(signalR.LogLevel.Error)
             .build()
     );
+
+    const attemptConnection = async () => {
+        try {
+            await lineHub.start();
+            setConnectionState(connected);
+            await lineHub.invoke('getLines');
+        } catch (error) {
+            setConnectionState({ ...disConnected, error });
+        }
+    };
 
     useEffect(() => {
         (async () => {
@@ -51,10 +65,16 @@ export const LineProvider: FC<LineProviderProps> = props => {
                 setLines(_ => lines.lines);
                 setIsInitializing(false);
             });
-            await lineHub.start();
-            await lineHub.invoke('getLines');
+            lineHub.onclose(error => setConnectionState({ ...disConnected, error }));
+            await attemptConnection();
         })();
     }, []);
+
+    useInterval(async () => {
+        if (lineHub.state === HubConnectionState.Disconnected) {
+            await attemptConnection();
+        }
+    }, 5000);
 
     const fetchLines = async () => {
         await lineHub.invoke('getLines');
@@ -66,7 +86,9 @@ export const LineProvider: FC<LineProviderProps> = props => {
     };
 
     return (
-        <LineContext.Provider value={{ isInitializing, lines, tempLines, fetchLines, createLine }}>
+        <LineContext.Provider
+            value={{ isInitializing, connectionState, lines, tempLines, fetchLines, createLine }}
+        >
             {props.children}
         </LineContext.Provider>
     );
