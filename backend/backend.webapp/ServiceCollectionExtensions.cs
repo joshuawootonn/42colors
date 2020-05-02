@@ -46,7 +46,9 @@ namespace backend
                                 "http://localhost:3000",
                                 "https://localhost:3000",
                                 "http://42colors.site",
-                                "https://42colors.site"
+                                "https://42colors.site",
+                                "http://www.42colors.site",
+                                "https://www.42colors.site"
                                 )
                             .AllowAnyHeader()
                             .AllowAnyMethod()
