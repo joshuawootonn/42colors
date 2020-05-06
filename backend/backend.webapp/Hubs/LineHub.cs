@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using backend.core.Models;
 using backend.core.Repositories;
 using backend.Requests;
 using backend.Views;
@@ -12,12 +14,13 @@ namespace backend.Hubs
     {
         private readonly ILogger<LineHub> _logger;
         private readonly ILineRepository _lineRepository;
-
+        
         public LineHub(ILogger<LineHub> logger, ILineRepository lineRepository)
         {
             _logger = logger;
             _lineRepository = lineRepository;
         }
+
         public override async Task OnConnectedAsync()
         { 
             await Groups.AddToGroupAsync(Context.ConnectionId, "signalR");
@@ -31,7 +34,7 @@ namespace backend.Hubs
             return Clients.All.SendAsync("receiveLine", new LineViewModel(line));
         }
         
-        public Task getLines()
+        public Task getLines(MapPosition mapPosition)
         {
             var lines = _lineRepository.getAll().ToArray();
             _logger.LogInformation($"found {lines.Length} lines");
