@@ -37,8 +37,8 @@ namespace backend.Controllers
         }
         
         [HttpGet]
-        [Route("/api/linesByMapPosition")]
-        public IActionResult getSomeLines([FromBody] MapPosition mapPosition)
+        [Route("/api/lineByMapPosition")]
+        public IActionResult getSomeLines([FromQuery] MapPosition mapPosition)
         {
             var lines = _lineRepository.getByMapPosition(mapPosition).ToArray();
             _logger.LogInformation($"found {lines.Length} lines");

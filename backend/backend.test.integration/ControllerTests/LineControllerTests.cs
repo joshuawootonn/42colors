@@ -7,7 +7,7 @@ using NUnit.Framework;
 
 namespace backend.integration.ControllerTests
 {
-    public class CanvasControllerTests : ControllerTestBase.IntegrationTestBase.SetUp
+    public class LineControllerTests : ControllerTestBase.IntegrationTestBase.SetUp
     {
         [TestCase(TestName = "WHEN get:diagnostic:ok THEN 200")]
         public async Task test()
@@ -22,14 +22,49 @@ namespace backend.integration.ControllerTests
             getLinesResponse.StatusCode.Should().Be(200);
             var response = await getLinesResponse.GetJsonAsync<LinesViewModel>();
             response.lines.Length.Should().Be(0);
+        }
 
+        [TestCase(TestName = "WHEN get:lines and there are 10 lines THEN 10 lines and 200")]
+        public async Task test021345()
+        {
             Task.WaitAll(Enumerable.Range(0, 10).Select(i => backendClient.postLine(Good.lineRequest))
                 .ToArray());
 
-            getLinesResponse = await backendClient.getLines();
+            var getLinesResponse = await backendClient.getLines();
             getLinesResponse.StatusCode.Should().Be(200);
-            response = await getLinesResponse.GetJsonAsync<LinesViewModel>();
+            var response = await getLinesResponse.GetJsonAsync<LinesViewModel>();
             response.lines.Length.Should().Be(10);
+        }
+
+        [TestCase(TestName = "WHEN get:linesByMapPosition and lines are empty THEN 200")]
+        public async Task test01()
+        {
+            var getLinesResponse = await backendClient.getLinesByMapPosition(Good.mapPosition);
+            getLinesResponse.StatusCode.Should().Be(200);
+            var response = await getLinesResponse.GetJsonAsync<LinesViewModel>();
+            response.lines.Length.Should().Be(0);
+        }
+        
+        [TestCase(TestName = "WHEN get:linesByMapPosition THEN 200 excluding lines partially in mapPosition")]
+        public async Task test07681()
+        {
+            await backendClient.postLine(Good.lineRequestWithinMapPosition);
+            await backendClient.postLine(Bad.linePartiallyInside);
+            var getLinesResponse = await backendClient.getLinesByMapPosition(Good.mapPosition);
+            getLinesResponse.StatusCode.Should().Be(200);
+            var response = await getLinesResponse.GetJsonAsync<LinesViewModel>();
+            response.lines.Length.Should().Be(1);
+        }
+        
+        [TestCase(TestName = "WHEN get:linesByMapPosition THEN 200 excluding lines completely outside in mapPosition")]
+        public async Task test0768231()
+        {
+            await backendClient.postLine(Good.lineRequestWithinMapPosition);
+            await backendClient.postLine(Bad.lineOutside);
+            var getLinesResponse = await backendClient.getLinesByMapPosition(Good.mapPosition);
+            getLinesResponse.StatusCode.Should().Be(200);
+            var response = await getLinesResponse.GetJsonAsync<LinesViewModel>();
+            response.lines.Length.Should().Be(1);
         }
 
         [TestCase(TestName = "Rate Limit: WHEN post:line reachs request limit and then waits 10s THEN 429")]

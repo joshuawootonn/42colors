@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using backend.core.Models;
 using backend.integration.Utils;
 using backend.Requests;
 using Flurl.Http;
@@ -39,6 +40,12 @@ namespace backend.integration.Services
         {
             return await _flurlClient
                 .Request("api/lines").GetAsync();
+        }
+        
+        public async Task<IFlurlResponse> getLinesByMapPosition(MapPosition mapPosition)
+        {
+            return await _flurlClient
+                .Request($"api/lineByMapPosition?x={mapPosition.x}&y={mapPosition.y}&w={mapPosition.w}&h={mapPosition.h}").GetAsync();
         }
 
         public async Task<Response<Empty>> postLine(LineRequest lineRequest)
