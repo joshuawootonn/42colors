@@ -13,6 +13,8 @@ namespace backend.core.Repositories
         Line insert(LineCmd line);
 
         IEnumerable<Line> getAll();
+
+        IEnumerable<Line> getByMapPosition(MapPosition mapPosition);
     }
 
     public class LineRepository : ILineRepository
@@ -63,6 +65,22 @@ namespace backend.core.Repositories
                     SELECT line_id as lineId, geom, brush_color as brushColor, brush_width as brushWidth
                     FROM line;
                 ");
+        }
+
+        public IEnumerable<Line> getByMapPosition(MapPosition mapPosition)
+        {
+            var polygonText =
+                $"POLYGON(({mapPosition.x} {mapPosition.y},{mapPosition.x + mapPosition.w} {mapPosition.y},{mapPosition.x + mapPosition.w} {mapPosition.y + mapPosition.h},{mapPosition.x} {mapPosition.y + mapPosition.h},{mapPosition.x} {mapPosition.y}))";
+
+            return _colorDbConnection.Query<Line>(
+                @"
+                    SELECT line_id as lineId, geom, brush_color as brushColor, brush_width as brushWidth
+                    FROM line
+                    where ST_Contains(ST_GeomFromText(@polygonText, 4326),geom);
+                ", new
+                {
+                    polygonText
+                });
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using backend.core.Models;
 using backend.core.Repositories;
 using backend.Requests;
 using backend.Views;
@@ -31,6 +32,15 @@ namespace backend.Controllers
         public IActionResult getAllLines()
         {
             var lines = _lineRepository.getAll().ToArray();
+            _logger.LogInformation($"found {lines.Length} lines");
+            return Ok(new LinesViewModel(lines));
+        }
+        
+        [HttpGet]
+        [Route("/api/some")]
+        public IActionResult getSomeLines([FromBody] MapPosition mapPosition)
+        {
+            var lines = _lineRepository.getByMapPosition(mapPosition).ToArray();
             _logger.LogInformation($"found {lines.Length} lines");
             return Ok(new LinesViewModel(lines));
         }
