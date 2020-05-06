@@ -32,5 +32,27 @@ namespace backend.test.core
             brushWidth = 101,
             points = new Point[0]
         };
+        
+        public static LineRequest linePartiallyInside = new LineRequest
+        {
+            points = new[]
+            {
+                new Point(1, 1),
+                new Point(2001, 2001),
+            },
+            brushColor = "#ffffff",
+            brushWidth = 10
+        };
+            
+        public static LineRequest lineOutside = new LineRequest
+        {
+            points = new[]
+            {
+                new Point(2001, 2001),
+                new Point(3999, 3999),
+            },
+            brushColor = "#ffffff",
+            brushWidth = 10
+        };
     }
 }

@@ -1,4 +1,7 @@
 using System.Linq;
+using backend.core.Commands;
+using backend.core.Models;
+using backend.Requests;
 using backend.test.core;
 using FluentAssertions;
 using NUnit.Framework;
@@ -26,6 +29,22 @@ namespace backend.unit
             _lineRepository.getAll().ToArray().Length.Should().Be(0);
             _lineRepository.insert(Good.lineRequest.toCmd());
             _lineRepository.getAll().ToArray().Length.Should().Be(1);
+            _lineRepository.insert(Good.lineRequest.toCmd());
+            _lineRepository.insert(Good.lineRequest.toCmd());
+            _lineRepository.insert(Good.lineRequest.toCmd());
+            _lineRepository.getAll().ToArray().Length.Should().Be(4);
+        }
+
+        [TestCase(TestName = "WHEN getByMapPosition THEN only lines with mapPosition are fetched")]
+        public void Test4()
+        {
+            _lineRepository.getByMapPosition(Good.mapPosition).ToArray().Length.Should().Be(0);
+            _lineRepository.insert(Good.lineRequestWithinMapPosition.toCmd());
+            _lineRepository.getByMapPosition(Good.mapPosition).ToArray().Length.Should().Be(1);
+            _lineRepository.insert(Bad.linePartiallyInside.toCmd());
+            _lineRepository.getByMapPosition(Good.mapPosition).ToArray().Length.Should().Be(1);
+            _lineRepository.insert(Bad.lineOutside.toCmd());
+            _lineRepository.getByMapPosition(Good.mapPosition).ToArray().Length.Should().Be(1);
         }
     }
 }

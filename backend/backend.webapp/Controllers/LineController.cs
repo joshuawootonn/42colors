@@ -37,21 +37,12 @@ namespace backend.Controllers
         }
         
         [HttpGet]
-        [Route("/api/some")]
+        [Route("/api/linesByMapPosition")]
         public IActionResult getSomeLines([FromBody] MapPosition mapPosition)
         {
             var lines = _lineRepository.getByMapPosition(mapPosition).ToArray();
             _logger.LogInformation($"found {lines.Length} lines");
             return Ok(new LinesViewModel(lines));
         }
-
-        private class PositionQuery
-        {
-            private int x { get; set; }
-            private int y { get; set; }
-            private int w { get; set; }
-            private int h { get; set; }
-        }
-        
     }
 }
