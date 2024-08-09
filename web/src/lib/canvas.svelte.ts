@@ -48,7 +48,14 @@ export class PencilTool {
 
 	onPointerDown(e: PointerEvent) {
 		console.log('pencil onPointerDown');
-		const draw = (e: PointerEvent) => {};
+		const draw = (e: PointerEvent) => {
+			const camera = this.canvas.camera;
+
+			const x = roundDown(camera.x + e.clientX);
+			const y = roundDown(camera.y + e.clientY);
+
+			this.canvas.blocks.push({ x, y });
+		};
 
 		this.canvas.canvas.addEventListener('pointermove', draw);
 		this.canvas.canvas.addEventListener(
@@ -60,6 +67,10 @@ export class PencilTool {
 			{ once: true }
 		);
 	}
+}
+
+function roundDown(num: number) {
+	return num - (num % 5);
 }
 
 type Block = {
@@ -100,10 +111,6 @@ export class Canvas {
 		cancelAnimationFrame(this.rafId);
 	}
 
-	roundDown(num: number) {
-		return num - (num % 5);
-	}
-
 	setMode(mode: Mode) {
 		console.log(this, mode);
 		this.mode = mode;
@@ -115,13 +122,13 @@ export class Canvas {
 		const cameraY = this.camera.y;
 
 		const startPoint = {
-			x: this.roundDown(cameraX - buffer),
-			y: this.roundDown(cameraY - buffer)
+			x: roundDown(cameraX - buffer),
+			y: roundDown(cameraY - buffer)
 		};
 
 		const endPoint = {
-			x: this.roundDown(cameraX + this.canvas.width + buffer),
-			y: this.roundDown(cameraY + this.canvas.height + buffer)
+			x: roundDown(cameraX + this.canvas.width + buffer),
+			y: roundDown(cameraY + this.canvas.height + buffer)
 		};
 
 		this.ctx.fillRect(startPoint.x, startPoint.y, 5, 5);
