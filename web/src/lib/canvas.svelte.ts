@@ -19,13 +19,9 @@ export type Store =
 	  };
 
 export class PanTool {
-	private isDragging = false;
-
 	constructor(private readonly canvas: Canvas) {}
 
 	onPointerDown(e: PointerEvent) {
-		this.isDragging = true;
-
 		const startingCamera = this.canvas.camera.clone();
 		const startingX = e.clientX;
 		const startingY = e.clientY;
@@ -39,7 +35,6 @@ export class PanTool {
 		this.canvas.canvas.addEventListener(
 			'pointerup',
 			(e: PointerEvent) => {
-				this.isDragging = false;
 				pan(e);
 				this.canvas.canvas.removeEventListener('pointermove', pan);
 			},
@@ -49,30 +44,18 @@ export class PanTool {
 }
 
 export class PencilTool {
-	private isDragging = false;
-
 	constructor(private readonly canvas: Canvas) {}
 
 	onPointerDown(e: PointerEvent) {
-		console.log('hi');
-		// this.isDragging = true;
-		//
-		// const startingCamera = this.canvas.camera.clone();
-		// const startingX = e.clientX;
-		// const startingY = e.clientY;
-		//
-		const pan = (e: PointerEvent) => {
-			// this.canvas.camera.x = startingCamera.x + e.clientX - startingX;
-			// this.canvas.camera.y = startingCamera.y + e.clientY - startingY;
-		};
+		console.log('pencil onPointerDown');
+		const draw = (e: PointerEvent) => {};
 
-		this.canvas.canvas.addEventListener('pointermove', pan);
+		this.canvas.canvas.addEventListener('pointermove', draw);
 		this.canvas.canvas.addEventListener(
 			'pointerup',
 			(e: PointerEvent) => {
-				this.isDragging = false;
-				pan(e);
-				this.canvas.canvas.removeEventListener('pointermove', pan);
+				draw(e);
+				this.canvas.canvas.removeEventListener('pointermove', draw);
 			},
 			{ once: true }
 		);
@@ -81,9 +64,9 @@ export class PencilTool {
 
 export class Canvas {
 	private rafId: number = 0;
-	private mode: 'pencil' | 'pan' = 'pan';
 	private panTool: PanTool;
 	private pencilTool: PencilTool;
+	mode: 'pencil' | 'pan' = $state('pan');
 	camera: Camera = new Camera(0, 0, 1);
 
 	constructor(
@@ -107,6 +90,11 @@ export class Canvas {
 
 	roundDown(num: number) {
 		return num - (num % 5);
+	}
+
+	setMode(mode: Mode) {
+		console.log(this, mode);
+		this.mode = mode;
 	}
 
 	drawBoard() {
@@ -150,10 +138,8 @@ export class Canvas {
 
 		this.drawBoard();
 
-		// Door
 		this.ctx.fillRect(130, 190, 5, 5);
 
-		// Wall
 		this.ctx.fillRect(75, 640, 5, 5);
 
 		this.rafId = requestAnimationFrame(this.draw);
