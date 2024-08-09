@@ -31,8 +31,39 @@ export class PanTool {
 		const startingY = e.clientY;
 
 		const pan = (e: PointerEvent) => {
-			this.canvas.camera.x = startingCamera.x + e.clientX - startingX;
-			this.canvas.camera.y = startingCamera.y + e.clientY - startingY;
+			this.canvas.camera.x = startingCamera.x - e.clientX + startingX;
+			this.canvas.camera.y = startingCamera.y - e.clientY + startingY;
+		};
+
+		this.canvas.canvas.addEventListener('pointermove', pan);
+		this.canvas.canvas.addEventListener(
+			'pointerup',
+			(e: PointerEvent) => {
+				this.isDragging = false;
+				pan(e);
+				this.canvas.canvas.removeEventListener('pointermove', pan);
+			},
+			{ once: true }
+		);
+	}
+}
+
+export class PencilTool {
+	private isDragging = false;
+
+	constructor(private readonly canvas: Canvas) {}
+
+	onPointerDown(e: PointerEvent) {
+		console.log('hi');
+		// this.isDragging = true;
+		//
+		// const startingCamera = this.canvas.camera.clone();
+		// const startingX = e.clientX;
+		// const startingY = e.clientY;
+		//
+		const pan = (e: PointerEvent) => {
+			// this.canvas.camera.x = startingCamera.x + e.clientX - startingX;
+			// this.canvas.camera.y = startingCamera.y + e.clientY - startingY;
 		};
 
 		this.canvas.canvas.addEventListener('pointermove', pan);
@@ -50,7 +81,9 @@ export class PanTool {
 
 export class Canvas {
 	private rafId: number = 0;
+	private mode: 'pencil' | 'pan' = 'pan';
 	private panTool: PanTool;
+	private pencilTool: PencilTool;
 	camera: Camera = new Camera(0, 0, 1);
 
 	constructor(
@@ -58,6 +91,7 @@ export class Canvas {
 		readonly ctx: CanvasRenderingContext2D
 	) {
 		this.panTool = new PanTool(this);
+		this.pencilTool = new PencilTool(this);
 
 		this.draw = this.draw.bind(this);
 		this.onPointerDown = this.onPointerDown.bind(this);
@@ -71,59 +105,74 @@ export class Canvas {
 		cancelAnimationFrame(this.rafId);
 	}
 
+	roundDown(num: number) {
+		return num - (num % 5);
+	}
+
+	drawBoard() {
+		const buffer = 100;
+		const cameraX = this.camera.x;
+		const cameraY = this.camera.y;
+
+		const startPoint = {
+			x: this.roundDown(cameraX - buffer),
+			y: this.roundDown(cameraY - buffer)
+		};
+
+		const endPoint = {
+			x: this.roundDown(cameraX + this.canvas.width + buffer),
+			y: this.roundDown(cameraY + this.canvas.height + buffer)
+		};
+
+		this.ctx.fillRect(startPoint.x, startPoint.y, 5, 5);
+		this.ctx.fillRect(endPoint.x, endPoint.y, 5, 5);
+
+		for (let x = startPoint.x; x <= endPoint.x; x += 5) {
+			this.ctx.moveTo(x, startPoint.y);
+			this.ctx.lineTo(x, endPoint.y);
+		}
+
+		for (let y = startPoint.y; y <= endPoint.y; y += 5) {
+			this.ctx.moveTo(startPoint.x, y);
+			this.ctx.lineTo(endPoint.x, y);
+		}
+		this.ctx.strokeStyle = '#eee';
+		this.ctx.stroke();
+	}
+
 	draw() {
 		this.canvas.width = window.innerWidth;
 		this.canvas.height = window.innerHeight;
 
-		this.ctx.translate(this.camera.x, this.camera.y);
+		this.ctx.translate(-this.camera.x, -this.camera.y);
 
 		this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-		// Set line width
-		this.ctx.lineWidth = 10;
-
-		// Wall
-		this.ctx.strokeRect(75, 140, 150, 110);
+		this.drawBoard();
 
 		// Door
-		this.ctx.fillRect(130, 190, 40, 60);
-
-		// Roof
-		this.ctx.beginPath();
-		this.ctx.moveTo(50, 140);
-		this.ctx.lineTo(150, 60);
-		this.ctx.lineTo(250, 140);
-		this.ctx.closePath();
-		this.ctx.stroke();
+		this.ctx.fillRect(130, 190, 5, 5);
 
 		// Wall
-		this.ctx.strokeRect(75, 640, 150, 110);
-
-		// Door
-		this.ctx.fillRect(130, 690, 40, 60);
-
-		// Roof
-		this.ctx.beginPath();
-		this.ctx.moveTo(50, 640);
-		this.ctx.lineTo(150, 560);
-		this.ctx.lineTo(250, 640);
-		this.ctx.closePath();
-		this.ctx.stroke();
+		this.ctx.fillRect(75, 640, 5, 5);
 
 		this.rafId = requestAnimationFrame(this.draw);
 	}
 
 	onPointerDown(e: PointerEvent) {
-		// const mode = this.mode
-		//
-		// switch(mode.){
-		//   case'pan': {
+		const mode = this.mode;
 
-		this.panTool.onPointerDown(e);
+		switch (mode) {
+			case 'pencil':
+				this.pencilTool.onPointerDown(e);
+				break;
+			case 'pan':
+				this.panTool.onPointerDown(e);
+				break;
 
-		//   }
-		// default:
-		//   console.log('default case of the onPointerDown')
+			default:
+				console.log('default case of the onPointerDown');
+		}
 	}
 }
 
