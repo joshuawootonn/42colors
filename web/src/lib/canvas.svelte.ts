@@ -62,12 +62,24 @@ export class PencilTool {
 	}
 }
 
+type Block = {
+	x: number;
+	y: number;
+};
+
+const initialBlocks: Block[] = [
+	{ x: 130, y: 190 },
+	{ x: 75, y: 640 },
+	{ x: 90, y: 640 }
+];
+
 export class Canvas {
 	private rafId: number = 0;
 	private panTool: PanTool;
 	private pencilTool: PencilTool;
 	mode: 'pencil' | 'pan' = $state('pan');
 	camera: Camera = new Camera(0, 0, 1);
+	blocks: Block[] = initialBlocks;
 
 	constructor(
 		readonly canvas: HTMLCanvasElement,
@@ -138,9 +150,10 @@ export class Canvas {
 
 		this.drawBoard();
 
-		this.ctx.fillRect(130, 190, 5, 5);
-
-		this.ctx.fillRect(75, 640, 5, 5);
+		for (let i = 0; i < this.blocks.length; i++) {
+			const block = this.blocks[i];
+			this.ctx.fillRect(block.x, block.y, 5, 5);
+		}
 
 		this.rafId = requestAnimationFrame(this.draw);
 	}
