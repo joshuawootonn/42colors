@@ -1,4 +1,4 @@
-Couple of years ago I was working on a site called [42 colors](https://github.com/joshuawootonn/42colors). I don't know why I abandoned the idea honestly. I was hosting it on azure so I took it down at some point. 
+Couple of years ago I was working on a site called [42 colors](https://github.com/joshuawootonn/42colors-v0). I don't know why I abandoned the idea honestly. I was hosting it on azure so I took it down at some point. 
 
 It's back. With a vengeance. 
 
