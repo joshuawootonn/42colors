@@ -33,6 +33,7 @@
 			}
 
 			canvas = new Canvas(element, context);
+			canvas.fetchPixels();
 		}
 	});
 

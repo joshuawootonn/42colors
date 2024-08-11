@@ -54,7 +54,7 @@ export class PencilTool {
 			const x = roundDown(camera.x + e.clientX);
 			const y = roundDown(camera.y + e.clientY);
 
-			this.canvas.blocks.push({ x, y });
+			this.canvas.pushPixel({ x, y });
 		};
 
 		this.canvas.canvas.addEventListener('pointermove', draw);
@@ -73,16 +73,12 @@ function roundDown(num: number) {
 	return num - (num % 5);
 }
 
-type Block = {
+type Pixel = {
 	x: number;
 	y: number;
 };
 
-const initialBlocks: Block[] = [
-	{ x: 130, y: 190 },
-	{ x: 75, y: 640 },
-	{ x: 90, y: 640 }
-];
+const initialPixels: Pixel[] = [];
 
 export class Canvas {
 	private rafId: number = 0;
@@ -90,7 +86,7 @@ export class Canvas {
 	private pencilTool: PencilTool;
 	mode: 'pencil' | 'pan' = $state('pan');
 	camera: Camera = new Camera(0, 0, 1);
-	blocks: Block[] = initialBlocks;
+	pixels: Pixel[] = initialPixels;
 
 	constructor(
 		readonly canvas: HTMLCanvasElement,
@@ -109,6 +105,37 @@ export class Canvas {
 	cleanUp() {
 		this.canvas.removeEventListener('pointerdown', this.onPointerDown);
 		cancelAnimationFrame(this.rafId);
+	}
+
+	fetchPixels() {
+		fetch('http://localhost:4000/api/pixels').then(async (res) => {
+			const json = await res.json();
+
+			if (!res.ok) {
+				console.error(json);
+				return;
+			}
+
+			this.pixels = json.data;
+		});
+	}
+
+	pushPixel(pixel: Pixel) {
+		this.pixels.push(pixel);
+		fetch('http://localhost:4000/api/pixels', {
+			method: 'post',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				pixel
+			})
+		}).then(async (res) => {
+			const json = await res.json();
+
+			if (!res.ok) {
+				console.error(json);
+				return;
+			}
+		});
 	}
 
 	setMode(mode: Mode) {
@@ -157,8 +184,8 @@ export class Canvas {
 
 		this.drawBoard();
 
-		for (let i = 0; i < this.blocks.length; i++) {
-			const block = this.blocks[i];
+		for (let i = 0; i < this.pixels.length; i++) {
+			const block = this.pixels[i];
 			this.ctx.fillRect(block.x, block.y, 5, 5);
 		}
 
