@@ -90,7 +90,8 @@ export class Canvas {
 
 	constructor(
 		readonly canvas: HTMLCanvasElement,
-		readonly ctx: CanvasRenderingContext2D
+		readonly ctx: CanvasRenderingContext2D,
+		private readonly apiOrigin: string
 	) {
 		this.panTool = new PanTool(this);
 		this.pencilTool = new PencilTool(this);
@@ -108,7 +109,7 @@ export class Canvas {
 	}
 
 	fetchPixels() {
-		fetch('http://localhost:4000/api/pixels').then(async (res) => {
+		fetch(new URL('/api/pixels', this.apiOrigin)).then(async (res) => {
 			const json = await res.json();
 
 			if (!res.ok) {
@@ -122,7 +123,7 @@ export class Canvas {
 
 	pushPixel(pixel: Pixel) {
 		this.pixels.push(pixel);
-		fetch('http://localhost:4000/api/pixels', {
+		fetch(new URL('/api/pixels', this.apiOrigin), {
 			method: 'post',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({

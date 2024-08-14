@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import Toolbar from './toolbar.svelte';
 	import { Canvas, type Mode } from '$lib/canvas.svelte';
+	import { PUBLIC_API_ORIGIN } from '$env/static/public';
 
 	let htmlCanvas: HTMLCanvasElement | null = null;
 
@@ -32,7 +33,7 @@
 				throw new Error('Failed to initialize the Canvas');
 			}
 
-			canvas = new Canvas(element, context);
+			canvas = new Canvas(element, context, PUBLIC_API_ORIGIN);
 			canvas.fetchPixels();
 		}
 	});
