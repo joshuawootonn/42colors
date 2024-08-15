@@ -25,12 +25,14 @@
 	}
 </script>
 
-<div class="flex fixed">
-	<h1 class="text-2xl font-bold">welcome to settlers of roy g biv</h1>
-	<!-- {#each initialColorOptions as color} -->
-	<!-- 	<input type="color" class="aspect-square w-4 h-4 border-0 border-red-700" value={color} /> -->
-	<!-- {/each} -->
+<div class="flex fixed top-3 left-3">
+	<h1 class="text-2xl font-bold">42colors</h1>
+</div>
+<!-- {#each initialColorOptions as color} -->
+<!-- 	<input type="color" class="aspect-square w-4 h-4 border-0 border-red-700" value={color} /> -->
+<!-- {/each} -->
 
+<div class="flex fixed top-3 right-3">
 	{#if canvas != null}
 		<Toolbar mode={canvas.mode} {setMode} />
 	{/if}
