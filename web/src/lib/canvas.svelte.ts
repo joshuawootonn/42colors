@@ -1,3 +1,4 @@
+import { Channel, Socket } from 'phoenix';
 // place files you want to import through the `$lib` alias in this folder.
 
 export type Mode = 'pencil' | 'pan';
@@ -87,11 +88,14 @@ export class Canvas {
 	mode: 'pencil' | 'pan' = $state('pan');
 	camera: Camera = new Camera(0, 0, 1);
 	pixels: Pixel[] = initialPixels;
+	private socket: Socket;
+	private currentChannel: Channel;
 
 	constructor(
 		readonly canvas: HTMLCanvasElement,
 		readonly ctx: CanvasRenderingContext2D,
-		private readonly apiOrigin: string
+		private readonly apiOrigin: string,
+		private readonly apiWebsocketOrigin: string
 	) {
 		this.panTool = new PanTool(this);
 		this.pencilTool = new PencilTool(this);
@@ -101,6 +105,22 @@ export class Canvas {
 
 		this.draw();
 		canvas.addEventListener('pointerdown', this.onPointerDown);
+		this.socket = new Socket(new URL('/socket', this.apiWebsocketOrigin).href);
+		this.socket.connect();
+
+		this.currentChannel = this.socket.channel('region:general', {});
+		this.currentChannel
+			.join()
+			.receive('ok', (resp) => {
+				console.log('Joined successfully', resp);
+			})
+			.receive('error', (resp) => {
+				console.log('Unable to join', resp);
+			});
+
+		this.currentChannel.on('new_pixel', (payload: { body: Pixel }) => {
+			this.updatePixels(payload.body);
+		});
 	}
 
 	cleanUp() {
@@ -121,22 +141,13 @@ export class Canvas {
 		});
 	}
 
+	updatePixels(pixel: Pixel) {
+		this.pixels.push(pixel);
+	}
+
 	pushPixel(pixel: Pixel) {
 		this.pixels.push(pixel);
-		fetch(new URL('/api/pixels', this.apiOrigin), {
-			method: 'post',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				pixel
-			})
-		}).then(async (res) => {
-			const json = await res.json();
-
-			if (!res.ok) {
-				console.error(json);
-				return;
-			}
-		});
+		this.currentChannel.push('new_pixel', { body: pixel });
 	}
 
 	setMode(mode: Mode) {

@@ -2,27 +2,9 @@
 	import { onMount } from 'svelte';
 	import Toolbar from './toolbar.svelte';
 	import { Canvas, type Mode } from '$lib/canvas.svelte';
-	import { PUBLIC_API_ORIGIN } from '$env/static/public';
-
-	let htmlCanvas: HTMLCanvasElement | null = null;
-
-	let context: CanvasRenderingContext2D | null = null;
+	import { PUBLIC_API_ORIGIN, PUBLIC_API_WEBSOCKET_ORIGIN } from '$env/static/public';
 
 	let canvas: Canvas | null = null;
-
-	onMount(() => {
-		const element = document.getElementById('my-house');
-		if (element instanceof HTMLCanvasElement) {
-			context = element.getContext('2d');
-			htmlCanvas = element;
-		}
-	});
-
-	function randomHex() {
-		return '#' + (Math.random() * 1000000000000).toString(16).slice(0, 6);
-	}
-
-	const initialColorOptions = Array.from({ length: 32 }, randomHex);
 
 	onMount(() => {
 		const element = document.getElementById('my-house');
@@ -33,7 +15,7 @@
 				throw new Error('Failed to initialize the Canvas');
 			}
 
-			canvas = new Canvas(element, context, PUBLIC_API_ORIGIN);
+			canvas = new Canvas(element, context, PUBLIC_API_ORIGIN, PUBLIC_API_WEBSOCKET_ORIGIN);
 			canvas.fetchPixels();
 		}
 	});
