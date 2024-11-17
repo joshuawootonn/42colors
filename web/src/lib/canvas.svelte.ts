@@ -1,3 +1,4 @@
+import { parse } from 'cookie';
 import { Channel, Socket } from 'phoenix';
 // place files you want to import through the `$lib` alias in this folder.
 
@@ -126,6 +127,37 @@ export class Canvas {
 	cleanUp() {
 		this.canvas.removeEventListener('pointerdown', this.onPointerDown);
 		cancelAnimationFrame(this.rafId);
+	}
+
+	async fetchAuthURL() {
+		return fetch(new URL('/api/auth_url', this.apiOrigin)).then(async (res) => {
+			const json = await res.json();
+
+			if (!res.ok) {
+				console.error(json);
+				return;
+			}
+
+			return json.data.url;
+		});
+	}
+
+	async fetchAuthedUser() {
+		const token = parse(document.cookie)['token'] ?? null;
+		if (token == null) return;
+
+		return fetch(new URL('/api/me', this.apiOrigin), {
+			headers: { Authorization: `Bearer: ${token}` }
+		}).then(async (res) => {
+			const json = await res.json();
+
+			if (!res.ok) {
+				console.error(json);
+				return;
+			}
+
+			return json.data;
+		});
 	}
 
 	fetchPixels() {

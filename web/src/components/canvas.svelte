@@ -4,7 +4,10 @@
 	import { Canvas, type Mode } from '$lib/canvas.svelte';
 	import { PUBLIC_API_ORIGIN, PUBLIC_API_WEBSOCKET_ORIGIN } from '$env/static/public';
 
-	let canvas: Canvas | null = null;
+	let canvas = $state<Canvas | null>(null);
+
+	let myUser = $state<{ email: string; name: string } | null>(null);
+	let myAuthUrl = $state<string | null>(null);
 
 	onMount(() => {
 		const element = document.getElementById('my-house');
@@ -17,6 +20,8 @@
 
 			canvas = new Canvas(element, context, PUBLIC_API_ORIGIN, PUBLIC_API_WEBSOCKET_ORIGIN);
 			canvas.fetchPixels();
+			canvas.fetchAuthedUser().then((user) => (myUser = user));
+			canvas.fetchAuthURL().then((url) => (myAuthUrl = url));
 		}
 	});
 
@@ -35,6 +40,14 @@
 <div class="flex fixed top-3 right-3">
 	{#if canvas != null}
 		<Toolbar mode={canvas.mode} {setMode} />
+	{/if}
+</div>
+
+<div class="flex fixed bottom-3 right-3">
+	{#if myUser?.name != null}
+		{myUser.name}
+	{:else if myAuthUrl}
+		<a href={myAuthUrl}>login</a>
 	{/if}
 </div>
 
