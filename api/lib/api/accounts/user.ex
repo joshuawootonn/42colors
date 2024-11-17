@@ -9,6 +9,8 @@ defmodule Api.Accounts.User do
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
 
+    field :is_oauth_user, :boolean, default: false
+
     timestamps(type: :utc_datetime)
   end
 
@@ -157,5 +159,13 @@ defmodule Api.Accounts.User do
     else
       add_error(changeset, :current_password, "is not valid")
     end
+  end
+
+  def oauth_registration_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email, :first_name, :last_name])
+    |> validate_required([:first_name, :last_name, :email])
+    |> validate_email(opts)
+    |> put_change(:is_oauth_user, true)
   end
 end

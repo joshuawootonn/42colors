@@ -13,9 +13,11 @@ defmodule ApiWeb.Router do
     plug :fetch_current_user
   end
 
+  app_url = Application.compile_env(:api, :app_url)
+
   pipeline :api do
     plug :accepts, ["json"]
-    plug CORSPlug, origin: "http://localhost:5173"
+    plug CORSPlug, origin: app_url
   end
 
   scope "/", ApiWeb do
@@ -24,10 +26,21 @@ defmodule ApiWeb.Router do
     get "/", PageController, :home
   end
 
+  scope "/auth", ApiWeb do
+    pipe_through :browser
+
+    get "/google/callback", GoogleAuthController, :index
+    # get "/", GoogleAuthController, :auth
+  end
+
   # Other scopes may use custom stacks.
   scope "/api", ApiWeb do
     pipe_through :api
     resources "/pixels", PixelController, except: [:new, :edit]
+
+    get "/me", MeController, :show
+
+    get "/auth_url", GoogleAuthController, :show
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
