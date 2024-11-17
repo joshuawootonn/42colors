@@ -28,7 +28,7 @@ function TrackPageView() {
   return null;
 }
 
-export default function Fathom() {
+export function Fathom() {
   return (
     <Suspense fallback={null}>
       <TrackPageView />

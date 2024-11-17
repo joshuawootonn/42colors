@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Fathom } from "@/components/fathom";
+import { Footer } from "@/components/footer";
+import Link from "next/link";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -29,9 +31,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <div className="flex fixed top-3 left-3">
+          <Link href="/">
+            <h1 className="text-2xl font-bold">42colors</h1>
+          </Link>
+        </div>
         {children}
 
         <Fathom />
+        <Footer />
       </body>
     </html>
   );

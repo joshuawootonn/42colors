@@ -41,10 +41,7 @@ export default function Home() {
     canvas?.setMode(mode);
   }
   return (
-    <div>
-      <div className="flex fixed top-3 left-3">
-        <h1 className="text-2xl font-bold">42colors</h1>
-      </div>
+    <>
       {/* <!-- {#each initialColorOptions as color} --> */}
       {/* <!-- 	<input type="color" class="aspect-square w-4 h-4 border-0 border-red-700" value={color} /> --> */}
       {/* <!-- {/each} --> */}
@@ -62,6 +59,6 @@ export default function Home() {
       </div>
 
       <canvas id="my-house" height="100vh" width="100vw"></canvas>
-    </div>
+    </>
   );
 }
