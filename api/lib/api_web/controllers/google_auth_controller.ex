@@ -17,7 +17,8 @@ defmodule ApiWeb.GoogleAuthController do
   end
 
   def show(conn, _params) do
-    url = ElixirAuthGoogle.generate_oauth_url(conn)
+    api_url = Application.get_env(:api, :api_url)
+    url = ElixirAuthGoogle.generate_oauth_url(api_url)
 
     render(conn, :show, url: url)
   end
