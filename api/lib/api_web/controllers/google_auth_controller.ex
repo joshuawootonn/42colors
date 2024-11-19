@@ -10,7 +10,10 @@ defmodule ApiWeb.GoogleAuthController do
 
     conn = put_resp_cookie(conn, "token", token.access_token, http_only: false)
 
-    redirect(conn, external: System.get_env("APP_URL"))
+    app_url = Application.get_env(:api, :app_url)
+    Logger.info(">> Login successful redirecting to #{app_url}")
+
+    redirect(conn, external: app_url)
   end
 
   def show(conn, _params) do

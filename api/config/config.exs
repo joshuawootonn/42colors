@@ -61,9 +61,16 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+client_id = System.get_env("GOOGLE_CLIENT_ID")
+client_secret = System.get_env("GOOGLE_CLIENT_SECRET")
+# Google Auth Credentials
 config :elixir_auth_google,
   client_id: System.get_env("GOOGLE_CLIENT_ID"),
   client_secret: System.get_env("GOOGLE_CLIENT_SECRET")
+
+# Callback URL from Google Auth 
+app_url = System.get_env("APP_URL") || "https://42colors.com"
+config :api, :app_url, app_url
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
