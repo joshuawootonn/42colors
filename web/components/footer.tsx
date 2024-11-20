@@ -8,7 +8,7 @@ import {
 
 export function Footer() {
   return (
-    <footer className="fixed bottom-3 left-3 flex w-full flex-col items-center justify-between text-sm text-primary sm:flex-row">
+    <footer className="fixed bottom-3 left-3 flex w-min flex-col items-center justify-between text-sm text-primary sm:flex-row">
       <div className="mb-3 flex items-center justify-between space-x-3 sm:mb-0">
         <Link className="svg-outline relative no-underline" href="/changelog">
           changelog
