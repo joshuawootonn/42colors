@@ -6,11 +6,20 @@ defmodule ApiWeb.GoogleAuthController do
   `index/2` handles the callback from Google Auth API redirect.
   """
   def index(conn, %{"code" => code}) do
-    {:ok, token} = ElixirAuthGoogle.get_token(code, ApiWeb.Endpoint.url())
+    api_url = Application.get_env(:api, :api_url)
 
-    conn = put_resp_cookie(conn, "token", token.access_token, http_only: false)
+    Logger.info(">> Getting token with #{api_url}")
+
+    {:ok, token} = ElixirAuthGoogle.get_token(code, api_url)
 
     app_url = Application.get_env(:api, :app_url)
+
+    conn =
+      put_resp_cookie(conn, "token", token.access_token,
+        http_only: false,
+        domain: "42colors.com"
+      )
+
     Logger.info(">> Login successful redirecting to #{app_url}")
 
     redirect(conn, external: app_url)
