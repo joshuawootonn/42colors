@@ -42,6 +42,15 @@ export class PanTool {
       },
       { once: true },
     );
+
+    document.addEventListener(
+      "pointerout",
+      (e: PointerEvent) => {
+        pan(e);
+        this.canvas.canvas.removeEventListener("pointermove", pan);
+      },
+      { once: true },
+    );
   }
 }
 

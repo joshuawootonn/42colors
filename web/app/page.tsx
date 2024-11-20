@@ -2,7 +2,7 @@
 
 import { Toolbar } from "@/components/toolbar";
 import { CanvasProvider } from "@/components/use-canvas";
-import { Canvas, Mode } from "@/lib/canvas";
+import { Canvas } from "@/lib/canvas";
 import { useState, useEffect } from "react";
 
 export default function Home() {
