@@ -1,6 +1,7 @@
 "use client";
 
 import { Toolbar } from "@/components/toolbar";
+import { CanvasProvider } from "@/components/use-canvas";
 import { Canvas, Mode } from "@/lib/canvas";
 import { useState, useEffect } from "react";
 
@@ -37,28 +38,28 @@ export default function Home() {
     }
   }, []);
 
-  function setMode(mode: Mode) {
-    canvas?.setMode(mode);
-  }
   return (
     <>
-      {/* <!-- {#each initialColorOptions as color} --> */}
-      {/* <!-- 	<input type="color" class="aspect-square w-4 h-4 border-0 border-red-700" value={color} /> --> */}
-      {/* <!-- {/each} --> */}
-
-      <div className="flex fixed top-3 right-3">
-        {canvas && <Toolbar mode={canvas.mode} setMode={setMode} />}
-      </div>
-
-      <div className="flex fixed bottom-3 right-3">
-        {myUser?.name ? (
-          myUser.name
-        ) : myAuthUrl ? (
-          <a href={myAuthUrl}>login</a>
-        ) : null}
-      </div>
-
       <canvas id="my-house" height="100vh" width="100vw"></canvas>
+      {canvas && (
+        <CanvasProvider canvas={canvas}>
+          {/* <!-- {#each initialColorOptions as color} --> */}
+          {/* <!-- 	<input type="color" class="aspect-square w-4 h-4 border-0 border-red-700" value={color} /> --> */}
+          {/* <!-- {/each} --> */}
+
+          <div className="flex fixed top-3 right-3">
+            {canvas && <Toolbar />}
+          </div>
+
+          <div className="flex fixed bottom-3 right-3">
+            {myUser?.name ? (
+              myUser.name
+            ) : myAuthUrl ? (
+              <a href={myAuthUrl}>login</a>
+            ) : null}
+          </div>
+        </CanvasProvider>
+      )}
     </>
   );
 }

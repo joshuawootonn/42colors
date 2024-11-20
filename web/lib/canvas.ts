@@ -182,9 +182,28 @@ export class Canvas {
     this.currentChannel.push("new_pixel", { body: pixel });
   }
 
+  listeners = new Map<string, () => void>();
+
+  emitChange() {
+    this.listeners.forEach((listener) => {
+      listener();
+    });
+  }
+
+  subscribe = (id: string, listener: () => void): (() => void) => {
+    this.listeners.set(id, listener);
+
+    return () => this.listeners.delete(id);
+  };
+
+  getMode(): Mode {
+    return this.mode;
+  }
+
   setMode(mode: Mode) {
-    console.log(this, mode);
     this.mode = mode;
+
+    this.emitChange();
   }
 
   drawBoard() {

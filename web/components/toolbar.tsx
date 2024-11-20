@@ -1,10 +1,12 @@
-import { Mode } from "@/lib/canvas";
+import { useCanvas, useCanvasSubscription } from "./use-canvas";
 
-export function Toolbar(props: { setMode: (mode: Mode) => void; mode: Mode }) {
+export function Toolbar() {
+  const canvas = useCanvas();
+  const mode = useCanvasSubscription((canvas) => canvas.getMode(), []);
   return (
     <>
-      <div>{props.mode}</div>
-      <button onClick={() => props.setMode("pan")}>
+      <div>{mode}</div>
+      <button onClick={() => canvas.setMode("pan")}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -21,7 +23,7 @@ export function Toolbar(props: { setMode: (mode: Mode) => void; mode: Mode }) {
         </svg>
       </button>
 
-      <button onClick={() => props.setMode("pencil")}>
+      <button onClick={() => canvas.setMode("pencil")}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
