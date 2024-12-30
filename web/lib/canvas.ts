@@ -34,23 +34,18 @@ export class PanTool {
     };
 
     this.canvas.canvas.addEventListener("pointermove", pan);
-    this.canvas.canvas.addEventListener(
-      "pointerup",
-      (e: PointerEvent) => {
-        pan(e);
-        this.canvas.canvas.removeEventListener("pointermove", pan);
-      },
-      { once: true },
-    );
 
-    document.addEventListener(
-      "pointerout",
-      (e: PointerEvent) => {
-        pan(e);
-        this.canvas.canvas.removeEventListener("pointermove", pan);
-      },
-      { once: true },
-    );
+    const cleanUp = () => {
+      this.canvas.canvas.removeEventListener("pointermove", pan);
+    };
+
+    this.canvas.canvas.addEventListener("pointerup", cleanUp, {
+      once: true,
+    });
+
+    document.addEventListener("pointerout", cleanUp, {
+      once: true,
+    });
   }
 }
 
@@ -58,7 +53,6 @@ export class PencilTool {
   constructor(private readonly canvas: Canvas) {}
 
   onPointerDown() {
-    console.log("pencil onPointerDown");
     const draw = (e: PointerEvent) => {
       const camera = this.canvas.camera;
 
@@ -69,14 +63,18 @@ export class PencilTool {
     };
 
     this.canvas.canvas.addEventListener("pointermove", draw);
-    this.canvas.canvas.addEventListener(
-      "pointerup",
-      (e: PointerEvent) => {
-        draw(e);
-        this.canvas.canvas.removeEventListener("pointermove", draw);
-      },
-      { once: true },
-    );
+
+    const cleanUp = () => {
+      this.canvas.canvas.removeEventListener("pointermove", draw);
+    };
+
+    this.canvas.canvas.addEventListener("pointerup", cleanUp, {
+      once: true,
+    });
+
+    document.addEventListener("pointerout", cleanUp, {
+      once: true,
+    });
   }
 }
 
