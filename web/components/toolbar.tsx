@@ -1,44 +1,76 @@
+import { ComponentPropsWithoutRef } from "react";
 import { useCanvas, useCanvasSubscription } from "./use-canvas";
+import { cn } from "@/lib/utils";
+
+function IconButton({
+  children,
+  active,
+  ...props
+}: ComponentPropsWithoutRef<"button"> & { active: boolean }) {
+  return (
+    <button
+      {...props}
+      className={cn(
+        "group flex justify-center items-center bg-white size-8 border-2 border-transparent border-dashed",
+
+        "focus-visible:border-black outline-none rounded-none",
+        "active:bg-black active:text-white active:focus-visible:border-white",
+        active && "bg-black text-white focus-visible:border-white",
+      )}
+    >
+      <div>{children}</div>
+    </button>
+  );
+}
 
 export function Toolbar() {
   const canvas = useCanvas();
   const mode = useCanvasSubscription((canvas) => canvas.getMode(), []);
   return (
-    <>
-      <div>{mode}</div>
-      <button onClick={() => canvas.setMode("pan")}>
+    <div
+      className={cn(
+        "bg-black gap-0.5 p-0.5 grid grid-cols-2",
+        "border-l-black border-l border-b-black border-b",
+      )}
+    >
+      <IconButton active={mode === "pan"} onClick={() => canvas.setMode("pan")}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          fill="none"
+          width="20"
+          height="20"
           viewBox="0 0 24 24"
-          strokeWidth="1.5"
+          fill="none"
           stroke="currentColor"
-          className="size-6"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M10.05 4.575a1.575 1.575 0 1 0-3.15 0v3m3.15-3v-1.5a1.575 1.575 0 0 1 3.15 0v1.5m-3.15 0 .075 5.925m3.075.75V4.575m0 0a1.575 1.575 0 0 1 3.15 0V15M6.9 7.575a1.575 1.575 0 1 0-3.15 0v8.175a6.75 6.75 0 0 0 6.75 6.75h2.018a5.25 5.25 0 0 0 3.712-1.538l1.732-1.732a5.25 5.25 0 0 0 1.538-3.712l.003-2.024a.668.668 0 0 1 .198-.471 1.575 1.575 0 1 0-2.228-2.228 3.818 3.818 0 0 0-1.12 2.687M6.9 7.575V12m6.27 4.318A4.49 4.49 0 0 1 16.35 15m.002 0h-.002"
-          />
-        </svg>
-      </button>
+          <path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2" />
+          <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2" />
+          <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8" />
+          <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+        </svg>{" "}
+      </IconButton>
 
-      <button onClick={() => canvas.setMode("pencil")}>
+      <IconButton
+        active={mode === "pencil"}
+        onClick={() => canvas.setMode("pencil")}
+      >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          fill="none"
+          width="20"
+          height="20"
           viewBox="0 0 24 24"
-          strokeWidth="1.5"
+          fill="none"
           stroke="currentColor"
-          className="size-6"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
-          />
+          <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+          <path d="m15 5 4 4" />
         </svg>
-      </button>
-    </>
+      </IconButton>
+    </div>
   );
 }

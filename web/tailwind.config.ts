@@ -11,6 +11,9 @@ export default {
   ],
   theme: {
     extend: {
+      spacing: {
+        "6.5": "1.625rem",
+      },
       fontFamily: {
         sans: ["var(--font-lexend-deca)", ...defaultTheme.fontFamily.sans],
         mono: ["var(--geist-mono)", ...defaultTheme.fontFamily.mono],
