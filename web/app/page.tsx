@@ -1,8 +1,12 @@
 "use client";
 
 import { Toolbar } from "@/components/toolbar";
-import { CanvasProvider } from "@/components/use-canvas";
+import {
+  CanvasProvider,
+  useLocalCanvasSubscription,
+} from "@/components/use-canvas";
 import { Canvas } from "@/lib/canvas";
+import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
 export default function Home() {
@@ -38,9 +42,31 @@ export default function Home() {
     }
   }, []);
 
+  const pointerState = useLocalCanvasSubscription(
+    canvas,
+    (canvas) => canvas.getPointerState(),
+    [],
+  );
+
+  const mode = useLocalCanvasSubscription(
+    canvas,
+    (canvas) => canvas.getMode(),
+    [],
+  );
+
+  const isInPanMode = mode === "pan";
+  const isPanning = mode === "pan" && pointerState === "pressed";
+
   return (
     <>
-      <canvas id="my-house" height="100vh" width="100vw"></canvas>
+      <canvas
+        id="my-house"
+        className={cn(
+          isInPanMode ? (isPanning ? "cursor-grabbing" : "cursor-grab") : null,
+        )}
+        height="100vh"
+        width="100vw"
+      ></canvas>
       {canvas && (
         <CanvasProvider canvas={canvas}>
           {/* <!-- {#each initialColorOptions as color} --> */}

@@ -3,6 +3,7 @@ import { Channel, Socket } from "phoenix";
 // place files you want to import through the `$lib` alias in this folder.
 
 export type Mode = "pencil" | "pan";
+export type PointerState = "default" | "pressed";
 
 export enum State {
   Initializing = "initializing",
@@ -93,7 +94,8 @@ export class Canvas {
   private rafId: number = 0;
   private panTool: PanTool;
   private pencilTool: PencilTool;
-  mode: "pencil" | "pan" = "pan";
+  private mode: Mode = "pan";
+  private pointerState: PointerState = "default";
   camera: Camera = new Camera(0, 0, 1);
   pixels: Pixel[] = initialPixels;
   private socket: Socket;
@@ -110,9 +112,13 @@ export class Canvas {
 
     this.draw = this.draw.bind(this);
     this.onPointerDown = this.onPointerDown.bind(this);
+    this.onPointerUp = this.onPointerUp.bind(this);
+    this.onPointerOut = this.onPointerOut.bind(this);
 
     this.draw();
     canvas.addEventListener("pointerdown", this.onPointerDown);
+    canvas.addEventListener("pointerup", this.onPointerUp);
+    canvas.addEventListener("pointerout", this.onPointerOut);
     this.socket = new Socket(new URL("/socket", this.apiWebsocketOrigin).href);
     this.socket.connect();
 
@@ -133,6 +139,8 @@ export class Canvas {
 
   cleanUp() {
     this.canvas.removeEventListener("pointerdown", this.onPointerDown);
+    this.canvas.removeEventListener("pointerup", this.onPointerUp);
+    this.canvas.removeEventListener("pointerout", this.onPointerOut);
     cancelAnimationFrame(this.rafId);
   }
 
@@ -213,6 +221,16 @@ export class Canvas {
     this.emitChange();
   }
 
+  getPointerState(): PointerState {
+    return this.pointerState;
+  }
+
+  setPointerState(state: PointerState) {
+    this.pointerState = state;
+
+    this.emitChange();
+  }
+
   drawBoard() {
     const buffer = 100;
     const cameraX = this.camera.x;
@@ -262,9 +280,18 @@ export class Canvas {
     this.rafId = requestAnimationFrame(this.draw);
   }
 
-  onPointerDown(e: PointerEvent) {
-    const mode = this.mode;
+  onPointerOut() {
+    this.setPointerState("default");
+  }
 
+  onPointerUp() {
+    this.setPointerState("default");
+  }
+
+  onPointerDown(e: PointerEvent) {
+    this.setPointerState("pressed");
+
+    const mode = this.mode;
     switch (mode) {
       case "pencil":
         this.pencilTool.onPointerDown();

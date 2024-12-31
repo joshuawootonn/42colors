@@ -1,5 +1,5 @@
 import { ComponentPropsWithoutRef } from "react";
-import { useCanvas, useCanvasSubscription } from "./use-canvas";
+import { useCanvas, useContextCanvasSubscription } from "./use-canvas";
 import { cn } from "@/lib/utils";
 
 function IconButton({
@@ -25,7 +25,7 @@ function IconButton({
 
 export function Toolbar() {
   const canvas = useCanvas();
-  const mode = useCanvasSubscription((canvas) => canvas.getMode(), []);
+  const mode = useContextCanvasSubscription((canvas) => canvas.getMode(), []);
   return (
     <div
       className={cn(

@@ -35,14 +35,14 @@ export function useCanvas(): Canvas {
   return builder;
 }
 
-export function useCanvasSubscription<T>(
+export function useContextCanvasSubscription<T>(
   getCurrentValue: (builder: Canvas) => T,
   deps: DependencyList,
 ): T {
+  const canvas = useCanvas();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const memoizedGetCurrentValue = useMemo(() => getCurrentValue, deps);
   const id = useId();
-  const canvas = useCanvas();
 
   const getSnapshot = useCallback(
     () => memoizedGetCurrentValue(canvas),
@@ -66,4 +66,41 @@ export function useCanvasSubscription<T>(
   );
 
   return useSyncExternalStore(subscribe, getSnapshot);
+}
+
+export function useLocalCanvasSubscription<T>(
+  canvas: Canvas | null,
+  getCurrentValue: (builder: Canvas) => T,
+  deps: DependencyList,
+): T | null {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const memoizedGetCurrentValue = useMemo(() => getCurrentValue, deps);
+  const id = useId();
+
+  const getSnapshot = useCallback(
+    () => (canvas == null ? null : memoizedGetCurrentValue(canvas)),
+    [canvas, memoizedGetCurrentValue],
+  );
+
+  const getServerSnapshot = useCallback(() => null, []);
+
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      if (canvas == null) return () => null;
+
+      let lastValue = memoizedGetCurrentValue(canvas);
+
+      return canvas.subscribe(id, () => {
+        const nextValue = memoizedGetCurrentValue(canvas);
+        if (!Object.is(lastValue, nextValue)) {
+          lastValue = nextValue;
+
+          callback();
+        }
+      });
+    },
+    [canvas, id, memoizedGetCurrentValue],
+  );
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
