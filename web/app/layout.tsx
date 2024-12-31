@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Lexend_Deca } from "next/font/google";
 import "./globals.css";
 import { Fathom } from "@/components/fathom";
 import { Footer } from "@/components/footer";
 import Link from "next/link";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+const lexendDeca = Lexend_Deca({
+  variable: "--font-lexend-deca",
+  subsets: ["latin"],
 });
+
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
@@ -29,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${lexendDeca.variable} ${geistMono.variable} antialiased font-sans`}
       >
         <div className="flex fixed top-3 left-3">
           <Link href="/">
