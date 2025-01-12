@@ -23,8 +23,10 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({
+  left,
   children,
 }: Readonly<{
+  left: React.ReactNode;
   children: React.ReactNode;
 }>) {
   return (
@@ -37,6 +39,7 @@ export default function RootLayout({
             <h1 className="text-2xl font-bold">42colors</h1>
           </Link>
         </div>
+        {left}
         {children}
 
         <Fathom />

@@ -9,7 +9,7 @@ import { Canvas } from "@/lib/canvas";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
-export default function Home() {
+export default function Page() {
   const [canvas, setCanvas] = useState<Canvas | null>(null);
 
   const [myUser, setMyUser] = useState<{ email: string; name: string } | null>(
