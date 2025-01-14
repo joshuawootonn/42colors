@@ -13,10 +13,11 @@ defmodule ApiWeb.GoogleAuthController do
     {:ok, token} = ElixirAuthGoogle.get_token(code, api_url)
 
     app_url = Application.get_env(:api, :app_url)
+    env = Application.get_env(:api, :env)
 
-    domain = if Mix.env() == :dev, do: nil, else: "42colors.com"
+    domain = if env == "dev", do: nil, else: "42colors.com"
 
-    Logger.info(">> Returning token with domain: #{domain} based on env: #{Mix.env()}")
+    Logger.info(">> Returning token with domain: #{domain} based on env: #{env}")
 
     conn =
       put_resp_cookie(conn, "token", token.access_token,

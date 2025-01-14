@@ -54,10 +54,12 @@ if config_env() == :prod do
 
   app_url = System.get_env("APP_URL") || "https://42colors.com"
   api_url = System.get_env("API_URL") || "https://api.42colors.com"
+  env = System.get_env("ENV") || "prod"
 
   config :api, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
   config :api, :app_url, app_url
   config :api, :api_url, api_url
+  config :api, :env, env
 
   config :api, ApiWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],

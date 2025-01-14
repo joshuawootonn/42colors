@@ -36,4 +36,5 @@ npm-debug.log
 /assets/node_modules/
 
 .env.local
+.env.*
 /.exlixir_ls/

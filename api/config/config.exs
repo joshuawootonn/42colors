@@ -71,9 +71,11 @@ config :elixir_auth_google,
 # Callback URL from Google Auth 
 app_url = System.get_env("APP_URL") || "https://42colors.com"
 api_url = System.get_env("API_URL") || "https://api.42colors.com"
+env = System.get_env("ENV") || "prod"
 
 config :api, :app_url, app_url
 config :api, :api_url, api_url
+config :api, :env, env
 
 require Logger
 Logger.info("Config loaded with #{app_url} / #{api_url} / #{client_secret} / #{client_id}")
