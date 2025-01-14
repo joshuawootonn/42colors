@@ -14,10 +14,14 @@ defmodule ApiWeb.GoogleAuthController do
 
     app_url = Application.get_env(:api, :app_url)
 
+    domain = if Mix.env() == :dev, do: nil, else: "42colors.com"
+
+    Logger.info(">> Returning token with domain: #{domain} based on env: #{Mix.env()}")
+
     conn =
       put_resp_cookie(conn, "token", token.access_token,
         http_only: false,
-        domain: "42colors.com"
+        domain: domain
       )
 
     Logger.info(">> Login successful redirecting to #{app_url}")
