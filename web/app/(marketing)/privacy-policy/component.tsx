@@ -14,7 +14,7 @@ export function PrivacyPolicy() {
         <ul>
           <li>Email</li>
           <li>First and last name</li>
-          <li>Passages you have typed</li>
+          <li>Pixels you have drawn</li>
         </ul>
       </div>
       <H2>how will 42colors use your data?</H2>
