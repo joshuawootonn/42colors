@@ -5,6 +5,7 @@ import "./globals.css";
 import { Fathom } from "@/components/fathom";
 import { Footer } from "@/components/footer";
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 
 const lexendDeca = Lexend_Deca({
   variable: "--font-lexend-deca",
@@ -36,7 +37,9 @@ export default function RootLayout({
       >
         <div className="flex fixed top-3 left-3">
           <Link href="/">
-            <h1 className="text-2xl font-bold">42colors</h1>
+            <h1 className="text-2xl font-bold flex gap-2">
+              <Logo />
+            </h1>
           </Link>
         </div>
         {left}
