@@ -4,11 +4,11 @@ defmodule Api.Accounts.User do
 
   schema "users" do
     field :email, :string
+    field :name, :string
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
-
     field :is_oauth_user, :boolean, default: false
 
     timestamps(type: :utc_datetime)
@@ -163,8 +163,8 @@ defmodule Api.Accounts.User do
 
   def oauth_registration_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email, :first_name, :last_name])
-    |> validate_required([:first_name, :last_name, :email])
+    |> cast(attrs, [:email, :name])
+    |> validate_required([:email, :name])
     |> validate_email(opts)
     |> put_change(:is_oauth_user, true)
   end

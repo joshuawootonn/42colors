@@ -353,7 +353,10 @@ defmodule Api.Accounts do
 
   def register_oauth_user(attrs) do
     %User{}
-    |> User.oauth_registration_changeset(attrs)
-    |> Repo.insert()
+    |> User.oauth_registration_changeset(attrs, validate_email: false)
+    |> Repo.insert(
+      on_conflict: {:replace_all_except, [:id, :inserted_at]},
+      conflict_target: [:email]
+    )
   end
 end
