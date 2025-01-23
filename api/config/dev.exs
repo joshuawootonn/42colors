@@ -6,6 +6,7 @@ config :api, Api.Repo,
   password: "postgres",
   hostname: "localhost",
   database: "42_colors",
+  port: 5434,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
