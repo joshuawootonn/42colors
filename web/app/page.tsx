@@ -6,7 +6,7 @@ import {
   useLocalCanvasSubscription,
 } from "@/components/use-canvas";
 import { Canvas } from "@/lib/canvas";
-import { cn } from "@/lib/utils";
+import { cn, deleteCookie } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
 export default function Page() {
@@ -77,12 +77,25 @@ export default function Page() {
             {canvas && <Toolbar />}
           </div>
 
-          <div className="flex fixed bottom-3 right-3">
+          <div className="flex fixed bottom-3 right-3 space-x-3">
             {myUser?.name ? (
-              myUser.name
+              <div>{myUser.name}</div>
             ) : myAuthUrl ? (
               <a href={myAuthUrl}>login</a>
             ) : null}
+            {myUser != null && (
+              <>
+                <div>/</div>
+                <button
+                  onClick={() => {
+                    deleteCookie("token");
+                    setMyUser(null);
+                  }}
+                >
+                  logout
+                </button>
+              </>
+            )}
           </div>
         </CanvasProvider>
       )}
