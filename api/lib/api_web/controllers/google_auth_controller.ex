@@ -1,6 +1,8 @@
 defmodule ApiWeb.GoogleAuthController do
+  alias Api.Accounts
   require Logger
   use ApiWeb, :controller
+  alias Api.Accounts
 
   @doc """
   `index/2` handles the callback from Google Auth API redirect.
@@ -11,6 +13,32 @@ defmodule ApiWeb.GoogleAuthController do
     Logger.info(">> Getting token with #{api_url}")
 
     {:ok, token} = ElixirAuthGoogle.get_token(code, api_url)
+    {:ok, user_profile} = ElixirAuthGoogle.get_user_profile(token.access_token)
+
+    IO.inspect(token)
+
+    # IO.inspect(%{
+    #   email: user_profile.email,
+    #   first_name: user_profile.given_name,
+    #   last_name: user_profile.family_name
+    # })
+
+    # Logger.info(">> #{user_profile}")
+
+    Accounts.register_oauth_user(%{
+      email: user_profile.email,
+      name: user_profile.name
+    })
+
+    # Accounts.insert_oauth_token(token)
+    Accounts.insert_oauth_token(Map.merge(token, %{user_id: 2}))
+
+    # user = createOrUpdateUser 
+    # storeTokenInUserToken
+
+    # Store this thing in db
+    #
+    # Store the user in the session
 
     app_url = Application.get_env(:api, :app_url)
     env = Application.get_env(:api, :env)

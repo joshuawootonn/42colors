@@ -2,11 +2,11 @@ defmodule ApiWeb.MeJSON do
   @doc """
   Renders a the authed user
   """
-  def show(profile) do
+  def show(user) do
     %{
       data: %{
-        name: profile.profile.name,
-        email: profile.profile.email
+        name: user.name,
+        email: user.email
       }
     }
   end

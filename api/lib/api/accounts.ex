@@ -7,6 +7,7 @@ defmodule Api.Accounts do
   alias Api.Repo
 
   alias Api.Accounts.{User}
+  alias Api.{Account}
 
   ## Database getters
 
@@ -49,6 +50,19 @@ defmodule Api.Accounts do
       on_conflict: {:replace_all_except, [:id, :inserted_at]},
       conflict_target: [:email]
     )
+  end
+
+  def insert_oauth_token(attrs) do
+    %Account{}
+    |> Account.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def get_user_by_token(token) do
+    current_time = DateTime.utc_now()
+    one_hour_ago = DateTime.add(current_time, -3600)
+
+    Repo.one(from a in Account, where: a.updated_at >= ^one_hour_ago and a.access_token == ^token)
   end
 
   # def get_user_by_token(token) do
