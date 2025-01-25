@@ -6,6 +6,7 @@ import { Fathom } from "@/components/fathom";
 import { Footer } from "@/components/footer";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { WipNotice } from "@/components/wip-notice";
 
 const lexendDeca = Lexend_Deca({
   variable: "--font-lexend-deca",
@@ -47,6 +48,7 @@ export default function RootLayout({
 
         <Fathom />
         <Footer />
+        <WipNotice />
       </body>
     </html>
   );
