@@ -14,13 +14,8 @@ defmodule ApiWeb.PixelProtobufController do
         end)
     }
 
-    IO.inspect(formatted_pixels)
-
     binary_pixels = Pixels.encode(formatted_pixels)
     and_back = Pixels.decode(binary_pixels)
-
-    IO.inspect(and_back)
-    # render(conn, :index, pixels: pixels)
 
     conn
     |> put_resp_content_type("application/octet-stream")
