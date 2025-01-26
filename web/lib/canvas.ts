@@ -1,5 +1,6 @@
 import { parse } from "cookie";
 import { Channel, Socket } from "phoenix";
+import protobuf from "protobufjs";
 // place files you want to import through the `$lib` alias in this folder.
 
 export type Mode = "pencil" | "pan";
@@ -185,6 +186,32 @@ export class Canvas {
       }
 
       this.pixels = json.data;
+    });
+
+    fetch(new URL("/api/pixels2", this.apiOrigin)).then(async (res) => {
+      const payload = await res.bytes();
+      protobuf.load("/pixels.proto", function (err, root) {
+        if (err) throw err;
+
+        if (root == null) {
+          console.warn("root is undefined");
+          return;
+        }
+
+        const Pixels = root.lookupType("Pixels");
+
+        const errMsg = Pixels.verify(payload);
+        if (errMsg) throw Error(errMsg);
+
+        const message = Pixels.decode(payload);
+        const object = Pixels.toObject(message, {
+          longs: String,
+          enums: String,
+          bytes: String,
+        });
+
+        console.log({ object, message });
+      });
     });
   }
 

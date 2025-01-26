@@ -61,7 +61,8 @@ defmodule Api.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:cors_plug, "~> 3.0"},
-      {:elixir_auth_google, "~> 1.6.9"}
+      {:elixir_auth_google, "~> 1.6.9"},
+      {:protobuf, "~> 0.14.0"}
     ]
   end
 

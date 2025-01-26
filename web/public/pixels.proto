@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+
+message Pixel {
+    sint32 x = 1;      // X coordinate of the pixel
+    sint32 y = 2;      // Y coordinate of the pixel
+    uint32 color = 3;  // Color of the pixel (could represent a color in ARGB format, for example)
+    uint32 id = 4;     // Unique identifier for the pixel
+}
+
+message Pixels {
+    repeated Pixel pixels = 1; // A list of Pixel objects
+}
