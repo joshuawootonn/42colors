@@ -177,20 +177,9 @@ export class Canvas {
   }
 
   fetchPixels() {
-    fetch(new URL("/api/pixels", this.apiOrigin)).then(async (res) => {
-      const json = await res.json();
-
-      if (!res.ok) {
-        console.error(json);
-        return;
-      }
-
-      this.pixels = json.data;
-    });
-
     fetch(new URL("/api/pixels2", this.apiOrigin)).then(async (res) => {
       const payload = await res.bytes();
-      protobuf.load("/pixels.proto", function (err, root) {
+      protobuf.load("/pixels.proto", (err, root) => {
         if (err) throw err;
 
         if (root == null) {
@@ -210,7 +199,7 @@ export class Canvas {
           bytes: String,
         });
 
-        console.log({ object, message });
+        this.pixels = object.pixels;
       });
     });
   }
