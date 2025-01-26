@@ -15,7 +15,6 @@ defmodule ApiWeb.PixelProtobufController do
     }
 
     binary_pixels = Pixels.encode(formatted_pixels)
-    and_back = Pixels.decode(binary_pixels)
 
     conn
     |> put_resp_content_type("application/octet-stream")
