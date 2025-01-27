@@ -178,7 +178,8 @@ export class Canvas {
 
   fetchPixels() {
     fetch(new URL("/api/pixels2", this.apiOrigin)).then(async (res) => {
-      const payload = await res.bytes();
+      const payload = await res.arrayBuffer();
+      const array = new Uint8Array(payload);
       protobuf.load("/pixels.proto", (err, root) => {
         if (err) throw err;
 
@@ -192,7 +193,7 @@ export class Canvas {
         const errMsg = Pixels.verify(payload);
         if (errMsg) throw Error(errMsg);
 
-        const message = Pixels.decode(payload);
+        const message = Pixels.decode(array);
         const object = Pixels.toObject(message, {
           longs: String,
           enums: String,
