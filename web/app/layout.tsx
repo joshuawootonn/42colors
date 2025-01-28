@@ -4,9 +4,11 @@ import { Lexend_Deca } from "next/font/google";
 import "./globals.css";
 import { Fathom } from "@/components/fathom";
 import { Footer } from "@/components/footer";
-import Link from "next/link";
-import { Logo } from "@/components/logo";
-import { WipNotice } from "@/components/wip-notice";
+import { Mark } from "@/components/mark";
+import { Intro } from "@/components/intro";
+import { Link } from "@/components/link";
+import { INTRO_SEEN } from "@/lib/cookies";
+import { cookies } from "next/headers";
 
 const lexendDeca = Lexend_Deca({
   variable: "--font-lexend-deca",
@@ -24,31 +26,33 @@ export const metadata: Metadata = {
   description: "....",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   left,
   children,
 }: Readonly<{
   left: React.ReactNode;
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get(INTRO_SEEN)?.value !== "true";
   return (
     <html lang="en">
       <body
         className={`${lexendDeca.variable} ${geistMono.variable} antialiased font-sans`}
       >
         <div className="flex fixed top-3 left-3">
-          <Link href="/">
-            <h1 className="text-2xl font-bold flex gap-2">
-              <Logo />
-            </h1>
-          </Link>
+          <h1 className="text-2xl font-bold flex gap-2">
+            <Link href="/">
+              <Mark />
+            </Link>
+          </h1>
         </div>
         {left}
         {children}
 
         <Fathom />
         <Footer />
-        <WipNotice />
+        <Intro defaultOpen={defaultOpen} />
       </body>
     </html>
   );

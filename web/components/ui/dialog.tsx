@@ -21,10 +21,7 @@ const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn(
-      "fixed inset-0 z-50 bg-black/15 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className,
-    )}
+    className={cn("fixed inset-0 z-50 bg-black/5", className)}
     {...props}
   />
 ));
@@ -53,8 +50,10 @@ const DialogContent = React.forwardRef<
     >
       <DialogContext.Provider value={true}>
         <div className="w-full overflow-y-auto p-4">{children}</div>
-        <DialogPrimitive.Close className="z-10 absolute right-1 top-1 translate-x-1/2 -translate-y-1/2 bg-white border-2 border-primary disabled:pointer-events-none focus-visible:border-dashed outline-none">
-          <X strokeWidth={2} strokeLinecap="square" />
+        <DialogPrimitive.Close className="z-10 absolute right-1 top-1 translate-x-1/2 -translate-y-1/2 bg-white border-2 border-primary disabled:pointer-events-none svg-outline">
+          <div className="relative">
+            <X strokeWidth={2} strokeLinecap="square" />
+          </div>
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
       </DialogContext.Provider>
@@ -97,10 +96,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn(
-      "text-lg font-semibold leading-none tracking-tight",
-      className,
-    )}
+    className={cn("font-semibold leading-none tracking-tight", className)}
     {...props}
   />
 ));
