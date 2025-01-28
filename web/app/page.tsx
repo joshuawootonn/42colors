@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@/components/link";
 import { Toolbar } from "@/components/toolbar";
 import {
   CanvasProvider,
@@ -81,7 +82,7 @@ export default function Page() {
             {myUser?.name ? (
               <div>{myUser.name}</div>
             ) : myAuthUrl ? (
-              <a href={myAuthUrl}>login</a>
+              <Link href={myAuthUrl}>login</Link>
             ) : null}
             {myUser != null && (
               <>
