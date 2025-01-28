@@ -27,7 +27,7 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem
+    --radius: 0.5rem;
   }
   .dark {
     --background: 224 71.4% 4.1%;
@@ -53,7 +53,7 @@
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%
+    --chart-5: 340 75% 55%;
   }
 }
 @layer base {
@@ -63,4 +63,49 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* focus-within is required because inputs have no content, and `:before` is prepended to content.*/
+.svg-outline:focus,
+.svg-outline-sm:focus,
+.svg-outline-within:focus-within * {
+  @apply outline-none;
+}
+
+.svg-outline-within:focus-within:before {
+  @apply -inset-2;
+  content: " ";
+  background-color: black;
+  -webkit-mask-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" %3E%3Crect x="0" y="0" width="100%25" height="100%25" stroke-width="4" stroke="black" fill="transparent" stroke-dasharray="6 5" /%3E%3C/svg%3E');
+  mask-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" %3E%3Crect x="0" y="0" width="100%25" height="100%25" stroke-width="4" stroke="black" fill="transparent" stroke-dasharray="6 5" /%3E%3C/svg%3E');
+  position: absolute;
+}
+
+.svg-outline-override,
+.svg-outline:focus:before,
+.svg-outline-sm:focus:before,
+.svg-outline-xs:focus:before,
+.svg-outline-stubby:focus:before {
+  @apply -inset-2;
+  content: " ";
+  background-color: black;
+  -webkit-mask-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" %3E%3Crect x="0" y="0" width="100%25" height="100%25" stroke-width="4" stroke="black" fill="transparent" stroke-dasharray="6 5" /%3E%3C/svg%3E');
+  mask-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" %3E%3Crect x="0" y="0" width="100%25" height="100%25" stroke-width="4" stroke="black" fill="transparent" stroke-dasharray="6 5" /%3E%3C/svg%3E');
+  position: absolute;
+}
+
+.svg-outline-sm:focus:before {
+  @apply -inset-1;
+}
+
+.svg-outline-xs:focus:before {
+  @apply inset-0;
+}
+
+.svg-outline-stubby:focus:before {
+  @apply -bottom-0.5 -left-3 -right-3 -top-0.5;
+
+  background-color: black;
+  -webkit-mask-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" %3E%3Crect x="0" y="0" width="100%25" height="100%25" stroke-width="4" stroke="var(--color-primary)" fill="transparent" stroke-dasharray="6 5" /%3E%3C/svg%3E');
+  mask-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" %3E%3Crect x="0" y="0" width="100%25" height="100%25" stroke-width="4" stroke="black" fill="transparent" stroke-dasharray="6 5" /%3E%3C/svg%3E');
 }
