@@ -1,89 +1,21 @@
-export function Logo() {
-  return (
-    <svg
-      width="65"
-      height="40"
-      viewBox="0 0 65 40"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <g id="Logo">
-        <g id="o1">
-          <rect id="Rectangle 529" x="45" width="15" height="5" fill="black" />
-          <rect
-            id="Rectangle 516"
-            x="60"
-            y="5"
-            width="5"
-            height="20"
-            fill="black"
-          />
-          <rect
-            id="Rectangle 518"
-            x="40"
-            y="5"
-            width="5"
-            height="20"
-            fill="black"
-          />
-          <rect
-            id="Rectangle 537"
-            width="15"
-            height="5"
-            transform="matrix(1 0 0 -1 45 30)"
-            fill="black"
-          />
-        </g>
-        <g id="l">
-          <rect id="Rectangle 525" x="30" width="5" height="40" fill="black" />
-          <rect
-            id="Rectangle 539"
-            width="20"
-            height="5"
-            transform="matrix(1 0 0 -1 30 40)"
-            fill="black"
-          />
-        </g>
-        <g id="o2">
-          <rect
-            id="Rectangle 517"
-            x="20"
-            y="10"
-            width="5"
-            height="20"
-            fill="black"
-          />
-          <rect id="Rectangle 519" y="10" width="5" height="20" fill="black" />
-          <rect
-            id="Rectangle 530"
-            x="5"
-            y="5"
-            width="15"
-            height="5"
-            fill="black"
-          />
-          <rect
-            id="Rectangle 538"
-            width="15"
-            height="5"
-            transform="matrix(1 0 0 -1 5 35)"
-            fill="black"
-          />
-        </g>
-      </g>
-    </svg>
-  );
+import { ComponentPropsWithoutRef } from "react";
 
+export function Logo({
+  className,
+  height = 40,
+  ...props
+}: ComponentPropsWithoutRef<"svg">) {
   return (
     <svg
-      width="227"
-      height="40"
-      viewBox="0 0 227 40"
+      height={height}
+      viewBox="0 0 226 40"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      {...props}
     >
       <g id="Logo">
-        <g id="4" className="hidden">
+        <g id="4">
           <rect
             id="Rectangle 497"
             x="10"
@@ -120,7 +52,15 @@ export function Logo() {
           />
           <rect id="Rectangle 503" x="20" width="5" height="5" fill="black" />
         </g>
-        <g id="2" className="hidden">
+        <rect
+          id="Rectangle 497_2"
+          x="30"
+          y="20"
+          width="5"
+          height="5"
+          fill="black"
+        />
+        <g id="2">
           <rect
             id="Rectangle 504"
             x="35"
@@ -179,7 +119,7 @@ export function Logo() {
           />
           <rect id="Rectangle 527" x="40" width="15" height="5" fill="black" />
         </g>
-        <g id="c" className="hidden">
+        <g id="c">
           <rect
             id="Rectangle 528"
             width="15"
@@ -225,48 +165,40 @@ export function Logo() {
             id="Rectangle 529"
             width="15"
             height="5"
-            transform="matrix(-1 0 0 1 115 0)"
+            transform="matrix(-1 0 0 1 115 5)"
             fill="black"
           />
           <rect
             id="Rectangle 516"
             width="5"
             height="20"
-            transform="matrix(-1 0 0 1 100 5)"
+            transform="matrix(-1 0 0 1 100 10)"
             fill="black"
           />
           <rect
             id="Rectangle 518"
             width="5"
             height="20"
-            transform="matrix(-1 0 0 1 120 5)"
+            transform="matrix(-1 0 0 1 120 10)"
             fill="black"
           />
           <rect
             id="Rectangle 537"
             x="115"
-            y="30"
+            y="35"
             width="15"
             height="5"
-            transform="rotate(180 115 30)"
+            transform="rotate(180 115 35)"
             fill="black"
           />
         </g>
         <g id="l">
-          <rect
-            id="Rectangle 525"
-            width="5"
-            height="40"
-            transform="matrix(-1 0 0 1 130 0)"
-            fill="black"
-          />
+          <rect id="Rectangle 525" x="125" width="5" height="40" fill="black" />
           <rect
             id="Rectangle 539"
-            x="130"
-            y="40"
             width="20"
             height="5"
-            transform="rotate(180 130 40)"
+            transform="matrix(1 0 0 -1 125 40)"
             fill="black"
           />
         </g>
@@ -275,34 +207,34 @@ export function Logo() {
             id="Rectangle 517"
             width="5"
             height="20"
-            transform="matrix(-1 0 0 1 140 10)"
+            transform="matrix(-1 0 0 1 140 5)"
             fill="black"
           />
           <rect
             id="Rectangle 519"
             width="5"
             height="20"
-            transform="matrix(-1 0 0 1 160 10)"
+            transform="matrix(-1 0 0 1 160 5)"
             fill="black"
           />
           <rect
             id="Rectangle 530"
             width="15"
             height="5"
-            transform="matrix(-1 0 0 1 155 5)"
+            transform="matrix(-1 0 0 1 155 0)"
             fill="black"
           />
           <rect
             id="Rectangle 538"
             x="155"
-            y="35"
+            y="30"
             width="15"
             height="5"
-            transform="rotate(180 155 35)"
+            transform="rotate(180 155 30)"
             fill="black"
           />
         </g>
-        <g id="r" className="hidden">
+        <g id="r">
           <rect
             id="Rectangle 531"
             width="20"
@@ -346,7 +278,7 @@ export function Logo() {
             fill="black"
           />
         </g>
-        <g id="s" className="hidden">
+        <g id="s">
           <rect
             id="Rectangle 532"
             width="15"
