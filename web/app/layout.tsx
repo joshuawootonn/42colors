@@ -7,8 +7,8 @@ import { Footer } from "@/components/footer";
 import { Mark } from "@/components/mark";
 import { Intro } from "@/components/intro";
 import { Link } from "@/components/link";
-import { INTRO_SEEN } from "@/lib/cookies";
-import { cookies } from "next/headers";
+// import { INTRO_SEEN } from "@/lib/cookies";
+// import { cookies } from "next/headers";
 
 const lexendDeca = Lexend_Deca({
   variable: "--font-lexend-deca",
@@ -33,8 +33,10 @@ export default async function RootLayout({
   left: React.ReactNode;
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const defaultOpen = cookieStore.get(INTRO_SEEN)?.value !== "true";
+  // todo(josh): remove this once google auth is done.
+  //
+  // const cookieStore = await cookies();
+  // const defaultOpen = cookieStore.get(INTRO_SEEN)?.value !== "true";
   return (
     <html lang="en">
       <body
@@ -52,7 +54,7 @@ export default async function RootLayout({
 
         <Fathom />
         <Footer />
-        <Intro defaultOpen={defaultOpen} />
+        <Intro defaultOpen={true} />
       </body>
     </html>
   );
