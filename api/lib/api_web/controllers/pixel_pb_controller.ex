@@ -1,20 +1,25 @@
 defmodule ApiWeb.PixelProtobufController do
   use ApiWeb, :controller
 
+  alias ApiWeb.TelemetryHelper
   alias Api.Canvas
   alias Pixels
 
   def index(conn, _params) do
-    pixels = Canvas.list_pixels()
+    pixels = TelemetryHelper.instrument(:list_pixels, fn -> Canvas.list_pixels() end)
 
-    formatted_pixels = %Pixels{
-      pixels:
-        Enum.map(pixels, fn pixel ->
-          %Pixel{x: pixel.x, y: pixel.y, color: 0, id: pixel.id}
-        end)
-    }
+    formatted_pixels =
+      TelemetryHelper.instrument(:format_pixels, fn ->
+        %Pixels{
+          pixels:
+            Enum.map(pixels, fn pixel ->
+              %Pixel{x: pixel.x, y: pixel.y, color: 0, id: pixel.id}
+            end)
+        }
+      end)
 
-    binary_pixels = Pixels.encode(formatted_pixels)
+    binary_pixels =
+      TelemetryHelper.instrument(:encode_pixels, fn -> Pixels.encode(formatted_pixels) end)
 
     conn
     |> put_resp_content_type("application/octet-stream")

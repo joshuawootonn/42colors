@@ -1,8 +1,26 @@
 defmodule ApiWeb.Telemetry do
+  alias ApiWeb.TelemetryHelper
   use Supervisor
 
   def start_link(arg) do
     Supervisor.start_link(__MODULE__, arg, name: __MODULE__)
+  end
+
+  require Logger
+
+  def setup do
+    events = [
+      [:my_app, :action, :format_pixels],
+      [:my_app, :action, :encode_pixels],
+      [:my_app, :action, :list_pixels]
+    ]
+
+    :telemetry.attach_many(
+      "action-handler",
+      events,
+      &TelemetryHelper.handle_event/4,
+      nil
+    )
   end
 
   @impl true
