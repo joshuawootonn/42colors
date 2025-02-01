@@ -79,7 +79,7 @@ export default function Page() {
             {canvas && <Toolbar />}
           </div>
 
-          {canvas && (
+          {canvas && myUser?.email === "jose56wonton@gmail.com" && (
             <div className="flex flex-col items-end fixed top-1/2 -translate-y-1/2 right-3">
               <Button onClick={canvas.fetchPixels1}>
                 fetch pixels as json
