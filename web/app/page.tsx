@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/button";
 import { Link } from "@/components/link";
 import { Toolbar } from "@/components/toolbar";
 import {
@@ -35,7 +36,7 @@ export default function Page() {
         process.env.NEXT_PUBLIC_API_WEBSOCKET_ORIGIN ??
           "https://api.42colors.com",
       );
-      canvas.fetchPixels();
+      canvas.fetchPixels3();
       canvas.fetchAuthedUser().then(setMyUser);
       canvas.fetchAuthURL().then(setMyAuthUrl);
 
@@ -77,6 +78,20 @@ export default function Page() {
           <div className="flex fixed top-3 right-3">
             {canvas && <Toolbar />}
           </div>
+
+          {canvas && (
+            <div className="flex flex-col items-end fixed top-1/2 -translate-y-1/2 right-3">
+              <Button onClick={canvas.fetchPixels1}>
+                fetch pixels as json
+              </Button>
+              <Button onClick={canvas.fetchPixels2}>
+                fetch pixels as proto
+              </Button>
+              <Button onClick={canvas.fetchPixels3}>
+                fetch pixels from memory
+              </Button>
+            </div>
+          )}
 
           <div className="flex fixed bottom-3 right-3 space-x-3">
             {myUser?.name ? (

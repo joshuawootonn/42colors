@@ -115,6 +115,9 @@ export class Canvas {
     this.onPointerDown = this.onPointerDown.bind(this);
     this.onPointerUp = this.onPointerUp.bind(this);
     this.onPointerOut = this.onPointerOut.bind(this);
+    this.fetchPixels1 = this.fetchPixels1.bind(this);
+    this.fetchPixels2 = this.fetchPixels2.bind(this);
+    this.fetchPixels3 = this.fetchPixels3.bind(this);
 
     this.draw();
     canvas.addEventListener("pointerdown", this.onPointerDown);
@@ -176,8 +179,50 @@ export class Canvas {
     });
   }
 
-  fetchPixels() {
+  fetchPixels1() {
+    fetch(new URL("/api/pixels", this.apiOrigin)).then(async (res) => {
+      const json = await res.json();
+
+      if (!res.ok) {
+        console.error(json);
+        return;
+      }
+
+      this.pixels = json.data;
+    });
+  }
+
+  fetchPixels2() {
     fetch(new URL("/api/pixels2", this.apiOrigin)).then(async (res) => {
+      const payload = await res.arrayBuffer();
+      const array = new Uint8Array(payload);
+      protobuf.load("/pixels.proto", (err, root) => {
+        if (err) throw err;
+
+        if (root == null) {
+          console.warn("root is undefined");
+          return;
+        }
+
+        const Pixels = root.lookupType("Pixels");
+
+        const errMsg = Pixels.verify(payload);
+        if (errMsg) throw Error(errMsg);
+
+        const message = Pixels.decode(array);
+        const object = Pixels.toObject(message, {
+          longs: String,
+          enums: String,
+          bytes: String,
+        });
+
+        this.pixels = object.pixels;
+      });
+    });
+  }
+
+  fetchPixels3() {
+    fetch(new URL("/api/pixels3", this.apiOrigin)).then(async (res) => {
       const payload = await res.arrayBuffer();
       const array = new Uint8Array(payload);
       protobuf.load("/pixels.proto", (err, root) => {
