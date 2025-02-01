@@ -18,7 +18,8 @@ defmodule Api.Application do
       # Start a worker by calling: Api.Worker.start_link(arg)
       # {Api.Worker, arg},
       # Start to serve requests, typically the last entry
-      ApiWeb.Endpoint
+      ApiWeb.Endpoint,
+      ApiWeb.PixelSupervisor
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
