@@ -9,12 +9,30 @@ defmodule ApiWeb.PixelSupervisor do
 
   def list_pixels() do
     GenServer.call(__MODULE__, :list_pixels)
+    |> Map.get(:pixels)
+  end
+
+  def list_encoded_pixels() do
+    GenServer.call(__MODULE__, :list_pixels)
+    |> Map.get(:binary_pixels)
   end
 
   @impl true
   def init(_init_args) do
     pixels = Canvas.list_pixels()
-    {:ok, pixels}
+
+    formatted_pixels =
+      %Pixels{
+        pixels:
+          Enum.map(pixels, fn pixel ->
+            %Pixel{x: pixel.x, y: pixel.y, color: 0, id: pixel.id}
+          end)
+      }
+
+    binary_pixels =
+      Pixels.encode(formatted_pixels)
+
+    {:ok, %{pixels: pixels, binary_pixels: binary_pixels}}
   end
 
   @impl true

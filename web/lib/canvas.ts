@@ -118,6 +118,7 @@ export class Canvas {
     this.fetchPixels1 = this.fetchPixels1.bind(this);
     this.fetchPixels2 = this.fetchPixels2.bind(this);
     this.fetchPixels3 = this.fetchPixels3.bind(this);
+    this.fetchPixels4 = this.fetchPixels4.bind(this);
 
     this.draw();
     canvas.addEventListener("pointerdown", this.onPointerDown);
@@ -223,6 +224,35 @@ export class Canvas {
 
   fetchPixels3() {
     fetch(new URL("/api/pixels3", this.apiOrigin)).then(async (res) => {
+      const payload = await res.arrayBuffer();
+      const array = new Uint8Array(payload);
+      protobuf.load("/pixels.proto", (err, root) => {
+        if (err) throw err;
+
+        if (root == null) {
+          console.warn("root is undefined");
+          return;
+        }
+
+        const Pixels = root.lookupType("Pixels");
+
+        const errMsg = Pixels.verify(payload);
+        if (errMsg) throw Error(errMsg);
+
+        const message = Pixels.decode(array);
+        const object = Pixels.toObject(message, {
+          longs: String,
+          enums: String,
+          bytes: String,
+        });
+
+        this.pixels = object.pixels;
+      });
+    });
+  }
+
+  fetchPixels4() {
+    fetch(new URL("/api/pixels4", this.apiOrigin)).then(async (res) => {
       const payload = await res.arrayBuffer();
       const array = new Uint8Array(payload);
       protobuf.load("/pixels.proto", (err, root) => {

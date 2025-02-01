@@ -6,7 +6,6 @@ defmodule ApiWeb.PixelInMemoryController do
   alias Pixels
 
   def index(conn, _params) do
-    # pixels = TelemetryHelper.instrument(:list_pixels, fn -> PixelSupervisor.list_pixels() end)
     pixels = PixelSupervisor.list_pixels()
 
     formatted_pixels =

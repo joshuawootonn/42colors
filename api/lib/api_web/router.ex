@@ -36,6 +36,7 @@ defmodule ApiWeb.Router do
     resources "/pixels", PixelController, except: [:new, :edit]
     resources "/pixels2", PixelProtobufController, except: [:new, :edit]
     resources "/pixels3", PixelInMemoryController, except: [:new, :edit]
+    resources "/pixels4", PixelInMemoryControllerPreEncoded, except: [:new, :edit]
 
     get "/me", MeController, :show
 
