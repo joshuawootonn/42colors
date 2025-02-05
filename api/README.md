@@ -16,3 +16,7 @@
 - `mix phx.server`
   - just doing this to make sure it worked
 - `mix ecto.migrate`
+
+## How I added a volume in and setup auto mounting
+
+- https://docs.digitalocean.com/products/volumes/how-to/mount/
