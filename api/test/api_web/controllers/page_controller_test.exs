@@ -3,6 +3,7 @@ defmodule ApiWeb.PageControllerTest do
 
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")
-    assert html_response(conn, 200) =~ "Peace of mind from prototype to production"
+
+    assert String.contains?(html_response(conn, 200), "What's up brother?!")
   end
 end
