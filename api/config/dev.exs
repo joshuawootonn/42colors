@@ -30,6 +30,11 @@ config :api, ApiWeb.Endpoint,
     tailwind: {Tailwind, :install_and_run, [:api, ~w(--watch)]}
   ]
 
+config :api, PixelCache,
+  canvas_height: 10000,
+  canvas_width: 10000,
+  pixel_cache_file_name: "pixel_cache.bin"
+
 # ## SSL Support
 #
 # In order to use HTTPS in development, a self-signed

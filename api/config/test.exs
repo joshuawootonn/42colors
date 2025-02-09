@@ -17,6 +17,11 @@ config :api, Api.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: System.schedulers_online() * 2
 
+config :api, PixelCache,
+  canvas_height: 1000,
+  canvas_width: 1000,
+  pixel_cache_file_name: "pixel_cache.bin"
+
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
 config :api, ApiWeb.Endpoint,

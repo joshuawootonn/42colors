@@ -38,3 +38,5 @@ npm-debug.log
 .env.local
 .env.*
 /.exlixir_ls/
+
+pixel_cache.bin
