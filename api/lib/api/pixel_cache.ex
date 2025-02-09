@@ -8,13 +8,24 @@ defmodule Api.PixelCache do
   end
 
   defp write_coord(coord, file) do
+    max_x = Application.get_env(:api, PixelCache)[:canvas_width]
     max_y = Application.get_env(:api, PixelCache)[:canvas_height]
-    offset = coord.x * max_y + coord.y
-    {:ok, next} = :file.position(file, offset)
+    negative_offset = trunc(max_x * (max_y / 2) + max_y / 2)
+    offset = trunc(negative_offset + coord.x * max_y + coord.y)
+
+    case :file.position(file, offset) do
+      {:ok, next} ->
+        # IO.puts("seeked to #{next}")
+        next
+
+      {:error, reason} ->
+        IO.puts("Error seeking to #{offset} with reason: #{reason}")
+    end
 
     case :file.write(file, <<1>>) do
       :ok ->
-        IO.puts("wrote 1 @ #{next}")
+        # IO.puts("wrote 1 @ #{offset}")
+        nil
 
       {:error, reason} ->
         IO.puts("Error reading file: #{reason}")
@@ -52,10 +63,11 @@ defmodule Api.PixelCache do
           |> Enum.with_index()
           |> Enum.reduce([], fn {byte, i}, acc ->
             if byte != 0 do
-              x = Integer.floor_div(i, max_x)
-              y = Integer.mod(i, max_x)
-              IO.inspect(acc, label: "")
-              IO.puts("data: #{byte}, position: #{i}, x: #{x}, y: #{y}")
+              # IO.inspect(i, label: "index")
+              x = Integer.floor_div(i, max_x) - trunc(max_y / 2)
+              y = Integer.mod(i, max_x) - trunc(max_y / 2)
+              # IO.inspect(acc, label: "")
+              # IO.puts("data: #{byte}, index: #{i}, x: #{x}, y: #{y}")
               acc ++ [%{x: x, y: y}]
             else
               acc
