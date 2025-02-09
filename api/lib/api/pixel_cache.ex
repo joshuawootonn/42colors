@@ -13,22 +13,30 @@ defmodule Api.PixelCache do
     negative_offset = trunc(max_x * (max_y / 2) + max_y / 2)
     offset = trunc(negative_offset + coord.x * max_y + coord.y)
 
-    case :file.position(file, offset) do
-      {:ok, next} ->
-        # IO.puts("seeked to #{next}")
-        next
+    if(abs(coord.x) > max_x / 2 || abs(coord.y) > max_y / 2) do
+      nil
+    else
+      case :file.position(file, offset) do
+        {:ok, next} ->
+          # IO.puts("seeked to #{next}")
+          next
 
-      {:error, reason} ->
-        IO.puts("Error seeking to #{offset} with reason: #{reason}")
-    end
+        {:error, reason} ->
+          IO.puts("Error seeking to #{offset} with reason: #{reason}")
 
-    case :file.write(file, <<1>>) do
-      :ok ->
-        # IO.puts("wrote 1 @ #{offset}")
-        nil
+          IO.puts(
+            "max x: #{max_x},max y: #{max_y}, negative_offset: #{negative_offset}, coord x: #{coord.x}, coord y: #{coord.y}"
+          )
+      end
 
-      {:error, reason} ->
-        IO.puts("Error reading file: #{reason}")
+      case :file.write(file, <<1>>) do
+        :ok ->
+          # IO.puts("wrote 1 @ #{offset}")
+          nil
+
+        {:error, reason} ->
+          IO.puts("Error reading file: #{reason}")
+      end
     end
   end
 
