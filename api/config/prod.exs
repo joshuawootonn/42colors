@@ -22,4 +22,5 @@ config :logger, :console, format: "[$level] $message\n"
 config :api, PixelCache,
   canvas_height: 10000,
   canvas_width: 10000,
+  viewport_diameter: 500,
   pixel_cache_file_name: "pixel_cache.bin"

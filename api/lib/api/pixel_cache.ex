@@ -56,7 +56,7 @@ defmodule Api.PixelCache do
     max_x = Application.get_env(:api, PixelCache)[:canvas_width]
     max_y = Application.get_env(:api, PixelCache)[:canvas_height]
 
-    viewport_diameter = 4
+    viewport_diameter = Application.get_env(:api, PixelCache)[:viewport_diameter]
     half_x = trunc(max_x / 2)
     half_y = trunc(max_y / 2)
     half_viewport = trunc(viewport_diameter / 2)

@@ -20,6 +20,7 @@ config :api, Api.Repo,
 config :api, PixelCache,
   canvas_height: 10,
   canvas_width: 10,
+  viewport_diameter: 4,
   pixel_cache_file_name: "pixel_cache.bin"
 
 # We don't run a server during test. If one is required,
