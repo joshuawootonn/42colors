@@ -3,8 +3,10 @@ defmodule Api.PixelCache do
     file_path = Application.get_env(:api, PixelCache)[:pixel_cache_file_name]
     max_x = Application.get_env(:api, PixelCache)[:canvas_width]
     max_y = Application.get_env(:api, PixelCache)[:canvas_height]
-    matrix = for _ <- 0..max_y, do: for(_ <- 0..max_x, do: <<0>>)
-    File.write(file_path, matrix)
+
+    size = max_x * max_y
+    zeros = <<0::size(size)>>
+    File.write(file_path, zeros)
   end
 
   defp write_coord(coord, file) do
