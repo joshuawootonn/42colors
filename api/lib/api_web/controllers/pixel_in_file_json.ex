@@ -1,4 +1,4 @@
-defmodule ApiWeb.PixelJSON do
+defmodule ApiWeb.PixelInFileJSON do
   alias Api.Canvas.Pixel
 
   @doc """
@@ -15,7 +15,7 @@ defmodule ApiWeb.PixelJSON do
     %{data: data(pixel)}
   end
 
-  defp data(%Pixel{} = pixel) do
+  defp data(%{} = pixel) do
     %{
       x: pixel.x,
       y: pixel.y

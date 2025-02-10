@@ -19,7 +19,8 @@ defmodule Api.Application do
       # {Api.Worker, arg},
       # Start to serve requests, typically the last entry
       ApiWeb.Endpoint,
-      ApiWeb.PixelSupervisor
+      ApiWeb.PixelSupervisor,
+      ApiWeb.PixelCacheSupervisor
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

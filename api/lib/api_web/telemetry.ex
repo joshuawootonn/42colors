@@ -12,7 +12,12 @@ defmodule ApiWeb.Telemetry do
     events = [
       [:my_app, :action, :format_pixels],
       [:my_app, :action, :encode_pixels],
-      [:my_app, :action, :list_pixels]
+      [:my_app, :action, :list_pixels],
+      [:my_app, :action, :initialize_file],
+      [:my_app, :action, :write_matrix_to_file],
+      [:my_app, :action, :write_coordinates_to_file],
+      [:my_app, :action, :list_pixel_subsection_from_file],
+      [:my_app, :action, :list_pixels_from_file]
     ]
 
     :telemetry.attach_many(

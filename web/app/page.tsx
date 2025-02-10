@@ -93,6 +93,12 @@ export default function Page() {
               <Button onClick={canvas.fetchPixels4}>
                 fetch pixels from memory pre encoded
               </Button>
+              <Button onClick={canvas.fetchPixels5}>
+                fetch pixels from file
+              </Button>
+              <Button onClick={canvas.fetchPixels6}>
+                fetch subsection of pixels from file
+              </Button>
             </div>
           )}
 
