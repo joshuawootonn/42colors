@@ -44,7 +44,6 @@ defmodule Api.PixelCache do
 
   def write_coordinates_to_file(coordinates) do
     file_path = Application.get_env(:api, PixelCache)[:pixel_cache_file_name]
-    # IO.puts("File caching to #{file_path}")
 
     # opening in read + write mode prevent this thing from truncating the file
     file = File.open!(file_path, [:raw, :binary, :read, :write, :delayed_write])
@@ -57,7 +56,6 @@ defmodule Api.PixelCache do
     file_path = Application.get_env(:api, PixelCache)[:pixel_cache_file_name]
     max_x = Application.get_env(:api, PixelCache)[:canvas_width]
     max_y = Application.get_env(:api, PixelCache)[:canvas_height]
-
     viewport_diameter = Application.get_env(:api, PixelCache)[:viewport_diameter]
     half_x = trunc(max_x / 2)
     half_y = trunc(max_y / 2)
