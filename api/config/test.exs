@@ -18,8 +18,8 @@ config :api, Api.Repo,
   pool_size: System.schedulers_online() * 2
 
 config :api, PixelCache,
-  canvas_height: 1000,
-  canvas_width: 1000,
+  canvas_height: 10,
+  canvas_width: 10,
   pixel_cache_file_name: "pixel_cache.bin"
 
 # We don't run a server during test. If one is required,
