@@ -7,6 +7,7 @@ import { Footer } from "@/components/footer";
 import { Mark } from "@/components/mark";
 import { Intro } from "@/components/intro";
 import { Link } from "@/components/link";
+import { Providers } from "./providers";
 // import { INTRO_SEEN } from "@/lib/cookies";
 // import { cookies } from "next/headers";
 
@@ -50,7 +51,7 @@ export default async function RootLayout({
           </h1>
         </div>
         {left}
-        {children}
+        <Providers>{children}</Providers>
 
         <Fathom />
         <Footer />
