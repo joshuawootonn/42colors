@@ -11,7 +11,7 @@ defmodule Api.PixelCache do
     max_x = Application.get_env(:api, PixelCache)[:canvas_width]
     max_y = Application.get_env(:api, PixelCache)[:canvas_height]
     negative_offset = trunc(max_x * (max_y / 2) + max_y / 2)
-    offset = trunc(negative_offset + coord.x * max_y + coord.y)
+    offset = trunc(negative_offset + coord.y * max_x + coord.x)
 
     if(abs(coord.x) > max_x / 2 || abs(coord.y) > max_y / 2) do
       nil
@@ -72,10 +72,10 @@ defmodule Api.PixelCache do
           |> Enum.reduce([], fn {byte, i}, acc ->
             if byte != 0 do
               # IO.inspect(i, label: "index")
-              x = Integer.floor_div(i, max_x) - trunc(max_y / 2)
-              y = Integer.mod(i, max_x) - trunc(max_y / 2)
+              x = Integer.mod(i, max_x) - trunc(max_y / 2)
+              y = Integer.floor_div(i, max_x) - trunc(max_y / 2)
               # IO.inspect(acc, label: "")
-              # IO.puts("data: #{byte}, index: #{i}, x: #{x}, y: #{y}")
+              IO.puts("data: #{byte}, index: #{i}, x: #{x}, y: #{y}")
               acc ++ [%{x: x, y: y}]
             else
               acc
