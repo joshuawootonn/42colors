@@ -33,7 +33,7 @@ config :api, ApiWeb.Endpoint,
 config :api, PixelCache,
   canvas_height: 10000,
   canvas_width: 10000,
-  viewport_diameter: 500,
+  viewport_diameter: 2000,
   pixel_cache_file_name: "pixel_cache.bin"
 
 # ## SSL Support

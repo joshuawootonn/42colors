@@ -40,7 +40,7 @@ defmodule ApiWeb.PixelCacheSupervisor do
 
   @impl true
   def handle_call(:sub_section_of_pixels, _from, _) do
-    sub_section_of_pixels = PixelCache.read_sub_section_of_file(%{x: 250, y: 250})
+    sub_section_of_pixels = PixelCache.read_sub_section_of_file(%{x: 500, y: 500})
 
     {:reply, %{sub_section_of_pixels: sub_section_of_pixels},
      %{sub_section_of_pixels: sub_section_of_pixels}}
