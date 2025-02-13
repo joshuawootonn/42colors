@@ -19,6 +19,10 @@ defmodule ApiWeb.PixelCacheSupervisor do
     |> Map.get(:sub_section_of_pixels)
   end
 
+  def write_pixels_to_file(pixels) do
+    GenServer.call(__MODULE__, {:write_pixels, pixels})
+  end
+
   @impl true
   def init(_init_args) do
     pixels = Canvas.list_pixels()
@@ -44,5 +48,15 @@ defmodule ApiWeb.PixelCacheSupervisor do
 
     {:reply, %{sub_section_of_pixels: sub_section_of_pixels},
      %{sub_section_of_pixels: sub_section_of_pixels}}
+  end
+
+  @impl true
+  def handle_call({:write_pixels, pixels}, _from, state) do
+    TelemetryHelper.instrument(:write_matrix_to_file, fn ->
+      PixelCache.write_coordinates_to_file(pixels)
+    end)
+
+    # or you can return the updated state if necessary
+    {:reply, :ok, state}
   end
 end
