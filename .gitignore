@@ -1,2 +1,3 @@
 /docker/.data/*
 .env.dev
+.DS_Store
