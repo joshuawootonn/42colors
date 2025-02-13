@@ -94,6 +94,7 @@ defmodule Api.PixelCache do
           case IO.binread(file, viewport_diameter + 1) do
             :eof ->
               IO.puts("End of file reached, no more data to read.")
+              []
 
             data when is_binary(data) ->
               :binary.bin_to_list(data)
@@ -115,6 +116,7 @@ defmodule Api.PixelCache do
 
             {:error, reason} ->
               IO.puts("Error reading file: #{reason}")
+              []
           end
 
         acc ++ coords
