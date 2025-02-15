@@ -1,6 +1,4 @@
 defmodule ApiWeb.PixelSubSectionInFileJSON do
-  alias Api.Canvas.Pixel
-
   @doc """
   Renders a list of pixels.
   """
