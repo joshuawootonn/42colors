@@ -1,6 +1,9 @@
 import { parse } from "cookie";
 import { Channel, Socket } from "phoenix";
 import protobuf from "protobufjs";
+import { PanTool } from "./tools/pan";
+import { PencilTool } from "./tools/pencil";
+import { roundDown } from "./utils";
 // place files you want to import through the `$lib` alias in this folder.
 
 export type Mode = "pencil" | "pan";
@@ -21,68 +24,6 @@ export type Store =
       context: CanvasRenderingContext2D;
       mode: Mode;
     };
-
-export class PanTool {
-  constructor(private readonly canvas: Canvas) {}
-
-  onPointerDown(e: PointerEvent) {
-    const startingCamera = this.canvas.camera.clone();
-    const startingX = e.clientX;
-    const startingY = e.clientY;
-
-    const pan = (e: PointerEvent) => {
-      this.canvas.camera.x = startingCamera.x - e.clientX + startingX;
-      this.canvas.camera.y = startingCamera.y - e.clientY + startingY;
-    };
-
-    this.canvas.canvas.addEventListener("pointermove", pan);
-
-    const cleanUp = () => {
-      this.canvas.canvas.removeEventListener("pointermove", pan);
-    };
-
-    this.canvas.canvas.addEventListener("pointerup", cleanUp, {
-      once: true,
-    });
-
-    document.addEventListener("pointerout", cleanUp, {
-      once: true,
-    });
-  }
-}
-
-export class PencilTool {
-  constructor(private readonly canvas: Canvas) {}
-
-  onPointerDown() {
-    const draw = (e: PointerEvent) => {
-      const camera = this.canvas.camera;
-
-      const x = roundDown(camera.x + e.clientX);
-      const y = roundDown(camera.y + e.clientY);
-
-      this.canvas.pushPixel({ x, y });
-    };
-
-    this.canvas.canvas.addEventListener("pointermove", draw);
-
-    const cleanUp = () => {
-      this.canvas.canvas.removeEventListener("pointermove", draw);
-    };
-
-    this.canvas.canvas.addEventListener("pointerup", cleanUp, {
-      once: true,
-    });
-
-    document.addEventListener("pointerout", cleanUp, {
-      once: true,
-    });
-  }
-}
-
-function roundDown(num: number) {
-  return num - (num % 5);
-}
 
 type Pixel = {
   x: number;
