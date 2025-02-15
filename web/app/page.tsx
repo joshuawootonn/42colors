@@ -36,7 +36,7 @@ export default function Page() {
         process.env.NEXT_PUBLIC_API_WEBSOCKET_ORIGIN ??
           "https://api.42colors.com",
       );
-      canvas.fetchPixels4();
+      canvas.fetchPixels7();
       canvas.fetchAuthedUser().then(setMyUser);
       canvas.fetchAuthURL().then(setMyAuthUrl);
 
@@ -98,6 +98,9 @@ export default function Page() {
               </Button>
               <Button onClick={canvas.fetchPixels6}>
                 fetch subsection of pixels from file
+              </Button>
+              <Button onClick={canvas.fetchPixels7}>
+                fetch subsection of pixels from file as binary
               </Button>
             </div>
           )}

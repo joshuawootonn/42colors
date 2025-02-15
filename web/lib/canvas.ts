@@ -121,6 +121,7 @@ export class Canvas {
     this.fetchPixels4 = this.fetchPixels4.bind(this);
     this.fetchPixels5 = this.fetchPixels5.bind(this);
     this.fetchPixels6 = this.fetchPixels6.bind(this);
+    this.fetchPixels7 = this.fetchPixels7.bind(this);
 
     this.draw();
     canvas.addEventListener("pointerdown", this.onPointerDown);
@@ -305,6 +306,34 @@ export class Canvas {
       }
 
       this.pixels = json.data;
+    });
+  }
+
+  fetchPixels7() {
+    fetch(new URL("/api/pixels7", this.apiOrigin)).then(async (res) => {
+      const binary = await res.arrayBuffer();
+
+      if (!res.ok) {
+        console.error(binary);
+        return;
+      }
+
+      const uint8Array = new Uint8Array(binary);
+
+      // Convert Uint8Array to a regular array
+      const parsedArray = Array.from(uint8Array);
+
+      const pixels = [];
+      for (let i = 0; i < parsedArray.length; i++) {
+        if (parsedArray[i] === 0) continue;
+
+        pixels.push({
+          x: (i - 500) % 2001,
+          y: Math.floor(i / 2001) - 500,
+        });
+      }
+
+      this.pixels = pixels;
     });
   }
 
