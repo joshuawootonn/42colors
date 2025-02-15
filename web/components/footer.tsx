@@ -1,3 +1,5 @@
+"use client";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,8 +8,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link } from "./link";
 import NextLink from "next/link";
+import { deleteCookie } from "@/lib/utils";
 
-export function Footer() {
+export function Footer({
+  user,
+  authUrl,
+}: {
+  user?: { email: string; name: string };
+  authUrl?: string;
+}) {
   return (
     <footer className="fixed bottom-3 left-3 flex w-min flex-col items-center justify-between text-sm text-primary sm:flex-row">
       <div className="mb-3 flex items-center justify-between space-x-3 sm:mb-0">
@@ -47,6 +56,26 @@ export function Footer() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <div>/</div>
+
+        {user?.name ? (
+          <div className="flex-shrink-0">{user.name}</div>
+        ) : authUrl ? (
+          <Link href={authUrl}>login</Link>
+        ) : null}
+        {user != null && (
+          <>
+            <div>/</div>
+            <button
+              onClick={() => {
+                deleteCookie("token");
+                document.location = "/";
+              }}
+            >
+              logout
+            </button>
+          </>
+        )}
       </div>
     </footer>
   );

@@ -1,23 +1,21 @@
 "use client";
 
 import { Button } from "@/components/button";
-import { Link } from "@/components/link";
+import { Footer } from "@/components/footer";
 import { Toolbar } from "@/components/toolbar";
 import {
   CanvasProvider,
   useLocalCanvasSubscription,
 } from "@/components/use-canvas";
 import { Canvas } from "@/lib/canvas";
-import { cn, deleteCookie } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
 export default function Page() {
   const [canvas, setCanvas] = useState<Canvas | null>(null);
 
-  const [myUser, setMyUser] = useState<{ email: string; name: string } | null>(
-    null,
-  );
-  const [myAuthUrl, setMyAuthUrl] = useState<string | null>(null);
+  const [user, setUser] = useState<{ email: string; name: string }>();
+  const [authUrl, setAuthUrl] = useState<string>();
 
   useEffect(() => {
     const element = document.getElementById("my-house");
@@ -37,8 +35,8 @@ export default function Page() {
           "https://api.42colors.com",
       );
       canvas.fetchPixels7();
-      canvas.fetchAuthedUser().then(setMyUser);
-      canvas.fetchAuthURL().then(setMyAuthUrl);
+      canvas.fetchAuthedUser().then(setUser);
+      canvas.fetchAuthURL().then(setAuthUrl);
 
       setCanvas(canvas);
     }
@@ -79,7 +77,7 @@ export default function Page() {
             {canvas && <Toolbar />}
           </div>
 
-          {canvas && myUser?.email === "jose56wonton@gmail.com" && (
+          {canvas && user?.email === "jose56wonton@gmail.com" && (
             <div className="flex flex-col items-end fixed top-1/2 -translate-y-1/2 right-3">
               <Button onClick={canvas.fetchPixels1}>
                 fetch pixels as json
@@ -104,27 +102,7 @@ export default function Page() {
               </Button>
             </div>
           )}
-
-          <div className="flex fixed bottom-3 right-3 space-x-3">
-            {myUser?.name ? (
-              <div>{myUser.name}</div>
-            ) : myAuthUrl ? (
-              <Link href={myAuthUrl}>login</Link>
-            ) : null}
-            {myUser != null && (
-              <>
-                <div>/</div>
-                <button
-                  onClick={() => {
-                    deleteCookie("token");
-                    setMyUser(null);
-                  }}
-                >
-                  logout
-                </button>
-              </>
-            )}
-          </div>
+          <Footer user={user} authUrl={authUrl} />
         </CanvasProvider>
       )}
     </>

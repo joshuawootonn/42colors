@@ -52,7 +52,6 @@ export default async function RootLayout({
         <Providers>{children}</Providers>
 
         <Fathom />
-        <Footer />
         <Intro defaultOpen={defaultOpen} />
       </body>
     </html>
