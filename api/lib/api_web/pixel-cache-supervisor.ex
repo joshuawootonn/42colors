@@ -19,6 +19,11 @@ defmodule ApiWeb.PixelCacheSupervisor do
     |> Map.get(:sub_section_of_pixels)
   end
 
+  def list_pixel_subsection_from_file_as_binary do
+    GenServer.call(__MODULE__, :sub_section_of_pixels_as_binary)
+    |> Map.get(:sub_section_of_pixels_as_binary)
+  end
+
   def write_pixels_to_file(pixels) do
     GenServer.call(__MODULE__, {:write_pixels, pixels})
   end
@@ -48,6 +53,15 @@ defmodule ApiWeb.PixelCacheSupervisor do
 
     {:reply, %{sub_section_of_pixels: sub_section_of_pixels},
      %{sub_section_of_pixels: sub_section_of_pixels}}
+  end
+
+  @impl true
+  def handle_call(:sub_section_of_pixels_as_binary, _from, _) do
+    sub_section_of_pixels_as_binary =
+      PixelCache.read_sub_section_of_file_as_binary(%{x: 500, y: 500})
+
+    {:reply, %{sub_section_of_pixels_as_binary: sub_section_of_pixels_as_binary},
+     %{sub_section_of_pixels_as_binary: sub_section_of_pixels_as_binary}}
   end
 
   @impl true

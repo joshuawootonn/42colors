@@ -17,6 +17,7 @@ defmodule ApiWeb.Telemetry do
       [:my_app, :action, :write_matrix_to_file],
       [:my_app, :action, :write_coordinates_to_file],
       [:my_app, :action, :list_pixel_subsection_from_file],
+      [:my_app, :action, :list_pixel_subsection_from_file_as_binary],
       [:my_app, :action, :list_pixels_from_file]
     ]
 

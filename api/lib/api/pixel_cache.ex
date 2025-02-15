@@ -165,28 +165,60 @@ defmodule Api.PixelCache do
     coords
   end
 
-  def read_sub_section_of_file_as_binary() do
+  def read_sub_section_of_file_as_binary(point) do
     file_path = Application.get_env(:api, PixelCache)[:pixel_cache_file_name]
     max_x = Application.get_env(:api, PixelCache)[:canvas_width]
     max_y = Application.get_env(:api, PixelCache)[:canvas_height]
-    start = 0
+    viewport_diameter = Application.get_env(:api, PixelCache)[:viewport_diameter]
+    half_x = trunc(max_x / 2)
+    half_y = trunc(max_y / 2)
+    half_viewport = trunc(viewport_diameter / 2)
+    negative_offset = trunc(max_x * half_viewport + half_viewport)
+
+    absolute_point = %{x: point.x + half_x, y: point.y + half_y}
+    absolute_position = absolute_point.x + absolute_point.y * max_x
+
+    absolute_start_position = absolute_position - negative_offset
+
     file = File.open!(file_path, [:raw, :binary, :read])
-    :file.position(file, start)
-    length_of_file = max_x * max_y
 
-    coords =
-      case IO.binread(file, length_of_file) do
-        :eof ->
-          IO.puts("End of file reached, no more data to read.")
+    matrix =
+      0..viewport_diameter
+      |> Enum.to_list()
+      |> Enum.reduce(<<>>, fn j, acc ->
+        absolute_start_position_of_row = absolute_start_position + max_x * j
+        :file.position(file, absolute_start_position_of_row)
 
-        data when is_binary(data) ->
-          data
+        # IO.inspect(%{
+        #   absolute_position: absolute_position,
+        #   negative_offset: negative_offset,
+        #   half_viewport: half_viewport,
+        #   absolute_start_position: absolute_start_position,
+        #   max_x: max_x,
+        #   j: j,
+        #   y: y,
+        #   absolute_start_position_of_row: absolute_start_position_of_row,
+        #   max_y: max_y
+        # })
 
-        {:error, reason} ->
-          IO.puts("Error reading file: #{reason}")
-      end
+        line =
+          case IO.binread(file, viewport_diameter + 1) do
+            :eof ->
+              IO.puts("End of file reached, no more data to read.")
+              <<>>
+
+            data when is_binary(data) ->
+              data
+
+            {:error, reason} ->
+              IO.puts("Error reading file: #{reason}")
+              <<>>
+          end
+
+        acc <> line
+      end)
 
     File.close(file)
-    coords
+    matrix
   end
 end
