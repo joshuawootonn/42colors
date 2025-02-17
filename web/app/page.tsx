@@ -4,10 +4,7 @@ import { Button } from "@/components/button";
 import { Footer } from "@/components/footer";
 import { Minimap } from "@/components/minimap";
 import { Toolbar } from "@/components/toolbar";
-import {
-  CanvasProvider,
-  useLocalCanvasSubscription,
-} from "@/components/use-canvas";
+import { CanvasProvider } from "@/components/use-canvas";
 import { Canvas } from "@/lib/canvas";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -62,8 +59,9 @@ export default function Page() {
     <>
       <canvas
         id="my-house"
-        className={cn()
-        // isInPanMode ? (isPanning ? "cursor-grabbing" : "cursor-grab") : null,
+        className={
+          cn()
+          // isInPanMode ? (isPanning ? "cursor-grabbing" : "cursor-grab") : null,
         }
         height="100vh"
         width="100vw"

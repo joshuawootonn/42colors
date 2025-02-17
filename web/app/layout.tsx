@@ -3,7 +3,6 @@ import localFont from "next/font/local";
 import { Lexend_Deca } from "next/font/google";
 import "./globals.css";
 import { Fathom } from "@/components/fathom";
-import { Footer } from "@/components/footer";
 import { Mark } from "@/components/mark";
 import { Intro } from "@/components/intro";
 import { Link } from "@/components/link";
