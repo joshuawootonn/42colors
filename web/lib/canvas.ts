@@ -4,6 +4,7 @@ import protobuf from "protobufjs";
 import { PanTool } from "./tools/pan";
 import { PencilTool } from "./tools/pencil";
 import { roundDown } from "./utils";
+import { Camera, CameraState } from "./camera";
 // place files you want to import through the `$lib` alias in this folder.
 
 export type Mode = "pencil" | "pan";
@@ -38,7 +39,7 @@ export class Canvas {
   private pencilTool: PencilTool;
   private mode: Mode = "pan";
   private pointerState: PointerState = "default";
-  camera: Camera = new Camera(0, 0, 1);
+  camera: Camera;
   pixels: Pixel[] = initialPixels;
   private socket: Socket;
   private currentChannel: Channel;
@@ -51,6 +52,7 @@ export class Canvas {
   ) {
     this.panTool = new PanTool(this);
     this.pencilTool = new PencilTool(this);
+    this.camera = new Camera(this, 0, 0, 1);
 
     this.draw = this.draw.bind(this);
     this.onPointerDown = this.onPointerDown.bind(this);
@@ -305,6 +307,10 @@ export class Canvas {
     return this.mode;
   }
 
+  getCameraState(): CameraState {
+    return { x: this.camera.x, y: this.camera.y, zoom: this.camera.zoom };
+  }
+
   setMode(mode: Mode) {
     this.mode = mode;
 
@@ -393,21 +399,5 @@ export class Canvas {
       default:
         console.log("default case of the onPointerDown");
     }
-  }
-}
-
-export class Camera {
-  x: number;
-  y: number;
-  zoom: number;
-
-  constructor(x: number, y: number, zoom: number) {
-    this.x = x;
-    this.y = y;
-    this.zoom = zoom;
-  }
-
-  clone() {
-    return new Camera(this.x, this.y, this.zoom);
   }
 }

@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/button";
 import { Footer } from "@/components/footer";
+import { Minimap } from "@/components/minimap";
 import { Toolbar } from "@/components/toolbar";
 import {
   CanvasProvider,
@@ -42,28 +43,28 @@ export default function Page() {
     }
   }, []);
 
-  const pointerState = useLocalCanvasSubscription(
-    canvas,
-    (canvas) => canvas.getPointerState(),
-    [],
-  );
+  // const pointerState = useLocalCanvasSubscription(
+  //   canvas,
+  //   (canvas) => canvas.getPointerState(),
+  //   [],
+  // );
+  //
+  // const mode = useLocalCanvasSubscription(
+  //   canvas,
+  //   (canvas) => canvas.getMode(),
+  //   [],
+  // );
 
-  const mode = useLocalCanvasSubscription(
-    canvas,
-    (canvas) => canvas.getMode(),
-    [],
-  );
-
-  const isInPanMode = mode === "pan";
-  const isPanning = mode === "pan" && pointerState === "pressed";
-
+  // const isInPanMode = mode === "pan";
+  // const isPanning = mode === "pan" && pointerState === "pressed";
+  //
   return (
     <>
       <canvas
         id="my-house"
-        className={cn(
-          isInPanMode ? (isPanning ? "cursor-grabbing" : "cursor-grab") : null,
-        )}
+        className={cn()
+        // isInPanMode ? (isPanning ? "cursor-grabbing" : "cursor-grab") : null,
+        }
         height="100vh"
         width="100vw"
       ></canvas>
@@ -103,6 +104,10 @@ export default function Page() {
             </div>
           )}
           <Footer user={user} authUrl={authUrl} />
+
+          <div className="flex fixed bottom-3 right-3">
+            {canvas && <Minimap />}
+          </div>
         </CanvasProvider>
       )}
     </>

@@ -1,3 +1,4 @@
+import { Camera, CameraState } from "@/lib/camera";
 import { Canvas } from "@/lib/canvas";
 import {
   ReactNode,
@@ -38,9 +39,9 @@ export function useCanvas(): Canvas {
 export function useContextCanvasSubscription<T>(
   getCurrentValue: (builder: Canvas) => T,
   deps: DependencyList,
+  is: (a: T, b: T) => boolean = Object.is,
 ): T {
   const canvas = useCanvas();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const memoizedGetCurrentValue = useMemo(() => getCurrentValue, deps);
   const id = useId();
 
@@ -55,14 +56,14 @@ export function useContextCanvasSubscription<T>(
 
       return canvas.subscribe(id, () => {
         const nextValue = memoizedGetCurrentValue(canvas);
-        if (!Object.is(lastValue, nextValue)) {
+        if (!is(lastValue, nextValue)) {
           lastValue = nextValue;
 
           callback();
         }
       });
     },
-    [canvas, id, memoizedGetCurrentValue],
+    [canvas, id, is, memoizedGetCurrentValue],
   );
 
   return useSyncExternalStore(subscribe, getSnapshot);
@@ -72,6 +73,7 @@ export function useLocalCanvasSubscription<T>(
   canvas: Canvas | null,
   getCurrentValue: (builder: Canvas) => T,
   deps: DependencyList,
+  is: (a: T, b: T) => boolean = Object.is,
 ): T | null {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const memoizedGetCurrentValue = useMemo(() => getCurrentValue, deps);
@@ -92,14 +94,15 @@ export function useLocalCanvasSubscription<T>(
 
       return canvas.subscribe(id, () => {
         const nextValue = memoizedGetCurrentValue(canvas);
-        if (!Object.is(lastValue, nextValue)) {
+
+        if (!is(lastValue, nextValue)) {
           lastValue = nextValue;
 
           callback();
         }
       });
     },
-    [canvas, id, memoizedGetCurrentValue],
+    [canvas, id, is, memoizedGetCurrentValue],
   );
 
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
