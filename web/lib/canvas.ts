@@ -49,10 +49,12 @@ export class Canvas {
     readonly ctx: CanvasRenderingContext2D,
     private readonly apiOrigin: string,
     private readonly apiWebsocketOrigin: string,
+
+    readonly cameraOptions: { x: number; y: number },
   ) {
     this.panTool = new PanTool(this);
     this.pencilTool = new PencilTool(this);
-    this.camera = new Camera(this, 0, 0, 1);
+    this.camera = new Camera(this, cameraOptions.x, cameraOptions.y, 1);
 
     this.draw = this.draw.bind(this);
     this.onPointerDown = this.onPointerDown.bind(this);

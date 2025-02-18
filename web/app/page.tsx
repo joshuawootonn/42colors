@@ -7,6 +7,7 @@ import { Toolbar } from "@/components/toolbar";
 import { CanvasProvider } from "@/components/use-canvas";
 import { Canvas } from "@/lib/canvas";
 import { cn } from "@/lib/utils";
+import { stringToNumberOrDefault } from "@/lib/utils/stringToNumberOrDefault";
 import { useState, useEffect } from "react";
 
 export default function Page() {
@@ -24,6 +25,10 @@ export default function Page() {
         throw new Error("Failed to initialize the Canvas");
       }
 
+      const search = new URLSearchParams(document.location.search);
+      const x = stringToNumberOrDefault.parse(search.get("x"));
+      const y = stringToNumberOrDefault.parse(search.get("y"));
+
       const canvas = new Canvas(
         element,
         context,
@@ -31,6 +36,7 @@ export default function Page() {
         process.env.NEXT_PUBLIC_API_ORIGIN ?? "https://api.42colors.com",
         process.env.NEXT_PUBLIC_API_WEBSOCKET_ORIGIN ??
           "https://api.42colors.com",
+        { x, y },
       );
       canvas.fetchPixels7();
       canvas.fetchAuthedUser().then(setUser);
