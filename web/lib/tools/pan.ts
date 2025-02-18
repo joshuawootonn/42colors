@@ -9,8 +9,13 @@ export class PanTool {
     const startingY = e.clientY;
 
     const pan = (e: PointerEvent) => {
-      this.canvas.camera.x = startingCamera.x - e.clientX + startingX;
-      this.canvas.camera.y = startingCamera.y - e.clientY + startingY;
+      this.canvas.camera.x = Math.floor(
+        startingCamera.x - e.clientX + startingX,
+      );
+      this.canvas.camera.y = Math.floor(
+        startingCamera.y - e.clientY + startingY,
+      );
+      this.canvas.emitChange();
     };
 
     this.canvas.canvas.addEventListener("pointermove", pan);
