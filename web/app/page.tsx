@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/button";
 import { Footer } from "@/components/footer";
-import { Minimap } from "@/components/minimap";
+import { Navigation } from "@/components/navigation";
 import { Toolbar } from "@/components/toolbar";
 import { CanvasProvider } from "@/components/use-canvas";
 import { Canvas } from "@/lib/canvas";
@@ -104,7 +104,7 @@ export default function Page() {
           <Footer user={user} authUrl={authUrl} />
 
           <div className="flex fixed bottom-3 right-3">
-            {canvas && <Minimap />}
+            {canvas && <Navigation />}
           </div>
         </CanvasProvider>
       )}
