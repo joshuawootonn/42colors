@@ -128,6 +128,183 @@ export class Canvas {
     });
   }
 
+  }
+  fetchPixels7() {
+    fetch(new URL("/api/pixels7", this.apiOrigin)).then(async (res) => {
+      const binary = await res.arrayBuffer();
+
+      if (!res.ok) {
+        console.error(binary);
+        return;
+      }
+
+      const uint8Array = new Uint8Array(binary);
+
+      // Convert Uint8Array to a regular array
+      const parsedArray = Array.from(uint8Array);
+
+      const pixels = [];
+      for (let i = 0; i < parsedArray.length; i++) {
+        if (parsedArray[i] === 0) continue;
+
+        pixels.push({
+          x: (i - 500) % 2001,
+          y: Math.floor(i / 2001) - 500,
+        });
+      }
+
+      this.pixels = pixels;
+    });
+  }
+
+  updatePixels(pixel: Pixel) {
+    this.pixels.push(pixel);
+  }
+
+  pushPixel(pixel: Pixel) {
+    this.pixels.push(pixel);
+    this.currentChannel.push("new_pixel", { body: pixel });
+  }
+
+  listeners = new Map<string, () => void>();
+
+  emitChange() {
+    this.listeners.forEach((listener) => {
+      listener();
+    });
+  }
+
+  subscribe = (id: string, listener: () => void): (() => void) => {
+    this.listeners.set(id, listener);
+
+    return () => this.listeners.delete(id);
+  };
+
+  getMode(): Mode {
+    return this.mode;
+  }
+
+  getCameraState(): CameraState {
+    return { x: this.camera.x, y: this.camera.y, zoom: this.camera.zoom };
+  }
+
+  setMode(mode: Mode) {
+    this.mode = mode;
+
+    this.emitChange();
+  }
+
+  getPointerState(): PointerState {
+    return this.pointerState;
+  }
+
+  setPointerState(state: PointerState) {
+    this.pointerState = state;
+
+    this.emitChange();
+  }
+
+  drawBoard() {
+    const buffer = 100;
+    const cameraX = this.camera.x;
+    const cameraY = this.camera.y;
+
+    const startPoint = {
+      x: roundDown(cameraX - buffer),
+      y: roundDown(cameraY - buffer),
+    };
+
+    const endPoint = {
+      x: roundDown(cameraX + this.canvas.width + buffer),
+      y: roundDown(cameraY + this.canvas.height + buffer),
+    };
+
+    this.ctx.fillRect(startPoint.x, startPoint.y, 5, 5);
+    this.ctx.fillRect(endPoint.x, endPoint.y, 5, 5);
+
+    for (let x = startPoint.x; x <= endPoint.x; x += 5) {
+      this.ctx.moveTo(x, startPoint.y);
+      this.ctx.lineTo(x, endPoint.y);
+    }
+
+    for (let y = startPoint.y; y <= endPoint.y; y += 5) {
+      this.ctx.moveTo(startPoint.x, y);
+      this.ctx.lineTo(endPoint.x, y);
+    }
+    this.ctx.strokeStyle = "#eee";
+    this.ctx.stroke();
+  }
+
+  draw() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+
+    this.ctx.translate(-this.camera.x, -this.camera.y);
+
+    this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+    this.drawBoard();
+
+    // Object.values(this.chunks).forEach((chunk) => {
+    //   this.ctx.drawImage(chunk.element, chunk.x, chunk.y);
+    // });
+
+    for (let i = 0; i < this.pixels.length; i++) {
+      const block = this.pixels[i];
+      this.ctx.fillRect(block.x, block.y, 5, 5);
+    }
+
+    this.rafId = requestAnimationFrame(this.draw);
+  }
+
+  onPointerOut() {
+    this.setPointerState("default");
+  }
+
+  onPointerUp() {
+    this.setPointerState("default");
+  }
+
+  onPointerDown(e: PointerEvent) {
+    this.setPointerState("pressed");
+
+    const mode = this.mode;
+    switch (mode) {
+      case "pencil":
+        this.pencilTool.onPointerDown();
+        break;
+      case "pan":
+        this.panTool.onPointerDown(e);
+        break;
+
+      default:
+        console.log("default case of the onPointerDown");
+    }
+  }
+
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------
+
   fetchPixels1() {
     fetch(new URL("/api/pixels", this.apiOrigin)).then(async (res) => {
       const json = await res.json();
@@ -252,154 +429,5 @@ export class Canvas {
 
       this.pixels = json.data;
     });
-  }
-
-  fetchPixels7() {
-    fetch(new URL("/api/pixels7", this.apiOrigin)).then(async (res) => {
-      const binary = await res.arrayBuffer();
-
-      if (!res.ok) {
-        console.error(binary);
-        return;
-      }
-
-      const uint8Array = new Uint8Array(binary);
-
-      // Convert Uint8Array to a regular array
-      const parsedArray = Array.from(uint8Array);
-
-      const pixels = [];
-      for (let i = 0; i < parsedArray.length; i++) {
-        if (parsedArray[i] === 0) continue;
-
-        pixels.push({
-          x: (i - 500) % 2001,
-          y: Math.floor(i / 2001) - 500,
-        });
-      }
-
-      this.pixels = pixels;
-    });
-  }
-
-  updatePixels(pixel: Pixel) {
-    this.pixels.push(pixel);
-  }
-
-  pushPixel(pixel: Pixel) {
-    this.pixels.push(pixel);
-    this.currentChannel.push("new_pixel", { body: pixel });
-  }
-
-  listeners = new Map<string, () => void>();
-
-  emitChange() {
-    this.listeners.forEach((listener) => {
-      listener();
-    });
-  }
-
-  subscribe = (id: string, listener: () => void): (() => void) => {
-    this.listeners.set(id, listener);
-
-    return () => this.listeners.delete(id);
-  };
-
-  getMode(): Mode {
-    return this.mode;
-  }
-
-  getCameraState(): CameraState {
-    return { x: this.camera.x, y: this.camera.y, zoom: this.camera.zoom };
-  }
-
-  setMode(mode: Mode) {
-    this.mode = mode;
-
-    this.emitChange();
-  }
-
-  getPointerState(): PointerState {
-    return this.pointerState;
-  }
-
-  setPointerState(state: PointerState) {
-    this.pointerState = state;
-
-    this.emitChange();
-  }
-
-  drawBoard() {
-    const buffer = 100;
-    const cameraX = this.camera.x;
-    const cameraY = this.camera.y;
-
-    const startPoint = {
-      x: roundDown(cameraX - buffer),
-      y: roundDown(cameraY - buffer),
-    };
-
-    const endPoint = {
-      x: roundDown(cameraX + this.canvas.width + buffer),
-      y: roundDown(cameraY + this.canvas.height + buffer),
-    };
-
-    this.ctx.fillRect(startPoint.x, startPoint.y, 5, 5);
-    this.ctx.fillRect(endPoint.x, endPoint.y, 5, 5);
-
-    for (let x = startPoint.x; x <= endPoint.x; x += 5) {
-      this.ctx.moveTo(x, startPoint.y);
-      this.ctx.lineTo(x, endPoint.y);
-    }
-
-    for (let y = startPoint.y; y <= endPoint.y; y += 5) {
-      this.ctx.moveTo(startPoint.x, y);
-      this.ctx.lineTo(endPoint.x, y);
-    }
-    this.ctx.strokeStyle = "#eee";
-    this.ctx.stroke();
-  }
-
-  draw() {
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-
-    this.ctx.translate(-this.camera.x, -this.camera.y);
-
-    this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-
-    this.drawBoard();
-
-    for (let i = 0; i < this.pixels.length; i++) {
-      const block = this.pixels[i];
-      this.ctx.fillRect(block.x, block.y, 5, 5);
-    }
-
-    this.rafId = requestAnimationFrame(this.draw);
-  }
-
-  onPointerOut() {
-    this.setPointerState("default");
-  }
-
-  onPointerUp() {
-    this.setPointerState("default");
-  }
-
-  onPointerDown(e: PointerEvent) {
-    this.setPointerState("pressed");
-
-    const mode = this.mode;
-    switch (mode) {
-      case "pencil":
-        this.pencilTool.onPointerDown();
-        break;
-      case "pan":
-        this.panTool.onPointerDown(e);
-        break;
-
-      default:
-        console.log("default case of the onPointerDown");
-    }
   }
 }
