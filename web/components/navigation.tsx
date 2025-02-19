@@ -51,7 +51,7 @@ export function Navigation() {
         value={cameraX}
         min={-50500}
         max={50500}
-        step={10}
+        step={5}
         onChange={onChange}
       />
       <Input
@@ -59,7 +59,7 @@ export function Navigation() {
         type="number"
         name="y"
         value={cameraY}
-        step={10}
+        step={5}
         min={-50500}
         max={50500}
         onChange={onChange}
