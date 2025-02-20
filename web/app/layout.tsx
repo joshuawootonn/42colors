@@ -40,7 +40,7 @@ export default async function RootLayout({
       <body
         className={`${lexendDeca.variable} ${geistMono.variable} antialiased font-sans`}
       >
-        <div className="flex fixed top-3 left-3">
+        <div className="flex fixed top-[10px] left-[10px]">
           <h1 className="text-2xl font-bold flex gap-2">
             <Link href="/">
               <Mark />
