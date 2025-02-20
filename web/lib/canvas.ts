@@ -5,6 +5,13 @@ import { PanTool } from "./tools/pan";
 import { PencilTool } from "./tools/pencil";
 import { roundDown } from "./utils";
 import { Camera, CameraState } from "./camera";
+import { canvasToClientConversion } from "./utils/clientToCanvasConversion";
+import {
+  CANVAS_BUFFER,
+  CANVAS_PIXEL_RATIO,
+  CHUNK_LENGTH,
+  UNKNOWN_COMPENSATION_COEFFICIENT,
+} from "./constants";
 // place files you want to import through the `$lib` alias in this folder.
 
 export type Mode = "pencil" | "pan";
@@ -29,6 +36,7 @@ export type Store =
 type Pixel = {
   x: number;
   y: number;
+  color: string;
 };
 
 const initialPixels: Pixel[] = [];
@@ -43,13 +51,17 @@ export class Canvas {
   pixels: Pixel[] = initialPixels;
   private socket: Socket;
   private currentChannel: Channel;
+  private chunks: Record<
+    string,
+    { element: HTMLCanvasElement; x: number; y: number }
+  > = {};
+  private backgroundCanvas: HTMLCanvasElement;
 
   constructor(
     readonly canvas: HTMLCanvasElement,
     readonly ctx: CanvasRenderingContext2D,
     private readonly apiOrigin: string,
     private readonly apiWebsocketOrigin: string,
-
     readonly cameraOptions: { x: number; y: number },
   ) {
     this.panTool = new PanTool(this);
@@ -68,10 +80,10 @@ export class Canvas {
     this.fetchPixels6 = this.fetchPixels6.bind(this);
     this.fetchPixels7 = this.fetchPixels7.bind(this);
 
-    this.draw();
     canvas.addEventListener("pointerdown", this.onPointerDown);
     canvas.addEventListener("pointerup", this.onPointerUp);
     canvas.addEventListener("pointerout", this.onPointerOut);
+
     this.socket = new Socket(new URL("/socket", this.apiWebsocketOrigin).href);
     this.socket.connect();
 
@@ -88,6 +100,9 @@ export class Canvas {
     this.currentChannel.on("new_pixel", (payload: { body: Pixel }) => {
       this.updatePixels(payload.body);
     });
+
+    this.backgroundCanvas = this.createBackgroundCanvas();
+    this.draw();
   }
 
   cleanUp() {
@@ -128,33 +143,41 @@ export class Canvas {
     });
   }
 
-  }
-  fetchPixels7() {
-    fetch(new URL("/api/pixels7", this.apiOrigin)).then(async (res) => {
-      const binary = await res.arrayBuffer();
+  binaryToPixels(binary: ArrayBuffer) {
+    const uint8Array = new Uint8Array(binary);
+    const parsedArray = Array.from(uint8Array);
 
-      if (!res.ok) {
-        console.error(binary);
-        return;
-      }
-
-      const uint8Array = new Uint8Array(binary);
-
-      // Convert Uint8Array to a regular array
-      const parsedArray = Array.from(uint8Array);
-
-      const pixels = [];
-      for (let i = 0; i < parsedArray.length; i++) {
-        if (parsedArray[i] === 0) continue;
-
+    const pixels = [];
+    for (let i = 0; i < parsedArray.length; i++) {
+      if (parsedArray[i] !== 0) {
         pixels.push({
-          x: (i - 500) % 2001,
-          y: Math.floor(i / 2001) - 500,
+          x: (i - UNKNOWN_COMPENSATION_COEFFICIENT) % CHUNK_LENGTH,
+          y: Math.floor(i / CHUNK_LENGTH) - UNKNOWN_COMPENSATION_COEFFICIENT,
+          color: "black",
         });
       }
+    }
+    return pixels;
+  }
 
-      this.pixels = pixels;
-    });
+  fetchPixels7(x: number, y: number) {
+    const search = new URLSearchParams();
+    search.set("x", x.toString());
+    search.set("y", y.toString());
+    fetch(new URL(`/api/pixels7?${search}`, this.apiOrigin)).then(
+      async (res) => {
+        const binary = await res.arrayBuffer();
+
+        if (!res.ok) {
+          console.error(binary);
+          return;
+        }
+
+        const pixels = this.binaryToPixels(binary);
+
+        this.chunks[x + y] = { element: this.createChunkCanvas(pixels), x, y };
+      },
+    );
   }
 
   updatePixels(pixel: Pixel) {
@@ -204,54 +227,117 @@ export class Canvas {
     this.emitChange();
   }
 
-  drawBoard() {
+  createBackgroundCanvas() {
+    const canvas = document.createElement("canvas");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const context = canvas.getContext("2d")!;
+
     const buffer = 100;
-    const cameraX = this.camera.x;
-    const cameraY = this.camera.y;
 
     const startPoint = {
-      x: roundDown(cameraX - buffer),
-      y: roundDown(cameraY - buffer),
+      x: roundDown(-buffer),
+      y: roundDown(-buffer),
     };
 
     const endPoint = {
-      x: roundDown(cameraX + this.canvas.width + buffer),
-      y: roundDown(cameraY + this.canvas.height + buffer),
+      x: roundDown(canvas.width + buffer),
+      y: roundDown(canvas.height + buffer),
     };
 
-    this.ctx.fillRect(startPoint.x, startPoint.y, 5, 5);
-    this.ctx.fillRect(endPoint.x, endPoint.y, 5, 5);
+    context.fillRect(
+      startPoint.x,
+      startPoint.y,
+      CANVAS_PIXEL_RATIO,
+      CANVAS_PIXEL_RATIO,
+    );
+    context.fillRect(
+      endPoint.x,
+      endPoint.y,
+      CANVAS_PIXEL_RATIO,
+      CANVAS_PIXEL_RATIO,
+    );
 
-    for (let x = startPoint.x; x <= endPoint.x; x += 5) {
-      this.ctx.moveTo(x, startPoint.y);
-      this.ctx.lineTo(x, endPoint.y);
+    for (let x = startPoint.x; x <= endPoint.x; x += CANVAS_PIXEL_RATIO) {
+      context.moveTo(x, startPoint.y);
+      context.lineTo(x, endPoint.y);
     }
 
-    for (let y = startPoint.y; y <= endPoint.y; y += 5) {
-      this.ctx.moveTo(startPoint.x, y);
-      this.ctx.lineTo(endPoint.x, y);
+    for (let y = startPoint.y; y <= endPoint.y; y += CANVAS_PIXEL_RATIO) {
+      context.moveTo(startPoint.x, y);
+      context.lineTo(endPoint.x, y);
     }
-    this.ctx.strokeStyle = "#eee";
-    this.ctx.stroke();
+    context.strokeStyle = "#eee";
+    context.stroke();
+
+    return canvas;
+  }
+
+  createChunkCanvas(pixels: Pixel[]) {
+    const canvas = document.createElement("canvas");
+    canvas.width = CANVAS_PIXEL_RATIO * CHUNK_LENGTH;
+    canvas.height = CANVAS_PIXEL_RATIO * CHUNK_LENGTH;
+
+    const context = canvas.getContext("2d")!;
+
+    for (let i = 0; i < pixels.length; i++) {
+      const pixel = pixels[i];
+      context.fillStyle = pixel.color;
+      context.fillRect(
+        pixel.x * CANVAS_PIXEL_RATIO,
+        pixel.y * CANVAS_PIXEL_RATIO,
+        CANVAS_PIXEL_RATIO,
+        CANVAS_PIXEL_RATIO,
+      );
+    }
+
+    return canvas;
   }
 
   draw() {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
 
-    this.ctx.translate(-this.camera.x, -this.camera.y);
+    this.ctx.translate(
+      -canvasToClientConversion(this.camera.x),
+      -canvasToClientConversion(this.camera.y),
+    );
 
-    this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    this.ctx.drawImage(
+      this.backgroundCanvas,
+      -CANVAS_BUFFER,
+      -CANVAS_BUFFER,
+      window.innerWidth + CANVAS_BUFFER,
+      window.innerHeight + CANVAS_BUFFER,
+      -CANVAS_BUFFER + canvasToClientConversion(this.camera.x),
+      -CANVAS_BUFFER + canvasToClientConversion(this.camera.y),
+      window.innerWidth + CANVAS_BUFFER,
+      window.innerHeight + CANVAS_BUFFER,
+    );
 
-    this.drawBoard();
-
-    // Object.values(this.chunks).forEach((chunk) => {
-    //   this.ctx.drawImage(chunk.element, chunk.x, chunk.y);
-    // });
+    Object.values(this.chunks).forEach((chunk) => {
+      this.ctx.drawImage(
+        chunk.element,
+        0,
+        0,
+        CANVAS_PIXEL_RATIO * CHUNK_LENGTH,
+        CANVAS_PIXEL_RATIO * CHUNK_LENGTH,
+        canvasToClientConversion(chunk.x),
+        canvasToClientConversion(chunk.y),
+        CANVAS_PIXEL_RATIO * CHUNK_LENGTH,
+        CANVAS_PIXEL_RATIO * CHUNK_LENGTH,
+      );
+    });
 
     for (let i = 0; i < this.pixels.length; i++) {
       const block = this.pixels[i];
-      this.ctx.fillRect(block.x, block.y, 5, 5);
+      this.ctx.fillRect(
+        block.x * CANVAS_PIXEL_RATIO,
+        block.y * CANVAS_PIXEL_RATIO,
+        CANVAS_PIXEL_RATIO,
+        CANVAS_PIXEL_RATIO,
+      );
     }
 
     this.rafId = requestAnimationFrame(this.draw);

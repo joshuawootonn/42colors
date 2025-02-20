@@ -1,5 +1,5 @@
 import { Canvas } from "../canvas";
-import { roundDown } from "../utils";
+import { clientToCanvasConversion } from "../utils/clientToCanvasConversion";
 
 export class PencilTool {
   constructor(private readonly canvas: Canvas) {}
@@ -8,10 +8,10 @@ export class PencilTool {
     const draw = (e: PointerEvent) => {
       const camera = this.canvas.camera;
 
-      const x = roundDown(camera.x + e.clientX);
-      const y = roundDown(camera.y + e.clientY);
+      const x = camera.x + clientToCanvasConversion(e.clientX);
+      const y = camera.y + clientToCanvasConversion(e.clientY);
 
-      this.canvas.pushPixel({ x, y });
+      this.canvas.pushPixel({ x, y, color: "black" });
     };
 
     this.canvas.canvas.addEventListener("pointermove", draw);

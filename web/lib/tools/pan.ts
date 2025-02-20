@@ -1,4 +1,8 @@
 import { Canvas } from "../canvas";
+import {
+  canvasToClientConversion,
+  clientToCanvasConversion,
+} from "../utils/clientToCanvasConversion";
 
 export class PanTool {
   constructor(private readonly canvas: Canvas) {}
@@ -9,12 +13,10 @@ export class PanTool {
     const startingY = e.clientY;
 
     const pan = (e: PointerEvent) => {
-      this.canvas.camera.x = Math.floor(
-        startingCamera.x - e.clientX + startingX,
-      );
-      this.canvas.camera.y = Math.floor(
-        startingCamera.y - e.clientY + startingY,
-      );
+      this.canvas.camera.x =
+        startingCamera.x + clientToCanvasConversion(startingX - e.clientX);
+      this.canvas.camera.y =
+        startingCamera.y + clientToCanvasConversion(startingY - e.clientY);
       this.canvas.emitChange();
     };
 

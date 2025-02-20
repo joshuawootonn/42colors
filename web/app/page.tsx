@@ -38,7 +38,7 @@ export default function Page() {
           "https://api.42colors.com",
         { x, y },
       );
-      canvas.fetchPixels7();
+      canvas.fetchPixels7(x, y);
       canvas.fetchAuthedUser().then(setUser);
       canvas.fetchAuthURL().then(setAuthUrl);
 
