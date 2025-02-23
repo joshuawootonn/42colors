@@ -4,7 +4,7 @@ defmodule Api.PixelCache do
     max_x = Application.get_env(:api, PixelCache)[:canvas_width]
     max_y = Application.get_env(:api, PixelCache)[:canvas_height]
 
-    size = max_x * max_y
+    size = max_x * max_y * 8
     zeros = <<0::size(size)>>
     File.write(file_path, zeros)
   end
