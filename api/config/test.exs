@@ -17,7 +17,7 @@ config :api, Api.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: System.schedulers_online() * 2
 
-config :api, PixelCache,
+config :api, Api.PixelCache,
   canvas_height: 10,
   canvas_width: 10,
   viewport_diameter: 4,

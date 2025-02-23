@@ -1,17 +1,19 @@
 defmodule Api.PixelCache do
   def initialize_file() do
-    file_path = Application.get_env(:api, PixelCache)[:pixel_cache_file_name]
-    max_x = Application.get_env(:api, PixelCache)[:canvas_width]
-    max_y = Application.get_env(:api, PixelCache)[:canvas_height]
+    file_path = Application.get_env(:api, Api.PixelCache)[:pixel_cache_file_name]
+
+    max_x = Application.get_env(:api, Api.PixelCache)[:canvas_width]
+    max_y = Application.get_env(:api, Api.PixelCache)[:canvas_height]
 
     size = max_x * max_y * 8
     zeros = <<0::size(size)>>
+
     File.write(file_path, zeros)
   end
 
   defp write_coord(coord, file) do
-    max_x = Application.get_env(:api, PixelCache)[:canvas_width]
-    max_y = Application.get_env(:api, PixelCache)[:canvas_height]
+    max_x = Application.get_env(:api, Api.PixelCache)[:canvas_width]
+    max_y = Application.get_env(:api, Api.PixelCache)[:canvas_height]
     negative_offset = trunc(max_x * (max_y / 2) + max_y / 2)
     offset = trunc(negative_offset + coord.y * max_x + coord.x)
 
@@ -43,7 +45,7 @@ defmodule Api.PixelCache do
   end
 
   def write_coordinates_to_file(coordinates) do
-    file_path = Application.get_env(:api, PixelCache)[:pixel_cache_file_name]
+    file_path = Application.get_env(:api, Api.PixelCache)[:pixel_cache_file_name]
 
     # opening in read + write mode prevent this thing from truncating the file
     file = File.open!(file_path, [:raw, :binary, :read, :write, :delayed_write])
@@ -53,10 +55,10 @@ defmodule Api.PixelCache do
   end
 
   def read_sub_section_of_file(point) do
-    file_path = Application.get_env(:api, PixelCache)[:pixel_cache_file_name]
-    max_x = Application.get_env(:api, PixelCache)[:canvas_width]
-    max_y = Application.get_env(:api, PixelCache)[:canvas_height]
-    viewport_diameter = Application.get_env(:api, PixelCache)[:viewport_diameter]
+    file_path = Application.get_env(:api, Api.PixelCache)[:pixel_cache_file_name]
+    max_x = Application.get_env(:api, Api.PixelCache)[:canvas_width]
+    max_y = Application.get_env(:api, Api.PixelCache)[:canvas_height]
+    viewport_diameter = Application.get_env(:api, Api.PixelCache)[:viewport_diameter]
     half_x = trunc(max_x / 2)
     half_y = trunc(max_y / 2)
     half_viewport = trunc(viewport_diameter / 2)
@@ -127,10 +129,10 @@ defmodule Api.PixelCache do
   end
 
   def read_sub_section_of_file_as_binary(point) do
-    file_path = Application.get_env(:api, PixelCache)[:pixel_cache_file_name]
-    max_x = Application.get_env(:api, PixelCache)[:canvas_width]
-    max_y = Application.get_env(:api, PixelCache)[:canvas_height]
-    viewport_diameter = Application.get_env(:api, PixelCache)[:viewport_diameter]
+    file_path = Application.get_env(:api, Api.PixelCache)[:pixel_cache_file_name]
+    max_x = Application.get_env(:api, Api.PixelCache)[:canvas_width]
+    max_y = Application.get_env(:api, Api.PixelCache)[:canvas_height]
+    viewport_diameter = Application.get_env(:api, Api.PixelCache)[:viewport_diameter]
     half_x = trunc(max_x / 2)
     half_y = trunc(max_y / 2)
     half_viewport = trunc(viewport_diameter / 2)
