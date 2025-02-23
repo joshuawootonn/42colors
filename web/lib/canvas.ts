@@ -160,24 +160,22 @@ export class Canvas {
     return pixels;
   }
 
-  fetchPixels7(x: number, y: number) {
-    const search = new URLSearchParams();
-    search.set("x", x.toString());
-    search.set("y", y.toString());
-    fetch(new URL(`/api/pixels7?${search}`, this.apiOrigin)).then(
-      async (res) => {
-        const binary = await res.arrayBuffer();
+  fetchPixels() {
+    const { x, y } = this.camera;
+    const otherX = x + Math.floor(window.innerWidth / 5);
+    const otherY = y + Math.floor(window.innerHeight / 5);
 
-        if (!res.ok) {
-          console.error(binary);
-          return;
-        }
+    const originChunkX = Math.floor(x / CHUNK_LENGTH);
+    const originChunkY = Math.floor(y / CHUNK_LENGTH);
 
-        const pixels = this.binaryToPixels(binary);
+    const otherChunkX = Math.floor(otherX / CHUNK_LENGTH);
+    const otherChunkY = Math.floor(otherY / CHUNK_LENGTH);
 
-        this.chunks[x + y] = { element: this.createChunkCanvas(pixels), x, y };
-      },
-    );
+    for (let i = originChunkX; i <= otherChunkX; i += CHUNK_LENGTH) {
+      for (let j = originChunkY; j <= otherChunkY; j += CHUNK_LENGTH) {
+        this.fetchPixels7(i * CHUNK_LENGTH, j * CHUNK_LENGTH);
+      }
+    }
   }
 
   updatePixels(pixel: Pixel) {
@@ -515,5 +513,36 @@ export class Canvas {
 
       this.pixels = json.data;
     });
+  }
+
+  fetchPixels7(x: number, y: number) {
+    const search = new URLSearchParams();
+    search.set("x", x.toString());
+    search.set("y", y.toString());
+
+    if (this.chunks[`x: ${x} y: ${y}`] != null) {
+      console.log(`skipping fetch for cached chunk x: ${x} y: ${y}`);
+      return;
+    }
+
+    console.log(`fetching chunk x: ${x} y: ${y}`);
+    fetch(new URL(`/api/pixels7?${search}`, this.apiOrigin)).then(
+      async (res) => {
+        const binary = await res.arrayBuffer();
+
+        if (!res.ok) {
+          console.error(binary);
+          return;
+        }
+
+        const pixels = this.binaryToPixels(binary);
+
+        this.chunks[`x: ${x} y: ${y}`] = {
+          element: this.createChunkCanvas(pixels),
+          x,
+          y,
+        };
+      },
+    );
   }
 }

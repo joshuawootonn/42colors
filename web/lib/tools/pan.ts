@@ -1,8 +1,5 @@
 import { Canvas } from "../canvas";
-import {
-  canvasToClientConversion,
-  clientToCanvasConversion,
-} from "../utils/clientToCanvasConversion";
+import { clientToCanvasConversion } from "../utils/clientToCanvasConversion";
 
 export class PanTool {
   constructor(private readonly canvas: Canvas) {}
@@ -24,6 +21,8 @@ export class PanTool {
 
     const cleanUp = () => {
       this.canvas.canvas.removeEventListener("pointermove", pan);
+
+      this.canvas.fetchPixels();
     };
 
     this.canvas.canvas.addEventListener("pointerup", cleanUp, {
