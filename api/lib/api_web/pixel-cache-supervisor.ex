@@ -9,11 +9,6 @@ defmodule ApiWeb.PixelCacheSupervisor do
     GenServer.start_link(__MODULE__, arg, name: __MODULE__)
   end
 
-  def list_pixels_from_file() do
-    GenServer.call(__MODULE__, :pixels)
-    |> Map.get(:pixels)
-  end
-
   def list_pixel_subsection_from_file do
     GenServer.call(__MODULE__, :sub_section_of_pixels)
     |> Map.get(:sub_section_of_pixels)
@@ -39,12 +34,6 @@ defmodule ApiWeb.PixelCacheSupervisor do
     end)
 
     {:ok, %{}}
-  end
-
-  @impl true
-  def handle_call(:pixels, _from, _) do
-    pixels = PixelCache.read_sub_section_of_file()
-    {:reply, %{pixels: pixels}, %{pixels: pixels}}
   end
 
   @impl true
