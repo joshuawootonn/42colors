@@ -19,7 +19,7 @@ config :logger, :console, format: "[$level] $message\n"
 
 # Runtime production configuration, including reading
 # of environment variables, is done on config/runtime.exs.
-config :api, PixelCache,
+config :api, Api.PixelCache,
   canvas_height: 10000,
   canvas_width: 10000,
   viewport_diameter: 2000,

@@ -30,7 +30,7 @@ config :api, ApiWeb.Endpoint,
     tailwind: {Tailwind, :install_and_run, [:api, ~w(--watch)]}
   ]
 
-config :api, PixelCache,
+config :api, Api.PixelCache,
   canvas_height: 10000,
   canvas_width: 10000,
   viewport_diameter: 2000,
