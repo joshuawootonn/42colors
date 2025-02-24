@@ -28,6 +28,67 @@ defmodule AssertionTest do
     end
   end
 
+  describe "write_coordinates_to_file" do
+    test "positive numbers" do
+      file_path = Application.get_env(:api, Api.PixelCache)[:pixel_cache_file_name]
+      PixelCache.initialize_file()
+
+      initial_list = [
+        %{x: 1, y: 1},
+        %{x: 2, y: 2},
+        %{x: 3, y: 3},
+        %{x: 4, y: 4}
+      ]
+
+      PixelCache.write_coordinates_to_file(initial_list)
+
+      result = File.read!(file_path)
+
+      assert result ==
+               <<0::size(66 * 8), 1, 0::size(10 * 8), 1, 0::size(10 * 8), 1, 0::size(10 * 8), 1>>
+    end
+
+    test "negative numbers" do
+      file_path = Application.get_env(:api, Api.PixelCache)[:pixel_cache_file_name]
+      PixelCache.initialize_file()
+
+      initial_list = [
+        %{x: -1, y: 1},
+        %{x: -2, y: -2},
+        %{x: 3, y: -3},
+        %{x: -4, y: -4}
+      ]
+
+      PixelCache.write_coordinates_to_file(initial_list)
+
+      result = File.read!(file_path)
+
+      assert result ==
+               <<0::size(11 * 8), 1, 0::size(16 * 8), 1, 0::size(4 * 8), 1, 0::size(30 * 8), 1,
+                 0::size(35 * 8)>>
+    end
+
+    test "edge cases" do
+      file_path = Application.get_env(:api, Api.PixelCache)[:pixel_cache_file_name]
+      PixelCache.initialize_file()
+
+      initial_list = [
+        %{x: 4, y: 4},
+        %{x: 0, y: 0},
+        %{x: -5, y: -5},
+        %{x: 4, y: -5},
+        %{x: -5, y: 4}
+      ]
+
+      PixelCache.write_coordinates_to_file(initial_list)
+
+      result = File.read!(file_path)
+
+      assert result ==
+               <<1, 0::size(8 * 8), 1, 0::size(45 * 8), 1, 0::size(34 * 8), 1, 0::size(8 * 8), 1>>
+    end
+  end
+
   # test "happy path" do
   #   TelemetryHelper.instrument(:initialize_file, fn -> PixelCache.initialize_file() end)
   #
