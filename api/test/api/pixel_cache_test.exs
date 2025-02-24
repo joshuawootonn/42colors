@@ -89,113 +89,60 @@ defmodule AssertionTest do
     end
   end
 
-  # test "happy path" do
-  #   TelemetryHelper.instrument(:initialize_file, fn -> PixelCache.initialize_file() end)
-  #
-  #   initial_list = [
-  #     %{x: 1, y: 1},
-  #     %{x: 2, y: 2},
-  #     %{x: 3, y: 2},
-  #     %{x: 4, y: 2}
-  #   ]
-  #
-  #   Enum.each(initial_list, fn coord -> Canvas.create_pixel(coord) end)
-  #   pixels = Canvas.list_pixels()
-  #
-  #   TelemetryHelper.instrument(:write_coordinates_to_file, fn ->
-  #     PixelCache.write_coordinates_to_file(pixels)
-  #   end)
-  #
-  #   #
-  #   cached_pixels =
-  #     TelemetryHelper.instrument(:read_sub_section_of_file, fn ->
-  #       PixelCache.read_sub_section_of_file()
-  #     end)
-  #
-  #   assert Enum.sort(initial_list) == Enum.sort(cached_pixels)
-  # end
-  #
-  # test "negative numbers" do
-  #   TelemetryHelper.instrument(:initialize_file, fn -> PixelCache.initialize_file() end)
-  #
-  #   initial_list = [
-  #     %{x: 1, y: -1},
-  #     %{x: 2, y: 2},
-  #     %{x: 3, y: -2},
-  #     %{x: 4, y: 2}
-  #   ]
-  #
-  #   Enum.each(initial_list, fn coord -> Canvas.create_pixel(coord) end)
-  #   pixels = Canvas.list_pixels()
-  #
-  #   TelemetryHelper.instrument(:write_coordinates_to_file, fn ->
-  #     PixelCache.write_coordinates_to_file(pixels)
-  #   end)
-  #
-  #   #
-  #   cached_pixels =
-  #     TelemetryHelper.instrument(:read_sub_section_of_file, fn ->
-  #       PixelCache.read_sub_section_of_file()
-  #     end)
-  #
-  #   assert Enum.sort(initial_list) == Enum.sort(cached_pixels)
-  # end
-  #
-  # test "out of bounds numbers are ignored" do
-  #   TelemetryHelper.instrument(:initialize_file, fn -> PixelCache.initialize_file() end)
-  #
-  #   initial_list = [
-  #     %{x: 2, y: 2},
-  #     %{x: 3, y: -2},
-  #     %{x: 4, y: 2},
-  #     %{x: -4, y: 2},
-  #     %{x: -5, y: -5},
-  #     %{x: -6, y: -1}
-  #   ]
-  #
-  #   Enum.each(initial_list, fn coord -> Canvas.create_pixel(coord) end)
-  #   pixels = Canvas.list_pixels()
-  #
-  #   TelemetryHelper.instrument(:write_coordinates_to_file, fn ->
-  #     PixelCache.write_coordinates_to_file(pixels)
-  #   end)
-  #
-  #   cached_pixels =
-  #     TelemetryHelper.instrument(:read_sub_section_of_file, fn ->
-  #       PixelCache.read_sub_section_of_file()
-  #     end)
-  #
-  #   assert Enum.sort(Enum.take(initial_list, 5)) == Enum.sort(cached_pixels)
-  # end
-  #
-  # test "sub section happy path" do
-  #   TelemetryHelper.instrument(:initialize_file, fn -> PixelCache.initialize_file() end)
-  #
-  #   initial_list = [
-  #     %{x: 2, y: 2},
-  #     %{x: 4, y: 2},
-  #     %{x: 0, y: 0},
-  #     %{x: 4, y: 4},
-  #     %{x: 3, y: -2},
-  #     %{x: -6, y: -1},
-  #     %{x: 5, y: -1},
-  #     %{x: -2, y: -2}
-  #   ]
-  #
-  #   point = %{x: 2, y: 2}
-  #
-  #   Enum.each(initial_list, fn coord -> Canvas.create_pixel(coord) end)
-  #   pixels = Canvas.list_pixels()
-  #
-  #   TelemetryHelper.instrument(:write_coordinates_to_file, fn ->
-  #     PixelCache.write_coordinates_to_file(pixels)
-  #   end)
-  #
-  #   cached_pixels =
-  #     TelemetryHelper.instrument(:read_sub_section_of_file, fn ->
-  #       PixelCache.read_sub_section_of_file(point)
-  #     end)
-  #
-  #   assert Enum.sort(Enum.take(initial_list, 4)) == Enum.sort(cached_pixels)
-  # end
+  describe "read binary from file" do
+    test "positive numbers" do
+      initial_list = [
+        %{x: 1, y: 1},
+        %{x: 2, y: 2},
+        %{x: 3, y: 3},
+        %{x: 4, y: 4}
+      ]
+
+      PixelCache.initialize_file()
+      PixelCache.write_coordinates_to_file(initial_list)
+
+      result = PixelCache.read_sub_section_of_file_as_binary(%{x: 1, y: 1})
+      IO.puts(byte_size(PixelCache.read_sub_section_of_file_as_binary(%{x: 1, y: 1})))
+
+      assert result ==
+               <<1, 0::size(4 * 8), 1, 0::size(4 * 8), 1, 0::size(4 * 8), 1>>
+    end
+
+    test "negative numbers" do
+      initial_list = [
+        %{x: -1, y: 1},
+        %{x: -2, y: -2},
+        %{x: 3, y: -3},
+        %{x: -4, y: -4}
+      ]
+
+      PixelCache.initialize_file()
+      PixelCache.write_coordinates_to_file(initial_list)
+
+      assert PixelCache.read_sub_section_of_file_as_binary(%{x: -5, y: -5}) ==
+               <<0::size(5 * 8), 1, 0::size(9 * 8), 1>>
+    end
+
+    test "edge cases" do
+      initial_list = [
+        %{x: 4, y: 4},
+        %{x: 0, y: 0},
+        %{x: -5, y: -5},
+        %{x: 4, y: -5},
+        %{x: -5, y: 4}
+      ]
+
+      PixelCache.initialize_file()
+      PixelCache.write_coordinates_to_file(initial_list)
+
+      assert PixelCache.read_sub_section_of_file_as_binary(%{x: -5, y: -5}) ==
+               <<1, 0::size(15 * 8)>>
+
+      assert PixelCache.read_sub_section_of_file_as_binary(%{x: 1, y: 1}) ==
+               <<0::size(15 * 8), 1>>
+
+      assert PixelCache.read_sub_section_of_file_as_binary(%{x: -5, y: 1}) ==
+               <<0::size(12 * 8), 1, 0::size(3 * 8)>>
+    end
+  end
 end

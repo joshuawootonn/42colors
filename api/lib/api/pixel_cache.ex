@@ -136,37 +136,20 @@ defmodule Api.PixelCache do
     viewport_diameter = options.viewport_diameter
     half_x = trunc(canvas_width / 2)
     half_y = trunc(canvas_height / 2)
-    half_viewport = trunc(viewport_diameter / 2)
-    negative_offset = trunc(canvas_width * half_viewport + half_viewport)
-
     absolute_point = %{x: point.x + half_x, y: point.y + half_y}
-    absolute_position = absolute_point.x + absolute_point.y * canvas_width
-
-    absolute_start_position = absolute_position - negative_offset
+    absolute_start_position = absolute_point.x + absolute_point.y * canvas_width
 
     file = File.open!(options.file_path, [:raw, :binary, :read])
 
     matrix =
-      0..viewport_diameter
+      0..(viewport_diameter - 1)
       |> Enum.to_list()
       |> Enum.reduce(<<>>, fn j, acc ->
         absolute_start_position_of_row = absolute_start_position + canvas_width * j
         :file.position(file, absolute_start_position_of_row)
 
-        # IO.inspect(%{
-        #   absolute_position: absolute_position,
-        #   negative_offset: negative_offset,
-        #   half_viewport: half_viewport,
-        #   absolute_start_position: absolute_start_position,
-        #   canvas_width: canvas_width,
-        #   j: j,
-        #   y: y,
-        #   absolute_start_position_of_row: absolute_start_position_of_row,
-        #   canvas_height: canvas_height
-        # })
-
         line =
-          case IO.binread(file, viewport_diameter + 1) do
+          case IO.binread(file, viewport_diameter) do
             :eof ->
               IO.puts("End of file reached, no more data to read.")
               <<>>
