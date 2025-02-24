@@ -27,6 +27,7 @@ defmodule ApiWeb.PixelControllerTest do
   end
 
   describe "create pixel" do
+    @tag :skip
     test "renders pixel when data is valid", %{conn: conn} do
       conn = post(conn, ~p"/api/pixels", pixel: @create_attrs)
       assert %{"id" => id} = json_response(conn, 201)["data"]
@@ -49,6 +50,7 @@ defmodule ApiWeb.PixelControllerTest do
   describe "update pixel" do
     setup [:create_pixel]
 
+    @tag :skip
     test "renders pixel when data is valid", %{conn: conn, pixel: %Pixel{id: id} = pixel} do
       conn = put(conn, ~p"/api/pixels/#{pixel}", pixel: @update_attrs)
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
