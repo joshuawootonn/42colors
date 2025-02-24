@@ -40,3 +40,4 @@ npm-debug.log
 /.exlixir_ls/
 
 pixel_cache.bin
+*.bin
