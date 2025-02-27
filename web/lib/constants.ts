@@ -1,5 +1,3 @@
 export const CANVAS_BUFFER = 100;
 export const CANVAS_PIXEL_RATIO = 5;
-export const CHUNK_LENGTH = 2001;
-
-export const UNKNOWN_COMPENSATION_COEFFICIENT = 1000;
+export const CHUNK_LENGTH = 2000;

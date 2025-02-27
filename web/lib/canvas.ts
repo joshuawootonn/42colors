@@ -6,12 +6,7 @@ import { PencilTool } from "./tools/pencil";
 import { roundDown } from "./utils";
 import { Camera, CameraState } from "./camera";
 import { canvasToClientConversion } from "./utils/clientToCanvasConversion";
-import {
-  CANVAS_BUFFER,
-  CANVAS_PIXEL_RATIO,
-  CHUNK_LENGTH,
-  UNKNOWN_COMPENSATION_COEFFICIENT,
-} from "./constants";
+import { CANVAS_BUFFER, CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from "./constants";
 // place files you want to import through the `$lib` alias in this folder.
 
 export type Mode = "pencil" | "pan";
@@ -151,8 +146,8 @@ export class Canvas {
     for (let i = 0; i < parsedArray.length; i++) {
       if (parsedArray[i] !== 0) {
         pixels.push({
-          x: (i - UNKNOWN_COMPENSATION_COEFFICIENT) % CHUNK_LENGTH,
-          y: Math.floor(i / CHUNK_LENGTH) - UNKNOWN_COMPENSATION_COEFFICIENT,
+          x: i % CHUNK_LENGTH,
+          y: Math.floor(i / CHUNK_LENGTH),
           color: "black",
         });
       }
