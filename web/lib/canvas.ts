@@ -166,8 +166,8 @@ export class Canvas {
     const otherChunkX = Math.floor(otherX / CHUNK_LENGTH);
     const otherChunkY = Math.floor(otherY / CHUNK_LENGTH);
 
-    for (let i = originChunkX; i <= otherChunkX; i += CHUNK_LENGTH) {
-      for (let j = originChunkY; j <= otherChunkY; j += CHUNK_LENGTH) {
+    for (let i = originChunkX; i <= otherChunkX; i += 1) {
+      for (let j = originChunkY; j <= otherChunkY; j += 1) {
         this.fetchPixels7(i * CHUNK_LENGTH, j * CHUNK_LENGTH);
       }
     }
