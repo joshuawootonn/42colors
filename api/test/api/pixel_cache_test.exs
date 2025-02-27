@@ -102,7 +102,6 @@ defmodule AssertionTest do
       PixelCache.write_coordinates_to_file(initial_list)
 
       result = PixelCache.read_sub_section_of_file_as_binary(%{x: 1, y: 1})
-      IO.puts(byte_size(PixelCache.read_sub_section_of_file_as_binary(%{x: 1, y: 1})))
 
       assert result ==
                <<1, 0::size(4 * 8), 1, 0::size(4 * 8), 1, 0::size(4 * 8), 1>>
