@@ -102,7 +102,7 @@ export default function Page() {
               <Button onClick={canvas.fetchPixels6}>
                 fetch subsection of pixels from file
               </Button>
-              <Button onClick={canvas.fetchPixels7}>
+              <Button onClick={() => canvas.fetchPixels7(0, 0)}>
                 fetch subsection of pixels from file as binary
               </Button>
             </div>

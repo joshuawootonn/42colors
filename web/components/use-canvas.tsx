@@ -1,4 +1,3 @@
-import { Camera, CameraState } from "@/lib/camera";
 import { Canvas } from "@/lib/canvas";
 import {
   ReactNode,
