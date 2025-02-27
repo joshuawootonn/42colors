@@ -18,7 +18,7 @@ export function Footer({
   authUrl?: string;
 }) {
   return (
-    <footer className="fixed bottom-3 left-3 flex w-min flex-col items-center justify-between text-sm text-primary sm:flex-row">
+    <footer className="fixed bottom-3 left-3 flex w-min flex-col items-center justify-between text-md font-medium text-primary sm:flex-row">
       <div className="mb-3 flex items-center justify-between space-x-3 sm:mb-0">
         <Link href="/changelog">changelog</Link>
         <div>/</div>

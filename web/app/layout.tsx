@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
-import { Lexend_Deca } from "next/font/google";
+import { Space_Mono } from "next/font/google";
 import "./globals.css";
 import { Fathom } from "@/components/fathom";
 import { Mark } from "@/components/mark";
@@ -10,15 +9,10 @@ import { Providers } from "./providers";
 import { INTRO_SEEN } from "@/lib/cookies";
 import { cookies } from "next/headers";
 
-const lexendDeca = Lexend_Deca({
-  variable: "--font-lexend-deca",
+const space = Space_Mono({
+  variable: "--font-space",
+  weight: ["400", "700"],
   subsets: ["latin"],
-});
-
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
 });
 
 export const metadata: Metadata = {
@@ -37,9 +31,7 @@ export default async function RootLayout({
   const defaultOpen = cookieStore.get(INTRO_SEEN)?.value !== "true";
   return (
     <html lang="en">
-      <body
-        className={`${lexendDeca.variable} ${geistMono.variable} antialiased font-sans`}
-      >
+      <body className={`${space.variable} font-sans`}>
         <div className="flex fixed top-[10px] left-[10px]">
           <h1 className="text-2xl font-bold flex gap-2">
             <Link href="/">

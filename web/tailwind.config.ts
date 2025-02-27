@@ -274,8 +274,8 @@ export default {
         250: "62.5rem",
       },
       fontFamily: {
-        sans: ["var(--font-lexend-deca)", ...defaultTheme.fontFamily.sans],
-        mono: ["var(--geist-mono)", ...defaultTheme.fontFamily.mono],
+        sans: ["var(--font-space)", ...defaultTheme.fontFamily.sans],
+        mono: ["var(--font-space)", ...defaultTheme.fontFamily.mono],
       },
       colors: {
         background: "hsl(var(--background))",
