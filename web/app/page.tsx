@@ -66,7 +66,7 @@ export default function Page() {
       <canvas
         id="my-house"
         className={
-          cn()
+          cn("touch-none")
           // isInPanMode ? (isPanning ? "cursor-grabbing" : "cursor-grab") : null,
         }
         height="100vh"
