@@ -3,10 +3,35 @@ import styles from "./number-input.module.css";
 
 import { cn } from "@/lib/utils";
 
-function Button({
+function NumberInputButton({
   className,
   ...props
-}: React.ComponentPropsWithoutRef<"button">) {
+}: React.ComponentPropsWithoutRef<"button"> & { onHold: () => void }) {
+  const timerID = React.useRef<number | null>(null);
+  let counter = 0;
+
+  const pressHoldDuration = 60;
+
+  function pressingDown(e: React.PointerEvent | React.TouchEvent) {
+    requestAnimationFrame(timer);
+    e.preventDefault();
+  }
+
+  function notPressingDown() {
+    if (timerID.current != null) cancelAnimationFrame(timerID.current);
+    counter = 0;
+  }
+
+  function timer() {
+    if (counter < pressHoldDuration) {
+      timerID.current = requestAnimationFrame(timer);
+      counter++;
+    } else if (counter === pressHoldDuration) {
+      timerID.current = requestAnimationFrame(timer);
+      props.onHold();
+    }
+  }
+
   return (
     <button
       tabIndex={-10}
@@ -14,6 +39,11 @@ function Button({
         "flex justify-center items-center h-1/2 aspect-square",
         className,
       )}
+      onPointerDown={pressingDown}
+      onTouchStart={pressingDown}
+      onPointerUp={notPressingDown}
+      onPointerLeave={notPressingDown}
+      onTouchEnd={notPressingDown}
       {...props}
     />
   );
@@ -33,6 +63,19 @@ const NumberInput = React.forwardRef<
 
   const buttonRef = React.useRef<HTMLInputElement | null>(null);
 
+  const onStep = React.useCallback(
+    (step: number) => {
+      buttonRef.current?.focus();
+      props.onChange?.({
+        currentTarget: {
+          name: props.name,
+          value: `${parseInt(buttonRef.current!.value) + step}`,
+        },
+      } as React.ChangeEvent<HTMLInputElement>);
+    },
+    [props],
+  );
+
   return (
     <div
       className={cn("relative z-0 svg-outline-within-sm  bg-white", className)}
@@ -51,7 +94,7 @@ const NumberInput = React.forwardRef<
           "[input\[type=number\]::-webkit-outer-spin-button]:appearance-[textfield]",
           "pl-1",
           "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
-          "placeholder:text-muted-foreground outline-none ",
+          "placeholder:text-muted-foreground outline-none",
           "disabled:cursor-not-allowed disabled:opacity-50",
         )}
         onInput={(e) => props.onInput?.(e)}
@@ -64,16 +107,11 @@ const NumberInput = React.forwardRef<
         {...props}
       />
       <div className="absolute right-[1.5px] divide-y-1.5 divide-primary top-0 h-full z-10 flex flex-col border-l-primary border-l-1.5">
-        <Button
+        <NumberInputButton
           className="group hover:bg-black"
-          onClick={() => {
-            props.onChange?.({
-              currentTarget: {
-                name: props.name,
-                value: `${parseInt(buttonRef.current!.value) + props.step}`,
-              },
-            } as React.ChangeEvent<HTMLInputElement>);
-          }}
+          value={value}
+          onClick={() => onStep(props.step)}
+          onHold={() => onStep(props.step * 5)}
         >
           <svg
             width="6"
@@ -89,18 +127,12 @@ const NumberInput = React.forwardRef<
               strokeWidth="1.5"
             />
           </svg>
-        </Button>
+        </NumberInputButton>
 
-        <Button
+        <NumberInputButton
           className="group hover:bg-black"
-          onClick={() => {
-            props.onChange?.({
-              currentTarget: {
-                name: props.name,
-                value: `${parseInt(buttonRef.current!.value) - props.step}`,
-              },
-            } as React.ChangeEvent<HTMLInputElement>);
-          }}
+          onClick={() => onStep(props.step * -1)}
+          onHold={() => onStep(props.step * -5)}
         >
           <svg
             width="6"
@@ -116,7 +148,7 @@ const NumberInput = React.forwardRef<
               strokeWidth="1.5"
             />
           </svg>
-        </Button>
+        </NumberInputButton>
       </div>
     </div>
   );
