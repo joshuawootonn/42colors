@@ -22,7 +22,7 @@ export function Intro({ defaultOpen }: { defaultOpen: boolean }) {
       <DialogContent
         className={cn(
           ...dialogProse,
-          "w-157 left-[unset] top-[unset] translate-x-0 translate-y-0 bottom-4 right-4 pt-2",
+          "w-157 left-[unset] top-[unset] translate-x-0 translate-y-0 bottom-5 right-5 pt-2",
         )}
       >
         <DialogTitle asChild>
