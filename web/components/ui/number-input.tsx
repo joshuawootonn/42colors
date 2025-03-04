@@ -9,7 +9,7 @@ function NumberInputButton({
   ...props
 }: React.ComponentPropsWithoutRef<"button"> & { onHold: () => void }) {
   const timerID = React.useRef<number | null>(null);
-  let counter = 0;
+  const counter = React.useRef(0);
 
   const pressHoldDuration = 60;
 
@@ -20,14 +20,14 @@ function NumberInputButton({
 
   function notPressingDown() {
     if (timerID.current != null) cancelAnimationFrame(timerID.current);
-    counter = 0;
+    counter.current = 0;
   }
 
   function timer() {
-    if (counter < pressHoldDuration) {
+    if (counter.current < pressHoldDuration) {
       timerID.current = requestAnimationFrame(timer);
-      counter++;
-    } else if (counter === pressHoldDuration) {
+      counter.current++;
+    } else if (counter.current === pressHoldDuration) {
       timerID.current = requestAnimationFrame(timer);
       onHold();
     }
