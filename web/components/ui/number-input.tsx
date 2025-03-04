@@ -102,7 +102,7 @@ const NumberInput = React.forwardRef<
         value={value}
         style={
           {
-            "--number-input-width": `${valueToWidth(value)}`,
+            "--number-input-width": valueToWidth(value),
           } as React.CSSProperties
         }
         {...props}
