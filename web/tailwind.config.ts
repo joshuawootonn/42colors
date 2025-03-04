@@ -319,6 +319,9 @@ export default {
           "5": "hsl(var(--chart-5))",
         },
       },
+      borderWidth: {
+        1.5: "1.5px",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
