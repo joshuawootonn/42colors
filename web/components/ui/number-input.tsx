@@ -1,0 +1,126 @@
+import * as React from "react";
+import styles from "./number-input.module.css";
+
+import { cn } from "@/lib/utils";
+
+function Button({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"button">) {
+  return (
+    <button
+      tabIndex={-10}
+      className={cn(
+        "flex justify-center items-center h-1/2 aspect-square",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function valueToWidth(value: number | string) {
+  return `${String(value).length.toString()}ch`;
+}
+
+const NumberInput = React.forwardRef<
+  HTMLInputElement,
+  Omit<React.ComponentProps<"input">, "type" | "step"> & { step: number }
+>(({ className, value, ...props }, parentRef) => {
+  if (typeof value !== "number") {
+    throw new Error("Number Input value must be type 'number'");
+  }
+
+  const buttonRef = React.useRef<HTMLInputElement | null>(null);
+
+  return (
+    <div
+      className={cn("relative z-0 svg-outline-within-sm  bg-white", className)}
+    >
+      <input
+        ref={(ref) => {
+          if (typeof parentRef === "function") parentRef(ref);
+          else if (parentRef !== null) parentRef.current = ref;
+          buttonRef.current = ref;
+        }}
+        type="number"
+        className={cn(
+          styles.input,
+          "flex h-7.5 min-w-0 border-1.5 border-input bg-transparent text-base",
+          "w-[calc(var(--number-input-width)+30px)]",
+          "[input\[type=number\]::-webkit-outer-spin-button]:appearance-[textfield]",
+          "pl-1",
+          "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
+          "placeholder:text-muted-foreground outline-none ",
+          "disabled:cursor-not-allowed disabled:opacity-50",
+        )}
+        onInput={(e) => props.onInput?.(e)}
+        value={value}
+        style={
+          {
+            "--number-input-width": `${valueToWidth(value)}`,
+          } as React.CSSProperties
+        }
+        {...props}
+      />
+      <div className="absolute right-[1.5px] divide-y-1.5 divide-primary top-0 h-full z-10 flex flex-col border-l-primary border-l-1.5">
+        <Button
+          className="group hover:bg-black"
+          onClick={() => {
+            props.onChange?.({
+              currentTarget: {
+                name: props.name,
+                value: `${parseInt(buttonRef.current!.value) + props.step}`,
+              },
+            } as React.ChangeEvent<HTMLInputElement>);
+          }}
+        >
+          <svg
+            width="6"
+            height="6"
+            viewBox="0 0 6 6"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-black group-hover:text-white translate-y-[1px]"
+          >
+            <path
+              d="M0.994293 3.75L3.04978 2.25L5.0057 3.75"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+          </svg>
+        </Button>
+
+        <Button
+          className="group hover:bg-black"
+          onClick={() => {
+            props.onChange?.({
+              currentTarget: {
+                name: props.name,
+                value: `${parseInt(buttonRef.current!.value) - props.step}`,
+              },
+            } as React.ChangeEvent<HTMLInputElement>);
+          }}
+        >
+          <svg
+            width="6"
+            height="6"
+            viewBox="0 0 6 6"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-black group-hover:text-white translate-y-[-1px]"
+          >
+            <path
+              d="M0.994293 2.16843L3.04978 3.83156L5.0057 2.16843"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+          </svg>
+        </Button>
+      </div>
+    </div>
+  );
+});
+NumberInput.displayName = "NumberInput";
+
+export { NumberInput };
