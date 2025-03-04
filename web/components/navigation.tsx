@@ -32,6 +32,7 @@ export function Navigation() {
       }
 
       canvas.emitChange();
+      canvas.fetchPixels();
     },
     [canvas],
   );
@@ -49,6 +50,7 @@ export function Navigation() {
           canvas.camera.x = 0;
           canvas.camera.y = 0;
           canvas.emitChange();
+          canvas.fetchPixels();
         }}
         className={
           "relative z-0 svg-outline-within-sm outline-none flex justify-center items-center h-8 bg-transparent text-base"

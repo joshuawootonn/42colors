@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 function NumberInputButton({
   className,
+  onHold,
   ...props
 }: React.ComponentPropsWithoutRef<"button"> & { onHold: () => void }) {
   const timerID = React.useRef<number | null>(null);
@@ -28,7 +29,7 @@ function NumberInputButton({
       counter++;
     } else if (counter === pressHoldDuration) {
       timerID.current = requestAnimationFrame(timer);
-      props.onHold();
+      onHold();
     }
   }
 
