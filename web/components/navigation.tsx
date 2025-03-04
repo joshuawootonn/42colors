@@ -60,22 +60,22 @@ export function Navigation() {
           width="30"
           height="30"
           viewBox="0 0 30 30"
-          fill="none"
+          className="fill-secondary"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
             d="M26.1429 2L3.85715 9.42857V23.5429L26.1429 17.6V2Z"
-            stroke="black"
+            className="stroke-primary"
             strokeWidth="1.5"
           />
           <path
             d="M6.08575 22.8V28H12.0286C12.0286 27.4058 12.0286 25.7715 12.0286 25.0286H16.4858V28H24.6572V18.3429"
-            stroke="black"
+            className="stroke-primary"
             strokeWidth="1.5"
           />
           <path
             d="M19.4642 22.8071H21.6785V25.0214H19.4642V22.8071Z"
-            stroke="black"
+            className="stroke-primary"
             strokeWidth="1.5"
           />
           <rect
@@ -83,28 +83,28 @@ export function Navigation() {
             y="8.06854"
             width="3.50898"
             height="1.30551"
-            fill="black"
+            className="fill-primary"
           />
           <rect
             x="9.42819"
             y="16.2648"
             width="3.50898"
             height="1.30551"
-            fill="black"
+            className="fill-primary"
           />
           <rect
             x="5.91922"
             y="17.6901"
             width="3.50898"
             height="1.30551"
-            fill="black"
+            className="fill-primary"
           />
           <rect
             x="11.8625"
             y="9.37408"
             width="3.50898"
             height="1.30551"
-            fill="black"
+            className="fill-primary"
           />
         </svg>
       </button>
