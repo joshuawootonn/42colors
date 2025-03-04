@@ -1,4 +1,4 @@
-import { Input } from "./ui/input";
+import { NumberInput } from "./ui/number-input";
 import { useCanvas, useContextCanvasSubscription } from "./use-canvas";
 import { cn } from "@/lib/utils";
 import { ChangeEvent, useCallback } from "react";
@@ -51,27 +51,62 @@ export function Navigation() {
           canvas.emitChange();
         }}
         className={
-          "flex justify-center items-center h-8 bg-transparent text-base"
+          "relative z-0 svg-outline-within-sm outline-none flex justify-center items-center h-8 bg-transparent text-base"
         }
       >
         <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
+          width="30"
+          height="30"
+          viewBox="0 0 30 30"
           fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
-          <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <path
+            d="M26.1429 2L3.85715 9.42857V23.5429L26.1429 17.6V2Z"
+            stroke="black"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M6.08575 22.8V28H12.0286C12.0286 27.4058 12.0286 25.7715 12.0286 25.0286H16.4858V28H24.6572V18.3429"
+            stroke="black"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M19.4642 22.8071H21.6785V25.0214H19.4642V22.8071Z"
+            stroke="black"
+            strokeWidth="1.5"
+          />
+          <rect
+            x="15.3714"
+            y="8.06854"
+            width="3.50898"
+            height="1.30551"
+            fill="black"
+          />
+          <rect
+            x="9.42819"
+            y="16.2648"
+            width="3.50898"
+            height="1.30551"
+            fill="black"
+          />
+          <rect
+            x="5.91922"
+            y="17.6901"
+            width="3.50898"
+            height="1.30551"
+            fill="black"
+          />
+          <rect
+            x="11.8625"
+            y="9.37408"
+            width="3.50898"
+            height="1.30551"
+            fill="black"
+          />
         </svg>
       </button>
-      <Input
-        className="w-20"
-        type="number"
+      <NumberInput
         name="x"
         value={cameraX}
         min={-50500}
@@ -79,9 +114,7 @@ export function Navigation() {
         step={5}
         onChange={onChange}
       />
-      <Input
-        className="w-20"
-        type="number"
+      <NumberInput
         name="y"
         value={cameraY}
         step={5}
