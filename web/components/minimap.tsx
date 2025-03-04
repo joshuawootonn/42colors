@@ -23,7 +23,7 @@ export function Minimap() {
   return (
     <div
       className={cn(
-        "flex space-x-1 justify-center items-center select-none font-bold text-xl border-primary border-2 aspect-square size-50 bg-white",
+        "flex space-x-1 justify-center items-center select-none font-bold text-xl border-primary border-1.5 aspect-square size-50 bg-white",
       )}
       onPointerDown={(e: PointerEvent) => {
         e.currentTarget.setPointerCapture(e.pointerId);

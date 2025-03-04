@@ -33,7 +33,7 @@ export function Footer({
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
-            className="flex flex-col border-2 border-primary bg-secondary "
+            className="flex flex-col border-1.5 border-primary bg-secondary "
             sideOffset={4}
             align="center"
             side="top"

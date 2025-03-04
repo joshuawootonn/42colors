@@ -11,7 +11,7 @@ function IconButton({
     <button
       {...props}
       className={cn(
-        "group flex justify-center items-center bg-white size-8 border-2 border-transparent border-dashed",
+        "group flex justify-center items-center bg-white size-8 border-1.5 border-transparent border-dashed",
 
         "focus-visible:border-black outline-none rounded-none",
         "active:bg-black active:text-white active:focus-visible:border-white",
