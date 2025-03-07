@@ -7,9 +7,11 @@ import { roundDown } from "./utils";
 import { Camera, CameraState } from "./camera";
 import { canvasToClientConversion } from "./utils/clientToCanvasConversion";
 import { CANVAS_BUFFER, CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from "./constants";
+import { BrushTool } from "./tools/brush";
+import { KeyboardCode } from "./keyboard-codes";
 // place files you want to import through the `$lib` alias in this folder.
 
-export type Mode = "pencil" | "pan";
+export type Tool = "pencil" | "brush";
 export type PointerState = "default" | "pressed";
 
 export enum State {
@@ -25,7 +27,7 @@ export type Store =
       state: State.Working;
       canvas: HTMLCanvasElement;
       context: CanvasRenderingContext2D;
-      mode: Mode;
+      tool: Tool;
     };
 
 type Pixel = {
@@ -40,10 +42,13 @@ export class Canvas {
   private rafId: number = 0;
   private panTool: PanTool;
   private pencilTool: PencilTool;
-  private mode: Mode = "pan";
+  private brushTool: BrushTool;
+  private tool: Tool = "pencil";
   private pointerState: PointerState = "default";
   camera: Camera;
   pixels: Pixel[] = initialPixels;
+
+  isPanning = false;
   private socket: Socket;
   private currentChannel: Channel;
   private chunks: Record<
@@ -53,6 +58,7 @@ export class Canvas {
   private backgroundCanvas: HTMLCanvasElement;
 
   constructor(
+    readonly body: HTMLBodyElement,
     readonly canvas: HTMLCanvasElement,
     readonly ctx: CanvasRenderingContext2D,
     private readonly apiOrigin: string,
@@ -61,12 +67,15 @@ export class Canvas {
   ) {
     this.panTool = new PanTool(this);
     this.pencilTool = new PencilTool(this);
+    this.brushTool = new BrushTool(this);
     this.camera = new Camera(this, cameraOptions.x, cameraOptions.y, 1);
 
     this.draw = this.draw.bind(this);
     this.onPointerDown = this.onPointerDown.bind(this);
     this.onPointerUp = this.onPointerUp.bind(this);
     this.onPointerOut = this.onPointerOut.bind(this);
+    this.onKeyDown = this.onKeyDown.bind(this);
+    this.onKeyUp = this.onKeyUp.bind(this);
     this.fetchPixels1 = this.fetchPixels1.bind(this);
     this.fetchPixels2 = this.fetchPixels2.bind(this);
     this.fetchPixels3 = this.fetchPixels3.bind(this);
@@ -75,6 +84,8 @@ export class Canvas {
     this.fetchPixels6 = this.fetchPixels6.bind(this);
     this.fetchPixels7 = this.fetchPixels7.bind(this);
 
+    body.addEventListener("keydown", this.onKeyDown);
+    body.addEventListener("keyup", this.onKeyUp);
     canvas.addEventListener("pointerdown", this.onPointerDown);
     canvas.addEventListener("pointerup", this.onPointerUp);
     canvas.addEventListener("pointerout", this.onPointerOut);
@@ -196,16 +207,16 @@ export class Canvas {
     return () => this.listeners.delete(id);
   };
 
-  getMode(): Mode {
-    return this.mode;
+  getTool(): Tool {
+    return this.tool;
   }
 
   getCameraState(): CameraState {
     return { x: this.camera.x, y: this.camera.y, zoom: this.camera.zoom };
   }
 
-  setMode(mode: Mode) {
-    this.mode = mode;
+  setTool(tool: Tool) {
+    this.tool = tool;
 
     this.emitChange();
   }
@@ -347,17 +358,39 @@ export class Canvas {
   onPointerDown(e: PointerEvent) {
     this.setPointerState("pressed");
 
-    const mode = this.mode;
-    switch (mode) {
+    if (this.isPanning) {
+      this.panTool.onPointerDown(e);
+
+      return;
+    }
+
+    const tool = this.tool;
+    switch (tool) {
       case "pencil":
         this.pencilTool.onPointerDown();
         break;
-      case "pan":
-        this.panTool.onPointerDown(e);
+      case "brush":
+        this.brushTool.onPointerDown();
         break;
 
       default:
         console.log("default case of the onPointerDown");
+    }
+  }
+
+  onKeyDown(e: KeyboardEvent) {
+    if (e.defaultPrevented) return;
+
+    if (e.code === KeyboardCode.Space) {
+      this.isPanning = true;
+    }
+  }
+
+  onKeyUp(e: KeyboardEvent) {
+    if (e.defaultPrevented) return;
+
+    if (e.code === KeyboardCode.Space) {
+      this.isPanning = false;
     }
   }
 

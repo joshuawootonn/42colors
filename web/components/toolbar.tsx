@@ -11,11 +11,10 @@ function IconButton({
     <button
       {...props}
       className={cn(
-        "group flex justify-center items-center bg-white size-8 border-1.5 border-transparent border-dashed",
-
+        "group flex justify-center items-center bg-white text-white size-8 border-1.5 border-transparent border-dashed",
         "focus-visible:border-black outline-none rounded-none",
-        "active:bg-black active:text-white active:focus-visible:border-white",
-        active && "bg-black text-white focus-visible:border-white",
+        "active:bg-gray-200 active:text-white active:focus-visible:border-white active:invert",
+        active && "bg-gray-200 text-white focus-visible:border-white invert",
       )}
     >
       <div>{children}</div>
@@ -25,52 +24,58 @@ function IconButton({
 
 export function Toolbar() {
   const canvas = useCanvas();
-  const mode = useContextCanvasSubscription((canvas) => canvas.getMode(), []);
+  const tool = useContextCanvasSubscription((canvas) => canvas.getTool(), []);
   return (
-    <div
-      className={cn(
-        "bg-black gap-0.5 p-0.5 grid grid-cols-2",
-        "border-l-black border-l border-b-black border-b",
-      )}
-    >
-      <IconButton active={mode === "pan"} onClick={() => canvas.setMode("pan")}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+    <div className="flex flex-row justify-end">
+      <div className={cn("bg-black gap-0.5 p-0.5 grid grid-cols-2")}>
+        <IconButton
+          active={tool === "pencil"}
+          onClick={() => canvas.setTool("pencil")}
         >
-          <path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2" />
-          <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2" />
-          <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8" />
-          <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
-        </svg>{" "}
-      </IconButton>
-
-      <IconButton
-        active={mode === "pencil"}
-        onClick={() => canvas.setMode("pencil")}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 32 32"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M23.4576 12.8967L11.7578 24.3561L8.83289 25.1574M23.4576 12.8967C25.7815 11.0536 26.2382 8.98528 24.6596 7.52761C23.1089 6.09567 21.2939 7.04679 19.4508 8.97005M23.4576 12.8967L19.4508 8.97005M19.4508 8.97005L7.83117 20.3493L6.98882 22.8062M6.98882 22.8062L5.90796 25.9588L8.83289 25.1574M6.98882 22.8062C6.98882 22.8062 7.88216 23.3063 8.25973 23.8153M8.83289 25.1574C8.83289 25.1574 8.59928 24.273 8.25973 23.8153M8.25973 23.8153L6.98882 24.9066"
+              className="stroke-primary"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </IconButton>
+        <IconButton
+          active={tool === "brush"}
+          onClick={() => canvas.setTool("brush")}
         >
-          <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
-          <path d="m15 5 4 4" />
-        </svg>
-      </IconButton>
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 32 32"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M11.1381 13.0183L8.9007 15.189L11.1381 18.7558C9.15983 20.0853 8.90045 20.187 6.82517 22.4199C4.26363 25.1761 7.91917 26.8835 9.90602 25.3383C11.4303 24.1528 12.6726 22.5605 13.6346 21.1878L16.8775 23.4576L19.1849 20.8725M11.1381 13.0183L18.1096 6.07733L20.7677 8.67033L23.4108 11.2487L26.054 13.8271L19.1849 20.8725M11.1381 13.0183L19.1849 20.8725"
+              className="stroke-primary"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M20.1739 7.90596C16.8036 12.0158 15.8201 14.9442 21.0244 9.25097L20.1739 7.90596Z"
+              className="fill-primary"
+            />
+            <path
+              d="M22.4003 10.9234C17.8105 15.8547 16.822 18.8329 23.9094 12.0016L22.4003 10.9234Z"
+              className="fill-primary"
+            />
+          </svg>
+        </IconButton>
+      </div>
     </div>
   );
 }

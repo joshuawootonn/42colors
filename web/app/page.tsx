@@ -29,7 +29,10 @@ export default function Page() {
       const x = stringToNumberOrDefault.parse(search.get("x"));
       const y = stringToNumberOrDefault.parse(search.get("y"));
 
+      const body = document.body as HTMLBodyElement;
+
       const canvas = new Canvas(
+        body,
         element,
         context,
         // todo(josh): make a config module that checks env vars
