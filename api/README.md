@@ -8,7 +8,7 @@
 - `docker stop $(docker ps -q --filter ancestor=joshuawootonn/42colors:latest )`
 - `docker run --env-file ./.env.prod -p 4000:4000 --pull=always -d joshuawootonn/42colors:latest`
 
-## How to migrate datebase
+## How to migrate database
 
 - `export $(xargs <.env.dev)`
 - `mix clean`
