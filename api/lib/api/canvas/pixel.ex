@@ -5,6 +5,7 @@ defmodule Api.Canvas.Pixel do
   schema "pixels" do
     field :y, :integer
     field :x, :integer
+    field :user_id, :integer
 
     timestamps(type: :utc_datetime)
   end
@@ -12,7 +13,7 @@ defmodule Api.Canvas.Pixel do
   @doc false
   def changeset(pixel, attrs) do
     pixel
-    |> cast(attrs, [:x, :y])
-    |> validate_required([:x, :y])
+    |> cast(attrs, [:x, :y, :user_id])
+    |> validate_required([:x, :y, :user_id])
   end
 end

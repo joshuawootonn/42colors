@@ -90,7 +90,10 @@ export class Canvas {
     canvas.addEventListener("pointerup", this.onPointerUp);
     canvas.addEventListener("pointerout", this.onPointerOut);
 
-    this.socket = new Socket(new URL("/socket", this.apiWebsocketOrigin).href);
+    const token = parse(document.cookie)["token"] ?? null;
+    this.socket = new Socket(new URL("/socket", this.apiWebsocketOrigin).href, {
+      params: { token },
+    });
     this.socket.connect();
 
     this.currentChannel = this.socket.channel("region:general", {});
@@ -189,7 +192,11 @@ export class Canvas {
 
   pushPixel(pixel: Pixel) {
     this.pixels.push(pixel);
-    this.currentChannel.push("new_pixel", { body: pixel });
+    this.currentChannel
+      .push("new_pixel", { body: pixel })
+      .receive("error", (resp) => {
+        console.log(resp, "unauthed_user" === resp);
+      });
   }
 
   listeners = new Map<string, () => void>();

@@ -1,6 +1,9 @@
 defmodule ApiWeb.PixelSocket do
   use Phoenix.Socket
 
+  alias Api.Canvas
+  alias Api.Accounts
+
   # A Socket handler
   #
   # It's possible to control the websocket connection and
@@ -34,7 +37,18 @@ defmodule ApiWeb.PixelSocket do
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
   @impl true
-  def connect(_params, socket, _connect_info) do
+  def connect(%{"token" => token}, socket, _connect_info) do
+    case Accounts.get_user_by_token(token) do
+      {:ok, account} ->
+        {:ok, assign(socket, :current_user_id, account.user_id)}
+
+      {:error} ->
+        {:ok, socket}
+    end
+  end
+
+  @impl true
+  def connect(%{}, socket, _connect_info) do
     {:ok, socket}
   end
 

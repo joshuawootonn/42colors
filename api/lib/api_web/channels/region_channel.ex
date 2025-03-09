@@ -9,14 +9,25 @@ defmodule ApiWeb.RegionChannel do
   end
 
   def handle_in("new_pixel", %{"body" => body}, socket) do
-    {:ok, pixel} = Canvas.create_pixel(body)
+    current_user_id = Map.get(socket.assigns, :current_user_id)
 
-    PixelCacheSupervisor.write_pixels_to_file([
-      pixel
-    ])
+    if current_user_id == nil do
+      {:reply, {:error, "unauthed_user"}, socket}
+    else
+      {:ok, pixel} =
+        Canvas.create_pixel(%{
+          x: Map.get(body, "x"),
+          y: Map.get(body, "y"),
+          user_id: current_user_id
+        })
 
-    broadcast!(socket, "new_pixel", %{body: body})
+      PixelCacheSupervisor.write_pixels_to_file([
+        pixel
+      ])
 
-    {:noreply, socket}
+      broadcast!(socket, "new_pixel", %{body: body})
+
+      {:noreply, socket}
+    end
   end
 end
