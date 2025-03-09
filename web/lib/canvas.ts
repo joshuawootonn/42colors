@@ -141,7 +141,6 @@ export class Canvas {
       const json = await res.json();
 
       if (!res.ok) {
-        console.error(json);
         return;
       }
 
