@@ -9,14 +9,10 @@ defmodule ApiWeb.MeController do
     Logger.info(get_req_header(conn, "authorization"))
 
     with ["Bearer: " <> token] <- get_req_header(conn, "authorization") do
-      account = Accounts.get_user_by_token(token)
-      user = Accounts.get_user!(account.user_id)
-      render(conn, :show, %{name: user.name, email: user.email})
-    else
-      _ ->
-        conn
-        |> send_resp(:unauthorized, "No access for you")
-        |> halt()
+      with {:ok, account} <- Accounts.get_user_by_token(token) do
+        user = Accounts.get_user!(account.user_id)
+        render(conn, :show, %{name: user.name, email: user.email})
+      end
     end
   end
 end

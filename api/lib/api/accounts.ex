@@ -62,7 +62,16 @@ defmodule Api.Accounts do
     current_time = DateTime.utc_now()
     one_hour_ago = DateTime.add(current_time, -3600)
 
-    Repo.one(from a in Account, where: a.updated_at >= ^one_hour_ago and a.access_token == ^token)
+    account =
+      Repo.one(
+        from a in Account, where: a.updated_at >= ^one_hour_ago and a.access_token == ^token
+      )
+
+    if account == nil do
+      {:error, :unauthorized}
+    else
+      {:ok, account}
+    end
   end
 
   # def get_user_by_token(token) do
