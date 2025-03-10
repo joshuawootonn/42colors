@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/button";
+import { Button } from "@/components/ui/button";
 import { Toast, toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 
@@ -50,8 +50,31 @@ export function DesignPage() {
         <ColorBlock variable="--chart-5" />
         <ColorBlock variable="--radius" />
       </div>
+      <h2>Button</h2>
+      <div className="not-prose space-y-4">
+        <div className="flex flex-wrap w-full gap-4 items-center">
+          <div className="text-sm">Small</div>
+          <Button size="sm">default</Button>
+          <Button size="sm" variant="destructive">
+            destructive
+          </Button>
+          <Button size="sm" variant="outline">
+            outline
+          </Button>
+          <Button size="sm" variant="link">
+            link
+          </Button>
+        </div>
+        <div className="flex flex-wrap w-full gap-4 items-center">
+          <div className="text-md">Default</div>
+          <Button>default</Button>
+          <Button variant="destructive">destructive</Button>
+          <Button variant="outline">outline</Button>
+          <Button variant="link">link</Button>
+        </div>
+      </div>
       <h2>Toast</h2>
-      <div className="not-prose">
+      <div className="not-prose flex wrap w-full gap-4 items-center">
         <Button
           onClick={() =>
             toast({
@@ -64,9 +87,8 @@ export function DesignPage() {
             })
           }
         >
-          Spawn
+          spawn
         </Button>
-
         <Toast
           id={"1"}
           title="Login (when you are ready)"
