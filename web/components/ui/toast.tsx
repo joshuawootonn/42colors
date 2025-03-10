@@ -2,6 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { Toaster as Sonner, toast as sonnerToast } from "sonner";
+import { Button } from "./button";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
@@ -42,14 +43,13 @@ export function throttleByKey<T extends Omit<ToastProps, "id">>(
       setTimeout(function () {
         const index = throttledKeys.indexOf(params.title);
         if (index > -1) throttledKeys.splice(index, 1);
-      }, 1000);
+      }, 5000);
     }
   };
 }
 
 const toast = throttleByKey(_toast);
 
-/** A fully custom toast that still maintains the animations and interactions. */
 export function Toast(props: ToastProps) {
   const { title, description, button, id } = props;
 
@@ -63,15 +63,15 @@ export function Toast(props: ToastProps) {
       </div>
       <div className="ml-4 shrink-0">
         {button && (
-          <button
-            className="relative svg-outline px-3 py-1 text-sm text-secondary bg-primary cursor-default"
+          <Button
+            size="sm"
             onClick={() => {
               button.onClick();
               sonnerToast.dismiss(id);
             }}
           >
             {button.label}
-          </button>
+          </Button>
         )}
       </div>
     </div>

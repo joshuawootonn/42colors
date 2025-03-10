@@ -47,8 +47,7 @@ export default async function RootLayout({
         <Toaster
           className="w-96"
           // @ts-expect-error just trying to set an "unknown property"
-          style={{ "--width": "500px" }}
-          toastOptions={{ duration: 60000 }}
+          style={{ "--width": "380px" }}
           offset={12}
           gap={12}
           position="bottom-center"
