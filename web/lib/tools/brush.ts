@@ -1,3 +1,4 @@
+import { toast } from "@/components/ui/toast";
 import { Canvas } from "../canvas";
 
 export class BrushTool {
@@ -6,6 +7,11 @@ export class BrushTool {
   onPointerDown() {
     const draw = () => {
       console.log("brushing");
+
+      toast({
+        title: "The brush tool isn't implemented (yet)",
+        description: "Actually good editing coming soon!!",
+      });
     };
 
     this.canvas.canvas.addEventListener("pointermove", draw);
