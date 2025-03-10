@@ -202,7 +202,7 @@ export class Canvas {
           const authURL = this.authURL;
           toast({
             title: "Login (when you are ready)",
-            description: "to save and share your pixels",
+            description: "to save and share your pixels.",
             button: authURL
               ? {
                   label: "login",
