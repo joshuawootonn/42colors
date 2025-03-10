@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { changelogUpdatedAt } from "./updated-at";
 import { H1 } from "@/components/dialog-headings";
+import { Link } from "@/components/link";
 
 function DateComponent({ date }: { date: Date }) {
   return (
@@ -26,10 +27,25 @@ export default function Changelog() {
       <hr className="w-full border-t-2 border-black dark:border-white" />
       <ul>
         <li>
-          <DateComponent date={new Date("3/4/2025")} /> — Shipped a new
-          navigation component that accelerates when you hold the controls and
-          has some of the new design patterns I'm thinking of using in the
-          toolbar.
+          <DateComponent date={new Date("3/10/2025")} />
+          <ul>
+            <li>
+              Created{" "}
+              <Link href="/design">
+                <code>/design</code>
+              </Link>{" "}
+              for iterating the design system. Basically a simpler storybook.{" "}
+            </li>
+          </ul>
+        </li>
+        <li>
+          <DateComponent date={new Date("3/9/2025")} />
+          <ul>
+            <li>
+              Shipped an update preventing non authed users from drawing.{" "}
+            </li>
+            <li>Created a toast UI for explaining this to users.</li>
+          </ul>
         </li>
         <li>
           <DateComponent date={new Date("2/1/2025")} /> — Experimented a bunch
