@@ -9,6 +9,7 @@ import {
 import { Link } from "./link";
 import NextLink from "next/link";
 import { deleteCookie } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
 
 export function Footer({
   user,
@@ -17,10 +18,13 @@ export function Footer({
   user?: { email: string; name: string };
   authUrl?: string;
 }) {
+  const searchParams = useSearchParams();
   return (
     <footer className="fixed bottom-3 left-3 flex w-min flex-col items-center justify-between text-md font-medium text-primary sm:flex-row">
       <div className="mb-3 flex items-center justify-between space-x-3 sm:mb-0">
-        <Link href="/changelog">changelog</Link>
+        <Link href={{ pathname: "/changelog", query: searchParams.toString() }}>
+          changelog
+        </Link>
         <div>/</div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -41,7 +45,10 @@ export function Footer({
             <DropdownMenuItem asChild={true}>
               <NextLink
                 className="cursor-pointer px-2 py-1 no-underline outline-none focus:bg-primary focus:text-secondary"
-                href={"/privacy-policy"}
+                href={{
+                  pathname: "/privacy-policy",
+                  query: searchParams.toString(),
+                }}
               >
                 privacy
               </NextLink>
@@ -49,7 +56,10 @@ export function Footer({
             <DropdownMenuItem asChild={true}>
               <NextLink
                 className="cursor-pointer px-2 py-1 no-underline outline-none focus:bg-primary focus:text-secondary"
-                href={"/terms-of-service"}
+                href={{
+                  pathname: "/terms-of-service",
+                  query: searchParams.toString(),
+                }}
               >
                 terms
               </NextLink>
