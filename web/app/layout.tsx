@@ -8,6 +8,7 @@ import { Link } from "@/components/link";
 import { Providers } from "./providers";
 import { INTRO_SEEN } from "@/lib/cookies";
 import { cookies } from "next/headers";
+import { Toaster } from "sonner";
 
 const space = Space_Mono({
   variable: "--font-space",
@@ -41,9 +42,18 @@ export default async function RootLayout({
         </div>
         {left}
         <Providers>{children}</Providers>
-
         <Fathom />
         <Intro defaultOpen={defaultOpen} />
+        <Toaster
+          className="w-96"
+          // @ts-expect-error just trying to set an "unknown property"
+          style={{ "--width": "500px" }}
+          toastOptions={{ duration: 60000 }}
+          offset={12}
+          gap={12}
+          position="bottom-center"
+          expand
+        />
       </body>
     </html>
   );

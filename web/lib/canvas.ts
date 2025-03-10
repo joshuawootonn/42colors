@@ -9,7 +9,8 @@ import { canvasToClientConversion } from "./utils/clientToCanvasConversion";
 import { CANVAS_BUFFER, CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from "./constants";
 import { BrushTool } from "./tools/brush";
 import { KeyboardCode } from "./keyboard-codes";
-// place files you want to import through the `$lib` alias in this folder.
+import { toast } from "@/components/ui/toast";
+import { ErrorCode } from "./error-codes";
 
 export type Tool = "pencil" | "brush";
 export type PointerState = "default" | "pressed";
@@ -49,6 +50,7 @@ export class Canvas {
   pixels: Pixel[] = initialPixels;
 
   isPanning = false;
+  private authURL: string | null = null;
   private socket: Socket;
   private currentChannel: Channel;
   private chunks: Record<
@@ -130,6 +132,7 @@ export class Canvas {
         return;
       }
 
+      this.authURL = json.data.url;
       return json.data.url;
     });
   }
@@ -195,7 +198,22 @@ export class Canvas {
     this.currentChannel
       .push("new_pixel", { body: pixel })
       .receive("error", (resp) => {
-        console.log(resp, "unauthed_user" === resp);
+        if (resp === ErrorCode.UNAUTHED_USER) {
+          const authURL = this.authURL;
+          toast({
+            title: "Login (when you are ready)",
+            description:
+              "Feel free to try out 42colors, but pixels won't be saved or shared till login.",
+            button: authURL
+              ? {
+                  label: "login",
+                  onClick: () => {
+                    window.location.href = authURL;
+                  },
+                }
+              : undefined,
+          });
+        }
       });
   }
 
