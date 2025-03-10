@@ -1,1 +1,1 @@
-export const INTRO_SEEN = "@@42:intro-seen";
+export const INTRO_SEEN = "__42colors-intro-seen";
