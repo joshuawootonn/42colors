@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 import { stringToNumberOrDefault } from "@/lib/utils/stringToNumberOrDefault";
 import { useState, useEffect } from "react";
 
+// Using this following comment so that the useEffect runs and reset my canvas on hot reload
+// @refresh reset
 export default function Page() {
   const [canvas, setCanvas] = useState<Canvas | null>(null);
 
