@@ -10,15 +10,15 @@ import { Link } from "./link";
 import NextLink from "next/link";
 import { deleteCookie } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
+import { useSelector } from "@xstate/store/react";
+import { store } from "@/lib/store";
 
-export function Footer({
-  user,
-  authUrl,
-}: {
-  user?: { email: string; name: string };
-  authUrl?: string;
-}) {
+export function Footer() {
   const searchParams = useSearchParams();
+
+  const user = useSelector(store, (state) => state.context.user);
+  const authUrl = useSelector(store, (state) => state.context.server?.authURL);
+
   return (
     <footer className="fixed bottom-3 left-3 flex w-min flex-col items-center justify-between text-md font-medium text-primary sm:flex-row">
       <div className="mb-3 flex items-center justify-between space-x-3 sm:mb-0">

@@ -1,31 +1,28 @@
 import { toast } from "@/components/ui/toast";
-import { Canvas } from "../canvas";
+import { Store } from "../store";
 
-export class BrushTool {
-  constructor(private readonly canvas: Canvas) {}
-
-  onPointerDown() {
-    const draw = () => {
-      console.log("brushing");
-
-      toast({
-        title: "The brush tool isn't implemented (yet)",
-        description: "Actually good editing coming soon!!",
-      });
-    };
-
-    this.canvas.canvas.addEventListener("pointermove", draw);
-
-    const cleanUp = () => {
-      this.canvas.canvas.removeEventListener("pointermove", draw);
-    };
-
-    this.canvas.canvas.addEventListener("pointerup", cleanUp, {
-      once: true,
+function onPointerDown(e: PointerEvent, context: Store) {
+  const draw = () => {
+    toast({
+      title: "The brush tool isn't implemented (yet)",
+      description: "Actually good editing coming soon!!",
     });
+  };
 
-    document.addEventListener("pointerout", cleanUp, {
-      once: true,
-    });
-  }
+  context.canvas?.rootCanvas.addEventListener("pointermove", draw);
+
+  const cleanUp = () => {
+    context.canvas?.rootCanvas.removeEventListener("pointermove", draw);
+  };
+
+  context.canvas?.rootCanvas.addEventListener("pointerup", cleanUp, {
+    once: true,
+  });
+
+  document.addEventListener("pointerout", cleanUp, {
+    once: true,
+  });
 }
+
+export const BrushTool = { onPointerDown };
+export type BrushTool = typeof BrushTool;

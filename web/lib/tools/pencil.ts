@@ -1,31 +1,28 @@
-import { Canvas } from "../canvas";
 import { clientToCanvasConversion } from "../utils/clientToCanvasConversion";
+import { store, Store } from "../store";
 
-export class PencilTool {
-  constructor(private readonly canvas: Canvas) {}
+function onPointerDown(_: PointerEvent, context: Store) {
+  const draw = (e: PointerEvent) => {
+    const camera = context.camera;
+    const x = camera.x + clientToCanvasConversion(e.clientX);
+    const y = camera.y + clientToCanvasConversion(e.clientY);
+    store.trigger.newPixel({ pixel: { x, y, color: "black" } });
+  };
 
-  onPointerDown() {
-    const draw = (e: PointerEvent) => {
-      const camera = this.canvas.camera;
+  context.canvas?.bodyElement.addEventListener("pointermove", draw);
 
-      const x = camera.x + clientToCanvasConversion(e.clientX);
-      const y = camera.y + clientToCanvasConversion(e.clientY);
+  const cleanUp = () => {
+    context.canvas?.bodyElement.removeEventListener("pointermove", draw);
+  };
 
-      this.canvas.pushPixel({ x, y, color: "black" });
-    };
+  context.canvas?.bodyElement.addEventListener("pointerup", cleanUp, {
+    once: true,
+  });
 
-    this.canvas.canvas.addEventListener("pointermove", draw);
-
-    const cleanUp = () => {
-      this.canvas.canvas.removeEventListener("pointermove", draw);
-    };
-
-    this.canvas.canvas.addEventListener("pointerup", cleanUp, {
-      once: true,
-    });
-
-    document.addEventListener("pointerout", cleanUp, {
-      once: true,
-    });
-  }
+  document.addEventListener("pointerout", cleanUp, {
+    once: true,
+  });
 }
+
+export const PencilTool = { onPointerDown };
+export type PencilTool = typeof PencilTool;

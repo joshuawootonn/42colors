@@ -1,6 +1,7 @@
 import { ComponentPropsWithoutRef } from "react";
-import { useCanvas, useContextCanvasSubscription } from "./use-canvas";
 import { cn } from "@/lib/utils";
+import { useSelector } from "@xstate/store/react";
+import { store } from "@/lib/store";
 
 function IconButton({
   children,
@@ -23,14 +24,13 @@ function IconButton({
 }
 
 export function Toolbar() {
-  const canvas = useCanvas();
-  const tool = useContextCanvasSubscription((canvas) => canvas.getTool(), []);
+  const tool = useSelector(store, (state) => state.context.currentTool);
   return (
     <div className="flex flex-row justify-end">
       <div className={cn("bg-black gap-0.5 p-0.5 grid grid-cols-2")}>
         <IconButton
           active={tool === "pencil"}
-          onClick={() => canvas.setTool("pencil")}
+          onClick={() => store.trigger.changeTool({ tool: "pencil" })}
         >
           <svg
             width="32"
@@ -49,7 +49,7 @@ export function Toolbar() {
         </IconButton>
         <IconButton
           active={tool === "brush"}
-          onClick={() => canvas.setTool("brush")}
+          onClick={() => store.trigger.changeTool({ tool: "brush" })}
         >
           <svg
             width="32"

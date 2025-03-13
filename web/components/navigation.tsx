@@ -1,43 +1,39 @@
 import { NumberInput } from "./ui/number-input";
-import { useCanvas, useContextCanvasSubscription } from "./use-canvas";
 import { cn } from "@/lib/utils";
 import { ChangeEvent, useCallback } from "react";
 import { useCameraSearchParams } from "./use-camera-search-params";
 import { z } from "zod";
+import { useSelector } from "@xstate/store/react";
+import { store } from "@/lib/store";
+import { toast } from "./ui/toast";
 
 const numberSchema = z.number();
 
 export function Navigation() {
-  const canvas = useCanvas();
-  const cameraX = useContextCanvasSubscription(
-    (canvas) => canvas.getCameraState().x,
-    [],
-  );
-  const cameraY = useContextCanvasSubscription(
-    (canvas) => canvas.getCameraState().y,
-    [],
-  );
+  const { x, y, zoom } = useSelector(store, (state) => state.context.camera);
 
-  const onChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      const parsedNumber = numberSchema.safeParse(
-        parseInt(e.currentTarget.value),
-      );
-      const next = parsedNumber.success ? parsedNumber.data : 0;
+  const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const parsedNumber = numberSchema.safeParse(
+      parseInt(e.currentTarget.value),
+    );
+    const next = parsedNumber.success ? parsedNumber.data : 0;
 
-      if (e.currentTarget.name === "x") {
-        canvas.camera.x = next;
-      } else if (e.currentTarget.name === "y") {
-        canvas.camera.y = next;
-      }
+    if (e.currentTarget.name === "x") {
+      store.trigger.moveCamera({ camera: { x: next } });
+    } else if (e.currentTarget.name === "y") {
+      store.trigger.moveCamera({ camera: { y: next } });
+    } else if (e.currentTarget.name === "zoom") {
+      store.trigger.moveCamera({ camera: { zoom: next } });
+      toast({
+        title: "Zoom doesn't currently work",
+        description: "thats coming up next.",
+      });
+    }
 
-      canvas.emitChange();
-      canvas.fetchPixels();
-    },
-    [canvas],
-  );
+    store.trigger.fetchPixels();
+  }, []);
 
-  useCameraSearchParams(cameraX, cameraY);
+  useCameraSearchParams(x, y);
 
   return (
     <div
@@ -47,10 +43,8 @@ export function Navigation() {
     >
       <button
         onClick={() => {
-          canvas.camera.x = 0;
-          canvas.camera.y = 0;
-          canvas.emitChange();
-          canvas.fetchPixels();
+          store.trigger.moveCamera({ camera: { x: 0, y: 0, zoom: 100 } });
+          store.trigger.fetchPixels();
         }}
         className={
           "relative z-0 svg-outline-within-sm outline-none flex justify-center items-center h-8 bg-transparent text-base"
@@ -110,7 +104,7 @@ export function Navigation() {
       </button>
       <NumberInput
         name="x"
-        value={cameraX}
+        value={x}
         min={-50500}
         max={50500}
         step={5}
@@ -118,10 +112,18 @@ export function Navigation() {
       />
       <NumberInput
         name="y"
-        value={cameraY}
+        value={y}
         step={5}
         min={-50500}
         max={50500}
+        onChange={onChange}
+      />
+      <NumberInput
+        name="zoom"
+        value={zoom}
+        step={25}
+        min={100}
+        max={500}
         onChange={onChange}
       />
     </div>

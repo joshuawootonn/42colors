@@ -1,29 +1,24 @@
 "use client";
 
-import { Button } from "@/components/button";
-import { Footer } from "@/components/footer";
-import { Navigation } from "@/components/navigation";
+// import { Navigation } from "@/components/navigation";
 import { Toolbar } from "@/components/toolbar";
-import { CanvasProvider } from "@/components/use-canvas";
-import { Canvas } from "@/lib/canvas";
 import { cn } from "@/lib/utils";
 import { stringToNumberOrDefault } from "@/lib/utils/stringToNumberOrDefault";
-import { useState, useEffect } from "react";
+import { store } from "@/lib/store";
+import { useEffect } from "react";
+import { useSelector } from "@xstate/store/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Footer } from "@/components/footer";
+import { Navigation } from "@/components/navigation";
 
-// Using this following comment so that the useEffect runs and reset my canvas on hot reload
-// @refresh reset
+const queryClient = new QueryClient();
+
 export default function Page() {
-  const [canvas, setCanvas] = useState<Canvas | null>(null);
-
-  const [user, setUser] = useState<{ email: string; name: string }>();
-  const [authUrl, setAuthUrl] = useState<string>();
-
   useEffect(() => {
     const element = document.getElementById("my-house");
     if (element instanceof HTMLCanvasElement) {
       const context = element.getContext("2d");
       if (context == null) {
-        // todo(Josh): create a state for this
         throw new Error("Failed to initialize the Canvas");
       }
 
@@ -33,92 +28,120 @@ export default function Page() {
 
       const body = document.body as HTMLBodyElement;
 
-      const canvas = new Canvas(
+      store.trigger.initializeStore({
         body,
-        element,
-        context,
+        canvas: element,
         // todo(josh): make a config module that checks env vars
-        process.env.NEXT_PUBLIC_API_ORIGIN ?? "https://api.42colors.com",
-        process.env.NEXT_PUBLIC_API_WEBSOCKET_ORIGIN ??
+        apiOrigin:
+          process.env.NEXT_PUBLIC_API_ORIGIN ?? "https://api.42colors.com",
+        apiWebsocketOrigin:
+          process.env.NEXT_PUBLIC_API_WEBSOCKET_ORIGIN ??
           "https://api.42colors.com",
-        { x, y },
-      );
-      canvas.fetchPixels();
-      canvas.fetchAuthedUser().then(setUser);
-      canvas.fetchAuthURL().then(setAuthUrl);
+        cameraOptions: { x, y },
+        queryClient,
+      });
 
-      setCanvas(canvas);
+      body.addEventListener("keydown", onKeyDown);
+      body.addEventListener("keyup", onKeyUp);
+      element.addEventListener("pointerdown", onPointerDown);
+      element.addEventListener("pointerup", onPointerUp);
+      element.addEventListener("pointerout", onPointerOut);
+
+      store.trigger.fetchPixels();
+      store.trigger.fetchAuthURL();
+      store.trigger.fetchUser();
+
+      const rafId = requestAnimationFrame(draw);
+
+      return () => {
+        cancelAnimationFrame(rafId);
+
+        body.removeEventListener("keydown", onKeyDown);
+        body.removeEventListener("keyup", onKeyUp);
+        element.removeEventListener("pointerdown", onPointerDown);
+        element.removeEventListener("pointerup", onPointerUp);
+        element.removeEventListener("pointerout", onPointerOut);
+      };
+      function draw() {
+        store.trigger.draw();
+        requestAnimationFrame(draw);
+      }
+      function onKeyDown(e: KeyboardEvent) {
+        store.trigger.onKeyDown({ e });
+      }
+      function onKeyUp(e: KeyboardEvent) {
+        store.trigger.onKeyUp({ e });
+      }
+      function onPointerUp() {
+        store.trigger.onPointerUp();
+      }
+      function onPointerOut() {
+        store.trigger.onPointerOut();
+      }
+      function onPointerDown(e: PointerEvent) {
+        store.trigger.onPointerDown({ e });
+      }
     }
   }, []);
 
-  // const pointerState = useLocalCanvasSubscription(
-  //   canvas,
-  //   (canvas) => canvas.getPointerState(),
-  //   [],
-  // );
-  //
-  // const mode = useLocalCanvasSubscription(
-  //   canvas,
-  //   (canvas) => canvas.getMode(),
-  //   [],
-  // );
+  const user = useSelector(store, (state) => state.context.user);
 
-  // const isInPanMode = mode === "pan";
-  // const isPanning = mode === "pan" && pointerState === "pressed";
-  //
+  const isPressed = useSelector(
+    store,
+    (state) => state.context.interaction?.isPressed,
+  );
+
+  const isSpacePressed = useSelector(
+    store,
+    (state) => state.context.interaction?.isSpacePressed,
+  );
+
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <canvas
         id="my-house"
-        className={
-          cn("touch-none")
-          // isInPanMode ? (isPanning ? "cursor-grabbing" : "cursor-grab") : null,
-        }
+        className={cn(
+          "touch-none",
+          isSpacePressed
+            ? isPressed
+              ? "cursor-grabbing"
+              : "cursor-grab"
+            : null,
+        )}
         height="100vh"
         width="100vw"
       ></canvas>
-      {canvas && (
-        <CanvasProvider canvas={canvas}>
-          {/* <!-- {#each initialColorOptions as color} --> */}
-          {/* <!-- 	<input type="color" class="aspect-square w-4 h-4 border-0 border-red-700" value={color} /> --> */}
-          {/* <!-- {/each} --> */}
 
-          <div className="flex fixed top-3 right-3">
-            {canvas && <Toolbar />}
-          </div>
+      <div className="flex fixed top-3 right-3">
+        <Toolbar />
+      </div>
 
-          {canvas && user?.email === "jose56wonton@gmail.com" && (
-            <div className="flex flex-col items-end fixed top-1/2 -translate-y-1/2 right-3">
-              <Button onClick={canvas.fetchPixels1}>
-                fetch pixels as json
-              </Button>
-              <Button onClick={canvas.fetchPixels2}>
-                fetch pixels as proto
-              </Button>
-              <Button onClick={canvas.fetchPixels3}>
-                fetch pixels from memory
-              </Button>
-              <Button onClick={canvas.fetchPixels4}>
-                fetch pixels from memory pre encoded
-              </Button>
-              <Button onClick={canvas.fetchPixels5}>
-                fetch pixels from file
-              </Button>
-              <Button onClick={canvas.fetchPixels6}>
-                fetch subsection of pixels from file
-              </Button>
-              <Button onClick={() => canvas.fetchPixels7(0, 0)}>
-                fetch subsection of pixels from file as binary
-              </Button>
-            </div>
-          )}
-          <Footer user={user} authUrl={authUrl} />
-
-          <div className="flex fixed bottom-3 right-3">
-            {canvas && <Navigation />}
-          </div>
-        </CanvasProvider>
+      {user?.email === "jose56wonton@gmail.com" && (
+        <div className="flex flex-col items-end fixed top-1/2 -translate-y-1/2 right-3">
+          <pre>{JSON.stringify({ isSpacePressed, isPressed }, null, 2)}</pre>
+          {/* todo */}
+          {/* <Button onClick={canvas.fetchPixels1}>fetch pixels as json</Button> */}
+          {/* <Button onClick={canvas.fetchPixels2}>fetch pixels as proto</Button> */}
+          {/* <Button onClick={canvas.fetchPixels3}> */}
+          {/*   fetch pixels from memory */}
+          {/* </Button> */}
+          {/* <Button onClick={canvas.fetchPixels4}> */}
+          {/*   fetch pixels from memory pre encoded */}
+          {/* </Button> */}
+          {/* <Button onClick={canvas.fetchPixels5}>fetch pixels from file</Button> */}
+          {/* <Button onClick={canvas.fetchPixels6}> */}
+          {/*   fetch subsection of pixels from file */}
+          {/* </Button> */}
+          {/* <Button onClick={() => canvas.fetchPixels7(0, 0)}> */}
+          {/*   fetch subsection of pixels from file as binary */}
+          {/* </Button> */}
+        </div>
       )}
-    </>
+      <Footer />
+
+      <div className="flex fixed bottom-3 right-3">
+        <Navigation />
+      </div>
+    </QueryClientProvider>
   );
 }

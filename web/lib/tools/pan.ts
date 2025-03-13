@@ -1,36 +1,42 @@
-import { Canvas } from "../canvas";
 import { clientToCanvasConversion } from "../utils/clientToCanvasConversion";
+import { store, Store } from "../store";
 
-export class PanTool {
-  constructor(private readonly canvas: Canvas) {}
-
-  onPointerDown(e: PointerEvent) {
-    const startingCamera = this.canvas.camera.clone();
-    const startingX = e.clientX;
-    const startingY = e.clientY;
-
-    const pan = (e: PointerEvent) => {
-      this.canvas.camera.x =
-        startingCamera.x + clientToCanvasConversion(startingX - e.clientX);
-      this.canvas.camera.y =
-        startingCamera.y + clientToCanvasConversion(startingY - e.clientY);
-      this.canvas.emitChange();
-    };
-
-    this.canvas.canvas.addEventListener("pointermove", pan);
-
-    const cleanUp = () => {
-      this.canvas.canvas.removeEventListener("pointermove", pan);
-
-      this.canvas.fetchPixels();
-    };
-
-    this.canvas.canvas.addEventListener("pointerup", cleanUp, {
-      once: true,
-    });
-
-    document.addEventListener("pointerout", cleanUp, {
-      once: true,
-    });
+function onPointerDown(e: PointerEvent, context: Store) {
+  if (context.canvas == null) {
+    console.warn("`PencilTool.onPointerDown` attempted in uninitialized state");
+    return;
   }
+
+  const startingCamera = { ...context.camera };
+  const startingX = e.clientX;
+  const startingY = e.clientY;
+
+  const pan = (e: PointerEvent) => {
+    store.trigger.moveCamera({
+      camera: {
+        x: startingCamera.x + clientToCanvasConversion(startingX - e.clientX),
+        y: startingCamera.y + clientToCanvasConversion(startingY - e.clientY),
+      },
+    });
+  };
+
+  context.canvas.rootCanvas.addEventListener("pointermove", pan);
+
+  const cleanUp = () => {
+    context.canvas?.rootCanvas.removeEventListener("pointermove", pan);
+
+    store.trigger.setIsPressed({ isPressed: false });
+    store.trigger.fetchPixels();
+  };
+
+  context.canvas.rootCanvas.addEventListener("pointerup", cleanUp, {
+    once: true,
+  });
+
+  context.canvas.bodyElement.addEventListener("pointerout", cleanUp, {
+    once: true,
+  });
 }
+
+export const PanTool = { onPointerDown };
+export type PanTool = typeof PanTool;
