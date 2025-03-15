@@ -269,7 +269,7 @@ export const store = createStore({
             console.log(
               `skipping fetch for cached chunk x: ${chunkX} y: ${chunkY}`,
             );
-            return;
+            continue;
           }
           const chunkKey = `x: ${chunkX} y: ${chunkY}`;
 
