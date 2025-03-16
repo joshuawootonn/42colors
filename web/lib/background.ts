@@ -1,5 +1,5 @@
 import { CANVAS_PIXEL_RATIO } from "./constants";
-import { roundDown } from "./utils";
+import { roundToFive } from "./utils/round-to-five";
 
 export function createBackgroundCanvas() {
   const canvas = document.createElement("canvas");
@@ -15,13 +15,13 @@ export function drawBackgroundCanvas(
   const buffer = 100;
 
   const startPoint = {
-    x: roundDown(-buffer),
-    y: roundDown(-buffer),
+    x: roundToFive(-buffer),
+    y: roundToFive(-buffer),
   };
 
   const endPoint = {
-    x: roundDown(canvas.width + buffer),
-    y: roundDown(canvas.height + buffer),
+    x: roundToFive(canvas.width + buffer),
+    y: roundToFive(canvas.height + buffer),
   };
 
   context.fillRect(

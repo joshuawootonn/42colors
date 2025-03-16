@@ -41,6 +41,7 @@ export default function Page() {
         queryClient,
       });
 
+      body.addEventListener("wheel", onWheel);
       body.addEventListener("keydown", onKeyDown);
       body.addEventListener("keyup", onKeyUp);
       element.addEventListener("pointerdown", onPointerDown);
@@ -56,6 +57,7 @@ export default function Page() {
       return () => {
         cancelAnimationFrame(rafId);
 
+        body.removeEventListener("wheel", onWheel);
         body.removeEventListener("keydown", onKeyDown);
         body.removeEventListener("keyup", onKeyUp);
         element.removeEventListener("pointerdown", onPointerDown);
@@ -65,6 +67,9 @@ export default function Page() {
       function draw() {
         store.trigger.draw();
         requestAnimationFrame(draw);
+      }
+      function onWheel(e: WheelEvent) {
+        store.trigger.onWheel({ e });
       }
       function onKeyDown(e: KeyboardEvent) {
         store.trigger.onKeyDown({ e });

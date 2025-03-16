@@ -4,7 +4,7 @@ import { PencilTool } from "./tools/pencil";
 import { BrushTool } from "./tools/brush";
 import { PanTool } from "./tools/pan";
 import { QueryClient } from "@tanstack/react-query";
-import { CHUNK_LENGTH } from "./constants";
+import { CHUNK_LENGTH, X_MIN, X_MAX, Y_MIN, Y_MAX } from "./constants";
 import { fetchPixels7 } from "./fetch-pixels";
 import { createBackgroundCanvas, drawBackgroundCanvas } from "./background";
 import { createChunkCanvas, drawToChunkCanvas } from "./chunk";
@@ -15,6 +15,8 @@ import { fetchAuthedUser, fetchAuthURL } from "./user";
 import { ErrorCode } from "./error-codes";
 import { toast } from "@/components/ui/toast";
 import { KeyboardCode } from "./keyboard-codes";
+import { clamp } from "./utils/clamp";
+import { roundToFive } from "./utils/round-to-five";
 
 export type Camera = { x: number; y: number; zoom: number };
 
@@ -400,6 +402,25 @@ export const store = createStore({
         };
       }
       return context;
+    },
+
+    onWheel: (context, { e }: { e: WheelEvent }) => {
+      if (isInitial(context)) return;
+      if (e.defaultPrevented) return;
+
+      const deltaZoom = e.ctrlKey ? e.deltaY * -0.1 : 0;
+      const deltaX = e.shiftKey ? e.deltaY : e.deltaX;
+      const deltaY = e.shiftKey || e.ctrlKey ? 0 : e.deltaY * 1;
+
+      return {
+        ...context,
+        camera: {
+          ...context.camera,
+          zoom: roundToFive(clamp(context.camera.zoom + deltaZoom, 10, 200)),
+          x: roundToFive(clamp(context.camera.x + deltaX, X_MIN, X_MAX)),
+          y: roundToFive(clamp(context.camera.y + deltaY, Y_MIN, Y_MAX)),
+        },
+      };
     },
   },
 });
