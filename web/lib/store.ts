@@ -4,7 +4,15 @@ import { PencilTool } from "./tools/pencil";
 import { BrushTool } from "./tools/brush";
 import { PanTool } from "./tools/pan";
 import { QueryClient } from "@tanstack/react-query";
-import { CHUNK_LENGTH, X_MIN, X_MAX, Y_MIN, Y_MAX } from "./constants";
+import {
+  CHUNK_LENGTH,
+  X_MIN,
+  X_MAX,
+  Y_MIN,
+  Y_MAX,
+  ZOOM_MIN,
+  ZOOM_MAX,
+} from "./constants";
 import { fetchPixels7 } from "./fetch-pixels";
 import { createBackgroundCanvas, drawBackgroundCanvas } from "./background";
 import { createChunkCanvas, drawToChunkCanvas } from "./chunk";
@@ -119,9 +127,11 @@ export const store = createStore({
       enqueue,
     ) => {
       const rootCanvasContext = event.canvas.getContext("2d")!;
+      rootCanvasContext.imageSmoothingEnabled = false;
 
       const backgroundCanvas = createBackgroundCanvas();
       const backgroundCanvasContext = backgroundCanvas.getContext("2d")!;
+      backgroundCanvasContext.imageSmoothingEnabled = false;
       drawBackgroundCanvas(backgroundCanvas, backgroundCanvasContext);
 
       const socket = setupSocketConnection(event.apiWebsocketOrigin);
@@ -277,6 +287,7 @@ export const store = createStore({
 
           const canvas = createChunkCanvas();
           const canvasContext = canvas.getContext("2d");
+          canvasContext!.imageSmoothingEnabled = false;
 
           context.canvas.chunkCanvases[chunkKey] = {
             element: canvas,
@@ -416,7 +427,9 @@ export const store = createStore({
         ...context,
         camera: {
           ...context.camera,
-          zoom: roundToFive(clamp(context.camera.zoom + deltaZoom, 10, 200)),
+          zoom: roundToFive(
+            clamp(context.camera.zoom + deltaZoom, ZOOM_MIN, ZOOM_MAX),
+          ),
           x: roundToFive(clamp(context.camera.x + deltaX, X_MIN, X_MAX)),
           y: roundToFive(clamp(context.camera.y + deltaY, Y_MIN, Y_MAX)),
         },

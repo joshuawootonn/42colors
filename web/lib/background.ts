@@ -12,6 +12,7 @@ export function drawBackgroundCanvas(
   canvas: HTMLCanvasElement,
   context: CanvasRenderingContext2D,
 ) {
+  context.imageSmoothingEnabled = false;
   const buffer = 100;
 
   const startPoint = {

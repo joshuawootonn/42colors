@@ -4,8 +4,8 @@ import { store, Store } from "../store";
 function onPointerDown(_: PointerEvent, context: Store) {
   const draw = (e: PointerEvent) => {
     const camera = context.camera;
-    const x = camera.x + clientToCanvasConversion(e.clientX);
-    const y = camera.y + clientToCanvasConversion(e.clientY);
+    const x = camera.x + clientToCanvasConversion(e.clientX, camera.zoom);
+    const y = camera.y + clientToCanvasConversion(e.clientY, camera.zoom);
     store.trigger.newPixel({ pixel: { x, y, color: "black" } });
   };
 

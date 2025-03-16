@@ -14,8 +14,12 @@ function onPointerDown(e: PointerEvent, context: Store) {
   const pan = (e: PointerEvent) => {
     store.trigger.moveCamera({
       camera: {
-        x: startingCamera.x + clientToCanvasConversion(startingX - e.clientX),
-        y: startingCamera.y + clientToCanvasConversion(startingY - e.clientY),
+        x:
+          startingCamera.x +
+          clientToCanvasConversion(startingX - e.clientX, context.camera.zoom),
+        y:
+          startingCamera.y +
+          clientToCanvasConversion(startingY - e.clientY, context.camera.zoom),
       },
     });
   };
