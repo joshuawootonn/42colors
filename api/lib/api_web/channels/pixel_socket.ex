@@ -42,7 +42,7 @@ defmodule ApiWeb.PixelSocket do
       {:ok, account} ->
         {:ok, assign(socket, :current_user_id, account.user_id)}
 
-      {:error} ->
+      {:error, :unauthorized} ->
         {:ok, socket}
     end
   end
