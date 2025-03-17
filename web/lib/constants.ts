@@ -7,4 +7,3 @@ export const X_MIN = -5000;
 export const Y_MIN = -5000;
 export const ZOOM_MAX = 400;
 export const ZOOM_MIN = 50;
-export const CHUNK_RENDER_SCALE = 5;

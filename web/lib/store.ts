@@ -78,6 +78,10 @@ export type InitializedStore = {
         context: CanvasRenderingContext2D;
         x: number;
         y: number;
+        pixels: [];
+        renderConditions: {
+          zoom: number;
+        };
       }
     >;
   };
@@ -294,6 +298,8 @@ export const store = createStore({
             context: canvasContext!,
             x: chunkX,
             y: chunkY,
+            pixels: [],
+            renderConditions: { zoom: context.camera.zoom },
           };
 
           enqueue.effect(() =>
@@ -315,6 +321,7 @@ export const store = createStore({
         context.canvas.chunkCanvases[event.chunkKey].element,
         context.canvas.chunkCanvases[event.chunkKey].context,
         event.pixels,
+        context.camera,
       );
     },
 
@@ -418,6 +425,8 @@ export const store = createStore({
     onWheel: (context, { e }: { e: WheelEvent }) => {
       if (isInitial(context)) return;
       if (e.defaultPrevented) return;
+
+      e.preventDefault();
 
       const deltaZoom = e.ctrlKey ? e.deltaY * -0.1 : 0;
       const deltaX = e.shiftKey ? e.deltaY : e.deltaX;
