@@ -306,7 +306,6 @@ export const store = createStore({
         context.canvas.chunkCanvases[event.chunkKey].element,
         context.canvas.chunkCanvases[event.chunkKey].context,
         event.pixels,
-        context.camera,
       );
     },
 
