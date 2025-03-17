@@ -7,3 +7,6 @@ export const X_MIN = -5000;
 export const Y_MIN = -5000;
 export const ZOOM_MAX = 400;
 export const ZOOM_MIN = 50;
+export const ZOOM_DEFAULT = 100;
+export const BACKGROUND_SCALE = 2;
+export const BACKGROUND_SIZE = ZOOM_DEFAULT / ZOOM_MIN;

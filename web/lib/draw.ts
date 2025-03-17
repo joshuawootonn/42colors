@@ -1,4 +1,4 @@
-import { CANVAS_BUFFER, CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from "./constants";
+import { BACKGROUND_SIZE, CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from "./constants";
 import { canvasToClientConversion } from "./utils/clientToCanvasConversion";
 import { InitializedStore } from "./store";
 
@@ -6,6 +6,7 @@ export function draw(context: InitializedStore) {
   const zoomMultiplier = context.camera.zoom / 100;
   context.canvas.rootCanvas.width = window.innerWidth;
   context.canvas.rootCanvas.height = window.innerHeight;
+  context.canvas.rootCanvasContext.imageSmoothingEnabled = false;
 
   context.canvas.rootCanvasContext.translate(
     -canvasToClientConversion(context.camera.x, context.camera.zoom),
@@ -14,16 +15,10 @@ export function draw(context: InitializedStore) {
 
   context.canvas.rootCanvasContext.drawImage(
     context.canvas.backgroundCanvas,
-    -CANVAS_BUFFER,
-    -CANVAS_BUFFER,
-    window.innerWidth + CANVAS_BUFFER,
-    window.innerHeight + CANVAS_BUFFER,
-    -CANVAS_BUFFER +
-      canvasToClientConversion(context.camera.x, context.camera.zoom),
-    -CANVAS_BUFFER +
-      canvasToClientConversion(context.camera.y, context.camera.zoom),
-    (window.innerWidth + CANVAS_BUFFER) * zoomMultiplier,
-    (window.innerHeight + CANVAS_BUFFER) * zoomMultiplier,
+    canvasToClientConversion(context.camera.x, context.camera.zoom),
+    canvasToClientConversion(context.camera.y, context.camera.zoom),
+    window.innerWidth * zoomMultiplier * BACKGROUND_SIZE,
+    window.innerHeight * zoomMultiplier * BACKGROUND_SIZE,
   );
 
   Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
