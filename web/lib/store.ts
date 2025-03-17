@@ -4,15 +4,7 @@ import { PencilTool } from "./tools/pencil";
 import { BrushTool } from "./tools/brush";
 import { PanTool } from "./tools/pan";
 import { QueryClient } from "@tanstack/react-query";
-import {
-  CHUNK_LENGTH,
-  X_MIN,
-  X_MAX,
-  Y_MIN,
-  Y_MAX,
-  ZOOM_MIN,
-  ZOOM_MAX,
-} from "./constants";
+import { CHUNK_LENGTH } from "./constants";
 import { fetchPixels7 } from "./fetch-pixels";
 import { createBackgroundCanvas, drawBackgroundCanvas } from "./background";
 import { createChunkCanvas, drawToChunkCanvas } from "./chunk";
@@ -23,8 +15,8 @@ import { fetchAuthedUser, fetchAuthURL } from "./user";
 import { ErrorCode } from "./error-codes";
 import { toast } from "@/components/ui/toast";
 import { KeyboardCode } from "./keyboard-codes";
-import { clamp } from "./utils/clamp";
-import { roundToFive } from "./utils/round-to-five";
+import { isInitialStore } from "./utils/is-initial-store";
+import { WheelTool } from "./tools/wheel";
 
 export type Camera = { x: number; y: number; zoom: number };
 
@@ -60,6 +52,7 @@ export type InitializedStore = {
     pencilTool: PencilTool;
     brushTool: BrushTool;
     panTool: PanTool;
+    wheelTool: WheelTool;
   };
   currentTool: Tool;
   currentPointerState: PointerState;
@@ -105,15 +98,6 @@ const initialialStoreContext: Store = {
   currentTool: "pencil",
   currentPointerState: "default",
 } as Store;
-
-function isInitial(context: Store): context is InitialStore {
-  const is = context.state === "initial";
-
-  if (is)
-    console.warn("`PencilTool.onPointerDown` attempted in uninitialized state");
-
-  return is;
-}
 
 export const store = createStore({
   context: initialialStoreContext,
@@ -165,6 +149,7 @@ export const store = createStore({
           brushTool: BrushTool,
           pencilTool: PencilTool,
           panTool: PanTool,
+          wheelTool: WheelTool,
         },
         interaction: {
           isPressed: false,
@@ -185,7 +170,7 @@ export const store = createStore({
     },
 
     newRealtimePixel: (context, event: { pixel: Pixel }) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
 
       return {
         ...context,
@@ -194,7 +179,7 @@ export const store = createStore({
     },
 
     newPixel: (context, event: { pixel: Pixel }) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
       const authURL = context.server.authURL;
 
       context.server.channel
@@ -223,7 +208,7 @@ export const store = createStore({
     },
 
     setUser: (context, event: { user: { email: string; name: string } }) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
       return {
         ...context,
         user: event.user,
@@ -231,7 +216,7 @@ export const store = createStore({
     },
 
     fetchUser: (context, _, enqueue) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
       enqueue.effect(() =>
         context.queryClient
           .fetchQuery({
@@ -243,7 +228,7 @@ export const store = createStore({
     },
 
     setAuthURL: (context, { authURL }: { authURL: string }) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
       return {
         ...context,
         server: { ...context.server, authURL },
@@ -251,7 +236,7 @@ export const store = createStore({
     },
 
     fetchAuthURL: (context, _, enqueue) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
       enqueue.effect(() =>
         context.queryClient
           .fetchQuery({
@@ -263,7 +248,7 @@ export const store = createStore({
     },
 
     fetchPixels: (context, _, enqueue) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
 
       const { x, y } = context.camera;
       const otherX = x + Math.floor(window.innerWidth / 5);
@@ -316,7 +301,7 @@ export const store = createStore({
     },
 
     drawPixels: (context, event: { chunkKey: string; pixels: Pixel[] }) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
       drawToChunkCanvas(
         context.canvas.chunkCanvases[event.chunkKey].element,
         context.canvas.chunkCanvases[event.chunkKey].context,
@@ -326,13 +311,13 @@ export const store = createStore({
     },
 
     moveCamera: (context, event: { camera: Partial<Camera> }) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
 
       return { ...context, camera: { ...context.camera, ...event.camera } };
     },
 
     draw: (context) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
       draw(context);
     },
 
@@ -341,7 +326,7 @@ export const store = createStore({
     },
 
     setIsPressed: (context, { isPressed }: { isPressed: boolean }) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
       return {
         ...context,
         interaction: { ...context.interaction, isPressed },
@@ -352,7 +337,7 @@ export const store = createStore({
       context,
       { isSpacePressed }: { isSpacePressed: boolean },
     ) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
       return {
         ...context,
         interaction: { ...context.interaction, isSpacePressed },
@@ -360,20 +345,20 @@ export const store = createStore({
     },
 
     onPointerUp: (context, _, enqueue) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
       enqueue.effect(() => {
         return store.trigger.setIsPressed({ isPressed: false });
       });
     },
 
     onPointerOut: (context, _, enqueue) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
 
       enqueue.effect(() => store.trigger.setIsPressed({ isPressed: false }));
     },
 
     onPointerDown: (context, { e }: { e: PointerEvent }, enqueue) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
 
       if (context.interaction.isSpacePressed) {
         context.tools.panTool.onPointerDown(e, context);
@@ -397,7 +382,7 @@ export const store = createStore({
     },
 
     onKeyDown: (context, { e }: { e: KeyboardEvent }) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
       if (e.defaultPrevented) return;
 
       if (e.code === KeyboardCode.Space) {
@@ -410,7 +395,7 @@ export const store = createStore({
     },
 
     onKeyUp: (context, { e }: { e: KeyboardEvent }) => {
-      if (isInitial(context)) return;
+      if (isInitialStore(context)) return;
       if (e.defaultPrevented) return;
 
       if (e.code === KeyboardCode.Space) {
@@ -422,27 +407,13 @@ export const store = createStore({
       return context;
     },
 
-    onWheel: (context, { e }: { e: WheelEvent }) => {
-      if (isInitial(context)) return;
+    onWheel: (context, { e }: { e: WheelEvent }, enqueue) => {
+      if (isInitialStore(context)) return;
       if (e.defaultPrevented) return;
 
       e.preventDefault();
 
-      const deltaZoom = e.ctrlKey ? e.deltaY * -0.1 : 0;
-      const deltaX = e.shiftKey ? e.deltaY : e.deltaX;
-      const deltaY = e.shiftKey || e.ctrlKey ? 0 : e.deltaY * 1;
-
-      return {
-        ...context,
-        camera: {
-          ...context.camera,
-          zoom: roundToFive(
-            clamp(context.camera.zoom + deltaZoom, ZOOM_MIN, ZOOM_MAX),
-          ),
-          x: roundToFive(clamp(context.camera.x + deltaX, X_MIN, X_MAX)),
-          y: roundToFive(clamp(context.camera.y + deltaY, Y_MIN, Y_MAX)),
-        },
-      };
+      return context.tools.wheelTool.onWheel(context, e, enqueue);
     },
   },
 });
