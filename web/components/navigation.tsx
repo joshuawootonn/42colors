@@ -33,7 +33,7 @@ export function Navigation() {
     store.trigger.fetchPixels();
   }, []);
 
-  useCameraSearchParams(x, y);
+  useCameraSearchParams(x, y, zoom);
 
   return (
     <div

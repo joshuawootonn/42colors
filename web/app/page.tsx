@@ -25,6 +25,7 @@ export default function Page() {
       const search = new URLSearchParams(document.location.search);
       const x = stringToNumberOrDefault.parse(search.get("x"));
       const y = stringToNumberOrDefault.parse(search.get("y"));
+      const zoom = stringToNumberOrDefault.parse(search.get("zoom"));
 
       const body = document.body as HTMLBodyElement;
 
@@ -37,7 +38,7 @@ export default function Page() {
         apiWebsocketOrigin:
           process.env.NEXT_PUBLIC_API_WEBSOCKET_ORIGIN ??
           "https://api.42colors.com",
-        cameraOptions: { x, y },
+        cameraOptions: { x, y, zoom },
         queryClient,
       });
 
