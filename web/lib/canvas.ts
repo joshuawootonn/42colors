@@ -6,6 +6,10 @@ import { roundToFive } from "./utils/round-to-five";
 
 export function createCanvas() {
   const canvas = document.createElement("canvas");
+  return resizeCanvas(canvas);
+}
+
+export function resizeCanvas(canvas: HTMLCanvasElement) {
   canvas.width = roundToFive(window.innerWidth);
   canvas.height = roundToFive(window.innerHeight);
   return canvas;

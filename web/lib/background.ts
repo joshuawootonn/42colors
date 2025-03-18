@@ -7,6 +7,10 @@ import { roundToTen } from "./utils/round-to-five";
 
 export function createBackgroundCanvas() {
   const canvas = document.createElement("canvas");
+  return resizeBackgroundCanvas(canvas);
+}
+
+export function resizeBackgroundCanvas(canvas: HTMLCanvasElement) {
   canvas.width = window.innerWidth * BACKGROUND_SCALE * BACKGROUND_SIZE;
   canvas.height = window.innerHeight * BACKGROUND_SCALE * BACKGROUND_SIZE;
   return canvas;

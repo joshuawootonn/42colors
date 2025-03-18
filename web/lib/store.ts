@@ -6,7 +6,11 @@ import { PanTool } from "./tools/pan";
 import { QueryClient } from "@tanstack/react-query";
 import { CHUNK_LENGTH } from "./constants";
 import { fetchPixels7 } from "./fetch-pixels";
-import { createBackgroundCanvas, drawBackgroundCanvas } from "./background";
+import {
+  createBackgroundCanvas,
+  drawBackgroundCanvas,
+  resizeBackgroundCanvas,
+} from "./background";
 import { createChunkCanvas, drawToChunkCanvas } from "./chunk";
 import { Pixel } from "./pixel";
 import { draw } from "./draw";
@@ -17,7 +21,7 @@ import { toast } from "@/components/ui/toast";
 import { KeyboardCode } from "./keyboard-codes";
 import { isInitialStore } from "./utils/is-initial-store";
 import { WheelTool } from "./tools/wheel";
-import { createCanvas, redrawPixels } from "./canvas";
+import { createCanvas, redrawPixels, resizeCanvas } from "./canvas";
 
 export type Camera = { x: number; y: number; zoom: number };
 
@@ -469,6 +473,22 @@ export const store = createStore({
       e.preventDefault();
 
       return context.tools.wheelTool.onWheel(context, e, enqueue);
+    },
+
+    onResize: (context, _, enqueue) => {
+      if (isInitialStore(context)) return;
+
+      enqueue.effect(() => {
+        resizeBackgroundCanvas(context.canvas.backgroundCanvas);
+        drawBackgroundCanvas(
+          context.canvas.backgroundCanvas,
+          context.canvas.backgroundCanvasContext,
+        );
+        resizeCanvas(context.canvas.userCanvas);
+        resizeCanvas(context.canvas.realtimeCanvas);
+        store.trigger.redrawUserCanvas();
+        store.trigger.redrawRealtimeCanvas();
+      });
     },
   },
 });

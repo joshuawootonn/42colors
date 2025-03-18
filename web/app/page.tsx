@@ -48,6 +48,7 @@ export default function Page() {
       body.addEventListener("wheel", onWheel);
       body.addEventListener("keydown", onKeyDown);
       body.addEventListener("keyup", onKeyUp);
+      window.addEventListener("resize", onResize);
       element.addEventListener("pointerdown", onPointerDown);
       element.addEventListener("pointerup", onPointerUp);
       element.addEventListener("pointerout", onPointerOut);
@@ -64,6 +65,7 @@ export default function Page() {
         body.removeEventListener("wheel", onWheel);
         body.removeEventListener("keydown", onKeyDown);
         body.removeEventListener("keyup", onKeyUp);
+        window.removeEventListener("resize", onResize);
         element.removeEventListener("pointerdown", onPointerDown);
         element.removeEventListener("pointerup", onPointerUp);
         element.removeEventListener("pointerout", onPointerOut);
@@ -71,6 +73,9 @@ export default function Page() {
       function draw() {
         store.trigger.draw();
         requestAnimationFrame(draw);
+      }
+      function onResize() {
+        store.trigger.onResize();
       }
       function onWheel(e: WheelEvent) {
         store.trigger.onWheel({ e });
