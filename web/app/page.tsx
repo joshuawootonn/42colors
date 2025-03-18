@@ -3,7 +3,10 @@
 // import { Navigation } from "@/components/navigation";
 import { Toolbar } from "@/components/toolbar";
 import { cn } from "@/lib/utils";
-import { stringToNumberOrDefault } from "@/lib/utils/stringToNumberOrDefault";
+import {
+  stringToNumberOr0,
+  stringToNumberOr100,
+} from "@/lib/utils/stringToNumberOrDefault";
 import { store } from "@/lib/store";
 import { useEffect } from "react";
 import { useSelector } from "@xstate/store/react";
@@ -23,9 +26,9 @@ export default function Page() {
       }
 
       const search = new URLSearchParams(document.location.search);
-      const x = stringToNumberOrDefault.parse(search.get("x"));
-      const y = stringToNumberOrDefault.parse(search.get("y"));
-      const zoom = stringToNumberOrDefault.parse(search.get("zoom"));
+      const x = stringToNumberOr0.parse(search.get("x"));
+      const y = stringToNumberOr0.parse(search.get("y"));
+      const zoom = stringToNumberOr100.parse(search.get("zoom"));
 
       const body = document.body as HTMLBodyElement;
 
