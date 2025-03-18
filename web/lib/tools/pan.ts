@@ -1,11 +1,9 @@
 import { clientToCanvasConversion } from "../utils/clientToCanvasConversion";
 import { store, Store } from "../store";
+import { isInitialStore } from "../utils/is-initial-store";
 
 function onPointerDown(e: PointerEvent, context: Store) {
-  if (context.canvas == null) {
-    console.warn("`PencilTool.onPointerDown` attempted in uninitialized state");
-    return;
-  }
+  if (isInitialStore(context)) return;
 
   const startingCamera = { ...context.camera };
   const startingX = e.clientX;
