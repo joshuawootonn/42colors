@@ -1,12 +1,19 @@
 import { BACKGROUND_SIZE, CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from "./constants";
 import { canvasToClientConversion } from "./utils/clientToCanvasConversion";
 import { InitializedStore } from "./store";
+import { roundToFive } from "./utils/round-to-five";
 
 export function draw(context: InitializedStore) {
   const zoomMultiplier = context.camera.zoom / 100;
   context.canvas.rootCanvas.width = window.innerWidth;
   context.canvas.rootCanvas.height = window.innerHeight;
   context.canvas.rootCanvasContext.imageSmoothingEnabled = false;
+  context.canvas.rootCanvasContext.clearRect(
+    0,
+    0,
+    context.canvas.rootCanvas.width,
+    context.canvas.rootCanvas.height,
+  );
 
   context.canvas.rootCanvasContext.translate(
     -canvasToClientConversion(context.camera.x, context.camera.zoom),
@@ -32,22 +39,19 @@ export function draw(context: InitializedStore) {
     );
   });
 
-  for (let i = 0; i < context.realtimePixels.length; i++) {
-    const block = context.realtimePixels[i];
-    context.canvas.rootCanvasContext.fillRect(
-      block.x * CANVAS_PIXEL_RATIO,
-      block.y * CANVAS_PIXEL_RATIO,
-      CANVAS_PIXEL_RATIO,
-      CANVAS_PIXEL_RATIO,
-    );
-  }
-  for (let i = 0; i < context.pixels.length; i++) {
-    const block = context.pixels[i];
-    context.canvas.rootCanvasContext.fillRect(
-      block.x * CANVAS_PIXEL_RATIO,
-      block.y * CANVAS_PIXEL_RATIO,
-      CANVAS_PIXEL_RATIO,
-      CANVAS_PIXEL_RATIO,
-    );
-  }
+  context.canvas.rootCanvasContext.drawImage(
+    context.canvas.realtimeCanvas,
+    canvasToClientConversion(context.camera.x, context.camera.zoom),
+    canvasToClientConversion(context.camera.y, context.camera.zoom),
+    roundToFive(window.innerWidth),
+    roundToFive(window.innerHeight),
+  );
+
+  context.canvas.rootCanvasContext.drawImage(
+    context.canvas.userCanvas,
+    canvasToClientConversion(context.camera.x, context.camera.zoom),
+    canvasToClientConversion(context.camera.y, context.camera.zoom),
+    roundToFive(window.innerWidth),
+    roundToFive(window.innerHeight),
+  );
 }

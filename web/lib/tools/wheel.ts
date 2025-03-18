@@ -33,21 +33,21 @@ function onWheel(
     timeout = setTimeout(fetchPixels, 100);
   });
 
-  return {
-    ...context,
-    camera: {
-      ...context.camera,
-      zoom: roundToFive(
-        clamp(context.camera.zoom + deltaZoom, ZOOM_MIN, ZOOM_MAX),
-      ),
-      x: roundToFive(
-        clamp(context.camera.x + zoomAdjustedDeltaX, X_MIN, X_MAX),
-      ),
-      y: roundToFive(
-        clamp(context.camera.y + zoomAdjustedDeltaY, Y_MIN, Y_MAX),
-      ),
-    },
-  };
+  enqueue.effect(() => {
+    store.trigger.moveCamera({
+      camera: {
+        zoom: roundToFive(
+          clamp(context.camera.zoom + deltaZoom, ZOOM_MIN, ZOOM_MAX),
+        ),
+        x: roundToFive(
+          clamp(context.camera.x + zoomAdjustedDeltaX, X_MIN, X_MAX),
+        ),
+        y: roundToFive(
+          clamp(context.camera.y + zoomAdjustedDeltaY, Y_MIN, Y_MAX),
+        ),
+      },
+    });
+  });
 }
 
 export const WheelTool = { onWheel };

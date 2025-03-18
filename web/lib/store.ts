@@ -17,6 +17,7 @@ import { toast } from "@/components/ui/toast";
 import { KeyboardCode } from "./keyboard-codes";
 import { isInitialStore } from "./utils/is-initial-store";
 import { WheelTool } from "./tools/wheel";
+import { createCanvas, redrawPixels } from "./canvas";
 
 export type Camera = { x: number; y: number; zoom: number };
 
@@ -64,6 +65,10 @@ export type InitializedStore = {
     rootCanvasContext: CanvasRenderingContext2D;
     backgroundCanvas: HTMLCanvasElement;
     backgroundCanvasContext: CanvasRenderingContext2D;
+    userCanvas: HTMLCanvasElement;
+    userCanvasContext: CanvasRenderingContext2D;
+    realtimeCanvas: HTMLCanvasElement;
+    realtimeCanvasContext: CanvasRenderingContext2D;
     chunkCanvases: Record<
       string,
       {
@@ -109,7 +114,7 @@ export const store = createStore({
         canvas: HTMLCanvasElement;
         apiOrigin: string;
         apiWebsocketOrigin: string;
-        cameraOptions: { x: number; y: number };
+        cameraOptions: { x: number; y: number; zoom: number };
         queryClient: QueryClient;
       },
       enqueue,
@@ -121,6 +126,14 @@ export const store = createStore({
       const backgroundCanvasContext = backgroundCanvas.getContext("2d")!;
       backgroundCanvasContext.imageSmoothingEnabled = false;
       drawBackgroundCanvas(backgroundCanvas, backgroundCanvasContext);
+
+      const userCanvas = createCanvas();
+      const userCanvasContext = userCanvas.getContext("2d")!;
+      userCanvasContext.imageSmoothingEnabled = false;
+
+      const realtimeCanvas = createCanvas();
+      const realtimeCanvasContext = realtimeCanvas.getContext("2d")!;
+      realtimeCanvasContext.imageSmoothingEnabled = false;
 
       const socket = setupSocketConnection(event.apiWebsocketOrigin);
       const channel = setupChannel(socket);
@@ -138,6 +151,7 @@ export const store = createStore({
           ...context.camera,
           x: event.cameraOptions.x,
           y: event.cameraOptions.y,
+          zoom: event.cameraOptions.zoom,
         },
         server: {
           apiOrigin: event.apiOrigin,
@@ -163,14 +177,22 @@ export const store = createStore({
           rootCanvasContext,
           backgroundCanvas,
           backgroundCanvasContext,
+          userCanvas,
+          userCanvasContext,
+          realtimeCanvas,
+          realtimeCanvasContext,
           chunkCanvases: {},
         },
         queryClient: event.queryClient,
       };
     },
 
-    newRealtimePixel: (context, event: { pixel: Pixel }) => {
+    newRealtimePixel: (context, event: { pixel: Pixel }, enqueue) => {
       if (isInitialStore(context)) return;
+
+      enqueue.effect(() => {
+        store.trigger.redrawRealtimeCanvas();
+      });
 
       return {
         ...context,
@@ -178,7 +200,7 @@ export const store = createStore({
       };
     },
 
-    newPixel: (context, event: { pixel: Pixel }) => {
+    newPixel: (context, event: { pixel: Pixel }, enqueue) => {
       if (isInitialStore(context)) return;
       const authURL = context.server.authURL;
 
@@ -200,6 +222,10 @@ export const store = createStore({
             });
           }
         });
+
+      enqueue.effect(() => {
+        store.trigger.redrawUserCanvas();
+      });
 
       return {
         ...context,
@@ -294,13 +320,38 @@ export const store = createStore({
                 queryFn: () =>
                   fetchPixels7(context.server.apiOrigin, chunkX, chunkY),
               })
-              .then((pixels) => store.trigger.drawPixels({ chunkKey, pixels })),
+              .then((pixels) =>
+                store.trigger.drawToChunkCanvas({ chunkKey, pixels }),
+              ),
           );
         }
       }
     },
 
-    drawPixels: (context, event: { chunkKey: string; pixels: Pixel[] }) => {
+    redrawUserCanvas: (context) => {
+      if (isInitialStore(context)) return;
+      redrawPixels(
+        context.canvas.userCanvas,
+        context.canvas.userCanvasContext,
+        context.pixels,
+        context.camera,
+      );
+    },
+
+    redrawRealtimeCanvas: (context) => {
+      if (isInitialStore(context)) return;
+      redrawPixels(
+        context.canvas.realtimeCanvas,
+        context.canvas.realtimeCanvasContext,
+        context.realtimePixels,
+        context.camera,
+      );
+    },
+
+    drawToChunkCanvas: (
+      context,
+      event: { chunkKey: string; pixels: Pixel[] },
+    ) => {
       if (isInitialStore(context)) return;
       drawToChunkCanvas(
         context.canvas.chunkCanvases[event.chunkKey].element,
@@ -309,8 +360,13 @@ export const store = createStore({
       );
     },
 
-    moveCamera: (context, event: { camera: Partial<Camera> }) => {
+    moveCamera: (context, event: { camera: Partial<Camera> }, enqueue) => {
       if (isInitialStore(context)) return;
+
+      enqueue.effect(() => {
+        store.trigger.redrawUserCanvas();
+        store.trigger.redrawRealtimeCanvas();
+      });
 
       return { ...context, camera: { ...context.camera, ...event.camera } };
     },
