@@ -49,6 +49,7 @@ export default function Page() {
       body.addEventListener("keydown", onKeyDown);
       body.addEventListener("keyup", onKeyUp);
       window.addEventListener("resize", onResize);
+      element.addEventListener("pointermove", onPointerMove);
       element.addEventListener("pointerdown", onPointerDown);
       element.addEventListener("pointerup", onPointerUp);
       element.addEventListener("pointerout", onPointerOut);
@@ -66,6 +67,7 @@ export default function Page() {
         body.removeEventListener("keydown", onKeyDown);
         body.removeEventListener("keyup", onKeyUp);
         window.removeEventListener("resize", onResize);
+        element.removeEventListener("pointermove", onPointerMove);
         element.removeEventListener("pointerdown", onPointerDown);
         element.removeEventListener("pointerup", onPointerUp);
         element.removeEventListener("pointerout", onPointerOut);
@@ -85,6 +87,9 @@ export default function Page() {
       }
       function onKeyUp(e: KeyboardEvent) {
         store.trigger.onKeyUp({ e });
+      }
+      function onPointerMove(e: PointerEvent) {
+        store.trigger.onPointerMove({ e });
       }
       function onPointerUp() {
         store.trigger.onPointerUp();
