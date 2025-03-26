@@ -22,9 +22,9 @@ export function useCameraSearchParams(x: number, y: number, zoom: number) {
   useDebouncedEffect(
     () => {
       const params = new URLSearchParams(searchParams.toString());
-      params.set("x", x.toString());
-      params.set("y", y.toString());
-      params.set("zoom", zoom.toString());
+      params.set("x", Math.round(x).toString());
+      params.set("y", Math.round(y).toString());
+      params.set("zoom", Math.round(zoom).toString());
 
       router.push(`${pathname}?${params.toString()}`);
     },
