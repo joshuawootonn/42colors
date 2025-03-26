@@ -20,7 +20,15 @@ function onWheel(
 
   const pixelWidth = context.camera.zoom / 20;
 
-  const deltaZoom = e.ctrlKey ? e.deltaY * -0.1 : 0;
+  // Differentiating pinch gestures from scroll wheels doesn't look possible.
+  // Pinch gestures seem to have around 40x smaller deltas though,
+  // which is why I have this assumption based on the delta being less than 5.
+  // console.log(e.deltaY, e.deltaZ);
+  const deltaZoom = e.ctrlKey
+    ? Math.abs(e.deltaY) < 5
+      ? e.deltaY * -4
+      : e.deltaY * -0.3
+    : 0;
   const nextZoom = clamp(context.camera.zoom + deltaZoom, ZOOM_MIN, ZOOM_MAX);
 
   const pixelX = e.clientX / pixelWidth;
