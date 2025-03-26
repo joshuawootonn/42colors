@@ -403,13 +403,13 @@ export const store = createStore({
       };
     },
 
-    onPointerMove: (context, { e }: { e: PointerEvent }) => {
-      if (isInitialStore(context)) return;
-
-      const pixelWidth = context.camera.zoom / 25;
-      const pixelX = Math.floor(e.clientX / pixelWidth);
-      const pixelY = Math.floor(e.clientY / pixelWidth);
-
+    onPointerMove: () => {
+      // onPointerMove: (context, { e }: { e: PointerEvent }) => {
+      // if (isInitialStore(context)) return;
+      //
+      // const pixelWidth = context.camera.zoom / 25;
+      // const pixelX = Math.floor(e.clientX / pixelWidth);
+      // const pixelY = Math.floor(e.clientY / pixelWidth);
       // console.log({ pixelX, pixelY });
     },
 
