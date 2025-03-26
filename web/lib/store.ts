@@ -478,9 +478,6 @@ export const store = createStore({
 
     onWheel: (context, { e }: { e: WheelEvent }, enqueue) => {
       if (isInitialStore(context)) return;
-      if (e.defaultPrevented) return;
-
-      e.preventDefault();
 
       return context.tools.wheelTool.onWheel(context, e, enqueue);
     },

@@ -16,17 +16,64 @@ function onWheel(
   e: WheelEvent,
   enqueue: EnqueueObject<{ type: string }>,
 ) {
+  console.log("wheel", e);
   if (isInitialStore(context)) return;
 
-  const zoomAdjustment = 25 / context.camera.zoom;
+  const pixelWidth = context.camera.zoom / 25;
 
   const deltaZoom = e.ctrlKey ? e.deltaY * -0.1 : 0;
-  const deltaX = e.shiftKey ? e.deltaY : e.deltaX;
-  const deltaY = e.shiftKey || e.ctrlKey ? 0 : e.deltaY * 1;
+  const nextZoom = roundToFive(
+    clamp(context.camera.zoom + deltaZoom, ZOOM_MIN, ZOOM_MAX),
+  );
 
-  const zoomAdjustedDeltaX = deltaX * zoomAdjustment;
-  const zoomAdjustedDeltaY = deltaY * zoomAdjustment;
+  const pixelX = Math.floor(e.clientX / pixelWidth);
+  const pixelY = Math.floor(e.clientY / pixelWidth);
 
+  const nextPixelWidth = nextZoom / 25;
+
+  const nextPixelX = Math.floor(e.clientX / nextPixelWidth);
+  const nextPixelY = Math.floor(e.clientY / nextPixelWidth);
+
+  // const deltaZoomX = Math.round(
+  //   (nextCanvasWidthInPixels - canvasWidthInPixels) *
+  //     ((canvasWidthInPixels - clientXInPixels) / canvasWidthInPixels),
+  // );
+  // const deltaZoomY = Math.round(
+  //   (nextCanvasHeightInPixels - canvasHeightInPixels) *
+  //     ((canvasHeightInPixels - clientYInPixels) / canvasHeightInPixels),
+  // );
+  //
+  //
+
+  // const deltaZoomX = pixelX - (pixelX * nextZoom) / context.camera.zoom;
+  // const deltaZoomY = pixelY - (pixelY * nextZoom) / context.camera.zoom;
+
+  const deltaZoomX2 = pixelX - nextPixelX;
+  const deltaZoomY2 = pixelY - nextPixelY;
+
+  const deltaX = deltaZoom
+    ? -deltaZoomX2
+    : e.shiftKey
+      ? e.deltaY / pixelWidth
+      : e.deltaX / pixelWidth;
+  const deltaY = deltaZoom
+    ? -deltaZoomY2
+    : e.shiftKey || e.ctrlKey
+      ? 0
+      : e.deltaY / pixelWidth;
+
+  // console.log({
+  //   deltaZoomX,
+  //   deltaZoomY,
+  //   deltaZoomX2,
+  //   deltaZoomY2,
+  //   nextZoom,
+  //   pixelX,
+  //   pixelY,
+  //   nextPixelX,
+  //   nextPixelY,
+  //   zoom: context.camera.zoom,
+  // });
   clearTimeout(timeout);
 
   enqueue.effect(() => {
@@ -36,15 +83,9 @@ function onWheel(
   enqueue.effect(() => {
     store.trigger.moveCamera({
       camera: {
-        zoom: roundToFive(
-          clamp(context.camera.zoom + deltaZoom, ZOOM_MIN, ZOOM_MAX),
-        ),
-        x: roundToFive(
-          clamp(context.camera.x + zoomAdjustedDeltaX, X_MIN, X_MAX),
-        ),
-        y: roundToFive(
-          clamp(context.camera.y + zoomAdjustedDeltaY, Y_MIN, Y_MAX),
-        ),
+        zoom: nextZoom,
+        x: Math.round(clamp(context.camera.x + deltaX, X_MIN, X_MAX)),
+        y: Math.round(clamp(context.camera.y + deltaY, Y_MIN, Y_MAX)),
       },
     });
   });

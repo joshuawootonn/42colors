@@ -32,6 +32,12 @@ export default async function RootLayout({
   const defaultOpen = cookieStore.get(INTRO_SEEN)?.value !== "true";
   return (
     <html lang="en">
+      <head>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+      </head>
       <body className={`${space.variable} font-sans`}>
         <div className="flex fixed top-[10px] left-[10px]">
           <h1 className="text-2xl font-bold flex gap-2">
