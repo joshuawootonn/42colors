@@ -107,6 +107,8 @@ export default function Page() {
       }
 
       function onWheel(e: WheelEvent) {
+        // `preventDefault` in the store is in the next tick and doesn't work.
+        // I have to actually call preventDefault here.
         e.preventDefault();
         store.trigger.onWheel({ e });
       }
