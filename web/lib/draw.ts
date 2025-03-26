@@ -5,6 +5,8 @@ import { roundToFive } from "./utils/round-to-five";
 
 export function draw(context: InitializedStore) {
   const zoomMultiplier = context.camera.zoom / 100;
+  const cameraXStart = Math.floor(context.camera.x);
+  const cameraYStart = Math.floor(context.camera.y);
   context.canvas.rootCanvas.width = window.innerWidth;
   context.canvas.rootCanvas.height = window.innerHeight;
   context.canvas.rootCanvasContext.imageSmoothingEnabled = false;
@@ -22,8 +24,8 @@ export function draw(context: InitializedStore) {
 
   context.canvas.rootCanvasContext.drawImage(
     context.canvas.backgroundCanvas,
-    canvasToClientConversion(context.camera.x, context.camera.zoom),
-    canvasToClientConversion(context.camera.y, context.camera.zoom),
+    canvasToClientConversion(cameraXStart, context.camera.zoom),
+    canvasToClientConversion(cameraYStart, context.camera.zoom),
     window.innerWidth * zoomMultiplier * BACKGROUND_SIZE,
     window.innerHeight * zoomMultiplier * BACKGROUND_SIZE,
   );
@@ -41,16 +43,16 @@ export function draw(context: InitializedStore) {
 
   context.canvas.rootCanvasContext.drawImage(
     context.canvas.realtimeCanvas,
-    canvasToClientConversion(context.camera.x, context.camera.zoom),
-    canvasToClientConversion(context.camera.y, context.camera.zoom),
+    canvasToClientConversion(cameraXStart, context.camera.zoom),
+    canvasToClientConversion(cameraYStart, context.camera.zoom),
     roundToFive(window.innerWidth),
     roundToFive(window.innerHeight),
   );
 
   context.canvas.rootCanvasContext.drawImage(
     context.canvas.userCanvas,
-    canvasToClientConversion(context.camera.x, context.camera.zoom),
-    canvasToClientConversion(context.camera.y, context.camera.zoom),
+    canvasToClientConversion(cameraXStart, context.camera.zoom),
+    canvasToClientConversion(cameraYStart, context.camera.zoom),
     roundToFive(window.innerWidth),
     roundToFive(window.innerHeight),
   );

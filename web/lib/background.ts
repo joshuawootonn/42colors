@@ -21,30 +21,16 @@ export function drawBackgroundCanvas(
   context: CanvasRenderingContext2D,
 ) {
   context.imageSmoothingEnabled = false;
-  const buffer = 100;
 
   const startPoint = {
-    x: roundToTen(-buffer),
-    y: roundToTen(-buffer),
+    x: 0,
+    y: 0,
   };
 
   const endPoint = {
-    x: roundToTen(canvas.width * BACKGROUND_SCALE + buffer),
-    y: roundToTen(canvas.height * BACKGROUND_SCALE + buffer),
+    x: roundToTen(canvas.width * BACKGROUND_SCALE * BACKGROUND_SIZE),
+    y: roundToTen(canvas.height * BACKGROUND_SCALE * BACKGROUND_SIZE),
   };
-
-  context.fillRect(
-    startPoint.x,
-    startPoint.y,
-    CANVAS_PIXEL_RATIO,
-    CANVAS_PIXEL_RATIO,
-  );
-  context.fillRect(
-    endPoint.x,
-    endPoint.y,
-    CANVAS_PIXEL_RATIO,
-    CANVAS_PIXEL_RATIO,
-  );
 
   for (
     let x = startPoint.x;
