@@ -19,7 +19,7 @@ function onWheel(
   console.log("wheel", e);
   if (isInitialStore(context)) return;
 
-  const pixelWidth = context.camera.zoom / 25;
+  const pixelWidth = context.camera.zoom / 20;
 
   const deltaZoom = e.ctrlKey ? e.deltaY * -0.1 : 0;
   const nextZoom = roundToFive(

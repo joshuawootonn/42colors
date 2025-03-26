@@ -280,9 +280,10 @@ export const store = createStore({
     fetchPixels: (context, _, enqueue) => {
       if (isInitialStore(context)) return;
 
-      const { x, y } = context.camera;
-      const otherX = x + Math.floor(window.innerWidth / 5);
-      const otherY = y + Math.floor(window.innerHeight / 5);
+      const { x, y, zoom } = context.camera;
+      const pixelWidth = zoom / 20;
+      const otherX = x + Math.floor(window.innerWidth / pixelWidth);
+      const otherY = y + Math.floor(window.innerHeight / pixelWidth);
 
       const originChunkX = Math.floor(x / CHUNK_LENGTH);
       const originChunkY = Math.floor(y / CHUNK_LENGTH);
