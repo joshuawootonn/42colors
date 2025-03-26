@@ -16,7 +16,6 @@ function onWheel(
   e: WheelEvent,
   enqueue: EnqueueObject<{ type: string }>,
 ) {
-  console.log("wheel", e);
   if (isInitialStore(context)) return;
 
   const pixelWidth = context.camera.zoom / 20;
