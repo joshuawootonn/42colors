@@ -2,7 +2,6 @@ import { CANVAS_PIXEL_RATIO } from "./constants";
 import { Pixel } from "./pixel";
 import { Camera } from "./store";
 import { canvasToClientConversion } from "./utils/clientToCanvasConversion";
-import { roundToFive } from "./utils/round-to-five";
 
 export function createCanvas() {
   const canvas = document.createElement("canvas");
@@ -10,8 +9,8 @@ export function createCanvas() {
 }
 
 export function resizeCanvas(canvas: HTMLCanvasElement) {
-  canvas.width = roundToFive(window.innerWidth);
-  canvas.height = roundToFive(window.innerHeight);
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
   return canvas;
 }
 
