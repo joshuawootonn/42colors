@@ -29,8 +29,8 @@ export function redrawPixels(
     const block = pixels[i];
 
     context.fillRect(
-      canvasToClientConversion(block.x - camera.x, camera.zoom),
-      canvasToClientConversion(block.y - camera.y, camera.zoom),
+      canvasToClientConversion(block.x - Math.floor(camera.x), camera.zoom),
+      canvasToClientConversion(block.y - Math.floor(camera.y), camera.zoom),
       CANVAS_PIXEL_RATIO * zoomMultiplier,
       CANVAS_PIXEL_RATIO * zoomMultiplier,
     );

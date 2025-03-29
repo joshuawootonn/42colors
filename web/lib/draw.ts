@@ -1,7 +1,6 @@
 import { BACKGROUND_SIZE, CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from "./constants";
 import { canvasToClientConversion } from "./utils/clientToCanvasConversion";
 import { InitializedStore } from "./store";
-import { roundToFive } from "./utils/round-to-five";
 
 export function draw(context: InitializedStore) {
   const zoomMultiplier = context.camera.zoom / 100;
@@ -45,15 +44,15 @@ export function draw(context: InitializedStore) {
     context.canvas.realtimeCanvas,
     canvasToClientConversion(cameraXStart, context.camera.zoom),
     canvasToClientConversion(cameraYStart, context.camera.zoom),
-    roundToFive(window.innerWidth),
-    roundToFive(window.innerHeight),
+    window.innerWidth,
+    window.innerHeight,
   );
 
   context.canvas.rootCanvasContext.drawImage(
     context.canvas.userCanvas,
     canvasToClientConversion(cameraXStart, context.camera.zoom),
     canvasToClientConversion(cameraYStart, context.camera.zoom),
-    roundToFive(window.innerWidth),
-    roundToFive(window.innerHeight),
+    window.innerWidth,
+    window.innerHeight,
   );
 }
