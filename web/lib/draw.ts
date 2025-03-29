@@ -21,10 +21,13 @@ export function draw(context: InitializedStore) {
     -canvasToClientConversion(context.camera.y, context.camera.zoom),
   );
 
+  const x = canvasToClientConversion(cameraXStart, context.camera.zoom);
+  const y = canvasToClientConversion(cameraYStart, context.camera.zoom);
+
   context.canvas.rootCanvasContext.drawImage(
     context.canvas.backgroundCanvas,
-    canvasToClientConversion(cameraXStart, context.camera.zoom),
-    canvasToClientConversion(cameraYStart, context.camera.zoom),
+    x,
+    y,
     window.innerWidth * zoomMultiplier * BACKGROUND_SIZE,
     window.innerHeight * zoomMultiplier * BACKGROUND_SIZE,
   );
@@ -42,16 +45,24 @@ export function draw(context: InitializedStore) {
 
   context.canvas.rootCanvasContext.drawImage(
     context.canvas.realtimeCanvas,
-    canvasToClientConversion(cameraXStart, context.camera.zoom),
-    canvasToClientConversion(cameraYStart, context.camera.zoom),
+    x,
+    y,
     window.innerWidth,
     window.innerHeight,
   );
 
   context.canvas.rootCanvasContext.drawImage(
     context.canvas.userCanvas,
-    canvasToClientConversion(cameraXStart, context.camera.zoom),
-    canvasToClientConversion(cameraYStart, context.camera.zoom),
+    x,
+    y,
+    window.innerWidth,
+    window.innerHeight,
+  );
+
+  context.canvas.rootCanvasContext.drawImage(
+    context.canvas.telegraphCanvas,
+    x,
+    y,
     window.innerWidth,
     window.innerHeight,
   );

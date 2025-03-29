@@ -73,6 +73,8 @@ export type InitializedStore = {
     userCanvasContext: CanvasRenderingContext2D;
     realtimeCanvas: HTMLCanvasElement;
     realtimeCanvasContext: CanvasRenderingContext2D;
+    telegraphCanvas: HTMLCanvasElement;
+    telegraphCanvasContext: CanvasRenderingContext2D;
     chunkCanvases: Record<
       string,
       {
@@ -139,6 +141,10 @@ export const store = createStore({
       const realtimeCanvasContext = realtimeCanvas.getContext("2d")!;
       realtimeCanvasContext.imageSmoothingEnabled = false;
 
+      const telegraphCanvas = createCanvas();
+      const telegraphCanvasContext = userCanvas.getContext("2d")!;
+      telegraphCanvasContext.imageSmoothingEnabled = false;
+
       const socket = setupSocketConnection(event.apiWebsocketOrigin);
       const channel = setupChannel(socket);
 
@@ -185,6 +191,8 @@ export const store = createStore({
           userCanvasContext,
           realtimeCanvas,
           realtimeCanvasContext,
+          telegraphCanvas,
+          telegraphCanvasContext,
           chunkCanvases: {},
         },
         queryClient: event.queryClient,
