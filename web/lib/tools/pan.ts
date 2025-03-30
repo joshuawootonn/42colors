@@ -1,5 +1,5 @@
-import { clientToCanvasConversion } from "../utils/clientToCanvasConversion";
 import { store, Store } from "../store";
+import { clientToCanvas } from "../utils/clientToCanvasConversion";
 import { isInitialStore } from "../utils/is-initial-store";
 
 function onPointerDown(e: PointerEvent, context: Store) {
@@ -14,10 +14,10 @@ function onPointerDown(e: PointerEvent, context: Store) {
       camera: {
         x:
           startingCamera.x +
-          clientToCanvasConversion(startingX - e.clientX, context.camera.zoom),
+          clientToCanvas(startingX - e.clientX, context.camera.zoom),
         y:
           startingCamera.y +
-          clientToCanvasConversion(startingY - e.clientY, context.camera.zoom),
+          clientToCanvas(startingY - e.clientY, context.camera.zoom),
       },
     });
   };

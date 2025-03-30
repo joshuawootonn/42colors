@@ -123,10 +123,9 @@ export default function Page() {
         store.trigger.onKeyUp({ e });
       }
 
-      function onPointerMove() {
+      function onPointerMove(e: PointerEvent) {
         // console.log("onPointerMove");
-        store.trigger.onPointerMove();
-        // store.trigger.onPointerMove({ e });
+        store.trigger.onPointerMove({ e });
       }
 
       function onPointerUp() {

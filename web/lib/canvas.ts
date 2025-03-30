@@ -1,7 +1,7 @@
 import { CANVAS_PIXEL_RATIO } from "./constants";
 import { Pixel } from "./pixel";
 import { Camera } from "./store";
-import { canvasToClientConversion } from "./utils/clientToCanvasConversion";
+import { canvasToClient } from "./utils/clientToCanvasConversion";
 
 export function createCanvas() {
   const canvas = document.createElement("canvas");
@@ -28,8 +28,8 @@ export function redrawPixels(
     const block = pixels[i];
 
     context.fillRect(
-      canvasToClientConversion(block.x - Math.floor(camera.x), camera.zoom),
-      canvasToClientConversion(block.y - Math.floor(camera.y), camera.zoom),
+      canvasToClient(block.x - Math.floor(camera.x), camera.zoom),
+      canvasToClient(block.y - Math.floor(camera.y), camera.zoom),
       CANVAS_PIXEL_RATIO * zoomMultiplier,
       CANVAS_PIXEL_RATIO * zoomMultiplier,
     );

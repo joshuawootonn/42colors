@@ -412,14 +412,18 @@ export const store = createStore({
       };
     },
 
-    onPointerMove: () => {
-      // onPointerMove: (context, { e }: { e: PointerEvent }) => {
-      // if (isInitialStore(context)) return;
-      //
-      // const pixelWidth = context.camera.zoom / 20;
-      // const pixelX = Math.floor(e.clientX / pixelWidth);
-      // const pixelY = Math.floor(e.clientY / pixelWidth);
-      // console.log({ pixelX, pixelY });
+    onPointerMove: (context, { e }: { e: PointerEvent }) => {
+      if (isInitialStore(context)) return;
+
+      const tool = context.currentTool;
+      switch (tool) {
+        case "pencil":
+          context.tools.pencilTool.onPointerMove(e, context);
+          break;
+
+        default:
+          console.log("default case of the onPointerMove");
+      }
     },
 
     onPointerUp: (context, _, enqueue) => {
@@ -447,7 +451,6 @@ export const store = createStore({
       const tool = context.currentTool;
       switch (tool) {
         case "pencil":
-          context.tools.pencilTool.onPointerDown(e, context);
           break;
         case "brush":
           context.tools.brushTool.onPointerDown(e, context);

@@ -1,5 +1,5 @@
 import { BACKGROUND_SIZE, CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from "./constants";
-import { canvasToClientConversion } from "./utils/clientToCanvasConversion";
+import { canvasToClient } from "./utils/clientToCanvasConversion";
 import { InitializedStore } from "./store";
 
 export function draw(context: InitializedStore) {
@@ -17,12 +17,12 @@ export function draw(context: InitializedStore) {
   );
 
   context.canvas.rootCanvasContext.translate(
-    -canvasToClientConversion(context.camera.x, context.camera.zoom),
-    -canvasToClientConversion(context.camera.y, context.camera.zoom),
+    -canvasToClient(context.camera.x, context.camera.zoom),
+    -canvasToClient(context.camera.y, context.camera.zoom),
   );
 
-  const x = canvasToClientConversion(cameraXStart, context.camera.zoom);
-  const y = canvasToClientConversion(cameraYStart, context.camera.zoom);
+  const x = canvasToClient(cameraXStart, context.camera.zoom);
+  const y = canvasToClient(cameraYStart, context.camera.zoom);
 
   context.canvas.rootCanvasContext.drawImage(
     context.canvas.backgroundCanvas,
@@ -36,8 +36,8 @@ export function draw(context: InitializedStore) {
     context.canvas.rootCanvasContext.imageSmoothingEnabled = false;
     context.canvas.rootCanvasContext.drawImage(
       chunk.element,
-      canvasToClientConversion(chunk.x, context.camera.zoom),
-      canvasToClientConversion(chunk.y, context.camera.zoom),
+      canvasToClient(chunk.x, context.camera.zoom),
+      canvasToClient(chunk.y, context.camera.zoom),
       CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
       CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
     );
