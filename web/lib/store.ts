@@ -92,6 +92,7 @@ export type InitializedStore = {
   interaction: {
     isPressed: boolean;
     isSpacePressed: boolean;
+    cursorPosition: { clientX: number; clientY: number } | null;
   };
   user?: {
     email: string;
@@ -178,6 +179,7 @@ export const store = createStore({
         interaction: {
           isPressed: false,
           isSpacePressed: false,
+          cursorPosition: null,
         },
         realtimePixels: [],
         pixels: [],
@@ -361,6 +363,24 @@ export const store = createStore({
       );
     },
 
+    redrawTelegraph: (context) => {
+      if (isInitialStore(context)) return;
+      const tool = context.currentTool;
+      switch (tool) {
+        case "pencil":
+          if (context.interaction.cursorPosition == null) break;
+          context.tools.pencilTool.redrawTelegraph(
+            context.interaction.cursorPosition.clientX,
+            context.interaction.cursorPosition.clientY,
+            context,
+          );
+          break;
+
+        default:
+          console.log("default case of the redrawTelegraph");
+      }
+    },
+
     drawToChunkCanvas: (
       context,
       event: { chunkKey: string; pixels: Pixel[] },
@@ -379,6 +399,7 @@ export const store = createStore({
       enqueue.effect(() => {
         store.trigger.redrawUserCanvas();
         store.trigger.redrawRealtimeCanvas();
+        store.trigger.redrawTelegraph();
       });
 
       return { ...context, camera: { ...context.camera, ...event.camera } };
@@ -391,6 +412,27 @@ export const store = createStore({
 
     changeTool: (context, event: { tool: Tool }) => {
       return { ...context, currentTool: event.tool };
+    },
+
+    clearCursor: (context) => {
+      if (isInitialStore(context)) return;
+      return {
+        ...context,
+        interaction: { ...context.interaction, cursorPosition: null },
+      };
+    },
+
+    setCursorPosition: (
+      context,
+      {
+        cursorPosition,
+      }: { cursorPosition: { clientX: number; clientY: number } },
+    ) => {
+      if (isInitialStore(context)) return;
+      return {
+        ...context,
+        interaction: { ...context.interaction, cursorPosition: cursorPosition },
+      };
     },
 
     setIsPressed: (context, { isPressed }: { isPressed: boolean }) => {
@@ -412,7 +454,7 @@ export const store = createStore({
       };
     },
 
-    onPointerMove: (context, { e }: { e: PointerEvent }) => {
+    onPointerMove: (context, { e }: { e: PointerEvent }, enqueue) => {
       if (isInitialStore(context)) return;
 
       const tool = context.currentTool;
@@ -424,6 +466,10 @@ export const store = createStore({
         default:
           console.log("default case of the onPointerMove");
       }
+
+      enqueue.effect(() =>
+        store.trigger.setCursorPosition({ cursorPosition: e }),
+      );
     },
 
     onPointerUp: (context, _, enqueue) => {
@@ -437,6 +483,7 @@ export const store = createStore({
       if (isInitialStore(context)) return;
 
       enqueue.effect(() => store.trigger.setIsPressed({ isPressed: false }));
+      enqueue.effect(() => store.trigger.clearCursor());
     },
 
     onPointerDown: (context, { e }: { e: PointerEvent }, enqueue) => {
@@ -507,6 +554,7 @@ export const store = createStore({
         resizeCanvas(context.canvas.realtimeCanvas);
         store.trigger.redrawUserCanvas();
         store.trigger.redrawRealtimeCanvas();
+        store.trigger.redrawTelegraph();
       });
     },
   },
