@@ -4,6 +4,7 @@ import {
 } from "../utils/clientToCanvasConversion";
 import { InitializedStore, store } from "../store";
 import { CANVAS_PIXEL_RATIO } from "../constants";
+import { EnqueueObject } from "@xstate/store";
 
 function getCanvasXY(
   clientX: number,
@@ -52,7 +53,11 @@ export function redrawTelegraph(
   drawTelegraph(canvasX, canvasY, context);
 }
 
-function onPointerMove(e: PointerEvent, context: InitializedStore) {
+function onPointerMove(
+  e: PointerEvent,
+  context: InitializedStore,
+  enqueue: EnqueueObject<{ type: string }>,
+) {
   const camera = context.camera;
 
   const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
@@ -61,7 +66,9 @@ function onPointerMove(e: PointerEvent, context: InitializedStore) {
   if (context.interaction.isPressed) {
     const x = Math.floor(camera.x + canvasX);
     const y = Math.floor(camera.y + canvasY);
-    store.trigger.newPixel({ pixel: { x, y, color: "black" } });
+    enqueue.effect(() =>
+      store.trigger.newPixel({ pixel: { x, y, color: "black" } }),
+    );
   }
 }
 

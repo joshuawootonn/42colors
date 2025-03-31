@@ -143,7 +143,7 @@ export const store = createStore({
       realtimeCanvasContext.imageSmoothingEnabled = false;
 
       const telegraphCanvas = createCanvas();
-      const telegraphCanvasContext = userCanvas.getContext("2d")!;
+      const telegraphCanvasContext = telegraphCanvas.getContext("2d")!;
       telegraphCanvasContext.imageSmoothingEnabled = false;
 
       const socket = setupSocketConnection(event.apiWebsocketOrigin);
@@ -214,7 +214,7 @@ export const store = createStore({
       };
     },
 
-    newPixel: (context, event: { pixel: Pixel }, enqueue) => {
+    newPixel: (context, event: { pixel: Pixel }) => {
       if (isInitialStore(context)) return;
       const authURL = context.server.authURL;
 
@@ -237,9 +237,12 @@ export const store = createStore({
           }
         });
 
-      enqueue.effect(() => {
-        store.trigger.redrawUserCanvas();
-      });
+      redrawPixels(
+        context.canvas.userCanvas,
+        context.canvas.userCanvasContext,
+        context.pixels.concat(event.pixel),
+        context.camera,
+      );
 
       return {
         ...context,
@@ -460,7 +463,7 @@ export const store = createStore({
       const tool = context.currentTool;
       switch (tool) {
         case "pencil":
-          context.tools.pencilTool.onPointerMove(e, context);
+          context.tools.pencilTool.onPointerMove(e, context, enqueue);
           break;
 
         default:
