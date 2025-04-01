@@ -141,15 +141,7 @@ export type InitializedStore = {
 
 export type Store = InitialStore | InitializedStore;
 
-let initialCamera: Camera = { x: 0, y: 0, zoom: 100 };
-
-if (process.env.NODE_ENV === "development") {
-  const search = new URLSearchParams(document.location.search);
-  const x = stringToNumberOr0.parse(search.get("x"));
-  const y = stringToNumberOr0.parse(search.get("y"));
-  const zoom = stringToNumberOr100.parse(search.get("zoom"));
-  initialCamera = { x, y, zoom };
-}
+const initialCamera: Camera = { x: 0, y: 0, zoom: 100 };
 
 const initialialStoreContext: Store = {
   state: "initial",
