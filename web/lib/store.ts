@@ -22,6 +22,22 @@ import { KeyboardCode } from "./keyboard-codes";
 import { isInitialStore } from "./utils/is-initial-store";
 import { WheelTool } from "./tools/wheel";
 import { createCanvas, redrawPixels, resizeCanvas } from "./canvas";
+import {
+  stringToNumberOr0,
+  stringToNumberOr100,
+} from "./utils/stringToNumberOrDefault";
+import {
+  onWheel,
+  onKeyDown,
+  onKeyUp,
+  onResize,
+  onPointerMove,
+  onPointerDown,
+  onPointerUp,
+  onPointerOut,
+  onTouch,
+  onGesture,
+} from "./events";
 
 export type Camera = { x: number; y: number; zoom: number };
 
@@ -105,6 +121,7 @@ export type InitializedStore = {
 export type Store = InitialStore | InitializedStore;
 
 let initialCamera: Camera = { x: 0, y: 0, zoom: 100 };
+
 if (process.env.NODE_ENV === "development") {
   const search = new URLSearchParams(document.location.search);
   const x = stringToNumberOr0.parse(search.get("x"));
@@ -158,11 +175,14 @@ export const store = createStore({
       const socket = setupSocketConnection(event.apiWebsocketOrigin);
       const channel = setupChannel(socket);
 
-      enqueue.effect(() =>
+      enqueue.effect(() => {
         channel.on("new_pixel", (payload: { body: Pixel }) => {
           store.trigger.newRealtimePixel({ pixel: payload.body });
-        }),
-      );
+        });
+        store.trigger.fetchPixels();
+        store.trigger.fetchAuthURL();
+        store.trigger.fetchUser();
+      });
 
       return {
         ...context,
@@ -208,6 +228,48 @@ export const store = createStore({
         },
         queryClient: event.queryClient,
       };
+    },
+
+    listen: (
+      context,
+      { element, body }: { element: HTMLCanvasElement; body: HTMLBodyElement },
+    ) => {
+      element.addEventListener("wheel", onWheel);
+      body.addEventListener("keydown", onKeyDown);
+      body.addEventListener("keyup", onKeyUp);
+      window.addEventListener("resize", onResize);
+      element.addEventListener("pointermove", onPointerMove);
+      element.addEventListener("pointerdown", onPointerDown);
+      element.addEventListener("pointerup", onPointerUp);
+      element.addEventListener("pointerout", onPointerOut);
+
+      body.addEventListener("touchstart", onTouch, true);
+      body.addEventListener("touchmove", onTouch, true);
+
+      body.addEventListener("gesturestart", onGesture, true);
+      body.addEventListener("gesturemove", onGesture, true);
+      body.addEventListener("gestureend", onGesture, true);
+    },
+
+    unlisten: (
+      context,
+      { element, body }: { element: HTMLCanvasElement; body: HTMLBodyElement },
+    ) => {
+      element.removeEventListener("wheel", onWheel);
+      body.removeEventListener("keydown", onKeyDown);
+      body.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("resize", onResize);
+      element.removeEventListener("pointermove", onPointerMove);
+      element.removeEventListener("pointerdown", onPointerDown);
+      element.removeEventListener("pointerup", onPointerUp);
+      element.removeEventListener("pointerout", onPointerOut);
+
+      body.removeEventListener("touchstart", onTouch, true);
+      body.removeEventListener("touchmove", onTouch, true);
+
+      body.removeEventListener("gesturestart", onGesture, true);
+      body.removeEventListener("gesturemove", onGesture, true);
+      body.removeEventListener("gestureend", onGesture, true);
     },
 
     newRealtimePixel: (context, event: { pixel: Pixel }, enqueue) => {
