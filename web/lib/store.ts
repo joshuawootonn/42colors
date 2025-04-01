@@ -640,6 +640,7 @@ export const store = createStore({
         );
         resizeCanvas(context.canvas.userCanvas);
         resizeCanvas(context.canvas.realtimeCanvas);
+        resizeCanvas(context.canvas.telegraphCanvas);
         store.trigger.redrawUserCanvas();
         store.trigger.redrawRealtimeCanvas();
         store.trigger.redrawTelegraph();
