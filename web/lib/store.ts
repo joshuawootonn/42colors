@@ -40,9 +40,26 @@ import {
 } from "./events";
 
 export type Camera = { x: number; y: number; zoom: number };
+export type Point = { x: number; y: number };
 
 export type Tool = "pencil" | "brush";
 export type PointerState = "default" | "pressed";
+
+type Action =
+  | {
+      type: "brush-active";
+      camera: Camera;
+      points: Point[];
+    }
+  | {
+      type: "camera-move";
+      points: Camera[];
+    }
+  | {
+      type: "tool-change";
+      before: Tool;
+      after: Tool;
+    };
 
 export type InitialStore = {
   state: "initial";
@@ -55,6 +72,8 @@ export type InitialStore = {
   interaction?: undefined;
   canvas?: undefined;
   user?: undefined;
+  actions?: undefined;
+  activeAction?: undefined;
   queryClient?: QueryClient;
   eventLoopRafId?: number;
 };
@@ -105,6 +124,8 @@ export type InitializedStore = {
       }
     >;
   };
+  actions: Action[];
+  activeAction: Action | null;
   interaction: {
     isPressed: boolean;
     isSpacePressed: boolean;
@@ -133,7 +154,7 @@ if (process.env.NODE_ENV === "development") {
 const initialialStoreContext: Store = {
   state: "initial",
   camera: initialCamera,
-  currentTool: "pencil",
+  currentTool: "brush",
   currentPointerState: "default",
 } as Store;
 
@@ -211,6 +232,8 @@ export const store = createStore({
           cursorPosition: null,
         },
         realtimePixels: [],
+        actions: [],
+        activeAction: null,
         pixels: [],
         canvas: {
           bodyElement: event.body,
@@ -528,59 +551,58 @@ export const store = createStore({
       };
     },
 
-    onPointerMove: (context, { e }: { e: PointerEvent }, enqueue) => {
+    onPointerDown: (context, { e }: { e: PointerEvent }, enqueue) => {
       if (isInitialStore(context)) return;
 
-      const tool = context.currentTool;
-      switch (tool) {
-        case "pencil":
-          context.tools.pencilTool.onPointerMove(e, context, enqueue);
-          break;
+      enqueue.effect(() => store.trigger.setIsPressed({ isPressed: true }));
 
-        default:
-          console.log("default case of the onPointerMove");
+      if (context.interaction.isSpacePressed) {
+        context.tools.panTool.onPointerDown(e, context);
+        return;
       }
+
+      if (context.currentTool === "brush") {
+        return context.tools.brushTool.onPointerDown(e, context, enqueue);
+      }
+    },
+
+    onPointerMove: (context, { e }: { e: PointerEvent }, enqueue) => {
+      if (isInitialStore(context)) return;
 
       enqueue.effect(() =>
         store.trigger.setCursorPosition({ cursorPosition: e }),
       );
+      const tool = context.currentTool;
+      if (tool === "pencil") {
+        context.tools.pencilTool.onPointerMove(e, context, enqueue);
+      }
+
+      if (context.currentTool === "brush") {
+        return context.tools.brushTool.onPointerMove(e, context, enqueue);
+      }
     },
 
-    onPointerUp: (context, _, enqueue) => {
+    onPointerUp: (context, { e }: { e: PointerEvent }, enqueue) => {
       if (isInitialStore(context)) return;
+
       enqueue.effect(() => {
         return store.trigger.setIsPressed({ isPressed: false });
       });
+
+      if (context.currentTool === "brush") {
+        return context.tools.brushTool.onPointerUp(e, context, enqueue);
+      }
     },
 
-    onPointerOut: (context, _, enqueue) => {
+    onPointerOut: (context, { e }: { e: PointerEvent }, enqueue) => {
       if (isInitialStore(context)) return;
 
       enqueue.effect(() => store.trigger.setIsPressed({ isPressed: false }));
       enqueue.effect(() => store.trigger.clearCursor());
-    },
 
-    onPointerDown: (context, { e }: { e: PointerEvent }, enqueue) => {
-      if (isInitialStore(context)) return;
-
-      if (context.interaction.isSpacePressed) {
-        context.tools.panTool.onPointerDown(e, context);
-        enqueue.effect(() => store.trigger.setIsPressed({ isPressed: true }));
-        return;
+      if (context.currentTool === "brush") {
+        return context.tools.brushTool.onPointerOut(e, context, enqueue);
       }
-
-      const tool = context.currentTool;
-      switch (tool) {
-        case "pencil":
-          break;
-        case "brush":
-          context.tools.brushTool.onPointerDown(e, context);
-          break;
-
-        default:
-          console.log("default case of the onPointerDown");
-      }
-      enqueue.effect(() => store.trigger.setIsPressed({ isPressed: true }));
     },
 
     onKeyDown: (context, { e }: { e: KeyboardEvent }) => {

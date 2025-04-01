@@ -1,4 +1,4 @@
-import { store } from "./store";
+import { Point, store } from "./store";
 
 export function onGesture(e: Event) {
   // console.log("gesture", e);
@@ -36,14 +36,14 @@ export function onPointerMove(e: PointerEvent) {
   store.trigger.onPointerMove({ e });
 }
 
-export function onPointerUp() {
+export function onPointerUp(e: PointerEvent) {
   // console.log("onPointerUp");
-  store.trigger.onPointerUp();
+  store.trigger.onPointerUp({ e });
 }
 
-export function onPointerOut() {
+export function onPointerOut(e: PointerEvent) {
   // console.log("onPointerOut");
-  store.trigger.onPointerOut();
+  store.trigger.onPointerOut({ e });
 }
 
 export function onPointerDown(e: PointerEvent) {
