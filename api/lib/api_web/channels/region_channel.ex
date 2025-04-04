@@ -8,24 +8,26 @@ defmodule ApiWeb.RegionChannel do
     {:ok, socket}
   end
 
-  def handle_in("new_pixel", %{"body" => body}, socket) do
+  def handle_in("new_pixels", %{"pixels" => pixels}, socket) do
     current_user_id = Map.get(socket.assigns, :current_user_id)
 
     if current_user_id == nil do
       {:reply, {:error, "unauthed_user"}, socket}
     else
-      {:ok, pixel} =
-        Canvas.create_pixel(%{
-          x: Map.get(body, "x"),
-          y: Map.get(body, "y"),
-          user_id: current_user_id
-        })
+      {:ok, pixel_changsets} =
+        Canvas.create_many_pixels(
+          Enum.map(pixels, fn pixel ->
+            %{
+              x: Map.get(pixel, "x"),
+              y: Map.get(pixel, "y"),
+              user_id: current_user_id
+            }
+          end)
+        )
 
-      PixelCacheSupervisor.write_pixels_to_file([
-        pixel
-      ])
+      PixelCacheSupervisor.write_pixels_to_file(pixel_changsets)
 
-      broadcast!(socket, "new_pixel", %{body: body})
+      broadcast!(socket, "new_pixels", %{pixels: pixels})
 
       {:noreply, socket}
     end

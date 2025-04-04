@@ -56,6 +56,27 @@ defmodule Api.Canvas do
   end
 
   @doc """
+  Creates many pixel.
+
+  ## Examples
+
+      iex> create_many_pixels(pixel(%{field: value})
+      {:ok, [%Pixel{}, ...]}
+
+      iex> create_many_pixels(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_many_pixels(attrs \\ %{}) do
+    pixels = Enum.map(attrs, fn pixel ->
+      {:ok, pixel} = create_pixel(pixel)
+      pixel
+    end)
+
+    {:ok, pixels}
+  end
+
+  @doc """
   Updates a pixel.
 
   ## Examples

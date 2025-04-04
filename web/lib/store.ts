@@ -40,7 +40,7 @@ import {
 } from "./events";
 
 export type Camera = { x: number; y: number; zoom: number };
-export type Point = { x: number; y: number };
+export type Point = { canvasX: number; canvasY: number; camera: Camera };
 
 export type Tool = "pencil" | "brush";
 export type PointerState = "default" | "pressed";
@@ -48,7 +48,6 @@ export type PointerState = "default" | "pressed";
 type Action =
   | {
       type: "brush-active";
-      camera: Camera;
       points: Point[];
     }
   | {
@@ -189,8 +188,8 @@ export const store = createStore({
       const channel = setupChannel(socket);
 
       enqueue.effect(() => {
-        channel.on("new_pixel", (payload: { body: Pixel }) => {
-          store.trigger.newRealtimePixel({ pixel: payload.body });
+        channel.on("new_pixels", (payload: { pixels: Pixel[] }) => {
+          store.trigger.newRealtimePixels({ pixels: payload.pixels });
         });
         store.trigger.fetchPixels();
         store.trigger.fetchAuthURL();
@@ -287,7 +286,7 @@ export const store = createStore({
       body.removeEventListener("gestureend", onGesture, true);
     },
 
-    newRealtimePixel: (context, event: { pixel: Pixel }, enqueue) => {
+    newRealtimePixels: (context, event: { pixels: Pixel[] }, enqueue) => {
       if (isInitialStore(context)) return;
 
       enqueue.effect(() => {
@@ -296,16 +295,16 @@ export const store = createStore({
 
       return {
         ...context,
-        realtimePixels: context.realtimePixels.concat(event.pixel),
+        realtimePixels: context.realtimePixels.concat(event.pixels),
       };
     },
 
-    newPixel: (context, event: { pixel: Pixel }) => {
+    newPixels: (context, event: { pixels: Pixel[] }) => {
       if (isInitialStore(context)) return;
       const authURL = context.server.authURL;
 
       context.server.channel
-        .push("new_pixel", { body: event.pixel })
+        .push("new_pixels", { pixels: event.pixels })
         .receive("error", (resp) => {
           if (resp === ErrorCode.UNAUTHED_USER) {
             toast({
@@ -326,13 +325,13 @@ export const store = createStore({
       redrawPixels(
         context.canvas.userCanvas,
         context.canvas.userCanvasContext,
-        context.pixels.concat(event.pixel),
+        context.pixels.concat(event.pixels),
         context.camera,
       );
 
       return {
         ...context,
-        pixels: context.pixels.concat(event.pixel),
+        pixels: context.pixels.concat(event.pixels),
       };
     },
 
@@ -626,7 +625,13 @@ export const store = createStore({
     onWheel: (context, { e }: { e: WheelEvent }, enqueue) => {
       if (isInitialStore(context)) return;
 
-      return context.tools.wheelTool.onWheel(context, e, enqueue);
+      context.tools.wheelTool.onWheel(context, e, enqueue);
+
+      if (context.currentTool === "brush") {
+        return context.tools.brushTool.onWheel(e, context, enqueue);
+      }
+
+      return context;
     },
 
     onResize: (context, _, enqueue) => {

@@ -1,6 +1,6 @@
 import { EnqueueObject } from "@xstate/store";
 import { CANVAS_PIXEL_RATIO } from "../constants";
-import { Camera, InitializedStore, Point } from "../store";
+import { InitializedStore, Point, store } from "../store";
 import {
   clientToCanvas,
   canvasToClient,
@@ -23,7 +23,7 @@ function getCanvasXY(
   return { canvasX, canvasY };
 }
 
-function drawUnActiveTelegraph(
+function drawUnactiveTelegraph(
   canvasX: number,
   canvasY: number,
   context: InitializedStore,
@@ -44,7 +44,7 @@ function drawUnActiveTelegraph(
   );
 }
 
-type Pixel = [number, number];
+type Pixel = { x: number; y: number };
 
 function bresenhamLine(
   x0: number,
@@ -61,7 +61,7 @@ function bresenhamLine(
   let err = dx - dy;
 
   while (true) {
-    points.push([x0, y0]);
+    points.push({ x: x0, y: y0 });
 
     if (x0 === x1 && y0 === y1) {
       break;
@@ -83,71 +83,78 @@ function bresenhamLine(
   return points;
 }
 
-function drawActiveTelegraph(action: BrushActive, context: InitializedStore) {
-  context.canvas.telegraphCanvasContext.clearRect(
-    0,
-    0,
-    context.canvas.telegraphCanvasContext.canvas.width,
-    context.canvas.telegraphCanvasContext.canvas.height,
-  );
+function normalizedPointToCurrentCamera(
+  point: Point,
+  context: InitializedStore,
+): Point {
+  const canvasX2 = (point.canvasX * context.camera.zoom) / point.camera.zoom;
 
-  let pixels: Pixel[] = [];
+  const cameraX2 = (point.camera.x * context.camera.zoom) / point.camera.zoom;
 
-  //todo what about just one point
-  for (let index = 0; index < action.points.length - 1; index++) {
-    const element = action.points[index];
-    const next = action.points[index + 1];
+  const canvasY2 = (point.canvasY * context.camera.zoom) / point.camera.zoom;
 
-    const p = bresenhamLine(element.x, element.y, next.x, next.y);
-    pixels = pixels.concat(p);
-  }
+  const cameraY2 = (point.camera.y * context.camera.zoom) / point.camera.zoom;
 
-  const zoomMultiplier = context.camera.zoom / 100;
-  for (let index = 0; index < pixels.length; index++) {
-    const pixel = pixels[index];
-    // console.log(
-    //   pixel,
-    //   canvasToClient(pixel[0], context.camera.zoom),
-    //   canvasToClient(pixel[1], context.camera.zoom),
-    // );
-    context.canvas.telegraphCanvasContext.fillRect(
-      canvasToClient(pixel[0], context.camera.zoom),
-      canvasToClient(pixel[1], context.camera.zoom),
-      CANVAS_PIXEL_RATIO * zoomMultiplier,
-      CANVAS_PIXEL_RATIO * zoomMultiplier,
-    );
-  }
+  const x = Math.floor(canvasX2 + cameraX2 - context.camera.x);
+  const y = Math.floor(canvasY2 + cameraY2 - context.camera.y);
+  return {
+    canvasX: x,
+    canvasY: y,
+    camera: context.camera,
+  };
 }
 
-export function redrawTelegraph(
-  clientX: number,
-  clientY: number,
-  context: InitializedStore,
-) {
-  const { canvasX, canvasY } = getCanvasXY(clientX, clientY, context);
-  drawUnActiveTelegraph(canvasX, canvasY, context);
+function getNewPixels(action: BrushActive, context: InitializedStore): Pixel[] {
+  if (action.points.length < 2) {
+    console.info(
+      `"drawLastPoints" was called with ${action.points.length} points`,
+    );
+    return [];
+  }
+
+  const normalizedFirstPoint = normalizedPointToCurrentCamera(
+    action.points.at(-2)!,
+    context,
+  );
+  const secondPoint = action.points.at(-1)!;
+
+  const points = bresenhamLine(
+    normalizedFirstPoint.canvasX,
+    normalizedFirstPoint.canvasY,
+    secondPoint.canvasX,
+    secondPoint.canvasY,
+  );
+
+  return points;
 }
 
 type BrushActive = {
   type: "brush-active";
-  camera: Camera;
   points: Point[];
 };
 
-type BrushActions = BrushActive;
+function isDuplicatePoint(
+  canvasX: number,
+  canvasY: number,
+  context: InitializedStore,
+) {
+  if (context.activeAction?.type !== "brush-active") return false;
+  const lastPoint = context.activeAction?.points.at(-1);
+  return lastPoint?.canvasX === canvasX && lastPoint?.canvasX === canvasY;
+}
 
-export function startBrushing(
+export function startBrushAction(
   canvasX: number,
   canvasY: number,
   context: InitializedStore,
 ): BrushActive {
   return {
     type: "brush-active",
-    camera: context.camera,
-    points: [{ x: canvasX, y: canvasY }],
+    points: [{ canvasX, canvasY, camera: context.camera }],
   };
 }
-export function continueBrushing(
+
+export function nextBrushAction(
   canvasX: number,
   canvasY: number,
   context: InitializedStore,
@@ -155,14 +162,13 @@ export function continueBrushing(
   if (context.activeAction?.type !== "brush-active")
     throw new Error("continueBrushing was called when you weren't brushing");
 
-  const lastPoint = context.activeAction.points.at(-1);
-  if (lastPoint?.x === canvasX && lastPoint?.y === canvasY)
-    return context.activeAction;
-
   return {
     type: "brush-active",
-    camera: context.camera,
-    points: context.activeAction.points.concat({ x: canvasX, y: canvasY }),
+    points: context.activeAction.points.concat({
+      canvasX,
+      canvasY,
+      camera: context.camera,
+    }),
   };
 }
 
@@ -172,33 +178,75 @@ function onPointerDown(
   _: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
-  drawUnActiveTelegraph(canvasX, canvasY, context);
-
-  const x = Math.floor(canvasX);
-  const y = Math.floor(canvasY);
+  drawUnactiveTelegraph(canvasX, canvasY, context);
 
   return {
     ...context,
-    activeAction: startBrushing(x, y, context),
+    activeAction: startBrushAction(canvasX, canvasY, context),
   };
 }
 
 function onPointerMove(
   e: PointerEvent,
   context: InitializedStore,
-  _: EnqueueObject<{ type: string }>,
+  enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
+  drawUnactiveTelegraph(canvasX, canvasY, context);
 
-  if (context.activeAction?.type !== "brush-active") {
-    drawUnActiveTelegraph(canvasX, canvasY, context);
+  if (
+    context.activeAction?.type !== "brush-active" ||
+    isDuplicatePoint(canvasX, canvasY, context)
+  ) {
     return context;
   }
 
-  const x = Math.floor(canvasX);
-  const y = Math.floor(canvasY);
-  const nextActiveAction = continueBrushing(x, y, context);
-  drawActiveTelegraph(nextActiveAction, context);
+  const nextActiveAction = nextBrushAction(canvasX, canvasY, context);
+  const pixels = getNewPixels(nextActiveAction, context);
+
+  enqueue.effect(() =>
+    store.trigger.newPixels({
+      pixels: pixels.map((point) => ({
+        x: point.x,
+        y: point.y,
+        color: "black",
+      })),
+    }),
+  );
+
+  return {
+    ...context,
+    activeAction: nextActiveAction,
+  };
+}
+
+function onWheel(
+  e: WheelEvent,
+  context: InitializedStore,
+  enqueue: EnqueueObject<{ type: string }>,
+): InitializedStore {
+  const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
+  drawUnactiveTelegraph(canvasX, canvasY, context);
+
+  if (
+    context.activeAction?.type !== "brush-active" ||
+    isDuplicatePoint(canvasX, canvasY, context)
+  ) {
+    return context;
+  }
+
+  const nextActiveAction = nextBrushAction(canvasX, canvasY, context);
+  const pixels = getNewPixels(nextActiveAction, context);
+
+  enqueue.effect(() =>
+    store.trigger.newPixels({
+      pixels: pixels.map((point) => ({
+        x: point.x,
+        y: point.y,
+        color: "black",
+      })),
+    }),
+  );
 
   return {
     ...context,
@@ -207,9 +255,9 @@ function onPointerMove(
 }
 
 function onPointerOut(
-  e: PointerEvent,
+  _: PointerEvent,
   context: InitializedStore,
-  _: EnqueueObject<{ type: string }>,
+  __: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   if (context.activeAction?.type !== "brush-active") return context;
 
@@ -221,9 +269,9 @@ function onPointerOut(
 }
 
 function onPointerUp(
-  e: PointerEvent,
+  _: PointerEvent,
   context: InitializedStore,
-  _: EnqueueObject<{ type: string }>,
+  __: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   if (context.activeAction?.type !== "brush-active") return context;
 
@@ -239,6 +287,7 @@ export const BrushTool = {
   onPointerDown,
   onPointerUp,
   onPointerOut,
+  onWheel,
 };
 
 export type BrushTool = typeof BrushTool;
