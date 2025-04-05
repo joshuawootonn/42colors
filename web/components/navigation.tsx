@@ -5,14 +5,19 @@ import { useCameraSearchParams } from "./use-camera-search-params";
 import { z } from "zod";
 import { useSelector } from "@xstate/store/react";
 import { store } from "@/lib/store";
-import { toast } from "./ui/toast";
+import { roundTo3Places } from "@/lib/utils/round-to-five";
+import { clamp } from "@/lib/utils/clamp";
+import { X_MAX, X_MIN, Y_MAX, Y_MIN } from "@/lib/constants";
 
 const numberSchema = z.number();
+
+const camera = store.select((store) => store.camera);
 
 export function Navigation() {
   const { x, y, zoom } = useSelector(store, (state) => state.context.camera);
 
   const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const { x, y, zoom } = camera.get();
     const parsedNumber = numberSchema.safeParse(
       parseInt(e.currentTarget.value),
     );
@@ -23,10 +28,27 @@ export function Navigation() {
     } else if (e.currentTarget.name === "y") {
       store.trigger.moveCamera({ camera: { y: next } });
     } else if (e.currentTarget.name === "zoom") {
-      store.trigger.moveCamera({ camera: { zoom: next } });
-      toast({
-        title: "Zoom doesn't currently work",
-        description: "thats coming up next.",
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+
+      const pixelWidth = zoom / 20;
+      const pixelX = centerX / pixelWidth;
+      const pixelY = centerY / pixelWidth;
+
+      const nextPixelWidth = next / 20;
+
+      const nextPixelX = centerX / nextPixelWidth;
+      const nextPixelY = centerY / nextPixelWidth;
+
+      const deltaXFromZoom = pixelX - nextPixelX;
+      const deltaYFromZoom = pixelY - nextPixelY;
+
+      store.trigger.moveCamera({
+        camera: {
+          zoom: roundTo3Places(next),
+          x: roundTo3Places(clamp(x + deltaXFromZoom, X_MIN, X_MAX)),
+          y: roundTo3Places(clamp(y + deltaYFromZoom, Y_MIN, Y_MAX)),
+        },
       });
     }
 
@@ -121,8 +143,8 @@ export function Navigation() {
       <NumberInput
         name="zoom"
         value={zoom}
-        step={25}
-        min={100}
+        step={10}
+        min={50}
         max={500}
         onChange={onChange}
       />
