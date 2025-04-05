@@ -13,7 +13,7 @@ export function Link({ className, ...props }: Props) {
   return (
     <NextLink
       className={cn(
-        "outline-none svg-outline-sm relative no-underline",
+        "outline-none svg-outline-sm relative underline-offset-2 decoration-[1.5px]",
         className,
       )}
       {...props}
