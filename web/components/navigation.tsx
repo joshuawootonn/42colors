@@ -24,9 +24,13 @@ export function Navigation() {
     const next = parsedNumber.success ? parsedNumber.data : 0;
 
     if (e.currentTarget.name === "x") {
-      store.trigger.moveCamera({ camera: { x: next } });
+      store.trigger.moveCamera({
+        camera: { x: roundTo3Places(clamp(next, X_MIN, X_MAX)) },
+      });
     } else if (e.currentTarget.name === "y") {
-      store.trigger.moveCamera({ camera: { y: next } });
+      store.trigger.moveCamera({
+        camera: { y: roundTo3Places(clamp(next, Y_MIN, Y_MAX)) },
+      });
     } else if (e.currentTarget.name === "zoom") {
       const centerX = window.innerWidth / 2;
       const centerY = window.innerHeight / 2;

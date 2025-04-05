@@ -104,6 +104,8 @@ const NumberInput = React.forwardRef<
     [props],
   );
 
+  const visualValue = Math.trunc(value);
+
   return (
     <div
       className={cn("relative z-0 svg-outline-within-sm  bg-white", className)}
@@ -126,10 +128,10 @@ const NumberInput = React.forwardRef<
           "disabled:cursor-not-allowed disabled:opacity-50",
         )}
         onInput={(e) => props.onInput?.(e)}
-        value={value}
+        value={visualValue}
         style={
           {
-            "--number-input-width": valueToWidth(value),
+            "--number-input-width": valueToWidth(visualValue),
           } as React.CSSProperties
         }
         {...props}
