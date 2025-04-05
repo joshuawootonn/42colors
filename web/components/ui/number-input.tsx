@@ -11,7 +11,7 @@ function NumberInputButton({
   const timerID = React.useRef<number | null>(null);
   const counter = React.useRef(0);
 
-  const pressHoldDuration = 60;
+  const pressHoldDuration = 20;
 
   function pressingDown(e: React.PointerEvent | React.TouchEvent) {
     requestAnimationFrame(timer);
@@ -56,7 +56,11 @@ function valueToWidth(value: number | string) {
 
 const NumberInput = React.forwardRef<
   HTMLInputElement,
-  Omit<React.ComponentProps<"input">, "type" | "step"> & { step: number }
+  Omit<React.ComponentProps<"input">, "type" | "step" | "min" | "max"> & {
+    step: number;
+    min: number;
+    max: number;
+  }
 >(({ className, value, ...props }, parentRef) => {
   if (typeof value !== "number") {
     throw new Error("Number Input value must be type 'number'");
@@ -67,6 +71,29 @@ const NumberInput = React.forwardRef<
   const onStep = React.useCallback(
     (step: number) => {
       buttonRef.current?.focus();
+
+      const next = parseInt(buttonRef.current!.value) + step;
+
+      if (next >= props.max) {
+        props.onChange?.({
+          currentTarget: {
+            name: props.name,
+            value: `${props.max}`,
+          },
+        } as React.ChangeEvent<HTMLInputElement>);
+        return;
+      }
+
+      if (next <= props.min) {
+        props.onChange?.({
+          currentTarget: {
+            name: props.name,
+            value: `${props.min}`,
+          },
+        } as React.ChangeEvent<HTMLInputElement>);
+        return;
+      }
+
       props.onChange?.({
         currentTarget: {
           name: props.name,
@@ -112,7 +139,7 @@ const NumberInput = React.forwardRef<
           className="group hover:bg-black"
           value={value}
           onClick={() => onStep(props.step)}
-          onHold={() => onStep(props.step * 5)}
+          onHold={() => onStep(props.step)}
         >
           <svg
             width="6"
@@ -133,7 +160,7 @@ const NumberInput = React.forwardRef<
         <NumberInputButton
           className="group hover:bg-black"
           onClick={() => onStep(props.step * -1)}
-          onHold={() => onStep(props.step * -5)}
+          onHold={() => onStep(props.step * -1)}
         >
           <svg
             width="6"
