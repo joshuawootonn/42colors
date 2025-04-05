@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { Space_Mono } from "next/font/google";
 import "./globals.css";
 import { Fathom } from "@/components/fathom";
-import { Mark } from "@/components/mark";
 import { Intro } from "@/components/intro";
 import { Link } from "@/components/link";
 import { Providers } from "./providers";
 import { INTRO_SEEN } from "@/lib/cookies";
 import { cookies } from "next/headers";
 import { Toaster } from "sonner";
+import { Logo } from "@/components/logo";
 
 const space = Space_Mono({
   variable: "--font-space",
@@ -42,7 +42,7 @@ export default async function RootLayout({
         <div className="flex fixed top-[10px] left-[10px]">
           <h1 className="text-2xl font-bold flex gap-2">
             <Link href="/">
-              <Mark />
+              <Logo />
             </Link>
           </h1>
         </div>
