@@ -23,10 +23,6 @@ import { isInitialStore } from "./utils/is-initial-store";
 import { WheelTool } from "./tools/wheel";
 import { createCanvas, redrawPixels, resizeCanvas } from "./canvas";
 import {
-  stringToNumberOr0,
-  stringToNumberOr100,
-} from "./utils/stringToNumberOrDefault";
-import {
   onWheel,
   onKeyDown,
   onKeyUp,
