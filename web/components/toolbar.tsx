@@ -26,7 +26,7 @@ function IconButton({
 export function Toolbar() {
   const tool = useSelector(store, (state) => state.context.currentTool);
   return (
-    <div className="flex flex-row justify-end">
+    <div className="flex flex-row justify-end items-start">
       <div className={cn("bg-black gap-0.5 p-0.5 grid grid-cols-2")}>
         <IconButton
           active={tool === "pencil"}

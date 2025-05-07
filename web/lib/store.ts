@@ -66,6 +66,7 @@ export type InitialStore = {
   server?: undefined;
   tools?: undefined;
   currentTool: Tool;
+  currentColor: string;
   currentPointerState: PointerState;
   realtime?: undefined;
   interaction?: undefined;
@@ -93,6 +94,7 @@ export type InitializedStore = {
     panTool: PanTool;
     wheelTool: WheelTool;
   };
+  currentColor: string;
   currentTool: Tool;
   currentPointerState: PointerState;
   realtimePixels: Pixel[];
@@ -146,6 +148,7 @@ const initialialStoreContext: Store = {
   state: "initial",
   camera: initialCamera,
   currentTool: "brush",
+  currentColor: "#000000",
   currentPointerState: "default",
 } as Store;
 
@@ -500,6 +503,19 @@ export const store = createStore({
 
     changeTool: (context, event: { tool: Tool }) => {
       return { ...context, currentTool: event.tool };
+    },
+
+    setCurrentColor: (
+      context,
+      {
+        color,
+      }: { color: string },
+    ) => {
+      if (isInitialStore(context)) return;
+      return {
+        ...context,
+        currentColor: color,
+      };
     },
 
     clearCursor: (context) => {
