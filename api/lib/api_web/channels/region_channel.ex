@@ -20,6 +20,7 @@ defmodule ApiWeb.RegionChannel do
             %{
               x: Map.get(pixel, "x"),
               y: Map.get(pixel, "y"),
+              color: Map.get(pixel, "color"),
               user_id: current_user_id
             }
           end)

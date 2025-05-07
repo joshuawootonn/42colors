@@ -34,10 +34,10 @@ defmodule AssertionTest do
       PixelCache.initialize_file()
 
       initial_list = [
-        %{x: 1, y: 1},
-        %{x: 2, y: 2},
-        %{x: 3, y: 3},
-        %{x: 4, y: 4}
+        %{x: 1, y: 1, color: 1},
+        %{x: 2, y: 2, color: 1},
+        %{x: 3, y: 3, color: 1},
+        %{x: 4, y: 4, color: 1}
       ]
 
       PixelCache.write_coordinates_to_file(initial_list)
@@ -48,15 +48,34 @@ defmodule AssertionTest do
                <<0::size(66 * 8), 1, 0::size(10 * 8), 1, 0::size(10 * 8), 1, 0::size(10 * 8), 1>>
     end
 
+    test "non black colors numbers" do
+      file_path = Application.get_env(:api, Api.PixelCache)[:pixel_cache_file_name]
+      PixelCache.initialize_file()
+
+      initial_list = [
+        %{x: 1, y: 1, color: 3},
+        %{x: 2, y: 2, color: 4},
+        %{x: 3, y: 3, color: 5},
+        %{x: 4, y: 4, color: 6}
+      ]
+
+      PixelCache.write_coordinates_to_file(initial_list)
+
+      result = File.read!(file_path)
+
+      assert result ==
+               <<0::size(66 * 8), 3, 0::size(10 * 8), 4, 0::size(10 * 8), 5, 0::size(10 * 8), 6>>
+    end
+
     test "negative numbers" do
       file_path = Application.get_env(:api, Api.PixelCache)[:pixel_cache_file_name]
       PixelCache.initialize_file()
 
       initial_list = [
-        %{x: -1, y: 1},
-        %{x: -2, y: -2},
-        %{x: 3, y: -3},
-        %{x: -4, y: -4}
+        %{x: -1, y: 1, color: 1},
+        %{x: -2, y: -2, color: 1},
+        %{x: 3, y: -3, color: 1},
+        %{x: -4, y: -4, color: 1}
       ]
 
       PixelCache.write_coordinates_to_file(initial_list)
@@ -73,11 +92,11 @@ defmodule AssertionTest do
       PixelCache.initialize_file()
 
       initial_list = [
-        %{x: 4, y: 4},
-        %{x: 0, y: 0},
-        %{x: -5, y: -5},
-        %{x: 4, y: -5},
-        %{x: -5, y: 4}
+        %{x: 4, y: 4, color: 1},
+        %{x: 0, y: 0, color: 1},
+        %{x: -5, y: -5, color: 1},
+        %{x: 4, y: -5, color: 1},
+        %{x: -5, y: 4, color: 1}
       ]
 
       PixelCache.write_coordinates_to_file(initial_list)

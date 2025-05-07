@@ -36,7 +36,7 @@ defmodule Api.PixelCache do
           )
       end
 
-      case :file.write(file, <<1>>) do
+      case :file.write(file, <<coord.color>>) do
         :ok ->
           # IO.puts("wrote 1 @ #{offset}")
           nil
