@@ -1,5 +1,6 @@
 // import protobuf from "protobufjs";
 import { CHUNK_LENGTH } from "./constants";
+import { ColorRef } from "./palette";
 import { Pixel } from "./pixel";
 
 // function fetchPixels1(apiOrigin: string) {
@@ -138,7 +139,7 @@ function binaryToPixels(binary: ArrayBuffer) {
       pixels.push({
         x: i % CHUNK_LENGTH,
         y: Math.floor(i / CHUNK_LENGTH),
-        color: "black",
+        colorRef: parsedArray[i] as ColorRef,
       });
     }
   }

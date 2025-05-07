@@ -1,5 +1,7 @@
+import { ColorRef } from "./palette";
+
 export type Pixel = {
   x: number;
   y: number;
-  color: string;
+  colorRef: ColorRef;
 };

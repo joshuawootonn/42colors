@@ -1,4 +1,5 @@
 import { CHUNK_LENGTH } from "./constants";
+import { COLOR_TABLE } from "./palette";
 import { Pixel } from "./pixel";
 
 export function createChunkCanvas(): HTMLCanvasElement {
@@ -17,7 +18,7 @@ export function drawToChunkCanvas(
 
   for (let i = 0; i < pixels.length; i++) {
     const pixel = pixels[i];
-    context.fillStyle = pixel.color;
+    context.fillStyle = COLOR_TABLE[pixel.colorRef];
     context.fillRect(pixel.x, pixel.y, 1, 1);
   }
 

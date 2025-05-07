@@ -1,4 +1,5 @@
 import { CANVAS_PIXEL_RATIO } from "./constants";
+import { COLOR_TABLE } from "./palette";
 import { Pixel } from "./pixel";
 import { Camera } from "./store";
 import { canvasToClient } from "./utils/clientToCanvasConversion";
@@ -27,7 +28,7 @@ export function redrawPixels(
   for (let i = 0; i < pixels.length; i++) {
     const block = pixels[i];
 
-    context.fillStyle = block.color;
+    context.fillStyle = COLOR_TABLE[block.colorRef];
     context.fillRect(
       canvasToClient(block.x - Math.floor(camera.x), camera.zoom),
       canvasToClient(block.y - Math.floor(camera.y), camera.zoom),

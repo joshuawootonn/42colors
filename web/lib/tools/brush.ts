@@ -5,6 +5,7 @@ import {
   clientToCanvas,
   canvasToClient,
 } from "../utils/clientToCanvasConversion";
+import { COLOR_TABLE } from "../palette";
 
 function getCanvasXY(
   clientX: number,
@@ -36,7 +37,7 @@ function drawUnactiveTelegraph(
   );
 
   const zoomMultiplier = context.camera.zoom / 100;
-  context.canvas.telegraphCanvasContext.fillStyle = context.currentColor;
+  context.canvas.telegraphCanvasContext.fillStyle = COLOR_TABLE[context.currentColorRef];
   context.canvas.telegraphCanvasContext.fillRect(
     canvasToClient(canvasX, context.camera.zoom),
     canvasToClient(canvasY, context.camera.zoom),
@@ -213,7 +214,7 @@ function onPointerMove(
     store.trigger.newPixels({
       pixels: absolutePixels.map((pixel) => ({
         ...pixel,
-        color: context.currentColor,
+        colorRef: context.currentColorRef 
       })),
     }),
   );
@@ -247,7 +248,7 @@ function onWheel(
       pixels: pixels.map((point) => ({
         x: point.x,
         y: point.y,
-        color: context.currentColor,
+        colorRef: context.currentColorRef,
       })),
     }),
   );

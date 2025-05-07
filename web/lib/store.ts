@@ -34,6 +34,7 @@ import {
   onTouch,
   onGesture,
 } from "./events";
+import { ColorRef } from "./palette";
 
 export type Camera = { x: number; y: number; zoom: number };
 export type Point = { canvasX: number; canvasY: number; camera: Camera };
@@ -62,7 +63,7 @@ export type InitialStore = {
   server?: undefined;
   tools?: undefined;
   currentTool: Tool;
-  currentColor: string;
+  currentColorRef: ColorRef;
   currentPointerState: PointerState;
   realtime?: undefined;
   interaction?: undefined;
@@ -90,7 +91,7 @@ export type InitializedStore = {
     panTool: PanTool;
     wheelTool: WheelTool;
   };
-  currentColor: string;
+  currentColorRef: ColorRef;
   currentTool: Tool;
   currentPointerState: PointerState;
   realtimePixels: Pixel[];
@@ -144,7 +145,7 @@ const initialialStoreContext: Store = {
   state: "initial",
   camera: initialCamera,
   currentTool: "brush",
-  currentColor: "#000000",
+  currentColorRef: 1,
   currentPointerState: "default",
 } as Store;
 
@@ -302,8 +303,10 @@ export const store = createStore({
       if (isInitialStore(context)) return;
       const authURL = context.server.authURL;
 
+      console.log("newPixels", event.pixels)
+
       context.server.channel
-        .push("new_pixels", { pixels: event.pixels })
+        .push("new_pixels", { pixels: event.pixels.map((pixel) => ({ ...pixel, color: pixel.colorRef })) })
         .receive("error", (resp) => {
           if (resp === ErrorCode.UNAUTHED_USER) {
             toast({
@@ -501,16 +504,11 @@ export const store = createStore({
       return { ...context, currentTool: event.tool };
     },
 
-    setCurrentColor: (
-      context,
-      {
-        color,
-      }: { color: string },
-    ) => {
+    setCurrentColor: (context, { colorRef }: { colorRef: ColorRef }) => {
       if (isInitialStore(context)) return;
       return {
         ...context,
-        currentColor: color,
+        currentColorRef: colorRef,
       };
     },
 
