@@ -3,12 +3,13 @@ defmodule Api.CanvasTest do
 
   alias Api.Canvas
 
+  @tag :only
   describe "pixels" do
     alias Api.Canvas.Pixel
 
     import Api.CanvasFixtures
 
-    @invalid_attrs %{y: nil, x: nil}
+    @invalid_attrs %{y: nil, x: nil, color: nil}
 
     test "list_pixels/0 returns all pixels" do
       pixel = pixel_fixture()
@@ -21,11 +22,12 @@ defmodule Api.CanvasTest do
     end
 
     test "create_pixel/1 with valid data creates a pixel" do
-      valid_attrs = %{y: 42, x: 42}
+      valid_attrs = %{y: 42, x: 42, color: 1}
 
       assert {:ok, %Pixel{} = pixel} = Canvas.create_pixel(valid_attrs)
       assert pixel.y == 42
       assert pixel.x == 42
+      assert pixel.color == 1
     end
 
     test "create_pixel/1 with invalid data returns error changeset" do
@@ -34,11 +36,12 @@ defmodule Api.CanvasTest do
 
     test "update_pixel/2 with valid data updates the pixel" do
       pixel = pixel_fixture()
-      update_attrs = %{y: 43, x: 43}
+      update_attrs = %{y: 43, x: 43, color: 2}
 
       assert {:ok, %Pixel{} = pixel} = Canvas.update_pixel(pixel, update_attrs)
       assert pixel.y == 43
       assert pixel.x == 43
+      assert pixel.color == 2
     end
 
     test "update_pixel/2 with invalid data returns error changeset" do

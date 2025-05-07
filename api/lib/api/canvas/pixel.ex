@@ -3,9 +3,10 @@ defmodule Api.Canvas.Pixel do
   import Ecto.Changeset
 
   schema "pixels" do
-    field :y, :integer
-    field :x, :integer
-    field :user_id, :integer
+    field(:y, :integer)
+    field(:x, :integer)
+    field(:color, :integer)
+    field(:user_id, :integer)
 
     timestamps(type: :utc_datetime)
   end
@@ -13,7 +14,7 @@ defmodule Api.Canvas.Pixel do
   @doc false
   def changeset(pixel, attrs) do
     pixel
-    |> cast(attrs, [:x, :y, :user_id])
-    |> validate_required([:x, :y, :user_id])
+    |> cast(attrs, [:x, :y, :color, :user_id])
+    |> validate_required([:x, :y, :color, :user_id])
   end
 end
