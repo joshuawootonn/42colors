@@ -27,6 +27,7 @@ export function redrawPixels(
   for (let i = 0; i < pixels.length; i++) {
     const block = pixels[i];
 
+    context.fillStyle = block.color;
     context.fillRect(
       canvasToClient(block.x - Math.floor(camera.x), camera.zoom),
       canvasToClient(block.y - Math.floor(camera.y), camera.zoom),

@@ -36,6 +36,7 @@ function drawUnactiveTelegraph(
   );
 
   const zoomMultiplier = context.camera.zoom / 100;
+  context.canvas.telegraphCanvasContext.fillStyle = context.currentColor;
   context.canvas.telegraphCanvasContext.fillRect(
     canvasToClient(canvasX, context.camera.zoom),
     canvasToClient(canvasY, context.camera.zoom),
@@ -212,7 +213,7 @@ function onPointerMove(
     store.trigger.newPixels({
       pixels: absolutePixels.map((pixel) => ({
         ...pixel,
-        color: "black",
+        color: context.currentColor,
       })),
     }),
   );
@@ -246,7 +247,7 @@ function onWheel(
       pixels: pixels.map((point) => ({
         x: point.x,
         y: point.y,
-        color: "black",
+        color: context.currentColor,
       })),
     }),
   );

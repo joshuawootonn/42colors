@@ -67,7 +67,7 @@ function onPointerMove(
     const x = Math.floor(camera.x + canvasX);
     const y = Math.floor(camera.y + canvasY);
     enqueue.effect(() =>
-      store.trigger.newPixels({ pixels: [{ x, y, color: "black" }] }),
+      store.trigger.newPixels({ pixels: [{ x, y, color: context.currentColor }] }),
     );
   }
 }
