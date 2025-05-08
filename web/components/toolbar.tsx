@@ -75,6 +75,26 @@ export function Toolbar() {
             />
           </svg>
         </ToolIconButton>
+        <ToolIconButton
+          active={tool === "erasure"}
+          onClick={() => store.trigger.changeTool({ tool: "erasure" })}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="32"
+            height="32"
+            viewBox="-3 -4 32 32"
+            fill="none"
+            className="stroke-primary"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
+            <path d="M22 21H7" />
+            <path d="m5 11 9 9" />
+          </svg>
+        </ToolIconButton>
       </div>
     </div>
   );

@@ -39,7 +39,7 @@ import { ColorRef } from "./palette";
 export type Camera = { x: number; y: number; zoom: number };
 export type Point = { canvasX: number; canvasY: number; camera: Camera };
 
-export type Tool = "pencil" | "brush";
+export type Tool = "pencil" | "brush" | "erasure";
 export type PointerState = "default" | "pressed";
 
 type Action =
