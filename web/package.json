@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack -p 4242",
     "build": "next build",
     "start": "next start -p 4242",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.4",
