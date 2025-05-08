@@ -9,3 +9,7 @@ export function roundToTen(num: number) {
 export function roundTo1Place(num: number) {
   return Math.round(num * 10) / 10;
 }
+
+export function roundTo3Places(num: number) {
+  return Math.round(num * 1000) / 1000;
+}

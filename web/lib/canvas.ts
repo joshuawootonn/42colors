@@ -3,6 +3,7 @@ import { COLOR_TABLE } from "./palette";
 import { Pixel } from "./pixel";
 import { Camera } from "./store";
 import { canvasToClient } from "./utils/clientToCanvasConversion";
+import { roundTo3Places } from "./utils/round-to-five";
 
 export function createCanvas() {
   const canvas = document.createElement("canvas");
@@ -22,6 +23,8 @@ export function redrawPixels(
   camera: Camera,
 ) {
   const zoomMultiplier = camera.zoom / 100;
+  const pixelSize = roundTo3Places(zoomMultiplier * CANVAS_PIXEL_RATIO);
+
   context.imageSmoothingEnabled = false;
   context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -32,8 +35,8 @@ export function redrawPixels(
     context.fillRect(
       canvasToClient(block.x - Math.floor(camera.x), camera.zoom),
       canvasToClient(block.y - Math.floor(camera.y), camera.zoom),
-      CANVAS_PIXEL_RATIO * zoomMultiplier,
-      CANVAS_PIXEL_RATIO * zoomMultiplier,
+      pixelSize,
+      pixelSize,
     );
   }
 }

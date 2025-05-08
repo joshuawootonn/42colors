@@ -1,4 +1,5 @@
 import { CANVAS_PIXEL_RATIO, ZOOM_DEFAULT } from "../constants";
+import { roundTo3Places } from "./round-to-five";
 
 export function clientToCanvas(
   clientPosition: number,
@@ -11,5 +12,5 @@ export function clientToCanvas(
 
 export function canvasToClient(canvasX: number, zoom: number): number {
   const pixelDensity = zoom / (ZOOM_DEFAULT / CANVAS_PIXEL_RATIO);
-  return Math.round(canvasX * pixelDensity);
+  return roundTo3Places(canvasX * pixelDensity);
 }
