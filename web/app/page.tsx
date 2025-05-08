@@ -88,9 +88,11 @@ export default function Page() {
         height="100vh"
         width="100vw"
       ></canvas>
+      <div className="flex fixed top-16 left-3">
+        <Palette />
+      </div>
 
       <div className="flex fixed  top-3 right-3">
-        <Palette />
         <Toolbar />
       </div>
 

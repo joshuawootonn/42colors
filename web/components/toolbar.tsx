@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { useSelector } from "@xstate/store/react";
 import { store } from "@/lib/store";
 
-function IconButton({
+export function ToolIconButton({
   children,
   active,
   ...props
@@ -28,7 +28,7 @@ export function Toolbar() {
   return (
     <div className="flex flex-row justify-end items-start">
       <div className={cn("p-0.5 grid grid-cols-2")}>
-        <IconButton
+        <ToolIconButton
           active={tool === "pencil"}
           onClick={() => store.trigger.changeTool({ tool: "pencil" })}
         >
@@ -46,8 +46,8 @@ export function Toolbar() {
               strokeLinejoin="round"
             />
           </svg>
-        </IconButton>
-        <IconButton
+        </ToolIconButton>
+        <ToolIconButton
           active={tool === "brush"}
           onClick={() => store.trigger.changeTool({ tool: "brush" })}
         >
@@ -74,7 +74,7 @@ export function Toolbar() {
               className="fill-primary"
             />
           </svg>
-        </IconButton>
+        </ToolIconButton>
       </div>
     </div>
   );

@@ -1,19 +1,17 @@
 import Color from "colorjs.io";
 import { cn } from "@/lib/utils";
-import {
-  ComponentPropsWithoutRef,
-  useCallback,
-  useMemo,
-  useState,
-} from "react";
-import { motion } from "motion/react";
+import { ComponentPropsWithoutRef, useMemo, useState } from "react";
+import { motion, Variants } from "motion/react";
 import { store } from "@/lib/store";
 import { useSelector } from "@xstate/store/react";
 import { COLOR_ORDER, ColorRef, COLOR_TABLE } from "@/lib/palette";
+import { chunk } from "@/lib/utils/chunk";
+import { ToolIconButton } from "./toolbar";
 
 export function IconButton({
   colorRef,
   showCurrentColorIndicator,
+  className,
   ...props
 }: ComponentPropsWithoutRef<typeof motion.button> & {
   showCurrentColorIndicator: boolean;
@@ -43,9 +41,9 @@ export function IconButton({
     <motion.button
       {...props}
       className={cn(
-        "group flex justify-center items-center bg-white text-white size-8 border-1.5 border-black ring-1 ring-black",
-        "relative",
+        "relative group flex justify-center items-center bg-white text-white size-8 border-1.5 border-black ring-1 ring-black",
         "focus-visible:border-black outline-none rounded-none",
+        className,
       )}
       initial={{ backgroundColor: colorString }}
       transition={{ duration: 0 }}
@@ -70,9 +68,47 @@ export function IconButton({
     </motion.button>
   );
 }
+const container: Variants = {
+  hidden: {
+    transition: {
+      duration: 0,
+      staggerChildren: 0.02,
+      staggerDirection: -1,
+    },
+  },
+  show: {
+    transition: {
+      duration: 0,
+      staggerChildren: 0.02,
+    },
+  },
+};
+
+const row: Variants = {
+  hidden: {
+    display: "none",
+    transition: {
+      duration: 0,
+      staggerChildren: 0.01,
+      staggerDirection: -1,
+    },
+  },
+  show: {
+    display: "flex",
+    transition: {
+      duration: 0,
+      staggerChildren: 0.01,
+    },
+  },
+};
+
+const item: Variants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1 },
+};
 
 export function Palette() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   const currentColor = useSelector(
     store,
@@ -81,31 +117,56 @@ export function Palette() {
 
   return (
     <div className="flex flex-row justify-end">
-      {isOpen ? (
-        <div
-          className={cn("p-0.5 grid grid-cols-[repeat(12,_minmax(0,_1fr))]")}
-        >
-          {COLOR_ORDER.map((colorRef) => (
-            <IconButton
-              onClick={() => {
-                setIsOpen(false);
-                store.trigger.setCurrentColor({ colorRef });
-              }}
-              key={colorRef}
-              colorRef={colorRef}
-              showCurrentColorIndicator={true}
-            />
-          ))}
+      <motion.div
+        className={cn("p-0.5 flex flex-col")}
+        variants={container}
+        initial="show"
+        animate={isOpen ? "show" : "hidden"}
+      >
+        <div>
+          <ToolIconButton
+            key={currentColor}
+            onClick={() => setIsOpen((prev) => !prev)}
+            active={false}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"
+                className="stroke-primary"
+              />
+              <g className="stroke-primary">
+                <circle cx="13.5" cy="6.5" r=".5" />
+                <circle cx="17.5" cy="10.5" r=".5" />
+                <circle cx="6.5" cy="12.5" r=".5" />
+                <circle cx="8.5" cy="7.5" r=".5" />
+              </g>
+            </svg>
+          </ToolIconButton>
         </div>
-      ) : (
-        <div className={cn("p-0.5")}>
-          <IconButton
-            onClick={() => setIsOpen(true)}
-            showCurrentColorIndicator={false}
-            colorRef={currentColor}
-          />
-        </div>
-      )}
+        {chunk(COLOR_ORDER, 4).map((colorChunk, i) => (
+          <motion.div variants={row} key={i} className="flex flex-row">
+            {colorChunk.map((colorRef) => (
+              <IconButton
+                onClick={() => store.trigger.setCurrentColor({ colorRef })}
+                key={colorRef}
+                colorRef={colorRef}
+                showCurrentColorIndicator={true}
+                variants={item}
+              />
+            ))}
+          </motion.div>
+        ))}
+      </motion.div>
     </div>
   );
 }
