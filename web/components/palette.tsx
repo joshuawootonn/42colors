@@ -1,6 +1,11 @@
 import Color from "colorjs.io";
 import { cn } from "@/lib/utils";
-import { ComponentPropsWithoutRef, useCallback, useMemo } from "react";
+import {
+  ComponentPropsWithoutRef,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 import { motion } from "motion/react";
 import { store } from "@/lib/store";
 import { useSelector } from "@xstate/store/react";
@@ -8,15 +13,15 @@ import { COLOR_ORDER, ColorRef, COLOR_TABLE } from "@/lib/palette";
 
 export function IconButton({
   colorRef,
+  showCurrentColorIndicator,
   ...props
-}: ComponentPropsWithoutRef<typeof motion.button> & { colorRef: ColorRef }) {
+}: ComponentPropsWithoutRef<typeof motion.button> & {
+  showCurrentColorIndicator: boolean;
+  colorRef: ColorRef;
+}) {
   const currentColor = useSelector(
     store,
     (state) => state.context.currentColorRef,
-  );
-  const setCurrentColor = useCallback(
-    () => store.trigger.setCurrentColor({ colorRef }),
-    [colorRef],
   );
   const colorString = useMemo(
     () => new Color(COLOR_TABLE[colorRef]).to("lch").toString(),
@@ -33,7 +38,6 @@ export function IconButton({
 
     return hoveredColor.toString();
   }, [colorRef]);
-  console.log("currentColor", currentColor);
 
   return (
     <motion.button
@@ -46,9 +50,8 @@ export function IconButton({
       initial={{ backgroundColor: colorString }}
       transition={{ duration: 0 }}
       whileHover={{ backgroundColor: hoveredColor }}
-      onClick={setCurrentColor}
     >
-      {currentColor === colorRef && (
+      {currentColor === colorRef && showCurrentColorIndicator && (
         <svg
           className="absolute -top-[1px] -left-[1px]"
           width="19"
@@ -69,13 +72,40 @@ export function IconButton({
 }
 
 export function Palette() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const currentColor = useSelector(
+    store,
+    (state) => state.context.currentColorRef as ColorRef,
+  );
+
   return (
     <div className="flex flex-row justify-end">
-      <div className={cn("p-0.5 grid grid-cols-[repeat(12,_minmax(0,_1fr))]")}>
-        {COLOR_ORDER.map((colorRef) => (
-          <IconButton key={colorRef} colorRef={colorRef} />
-        ))}
-      </div>
+      {isOpen ? (
+        <div
+          className={cn("p-0.5 grid grid-cols-[repeat(12,_minmax(0,_1fr))]")}
+        >
+          {COLOR_ORDER.map((colorRef) => (
+            <IconButton
+              onClick={() => {
+                setIsOpen(false);
+                store.trigger.setCurrentColor({ colorRef });
+              }}
+              key={colorRef}
+              colorRef={colorRef}
+              showCurrentColorIndicator={true}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className={cn("p-0.5")}>
+          <IconButton
+            onClick={() => setIsOpen(true)}
+            showCurrentColorIndicator={false}
+            colorRef={currentColor}
+          />
+        </div>
+      )}
     </div>
   );
 }

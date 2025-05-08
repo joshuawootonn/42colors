@@ -12,10 +12,10 @@ function IconButton({
     <button
       {...props}
       className={cn(
-        "group flex justify-center items-center bg-white text-white size-8 border-1.5 border-transparent border-dashed",
+        "group flex justify-center items-center bg-white text-white size-8 border-1.5 border-black ring-1 ring-black",
+        "relative",
         "focus-visible:border-black outline-none rounded-none",
-        "active:bg-gray-200 active:text-white active:focus-visible:border-white active:invert",
-        active && "bg-gray-200 text-white focus-visible:border-white invert",
+        active && "border-white ring-white invert",
       )}
     >
       <div>{children}</div>
@@ -27,7 +27,7 @@ export function Toolbar() {
   const tool = useSelector(store, (state) => state.context.currentTool);
   return (
     <div className="flex flex-row justify-end items-start">
-      <div className={cn("bg-black gap-0.5 p-0.5 grid grid-cols-2")}>
+      <div className={cn("p-0.5 grid grid-cols-2")}>
         <IconButton
           active={tool === "pencil"}
           onClick={() => store.trigger.changeTool({ tool: "pencil" })}

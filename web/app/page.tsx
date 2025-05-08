@@ -65,12 +65,12 @@ export default function Page() {
 
   const isPressed = useSelector(
     store,
-    (state) => state.context.interaction?.isPressed
+    (state) => state.context.interaction?.isPressed,
   );
 
   const isSpacePressed = useSelector(
     store,
-    (state) => state.context.interaction?.isSpacePressed
+    (state) => state.context.interaction?.isSpacePressed,
   );
 
   return (
@@ -83,13 +83,13 @@ export default function Page() {
             ? isPressed
               ? "cursor-grabbing"
               : "cursor-grab"
-            : null
+            : null,
         )}
         height="100vh"
         width="100vw"
       ></canvas>
 
-      <div className="flex fixed space-x-3 top-3 right-3">
+      <div className="flex fixed  top-3 right-3">
         <Palette />
         <Toolbar />
       </div>
