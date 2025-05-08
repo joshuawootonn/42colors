@@ -1,7 +1,7 @@
 import { store, Store } from "../store";
 import { isInitialStore } from "../utils/is-initial-store";
 import { ZOOM_MIN, ZOOM_MAX, X_MIN, X_MAX, Y_MIN, Y_MAX } from "../constants";
-import { roundTo3Places } from "../utils/round-to-five";
+import { roundTo1Place } from "../utils/round-to-five";
 import { clamp } from "../utils/clamp";
 import { EnqueueObject } from "@xstate/store";
 
@@ -73,9 +73,9 @@ function onWheel(
   enqueue.effect(() => {
     store.trigger.moveCamera({
       camera: {
-        zoom: roundTo3Places(nextZoom),
-        x: roundTo3Places(clamp(context.camera.x + deltaX, X_MIN, X_MAX)),
-        y: roundTo3Places(clamp(context.camera.y + deltaY, Y_MIN, Y_MAX)),
+        zoom: roundTo1Place(nextZoom),
+        x: roundTo1Place(clamp(context.camera.x + deltaX, X_MIN, X_MAX)),
+        y: roundTo1Place(clamp(context.camera.y + deltaY, Y_MIN, Y_MAX)),
       },
     });
   });

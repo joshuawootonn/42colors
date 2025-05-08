@@ -5,7 +5,7 @@ import { useCameraSearchParams } from "./use-camera-search-params";
 import { z } from "zod";
 import { useSelector } from "@xstate/store/react";
 import { store } from "@/lib/store";
-import { roundTo3Places } from "@/lib/utils/round-to-five";
+import { roundTo1Place } from "@/lib/utils/round-to-five";
 import { clamp } from "@/lib/utils/clamp";
 import { X_MAX, X_MIN, Y_MAX, Y_MIN } from "@/lib/constants";
 
@@ -25,11 +25,11 @@ export function Navigation() {
 
     if (e.currentTarget.name === "x") {
       store.trigger.moveCamera({
-        camera: { x: roundTo3Places(clamp(next, X_MIN, X_MAX)) },
+        camera: { x: roundTo1Place(clamp(next, X_MIN, X_MAX)) },
       });
     } else if (e.currentTarget.name === "y") {
       store.trigger.moveCamera({
-        camera: { y: roundTo3Places(clamp(next, Y_MIN, Y_MAX)) },
+        camera: { y: roundTo1Place(clamp(next, Y_MIN, Y_MAX)) },
       });
     } else if (e.currentTarget.name === "zoom") {
       const centerX = window.innerWidth / 2;
@@ -49,9 +49,9 @@ export function Navigation() {
 
       store.trigger.moveCamera({
         camera: {
-          zoom: roundTo3Places(next),
-          x: roundTo3Places(clamp(x + deltaXFromZoom, X_MIN, X_MAX)),
-          y: roundTo3Places(clamp(y + deltaYFromZoom, Y_MIN, Y_MAX)),
+          zoom: roundTo1Place(next),
+          x: roundTo1Place(clamp(x + deltaXFromZoom, X_MIN, X_MAX)),
+          y: roundTo1Place(clamp(y + deltaYFromZoom, Y_MIN, Y_MAX)),
         },
       });
     }
