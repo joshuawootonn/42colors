@@ -303,10 +303,13 @@ export const store = createStore({
       if (isInitialStore(context)) return;
       const authURL = context.server.authURL;
 
-      console.log("newPixels", event.pixels)
-
       context.server.channel
-        .push("new_pixels", { pixels: event.pixels.map((pixel) => ({ ...pixel, color: pixel.colorRef })) })
+        .push("new_pixels", {
+          pixels: event.pixels.map((pixel) => ({
+            ...pixel,
+            color: pixel.colorRef,
+          })),
+        })
         .receive("error", (resp) => {
           if (resp === ErrorCode.UNAUTHED_USER) {
             toast({
