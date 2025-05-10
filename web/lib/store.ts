@@ -35,6 +35,7 @@ import {
   onGesture,
 } from "./events";
 import { ColorRef } from "./palette";
+import { ErasureTool } from "./tools/erasure";
 
 export type Camera = { x: number; y: number; zoom: number };
 export type Point = { canvasX: number; canvasY: number; camera: Camera };
@@ -43,6 +44,10 @@ export type Tool = "pencil" | "brush" | "erasure";
 export type PointerState = "default" | "pressed";
 
 type Action =
+  | {
+      type: "erasure-active";
+      points: Point[];
+    }
   | {
       type: "brush-active";
       points: Point[];
@@ -88,6 +93,7 @@ export type InitializedStore = {
   tools: {
     pencilTool: PencilTool;
     brushTool: BrushTool;
+    erasureTool: ErasureTool;
     panTool: PanTool;
     wheelTool: WheelTool;
   };
@@ -212,6 +218,7 @@ export const store = createStore({
           channel,
         },
         tools: {
+          erasureTool: ErasureTool,
           brushTool: BrushTool,
           pencilTool: PencilTool,
           panTool: PanTool,
@@ -568,6 +575,10 @@ export const store = createStore({
       if (context.currentTool === "brush") {
         return context.tools.brushTool.onPointerDown(e, context, enqueue);
       }
+
+      if (context.currentTool === "erasure") {
+        return context.tools.erasureTool.onPointerDown(e, context, enqueue);
+      }
     },
 
     onPointerMove: (context, { e }: { e: PointerEvent }, enqueue) => {
@@ -581,8 +592,12 @@ export const store = createStore({
         context.tools.pencilTool.onPointerMove(e, context, enqueue);
       }
 
-      if (context.currentTool === "brush") {
+      if (tool === "brush") {
         return context.tools.brushTool.onPointerMove(e, context, enqueue);
+      }
+
+      if (tool === "erasure") {
+        return context.tools.erasureTool.onPointerMove(e, context, enqueue);
       }
     },
 
@@ -596,6 +611,10 @@ export const store = createStore({
       if (context.currentTool === "brush") {
         return context.tools.brushTool.onPointerUp(e, context, enqueue);
       }
+
+      if (context.currentTool === "erasure") {
+        return context.tools.erasureTool.onPointerUp(e, context, enqueue);
+      }
     },
 
     onPointerOut: (context, { e }: { e: PointerEvent }, enqueue) => {
@@ -606,6 +625,10 @@ export const store = createStore({
 
       if (context.currentTool === "brush") {
         return context.tools.brushTool.onPointerOut(e, context, enqueue);
+      }
+
+      if (context.currentTool === "erasure") {
+        return context.tools.erasureTool.onPointerOut(e, context, enqueue);
       }
     },
 
@@ -642,6 +665,10 @@ export const store = createStore({
 
       if (context.currentTool === "brush") {
         return context.tools.brushTool.onWheel(e, context, enqueue);
+      }
+
+      if (context.currentTool === "erasure") {
+        return context.tools.erasureTool.onWheel(e, context, enqueue);
       }
 
       return context;

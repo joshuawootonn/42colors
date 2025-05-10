@@ -6,8 +6,9 @@ import {
   canvasToClient,
 } from "../utils/clientToCanvasConversion";
 import { COLOR_TABLE } from "../palette";
+import { ErasureActive } from "./erasure";
 
-function getCanvasXY(
+export function getCanvasXY(
   clientX: number,
   clientY: number,
   context: InitializedStore,
@@ -37,7 +38,8 @@ function drawUnactiveTelegraph(
   );
 
   const zoomMultiplier = context.camera.zoom / 100;
-  context.canvas.telegraphCanvasContext.fillStyle = COLOR_TABLE[context.currentColorRef];
+  context.canvas.telegraphCanvasContext.fillStyle =
+    COLOR_TABLE[context.currentColorRef];
   context.canvas.telegraphCanvasContext.fillRect(
     canvasToClient(canvasX, context.camera.zoom),
     canvasToClient(canvasY, context.camera.zoom),
@@ -48,7 +50,7 @@ function drawUnactiveTelegraph(
 
 type Pixel = { x: number; y: number };
 
-function bresenhamLine(
+export function bresenhamLine(
   x0: number,
   y0: number,
   x1: number,
@@ -85,7 +87,7 @@ function bresenhamLine(
   return points;
 }
 
-function normalizedPointToCurrentCamera(
+export function normalizedPointToCurrentCamera(
   point: Point,
   context: InitializedStore,
 ): Point {
@@ -106,7 +108,10 @@ function normalizedPointToCurrentCamera(
   };
 }
 
-function getNewPixels(action: BrushActive, context: InitializedStore): Pixel[] {
+export function getNewPixels(
+  action: BrushActive | ErasureActive,
+  context: InitializedStore,
+): Pixel[] {
   if (action.points.length < 2) {
     console.info(
       `"drawLastPoints" was called with ${action.points.length} points`,
@@ -135,7 +140,7 @@ type BrushActive = {
   points: Point[];
 };
 
-function isDuplicatePoint(
+export function isDuplicatePoint(
   canvasX: number,
   canvasY: number,
   context: InitializedStore,
@@ -214,7 +219,7 @@ function onPointerMove(
     store.trigger.newPixels({
       pixels: absolutePixels.map((pixel) => ({
         ...pixel,
-        colorRef: context.currentColorRef 
+        colorRef: context.currentColorRef,
       })),
     }),
   );
