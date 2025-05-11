@@ -11,7 +11,7 @@ import {
   drawBackgroundCanvas,
   resizeBackgroundCanvas,
 } from "./background";
-import { createChunkCanvas, drawToChunkCanvas } from "./chunk";
+import { createChunkCanvas, drawToChunkCanvas, getChunkKey } from "./chunk";
 import { Pixel } from "./pixel";
 import { draw } from "./draw";
 import { setupChannel, setupSocketConnection } from "./sockets";
@@ -36,6 +36,7 @@ import {
 } from "./events";
 import { ColorRef } from "./palette";
 import { ErasureTool } from "./tools/erasure";
+import { dedupPixels } from "./utils/dedup-pixels";
 
 export type Camera = { x: number; y: number; zoom: number };
 export type Point = { canvasX: number; canvasY: number; camera: Camera };
@@ -334,16 +335,18 @@ export const store = createStore({
           }
         });
 
+      const nextPixels = dedupPixels(context.pixels.concat(event.pixels));
+
       redrawPixels(
         context.canvas.userCanvas,
         context.canvas.userCanvasContext,
-        context.pixels.concat(event.pixels),
+        nextPixels,
         context.camera,
       );
 
       return {
         ...context,
-        pixels: context.pixels.concat(event.pixels),
+        pixels: nextPixels,
       };
     },
 
@@ -455,12 +458,12 @@ export const store = createStore({
 
     redrawRealtimeCanvas: (context) => {
       if (isInitialStore(context)) return;
-      redrawPixels(
-        context.canvas.realtimeCanvas,
-        context.canvas.realtimeCanvasContext,
-        context.realtimePixels,
-        context.camera,
-      );
+      // redrawPixels(
+      //   context.canvas.realtimeCanvas,
+      //   context.canvas.realtimeCanvasContext,
+      //   context.realtimePixels,
+      //   context.camera,
+      // );
     },
 
     redrawTelegraph: (context) => {
