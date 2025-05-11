@@ -1,4 +1,5 @@
 // import protobuf from "protobufjs";
+import { ChunkPixel, chunkPixelSchema } from "./chunk";
 import { CHUNK_LENGTH } from "./constants";
 import { ColorRef } from "./palette";
 import { Pixel } from "./pixel";
@@ -129,18 +130,20 @@ import { Pixel } from "./pixel";
 //   });
 // }
 
-function binaryToPixels(binary: ArrayBuffer) {
+function binaryToPixels(binary: ArrayBuffer): ChunkPixel[] {
   const uint8Array = new Uint8Array(binary);
   const parsedArray = Array.from(uint8Array);
 
   const pixels = [];
   for (let i = 0; i < parsedArray.length; i++) {
     if (parsedArray[i] !== 0) {
-      pixels.push({
-        x: i % CHUNK_LENGTH,
-        y: Math.floor(i / CHUNK_LENGTH),
-        colorRef: parsedArray[i] as ColorRef,
-      });
+      pixels.push(
+        chunkPixelSchema.parse({
+          x: i % CHUNK_LENGTH,
+          y: Math.floor(i / CHUNK_LENGTH),
+          colorRef: parsedArray[i] as ColorRef,
+        }),
+      );
     }
   }
   return pixels;

@@ -11,7 +11,13 @@ import {
   drawBackgroundCanvas,
   resizeBackgroundCanvas,
 } from "./background";
-import { createChunkCanvas, drawToChunkCanvas, getChunkKey } from "./chunk";
+import {
+  ChunkCanvases,
+  clearChunkPixels,
+  createChunkCanvas,
+  drawToChunkCanvas,
+  getChunkKey,
+} from "./chunk";
 import { Pixel } from "./pixel";
 import { draw } from "./draw";
 import { setupChannel, setupSocketConnection } from "./sockets";
@@ -118,19 +124,7 @@ export type InitializedStore = {
     realtimeCanvasContext: CanvasRenderingContext2D;
     telegraphCanvas: HTMLCanvasElement;
     telegraphCanvasContext: CanvasRenderingContext2D;
-    chunkCanvases: Record<
-      string,
-      {
-        element: HTMLCanvasElement;
-        context: CanvasRenderingContext2D;
-        x: number;
-        y: number;
-        pixels: [];
-        renderConditions: {
-          zoom: number;
-        };
-      }
-    >;
+    chunkCanvases: ChunkCanvases;
   };
   actions: Action[];
   activeAction: Action | null;
@@ -309,6 +303,7 @@ export const store = createStore({
     newRealtimePixels: (context, event: { pixels: Pixel[] }, enqueue) => {
       if (isInitialStore(context)) return;
 
+      clearChunkPixels(context.canvas.chunkCanvases, event.pixels);
       enqueue.effect(() => {
         store.trigger.redrawRealtimeCanvas();
       });
@@ -356,6 +351,8 @@ export const store = createStore({
         nextPixels,
         context.camera,
       );
+
+      clearChunkPixels(context.canvas.chunkCanvases, event.pixels);
 
       return {
         ...context,
