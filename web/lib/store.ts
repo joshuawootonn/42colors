@@ -37,6 +37,7 @@ import {
 import { ColorRef } from "./palette";
 import { ErasureTool } from "./tools/erasure";
 import { dedupPixels } from "./utils/dedup-pixels";
+import { uuid } from "./utils/uuid";
 
 export type Camera = { x: number; y: number; zoom: number };
 export type Point = { canvasX: number; canvasY: number; camera: Camera };
@@ -65,6 +66,7 @@ type Action =
 
 export type InitialStore = {
   state: "initial";
+  id: undefined;
   camera: { x: number; y: number; zoom: number };
   server?: undefined;
   tools?: undefined;
@@ -103,6 +105,7 @@ export type InitializedStore = {
   currentPointerState: PointerState;
   realtimePixels: Pixel[];
   pixels: Pixel[];
+  id: string;
   canvas: {
     bodyElement: HTMLBodyElement;
     rootCanvas: HTMLCanvasElement;
@@ -139,6 +142,7 @@ export type InitializedStore = {
   user?: {
     email: string;
     name: string;
+    id: number;
   };
   queryClient: QueryClient;
   eventLoopRafId?: number;
@@ -195,9 +199,16 @@ export const store = createStore({
       const channel = setupChannel(socket);
 
       enqueue.effect(() => {
-        channel.on("new_pixels", (payload: { pixels: Pixel[] }) => {
-          store.trigger.newRealtimePixels({ pixels: payload.pixels });
-        });
+        channel.on(
+          "new_pixels",
+          (payload: { pixels: Pixel[]; store_id: string }) => {
+            if (payload.store_id === store.getSnapshot().context.id) {
+              console.log(`skipping realtime since they came from this store`);
+              return;
+            }
+            store.trigger.newRealtimePixels({ pixels: payload.pixels });
+          },
+        );
         store.trigger.fetchPixels();
         store.trigger.fetchAuthURL();
         store.trigger.fetchUser();
@@ -206,6 +217,7 @@ export const store = createStore({
       return {
         ...context,
         state: "initialized" as const,
+        id: uuid(),
         camera: {
           ...context.camera,
           x: event.cameraOptions.x,
@@ -317,6 +329,7 @@ export const store = createStore({
             ...pixel,
             color: pixel.colorRef,
           })),
+          store_id: context.id,
         })
         .receive("error", (resp) => {
           if (resp === ErrorCode.UNAUTHED_USER) {
@@ -350,7 +363,10 @@ export const store = createStore({
       };
     },
 
-    setUser: (context, event: { user: { email: string; name: string } }) => {
+    setUser: (
+      context,
+      event: { user: { email: string; name: string; id: number } },
+    ) => {
       if (isInitialStore(context)) return;
       return {
         ...context,
@@ -458,12 +474,12 @@ export const store = createStore({
 
     redrawRealtimeCanvas: (context) => {
       if (isInitialStore(context)) return;
-      // redrawPixels(
-      //   context.canvas.realtimeCanvas,
-      //   context.canvas.realtimeCanvasContext,
-      //   context.realtimePixels,
-      //   context.camera,
-      // );
+      redrawPixels(
+        context.canvas.realtimeCanvas,
+        context.canvas.realtimeCanvasContext,
+        context.realtimePixels,
+        context.camera,
+      );
     },
 
     redrawTelegraph: (context) => {

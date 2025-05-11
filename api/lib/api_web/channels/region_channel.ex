@@ -8,7 +8,7 @@ defmodule ApiWeb.RegionChannel do
     {:ok, socket}
   end
 
-  def handle_in("new_pixels", %{"pixels" => pixels}, socket) do
+  def handle_in("new_pixels", %{"pixels" => pixels, "store_id" => store_id}, socket) do
     current_user_id = Map.get(socket.assigns, :current_user_id)
 
     if current_user_id == nil do
@@ -28,7 +28,7 @@ defmodule ApiWeb.RegionChannel do
 
       PixelCacheSupervisor.write_pixels_to_file(pixel_changsets)
 
-      broadcast!(socket, "new_pixels", %{pixels: pixels})
+      broadcast!(socket, "new_pixels", %{pixels: pixels, store_id: store_id})
 
       {:noreply, socket}
     end
