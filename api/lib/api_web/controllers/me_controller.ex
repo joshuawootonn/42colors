@@ -11,7 +11,7 @@ defmodule ApiWeb.MeController do
     with ["Bearer: " <> token] <- get_req_header(conn, "authorization") do
       with {:ok, account} <- Accounts.get_user_by_token(token) do
         user = Accounts.get_user!(account.user_id)
-        render(conn, :show, %{name: user.name, email: user.email})
+        render(conn, :show, %{name: user.name, email: user.email, id: user.id})
       end
     end
   end

@@ -6,7 +6,8 @@ defmodule ApiWeb.MeJSON do
     %{
       data: %{
         name: user.name,
-        email: user.email
+        email: user.email,
+        id: user.id
       }
     }
   end
