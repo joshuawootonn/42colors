@@ -265,7 +265,7 @@ export const store = createStore({
     },
 
     listen: (
-      context,
+      _context,
       { element, body }: { element: HTMLCanvasElement; body: HTMLBodyElement },
     ) => {
       element.addEventListener("wheel", onWheel);
@@ -286,7 +286,7 @@ export const store = createStore({
     },
 
     unlisten: (
-      context,
+      _context,
       { element, body }: { element: HTMLCanvasElement; body: HTMLBodyElement },
     ) => {
       element.removeEventListener("wheel", onWheel);
