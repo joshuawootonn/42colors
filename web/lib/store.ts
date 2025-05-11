@@ -110,7 +110,6 @@ export type InitializedStore = {
   currentTool: Tool;
   currentPointerState: PointerState;
   realtimePixels: Pixel[];
-  pixels: Pixel[];
   id: string;
   canvas: {
     bodyElement: HTMLBodyElement;
@@ -118,8 +117,6 @@ export type InitializedStore = {
     rootCanvasContext: CanvasRenderingContext2D;
     backgroundCanvas: HTMLCanvasElement;
     backgroundCanvasContext: CanvasRenderingContext2D;
-    userCanvas: HTMLCanvasElement;
-    userCanvasContext: CanvasRenderingContext2D;
     realtimeCanvas: HTMLCanvasElement;
     realtimeCanvasContext: CanvasRenderingContext2D;
     telegraphCanvas: HTMLCanvasElement;
@@ -176,10 +173,6 @@ export const store = createStore({
       const backgroundCanvasContext = backgroundCanvas.getContext("2d")!;
       backgroundCanvasContext.imageSmoothingEnabled = false;
       drawBackgroundCanvas(backgroundCanvas, backgroundCanvasContext);
-
-      const userCanvas = createCanvas();
-      const userCanvasContext = userCanvas.getContext("2d")!;
-      userCanvasContext.imageSmoothingEnabled = false;
 
       const realtimeCanvas = createCanvas();
       const realtimeCanvasContext = realtimeCanvas.getContext("2d")!;
@@ -246,8 +239,6 @@ export const store = createStore({
           rootCanvasContext,
           backgroundCanvas,
           backgroundCanvasContext,
-          userCanvas,
-          userCanvasContext,
           realtimeCanvas,
           realtimeCanvasContext,
           telegraphCanvas,
@@ -304,13 +295,16 @@ export const store = createStore({
       if (isInitialStore(context)) return;
 
       clearChunkPixels(context.canvas.chunkCanvases, event.pixels);
+
       enqueue.effect(() => {
         store.trigger.redrawRealtimeCanvas();
       });
 
       return {
         ...context,
-        realtimePixels: context.realtimePixels.concat(event.pixels),
+        realtimePixels: dedupPixels(
+          context.realtimePixels.concat(event.pixels),
+        ),
       };
     },
 
@@ -343,11 +337,13 @@ export const store = createStore({
           }
         });
 
-      const nextPixels = dedupPixels(context.pixels.concat(event.pixels));
+      const nextPixels = dedupPixels(
+        context.realtimePixels.concat(event.pixels),
+      );
 
       redrawPixels(
-        context.canvas.userCanvas,
-        context.canvas.userCanvasContext,
+        context.canvas.realtimeCanvas,
+        context.canvas.realtimeCanvasContext,
         nextPixels,
         context.camera,
       );
@@ -356,7 +352,7 @@ export const store = createStore({
 
       return {
         ...context,
-        pixels: nextPixels,
+        realtimePixels: nextPixels,
       };
     },
 
@@ -459,16 +455,6 @@ export const store = createStore({
       }
     },
 
-    redrawUserCanvas: (context) => {
-      if (isInitialStore(context)) return;
-      redrawPixels(
-        context.canvas.userCanvas,
-        context.canvas.userCanvasContext,
-        context.pixels,
-        context.camera,
-      );
-    },
-
     redrawRealtimeCanvas: (context) => {
       if (isInitialStore(context)) return;
       redrawPixels(
@@ -513,7 +499,6 @@ export const store = createStore({
       if (isInitialStore(context)) return;
 
       enqueue.effect(() => {
-        store.trigger.redrawUserCanvas();
         store.trigger.redrawRealtimeCanvas();
         store.trigger.redrawTelegraph();
       });
@@ -699,10 +684,8 @@ export const store = createStore({
           context.canvas.backgroundCanvas,
           context.canvas.backgroundCanvasContext,
         );
-        resizeCanvas(context.canvas.userCanvas);
         resizeCanvas(context.canvas.realtimeCanvas);
         resizeCanvas(context.canvas.telegraphCanvas);
-        store.trigger.redrawUserCanvas();
         store.trigger.redrawRealtimeCanvas();
         store.trigger.redrawTelegraph();
       });

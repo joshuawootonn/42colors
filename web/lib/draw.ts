@@ -52,14 +52,6 @@ export function draw(context: InitializedStore) {
   );
 
   context.canvas.rootCanvasContext.drawImage(
-    context.canvas.userCanvas,
-    x,
-    y,
-    window.innerWidth,
-    window.innerHeight,
-  );
-
-  context.canvas.rootCanvasContext.drawImage(
     context.canvas.telegraphCanvas,
     x,
     y,
