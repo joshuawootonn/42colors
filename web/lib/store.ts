@@ -44,31 +44,13 @@ import { ColorRef } from "./palette";
 import { ErasureTool } from "./tools/erasure";
 import { dedupPixels } from "./utils/dedup-pixels";
 import { uuid } from "./utils/uuid";
+import { Action, derivePixelsFromActions } from "./actions";
 
 export type Camera = { x: number; y: number; zoom: number };
 export type Point = { canvasX: number; canvasY: number; camera: Camera };
 
 export type Tool = "pencil" | "brush" | "erasure";
 export type PointerState = "default" | "pressed";
-
-type Action =
-  | {
-      type: "erasure-active";
-      points: Point[];
-    }
-  | {
-      type: "brush-active";
-      points: Point[];
-    }
-  | {
-      type: "camera-move";
-      points: Camera[];
-    }
-  | {
-      type: "tool-change";
-      before: Tool;
-      after: Tool;
-    };
 
 export type InitialStore = {
   state: "initial";
@@ -109,7 +91,6 @@ export type InitializedStore = {
   currentColorRef: ColorRef;
   currentTool: Tool;
   currentPointerState: PointerState;
-  realtimePixels: Pixel[];
   id: string;
   canvas: {
     bodyElement: HTMLBodyElement;
@@ -193,7 +174,7 @@ export const store = createStore({
               console.log(`skipping realtime since they came from this store`);
               return;
             }
-            store.trigger.newRealtimePixels({ pixels: payload.pixels });
+            // store.trigger.newRealtimePixels({ pixels: payload.pixels });
           },
         );
         store.trigger.fetchPixels();
@@ -229,7 +210,6 @@ export const store = createStore({
           isSpacePressed: false,
           cursorPosition: null,
         },
-        realtimePixels: [],
         actions: [],
         activeAction: null,
         pixels: [],
@@ -302,57 +282,73 @@ export const store = createStore({
 
       return {
         ...context,
-        realtimePixels: dedupPixels(
-          context.realtimePixels.concat(event.pixels),
-        ),
       };
     },
 
-    newPixels: (context, event: { pixels: Pixel[] }) => {
+    // newPixels: (context, event: { pixels: Pixel[] }) => {
+    //   if (isInitialStore(context)) return;
+    //   const authURL = context.server.authURL;
+    //
+    //   context.server.channel
+    //     .push("new_pixels", {
+    //       pixels: event.pixels.map((pixel) => ({
+    //         ...pixel,
+    //         color: pixel.colorRef,
+    //       })),
+    //       store_id: context.id,
+    //     })
+    //     .receive("error", (resp) => {
+    //       if (resp === ErrorCode.UNAUTHED_USER) {
+    //         toast({
+    //           title: "Login (when you are ready)",
+    //           description: "to save and share your pixels.",
+    //           button: authURL
+    //             ? {
+    //                 label: "login",
+    //                 onClick: () => {
+    //                   window.location.href = authURL;
+    //                 },
+    //               }
+    //             : undefined,
+    //         });
+    //       }
+    //     });
+    //
+    //   const nextPixels = dedupPixels(
+    //     context.realtimePixels.concat(event.pixels),
+    //   );
+    //
+    //   redrawPixels(
+    //     context.canvas.realtimeCanvas,
+    //     context.canvas.realtimeCanvasContext,
+    //     nextPixels,
+    //     context.camera,
+    //   );
+    //
+    //   clearChunkPixels(context.canvas.chunkCanvases, event.pixels);
+    //
+    //   return context;
+    // },
+
+    undo: (context, _, enqueue) => {
       if (isInitialStore(context)) return;
-      const authURL = context.server.authURL;
 
-      context.server.channel
-        .push("new_pixels", {
-          pixels: event.pixels.map((pixel) => ({
-            ...pixel,
-            color: pixel.colorRef,
-          })),
-          store_id: context.id,
-        })
-        .receive("error", (resp) => {
-          if (resp === ErrorCode.UNAUTHED_USER) {
-            toast({
-              title: "Login (when you are ready)",
-              description: "to save and share your pixels.",
-              button: authURL
-                ? {
-                    label: "login",
-                    onClick: () => {
-                      window.location.href = authURL;
-                    },
-                  }
-                : undefined,
-            });
-          }
-        });
-
-      const nextPixels = dedupPixels(
-        context.realtimePixels.concat(event.pixels),
-      );
-
-      redrawPixels(
-        context.canvas.realtimeCanvas,
-        context.canvas.realtimeCanvasContext,
-        nextPixels,
-        context.camera,
-      );
-
-      clearChunkPixels(context.canvas.chunkCanvases, event.pixels);
+      enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
 
       return {
         ...context,
-        realtimePixels: nextPixels,
+        actions: context.actions.concat({ type: "undo" }),
+      };
+    },
+
+    redo: (context, _, enqueue) => {
+      if (isInitialStore(context)) return;
+
+      enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
+
+      return {
+        ...context,
+        actions: context.actions.concat({ type: "redo" }),
       };
     },
 
@@ -457,12 +453,22 @@ export const store = createStore({
 
     redrawRealtimeCanvas: (context) => {
       if (isInitialStore(context)) return;
+
+      const actions = context.activeAction
+        ? context.actions.concat(context.activeAction)
+        : context.actions;
+
+      const pixels = derivePixelsFromActions(actions);
+      const dedupedPixels = dedupPixels(pixels);
+
       redrawPixels(
         context.canvas.realtimeCanvas,
         context.canvas.realtimeCanvasContext,
-        context.realtimePixels,
+        dedupedPixels,
         context.camera,
       );
+
+      clearChunkPixels(context.canvas.chunkCanvases, pixels);
     },
 
     redrawTelegraph: (context) => {
@@ -633,9 +639,17 @@ export const store = createStore({
       }
     },
 
-    onKeyDown: (context, { e }: { e: KeyboardEvent }) => {
+    onKeyDown: (context, { e }: { e: KeyboardEvent }, enqueue) => {
       if (isInitialStore(context)) return;
       if (e.defaultPrevented) return;
+
+      if (e.metaKey && e.key === "z") {
+        if (e.shiftKey) {
+          enqueue.effect(() => store.trigger.redo());
+        } else {
+          enqueue.effect(() => store.trigger.undo());
+        }
+      }
 
       if (e.code === KeyboardCode.Space) {
         return {

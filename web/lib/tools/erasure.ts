@@ -1,10 +1,9 @@
 import { EnqueueObject } from "@xstate/store";
 import { CANVAS_PIXEL_RATIO } from "../constants";
-import { COLOR_TABLE, TRANSPARENT_REF } from "../palette";
+import { COLOR_TABLE } from "../palette";
 import { InitializedStore, Point, store } from "../store";
 import { canvasToClient } from "../utils/clientToCanvasConversion";
-import { getCanvasXY, isDuplicatePoint, getNewPixels } from "./brush";
-import { pixelSchema } from "../pixel";
+import { bresenhamLine, getCanvasXY, isDuplicatePoint } from "./brush";
 
 function drawUnactiveTelegraph(
   canvasX: number,
@@ -49,21 +48,8 @@ function onPointerDown(
   drawUnactiveTelegraph(canvasX, canvasY, context);
 
   const nextActiveAction = startErasureAction(canvasX, canvasY, context);
-  const pixels = getNewPixels(nextActiveAction, context);
-  const absolutePixels = pixels.map((pixel) =>
-    pixelSchema.parse({
-      x: Math.floor(context.camera.x + pixel.x),
-      y: Math.floor(context.camera.y + pixel.y),
-      colorRef: TRANSPARENT_REF,
-    }),
-  );
 
-  enqueue.effect(() =>
-    store.trigger.newPixels({
-      pixels: absolutePixels,
-    }),
-  );
-
+  enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
   return {
     ...context,
     activeAction: nextActiveAction,
@@ -83,13 +69,17 @@ export function nextErasureAction(
   if (context.activeAction?.type !== "erasure-active")
     throw new Error("nextErasureAction was called when you weren't erasing");
 
+  const points = bresenhamLine(
+    context.activeAction.points.at(-1)!.canvasX,
+    context.activeAction.points.at(-1)!.canvasY,
+    canvasX,
+    canvasY,
+    context.camera,
+  );
+
   return {
     type: "erasure-active",
-    points: context.activeAction.points.concat({
-      canvasX,
-      canvasY,
-      camera: context.camera,
-    }),
+    points: context.activeAction.points.concat(points),
   };
 }
 
@@ -109,20 +99,8 @@ function onPointerMove(
   }
 
   const nextActiveAction = nextErasureAction(canvasX, canvasY, context);
-  const pixels = getNewPixels(nextActiveAction, context);
-  const absolutePixels = pixels.map((pixel) =>
-    pixelSchema.parse({
-      x: Math.floor(context.camera.x + pixel.x),
-      y: Math.floor(context.camera.y + pixel.y),
-      colorRef: TRANSPARENT_REF,
-    }),
-  );
 
-  enqueue.effect(() =>
-    store.trigger.newPixels({
-      pixels: absolutePixels,
-    }),
-  );
+  enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
 
   return {
     ...context,
@@ -146,19 +124,7 @@ function onWheel(
   }
 
   const nextActiveAction = nextErasureAction(canvasX, canvasY, context);
-  const pixels = getNewPixels(nextActiveAction, context);
-
-  enqueue.effect(() =>
-    store.trigger.newPixels({
-      pixels: pixels.map((point) =>
-        pixelSchema.parse({
-          x: point.x,
-          y: point.y,
-          colorRef: TRANSPARENT_REF,
-        }),
-      ),
-    }),
-  );
+  enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
 
   return {
     ...context,

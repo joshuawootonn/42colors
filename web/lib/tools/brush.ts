@@ -1,13 +1,13 @@
 import { EnqueueObject } from "@xstate/store";
 import { CANVAS_PIXEL_RATIO } from "../constants";
-import { InitializedStore, Point, store } from "../store";
+import { Camera, InitializedStore, Point, store } from "../store";
 import {
   clientToCanvas,
   canvasToClient,
 } from "../utils/clientToCanvasConversion";
-import { COLOR_TABLE } from "../palette";
+import { COLOR_TABLE, ColorRef } from "../palette";
 import { ErasureActive } from "./erasure";
-import { pixelSchema } from "../pixel";
+import { Pixel, pixelSchema } from "../pixel";
 
 export function getCanvasXY(
   clientX: number,
@@ -49,15 +49,14 @@ function drawUnactiveTelegraph(
   );
 }
 
-type Pixel = { x: number; y: number };
-
 export function bresenhamLine(
   x0: number,
   y0: number,
   x1: number,
   y1: number,
-): Pixel[] {
-  const points: Pixel[] = [];
+  camera: Camera,
+): Point[] {
+  const points: Point[] = [];
 
   const dx = Math.abs(x1 - x0);
   const dy = Math.abs(y1 - y0);
@@ -66,7 +65,7 @@ export function bresenhamLine(
   let err = dx - dy;
 
   while (true) {
-    points.push({ x: x0, y: y0 });
+    points.push({ canvasX: x0, canvasY: y0, camera });
 
     if (x0 === x1 && y0 === y1) {
       break;
@@ -88,58 +87,42 @@ export function bresenhamLine(
   return points;
 }
 
-export function normalizedPointToCurrentCamera(
-  point: Point,
-  context: InitializedStore,
-): Point {
-  const canvasX2 = (point.canvasX * context.camera.zoom) / point.camera.zoom;
+export function normalizedPointsToCamera(
+  points: Point[],
+  camera: Camera,
+): Point[] {
+  return points.map((point) => {
+    const canvasX2 = (point.canvasX * camera.zoom) / point.camera.zoom;
 
-  const cameraX2 = (point.camera.x * context.camera.zoom) / point.camera.zoom;
+    const cameraX2 = (point.camera.x * camera.zoom) / point.camera.zoom;
 
-  const canvasY2 = (point.canvasY * context.camera.zoom) / point.camera.zoom;
+    const canvasY2 = (point.canvasY * camera.zoom) / point.camera.zoom;
 
-  const cameraY2 = (point.camera.y * context.camera.zoom) / point.camera.zoom;
+    const cameraY2 = (point.camera.y * camera.zoom) / point.camera.zoom;
 
-  const x = Math.floor(canvasX2 + cameraX2 - context.camera.x);
-  const y = Math.floor(canvasY2 + cameraY2 - context.camera.y);
-  return {
-    canvasX: x,
-    canvasY: y,
-    camera: context.camera,
-  };
+    const x = Math.floor(canvasX2 + cameraX2 - camera.x);
+    const y = Math.floor(canvasY2 + cameraY2 - camera.y);
+    return {
+      canvasX: x,
+      canvasY: y,
+      camera: camera,
+    };
+  });
 }
 
-export function getNewPixels(
-  action: BrushActive | ErasureActive,
-  context: InitializedStore,
-): Pixel[] {
-  if (action.points.length === 0) {
-    throw new Error(`\`getNewPixels\` was called with 0 points`);
-  }
-
-  if (action.points.length === 1) {
-    const firstPoint = action.points.at(0)!;
-    return [{ x: firstPoint.canvasX, y: firstPoint.canvasY }];
-  }
-
-  const normalizedFirstPoint = normalizedPointToCurrentCamera(
-    action.points.at(-2)!,
-    context,
+export function pointsToPixels(points: Point[], colorRef: ColorRef): Pixel[] {
+  return points.map((point) =>
+    pixelSchema.parse({
+      x: Math.floor(point.canvasX + point.camera.x),
+      y: Math.floor(point.canvasY + point.camera.y),
+      colorRef: colorRef,
+    }),
   );
-  const secondPoint = action.points.at(-1)!;
-
-  const points = bresenhamLine(
-    normalizedFirstPoint.canvasX,
-    normalizedFirstPoint.canvasY,
-    secondPoint.canvasX,
-    secondPoint.canvasY,
-  );
-
-  return points;
 }
 
-type BrushActive = {
+export type BrushActive = {
   type: "brush-active";
+  colorRef: ColorRef;
   points: Point[];
 };
 
@@ -160,6 +143,7 @@ export function startBrushAction(
 ): BrushActive {
   return {
     type: "brush-active",
+    colorRef: context.currentColorRef,
     points: [{ canvasX, canvasY, camera: context.camera }],
   };
 }
@@ -172,13 +156,18 @@ export function nextBrushAction(
   if (context.activeAction?.type !== "brush-active")
     throw new Error("continueBrushing was called when you weren't brushing");
 
+  const points = bresenhamLine(
+    context.activeAction.points.at(-1)!.canvasX,
+    context.activeAction.points.at(-1)!.canvasY,
+    canvasX,
+    canvasY,
+    context.camera,
+  );
+
   return {
     type: "brush-active",
-    points: context.activeAction.points.concat({
-      canvasX,
-      canvasY,
-      camera: context.camera,
-    }),
+    colorRef: context.currentColorRef,
+    points: context.activeAction.points.concat(points),
   };
 }
 
@@ -191,20 +180,8 @@ function onPointerDown(
   drawUnactiveTelegraph(canvasX, canvasY, context);
 
   const nextActiveAction = startBrushAction(canvasX, canvasY, context);
-  const pixels = getNewPixels(nextActiveAction, context);
-  const absolutePixels = pixels.map((pixel) =>
-    pixelSchema.parse({
-      x: Math.floor(context.camera.x + pixel.x),
-      y: Math.floor(context.camera.y + pixel.y),
-      colorRef: context.currentColorRef,
-    }),
-  );
 
-  enqueue.effect(() =>
-    store.trigger.newPixels({
-      pixels: absolutePixels,
-    }),
-  );
+  enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
 
   return {
     ...context,
@@ -228,20 +205,7 @@ function onPointerMove(
   }
 
   const nextActiveAction = nextBrushAction(canvasX, canvasY, context);
-  const pixels = getNewPixels(nextActiveAction, context);
-  const absolutePixels = pixels.map((pixel) =>
-    pixelSchema.parse({
-      x: Math.floor(context.camera.x + pixel.x),
-      y: Math.floor(context.camera.y + pixel.y),
-      colorRef: context.currentColorRef,
-    }),
-  );
-
-  enqueue.effect(() =>
-    store.trigger.newPixels({
-      pixels: absolutePixels,
-    }),
-  );
+  enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
 
   return {
     ...context,
@@ -265,19 +229,7 @@ function onWheel(
   }
 
   const nextActiveAction = nextBrushAction(canvasX, canvasY, context);
-  const pixels = getNewPixels(nextActiveAction, context);
-
-  enqueue.effect(() =>
-    store.trigger.newPixels({
-      pixels: pixels.map((point) =>
-        pixelSchema.parse({
-          x: point.x,
-          y: point.y,
-          colorRef: context.currentColorRef,
-        }),
-      ),
-    }),
-  );
+  enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
 
   return {
     ...context,
