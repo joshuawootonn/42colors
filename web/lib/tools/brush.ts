@@ -113,11 +113,13 @@ export function getNewPixels(
   action: BrushActive | ErasureActive,
   context: InitializedStore,
 ): Pixel[] {
-  if (action.points.length < 2) {
-    console.info(
-      `"drawLastPoints" was called with ${action.points.length} points`,
-    );
-    return [];
+  if (action.points.length === 0) {
+    throw new Error(`\`getNewPixels\` was called with 0 points`);
+  }
+
+  if (action.points.length === 1) {
+    const firstPoint = action.points.at(0)!;
+    return [{ x: firstPoint.canvasX, y: firstPoint.canvasY }];
   }
 
   const normalizedFirstPoint = normalizedPointToCurrentCamera(
@@ -183,14 +185,30 @@ export function nextBrushAction(
 function onPointerDown(
   e: PointerEvent,
   context: InitializedStore,
-  _: EnqueueObject<{ type: string }>,
+  enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
   drawUnactiveTelegraph(canvasX, canvasY, context);
 
+  const nextActiveAction = startBrushAction(canvasX, canvasY, context);
+  const pixels = getNewPixels(nextActiveAction, context);
+  const absolutePixels = pixels.map((pixel) =>
+    pixelSchema.parse({
+      x: Math.floor(context.camera.x + pixel.x),
+      y: Math.floor(context.camera.y + pixel.y),
+      colorRef: context.currentColorRef,
+    }),
+  );
+
+  enqueue.effect(() =>
+    store.trigger.newPixels({
+      pixels: absolutePixels,
+    }),
+  );
+
   return {
     ...context,
-    activeAction: startBrushAction(canvasX, canvasY, context),
+    activeAction: nextActiveAction,
   };
 }
 

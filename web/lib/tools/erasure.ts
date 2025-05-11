@@ -39,17 +39,34 @@ export function startErasureAction(
     points: [{ canvasX, canvasY, camera: context.camera }],
   };
 }
+
 function onPointerDown(
   e: PointerEvent,
   context: InitializedStore,
-  _: EnqueueObject<{ type: string }>,
+  enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
   drawUnactiveTelegraph(canvasX, canvasY, context);
 
+  const nextActiveAction = startErasureAction(canvasX, canvasY, context);
+  const pixels = getNewPixels(nextActiveAction, context);
+  const absolutePixels = pixels.map((pixel) =>
+    pixelSchema.parse({
+      x: Math.floor(context.camera.x + pixel.x),
+      y: Math.floor(context.camera.y + pixel.y),
+      colorRef: TRANSPARENT_REF,
+    }),
+  );
+
+  enqueue.effect(() =>
+    store.trigger.newPixels({
+      pixels: absolutePixels,
+    }),
+  );
+
   return {
     ...context,
-    activeAction: startErasureAction(canvasX, canvasY, context),
+    activeAction: nextActiveAction,
   };
 }
 
