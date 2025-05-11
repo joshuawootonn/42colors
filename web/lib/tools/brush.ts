@@ -7,6 +7,7 @@ import {
 } from "../utils/clientToCanvasConversion";
 import { COLOR_TABLE } from "../palette";
 import { ErasureActive } from "./erasure";
+import { pixelSchema } from "../pixel";
 
 export function getCanvasXY(
   clientX: number,
@@ -210,17 +211,17 @@ function onPointerMove(
 
   const nextActiveAction = nextBrushAction(canvasX, canvasY, context);
   const pixels = getNewPixels(nextActiveAction, context);
-  const absolutePixels = pixels.map((pixel) => ({
-    x: Math.floor(context.camera.x + pixel.x),
-    y: Math.floor(context.camera.y + pixel.y),
-  }));
+  const absolutePixels = pixels.map((pixel) =>
+    pixelSchema.parse({
+      x: Math.floor(context.camera.x + pixel.x),
+      y: Math.floor(context.camera.y + pixel.y),
+      colorRef: context.currentColorRef,
+    }),
+  );
 
   enqueue.effect(() =>
     store.trigger.newPixels({
-      pixels: absolutePixels.map((pixel) => ({
-        ...pixel,
-        colorRef: context.currentColorRef,
-      })),
+      pixels: absolutePixels,
     }),
   );
 
@@ -250,11 +251,13 @@ function onWheel(
 
   enqueue.effect(() =>
     store.trigger.newPixels({
-      pixels: pixels.map((point) => ({
-        x: point.x,
-        y: point.y,
-        colorRef: context.currentColorRef,
-      })),
+      pixels: pixels.map((point) =>
+        pixelSchema.parse({
+          x: point.x,
+          y: point.y,
+          colorRef: context.currentColorRef,
+        }),
+      ),
     }),
   );
 

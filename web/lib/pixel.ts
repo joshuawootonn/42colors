@@ -1,7 +1,7 @@
-import { ColorRef } from "./palette";
+import { z } from "zod";
+import { colorRefSchema } from "./palette";
+export const pixelSchema = z
+  .object({ x: z.number(), y: z.number(), colorRef: colorRefSchema })
+  .brand<"Pixel">();
 
-export type Pixel = {
-  x: number;
-  y: number;
-  colorRef: ColorRef;
-};
+export type Pixel = z.infer<typeof pixelSchema>;

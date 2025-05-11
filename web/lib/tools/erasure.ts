@@ -4,6 +4,7 @@ import { COLOR_TABLE, TRANSPARENT_REF } from "../palette";
 import { InitializedStore, Point, store } from "../store";
 import { canvasToClient } from "../utils/clientToCanvasConversion";
 import { getCanvasXY, isDuplicatePoint, getNewPixels } from "./brush";
+import { pixelSchema } from "../pixel";
 
 function drawUnactiveTelegraph(
   canvasX: number,
@@ -92,17 +93,17 @@ function onPointerMove(
 
   const nextActiveAction = nextErasureAction(canvasX, canvasY, context);
   const pixels = getNewPixels(nextActiveAction, context);
-  const absolutePixels = pixels.map((pixel) => ({
-    x: Math.floor(context.camera.x + pixel.x),
-    y: Math.floor(context.camera.y + pixel.y),
-  }));
+  const absolutePixels = pixels.map((pixel) =>
+    pixelSchema.parse({
+      x: Math.floor(context.camera.x + pixel.x),
+      y: Math.floor(context.camera.y + pixel.y),
+      colorRef: TRANSPARENT_REF,
+    }),
+  );
 
   enqueue.effect(() =>
     store.trigger.newPixels({
-      pixels: absolutePixels.map((pixel) => ({
-        ...pixel,
-        colorRef: TRANSPARENT_REF,
-      })),
+      pixels: absolutePixels,
     }),
   );
 
@@ -132,11 +133,13 @@ function onWheel(
 
   enqueue.effect(() =>
     store.trigger.newPixels({
-      pixels: pixels.map((point) => ({
-        x: point.x,
-        y: point.y,
-        colorRef: TRANSPARENT_REF,
-      })),
+      pixels: pixels.map((point) =>
+        pixelSchema.parse({
+          x: point.x,
+          y: point.y,
+          colorRef: TRANSPARENT_REF,
+        }),
+      ),
     }),
   );
 
@@ -183,4 +186,3 @@ export const ErasureTool = {
 };
 
 export type ErasureTool = typeof ErasureTool;
-

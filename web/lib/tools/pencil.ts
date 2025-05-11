@@ -5,6 +5,7 @@ import {
 import { InitializedStore, store } from "../store";
 import { CANVAS_PIXEL_RATIO } from "../constants";
 import { EnqueueObject } from "@xstate/store";
+import { pixelSchema } from "../pixel";
 
 function getCanvasXY(
   clientX: number,
@@ -67,7 +68,11 @@ function onPointerMove(
     const x = Math.floor(camera.x + canvasX);
     const y = Math.floor(camera.y + canvasY);
     enqueue.effect(() =>
-      store.trigger.newPixels({ pixels: [{ x, y, colorRef: context.currentColorRef }] }),
+      store.trigger.newPixels({
+        pixels: [
+          pixelSchema.parse({ x, y, colorRef: context.currentColorRef }),
+        ],
+      }),
     );
   }
 }

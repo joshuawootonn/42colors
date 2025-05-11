@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export const COLOR_TABLE = {
   0: "transparent",
   1: "#000000",
@@ -44,7 +46,53 @@ export const COLOR_TABLE = {
   42: "#3f0d43",
 };
 
-export type ColorRef = keyof typeof COLOR_TABLE;
+export const colorRefSchema = z.union([
+  z.literal(0),
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+  z.literal(6),
+  z.literal(7),
+  z.literal(8),
+  z.literal(9),
+  z.literal(10),
+  z.literal(11),
+  z.literal(12),
+  z.literal(13),
+  z.literal(14),
+  z.literal(15),
+  z.literal(16),
+  z.literal(17),
+  z.literal(18),
+  z.literal(19),
+  z.literal(20),
+  z.literal(21),
+  z.literal(22),
+  z.literal(23),
+  z.literal(24),
+  z.literal(25),
+  z.literal(26),
+  z.literal(27),
+  z.literal(28),
+  z.literal(29),
+  z.literal(30),
+  z.literal(31),
+  z.literal(32),
+  z.literal(33),
+  z.literal(34),
+  z.literal(35),
+  z.literal(36),
+  z.literal(37),
+  z.literal(38),
+  z.literal(39),
+  z.literal(40),
+  z.literal(41),
+  z.literal(42),
+]);
+
+export type ColorRef = z.infer<typeof colorRefSchema>;
 
 export const TRANSPARENT_REF = 0;
 export const BLACK_REF = 1;

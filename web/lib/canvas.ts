@@ -29,7 +29,7 @@ export function redrawPixels(
   context.clearRect(0, 0, canvas.width, canvas.height);
 
   for (let i = 0; i < pixels.length; i++) {
-    const block = pixels[i];
+    const block: Pixel = pixels[i];
 
     context.fillStyle = COLOR_TABLE[block.colorRef];
     context.fillRect(
