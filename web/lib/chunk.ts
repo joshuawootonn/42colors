@@ -24,3 +24,9 @@ export function drawToChunkCanvas(
 
   return canvas;
 }
+
+export function getChunkKey(x: number, y: number) {
+  const chunkX = Math.floor(x / CHUNK_LENGTH) * CHUNK_LENGTH;
+  const chunkY = Math.floor(y / CHUNK_LENGTH) * CHUNK_LENGTH;
+  return `x: ${chunkX} y: ${chunkY}`;
+}

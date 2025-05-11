@@ -413,7 +413,7 @@ export const store = createStore({
             );
             continue;
           }
-          const chunkKey = `x: ${chunkX} y: ${chunkY}`;
+          const chunkKey = getChunkKey(chunkX, chunkY);
 
           const canvas = createChunkCanvas();
           const canvasContext = canvas.getContext("2d");
