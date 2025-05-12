@@ -9,6 +9,10 @@ export type Action =
   | ErasureActive
   | BrushActive
   | {
+      type: "realtime-active";
+      pixels: Pixel[];
+    }
+  | {
       type: "camera-move";
       points: Camera[];
     }
@@ -58,6 +62,8 @@ export function derivePixelsFromActions(actions: Action[]): Pixel[] {
       pixels.push(...pointsToPixels(action.points, action.colorRef));
     } else if (action.type === "erasure-active") {
       pixels.push(...pointsToPixels(action.points, TRANSPARENT_REF));
+    } else if (action.type === "realtime-active") {
+      pixels.push(...action.pixels);
     }
   }
 

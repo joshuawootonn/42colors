@@ -174,7 +174,7 @@ export const store = createStore({
               console.log(`skipping realtime since they came from this store`);
               return;
             }
-            // store.trigger.newRealtimePixels({ pixels: payload.pixels });
+            store.trigger.newRealtimePixels({ pixels: payload.pixels });
           },
         );
         store.trigger.fetchPixels();
@@ -276,59 +276,49 @@ export const store = createStore({
 
       clearChunkPixels(context.canvas.chunkCanvases, event.pixels);
 
-      enqueue.effect(() => {
-        store.trigger.redrawRealtimeCanvas();
-      });
+      enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
+
 
       return {
         ...context,
+        actions: context.actions.concat({
+          type: "realtime-active",
+          pixels: event.pixels,
+        }),
       };
     },
 
-    // newPixels: (context, event: { pixels: Pixel[] }) => {
-    //   if (isInitialStore(context)) return;
-    //   const authURL = context.server.authURL;
-    //
-    //   context.server.channel
-    //     .push("new_pixels", {
-    //       pixels: event.pixels.map((pixel) => ({
-    //         ...pixel,
-    //         color: pixel.colorRef,
-    //       })),
-    //       store_id: context.id,
-    //     })
-    //     .receive("error", (resp) => {
-    //       if (resp === ErrorCode.UNAUTHED_USER) {
-    //         toast({
-    //           title: "Login (when you are ready)",
-    //           description: "to save and share your pixels.",
-    //           button: authURL
-    //             ? {
-    //                 label: "login",
-    //                 onClick: () => {
-    //                   window.location.href = authURL;
-    //                 },
-    //               }
-    //             : undefined,
-    //         });
-    //       }
-    //     });
-    //
-    //   const nextPixels = dedupPixels(
-    //     context.realtimePixels.concat(event.pixels),
-    //   );
-    //
-    //   redrawPixels(
-    //     context.canvas.realtimeCanvas,
-    //     context.canvas.realtimeCanvasContext,
-    //     nextPixels,
-    //     context.camera,
-    //   );
-    //
-    //   clearChunkPixels(context.canvas.chunkCanvases, event.pixels);
-    //
-    //   return context;
-    // },
+    newPixels: (context, event: { pixels: Pixel[] }) => {
+      if (isInitialStore(context)) return;
+      const authURL = context.server.authURL;
+
+      context.server.channel
+        .push("new_pixels", {
+          pixels: event.pixels.map((pixel) => ({
+            ...pixel,
+            color: pixel.colorRef,
+          })),
+          store_id: context.id,
+        })
+        .receive("error", (resp) => {
+          if (resp === ErrorCode.UNAUTHED_USER) {
+            toast({
+              title: "Login (when you are ready)",
+              description: "to save and share your pixels.",
+              button: authURL
+                ? {
+                    label: "login",
+                    onClick: () => {
+                      window.location.href = authURL;
+                    },
+                  }
+                : undefined,
+            });
+          }
+        });
+
+      return context;
+    },
 
     undo: (context, _, enqueue) => {
       if (isInitialStore(context)) return;

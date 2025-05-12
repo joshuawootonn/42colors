@@ -149,25 +149,12 @@ export function startBrushAction(
 }
 
 export function nextBrushAction(
-  canvasX: number,
-  canvasY: number,
-  context: InitializedStore,
+  activeBrushAction: BrushActive,
+  newPoints: Point[],
 ): BrushActive {
-  if (context.activeAction?.type !== "brush-active")
-    throw new Error("continueBrushing was called when you weren't brushing");
-
-  const points = bresenhamLine(
-    context.activeAction.points.at(-1)!.canvasX,
-    context.activeAction.points.at(-1)!.canvasY,
-    canvasX,
-    canvasY,
-    context.camera,
-  );
-
   return {
-    type: "brush-active",
-    colorRef: context.currentColorRef,
-    points: context.activeAction.points.concat(points),
+    ...activeBrushAction,
+    points: activeBrushAction.points.concat(newPoints),
   };
 }
 
@@ -181,7 +168,15 @@ function onPointerDown(
 
   const nextActiveAction = startBrushAction(canvasX, canvasY, context);
 
-  enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
+  enqueue.effect(() => {
+    store.trigger.newPixels({
+      pixels: pointsToPixels(
+        nextActiveAction.points,
+        nextActiveAction.colorRef,
+      ),
+    });
+    store.trigger.redrawRealtimeCanvas();
+  });
 
   return {
     ...context,
@@ -204,8 +199,21 @@ function onPointerMove(
     return context;
   }
 
-  const nextActiveAction = nextBrushAction(canvasX, canvasY, context);
-  enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
+  const newPoints = bresenhamLine(
+    context.activeAction.points.at(-1)!.canvasX,
+    context.activeAction.points.at(-1)!.canvasY,
+    canvasX,
+    canvasY,
+    context.camera,
+  );
+
+  const nextActiveAction = nextBrushAction(context.activeAction, newPoints);
+  enqueue.effect(() => {
+    store.trigger.newPixels({
+      pixels: pointsToPixels(newPoints, nextActiveAction.colorRef),
+    });
+    store.trigger.redrawRealtimeCanvas();
+  });
 
   return {
     ...context,
@@ -228,8 +236,21 @@ function onWheel(
     return context;
   }
 
-  const nextActiveAction = nextBrushAction(canvasX, canvasY, context);
-  enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
+  const newPoints = bresenhamLine(
+    context.activeAction.points.at(-1)!.canvasX,
+    context.activeAction.points.at(-1)!.canvasY,
+    canvasX,
+    canvasY,
+    context.camera,
+  );
+
+  const nextActiveAction = nextBrushAction(context.activeAction, newPoints);
+  enqueue.effect(() => {
+    store.trigger.newPixels({
+      pixels: pointsToPixels(newPoints, nextActiveAction.colorRef),
+    });
+    store.trigger.redrawRealtimeCanvas();
+  });
 
   return {
     ...context,
