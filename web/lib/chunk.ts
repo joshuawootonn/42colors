@@ -2,20 +2,20 @@ import { z } from "zod";
 import { CHUNK_LENGTH } from "./constants";
 import { COLOR_TABLE } from "./palette";
 import { Pixel, pixelSchema } from "./pixel";
+import { dedupe } from "./utils/dedup";
 
-export type ChunkCanvases = Record<
-  string,
-  {
-    element: HTMLCanvasElement;
-    context: CanvasRenderingContext2D;
-    x: number;
-    y: number;
-    pixels: [];
-    renderConditions: {
-      zoom: number;
-    };
-  }
->;
+export type Chunk = {
+  element: HTMLCanvasElement;
+  context: CanvasRenderingContext2D;
+  x: number;
+  y: number;
+  pixels: Pixel[];
+  renderConditions: {
+    zoom: number;
+  };
+};
+
+export type ChunkCanvases = Record<string, Chunk>;
 
 export function createChunkCanvas(): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
@@ -38,6 +38,25 @@ export function drawToChunkCanvas(
   }
 
   return canvas;
+}
+
+/**
+ * Redraw pixels in their respective chunks
+ */
+export function unsetChunkPixels(
+  chunkCanvases: ChunkCanvases,
+  pixels: Pixel[],
+) {
+  const chunkKeys = [];
+  for (let i = 0; i < pixels.length; i++) {
+    const pixel = pixels[i];
+    chunkKeys.push(getChunkKey(pixel.x, pixel.y));
+  }
+  const uniqueChunkKeys = dedupe(chunkKeys);
+  for (let i = 0; i < uniqueChunkKeys.length; i++) {
+    const chunk = chunkCanvases[uniqueChunkKeys[i]];
+    drawToChunkCanvas(chunk.element, chunk.context, chunk.pixels);
+  }
 }
 
 /**

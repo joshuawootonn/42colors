@@ -17,6 +17,7 @@ import {
   createChunkCanvas,
   drawToChunkCanvas,
   getChunkKey,
+  unsetChunkPixels,
 } from "./chunk";
 import { Pixel } from "./pixel";
 import { draw } from "./draw";
@@ -44,7 +45,11 @@ import { ColorRef } from "./palette";
 import { ErasureTool } from "./tools/erasure";
 import { dedupPixels } from "./utils/dedup-pixels";
 import { uuid } from "./utils/uuid";
-import { Action, derivePixelsFromActions } from "./actions";
+import {
+  Action,
+  derivePixelsFromActions,
+  deriveUnsetPixelsFromActions,
+} from "./actions";
 
 export type Camera = { x: number; y: number; zoom: number };
 export type Point = { canvasX: number; canvasY: number; camera: Camera };
@@ -278,7 +283,6 @@ export const store = createStore({
 
       enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
 
-
       return {
         ...context,
         actions: context.actions.concat({
@@ -434,11 +438,37 @@ export const store = createStore({
                   fetchPixels7(context.server.apiOrigin, chunkX, chunkY),
               })
               .then((pixels) =>
-                store.trigger.drawToChunkCanvas({ chunkKey, pixels }),
+                store.trigger.updateChunk({ chunkKey, pixels }),
               ),
           );
         }
       }
+    },
+
+    updateChunk: (
+      context,
+      { chunkKey, pixels }: { chunkKey: string; pixels: Pixel[] },
+      enqueue,
+    ) => {
+      if (isInitialStore(context)) return;
+
+      const prev = context.canvas.chunkCanvases[chunkKey];
+
+      if (prev == null) {
+        console.log(
+          `skipping chunk update on uninitialized, chunkKey: ${chunkKey}`,
+        );
+        return;
+      }
+
+      context.canvas.chunkCanvases[chunkKey] = {
+        ...prev,
+        pixels: [...prev.pixels, ...pixels],
+      };
+
+      enqueue.effect(() =>
+        store.trigger.drawToChunkCanvas({ chunkKey, pixels }),
+      );
     },
 
     redrawRealtimeCanvas: (context) => {
@@ -449,16 +479,19 @@ export const store = createStore({
         : context.actions;
 
       const pixels = derivePixelsFromActions(actions);
-      const dedupedPixels = dedupPixels(pixels);
 
+      const unsetPixels = deriveUnsetPixelsFromActions(actions);
+
+      unsetChunkPixels(context.canvas.chunkCanvases, unsetPixels);
+
+      const dedupedPixels = dedupPixels(pixels);
       redrawPixels(
         context.canvas.realtimeCanvas,
         context.canvas.realtimeCanvasContext,
         dedupedPixels,
         context.camera,
       );
-
-      clearChunkPixels(context.canvas.chunkCanvases, pixels);
+      clearChunkPixels(context.canvas.chunkCanvases, dedupedPixels);
     },
 
     redrawTelegraph: (context) => {
