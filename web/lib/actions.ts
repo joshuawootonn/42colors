@@ -1,9 +1,12 @@
 import { Pixel } from "./pixel";
-import { Camera, Tool } from "./store";
+import { Camera, Point, Tool } from "./store";
 import { BrushActive } from "./tools/brush";
 import { ErasureActive } from "./tools/erasure";
 import { pointsToPixels } from "./tools/brush";
-import { TRANSPARENT_REF } from "./palette";
+import { ColorRef, TRANSPARENT_REF } from "./palette";
+
+type Undo = { type: "undo" };
+type Redo = { type: "redo" };
 
 export type Action =
   | ErasureActive
@@ -21,42 +24,67 @@ export type Action =
       before: Tool;
       after: Tool;
     }
-  | {
-      type: "undo";
-    }
-  | {
-      type: "redo";
-    };
+  | Undo
+  | Redo;
 
+function brush(points: Point[], colorRef: ColorRef): BrushActive {
+  return {
+    type: "brush-active",
+    colorRef,
+    points,
+  };
+}
+function erase(points: Point[]): ErasureActive {
+  return {
+    type: "erasure-active",
+    points,
+  };
+}
+function undo(): Undo {
+  return { type: "undo" };
+}
+function redo(): Redo {
+  return { type: "redo" };
+}
+
+export const Actions = {
+  brush,
+  erase,
+  undo,
+  redo,
+};
+
+/**
+ * Find the pixels changes for a set of actions.
+ */
 export function derivePixelsFromActions(actions: Action[]): Pixel[] {
-  let undoBuffer: Action[] = [];
-
-  const cleanedActions: Action[] = [];
+  let undoStack: Action[] = [];
+  const completedActions: Action[] = [];
   const pixels: Pixel[] = [];
 
   for (let index = 0; index < actions.length; index++) {
     const action = actions[index];
 
     if (action.type === "redo") {
-      const undoAction = undoBuffer.pop();
+      const undoAction = undoStack.pop();
 
       if (undoAction != null) {
-        cleanedActions.push(undoAction);
+        completedActions.push(undoAction);
       }
     } else if (action.type === "undo") {
-      const action = cleanedActions.pop();
+      const action = completedActions.pop();
 
       if (action != null) {
-        undoBuffer.push(action);
+        undoStack.push(action);
       }
     } else {
-      undoBuffer = [];
-      cleanedActions.push(action);
+      undoStack = [];
+      completedActions.push(action);
     }
   }
 
-  for (let index = 0; index < cleanedActions.length; index++) {
-    const action = cleanedActions[index];
+  for (let index = 0; index < completedActions.length; index++) {
+    const action = completedActions[index];
 
     if (action.type === "brush-active") {
       pixels.push(...pointsToPixels(action.points, action.colorRef));
@@ -68,4 +96,67 @@ export function derivePixelsFromActions(actions: Action[]): Pixel[] {
   }
 
   return pixels;
+}
+
+/**
+ * Find the pixels set and unset for a set of actions
+ */
+export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
+  let undoStack: Action[] = [];
+  const completedActions: Action[] = [];
+  let unsetPixels: Pixel[] = [];
+
+  for (let index = 0; index < actions.length; index++) {
+    const action = actions[index];
+
+    if (action.type === "redo") {
+      const undoAction = undoStack.pop();
+
+      if (undoAction != null) {
+        completedActions.push(undoAction);
+
+        if (undoAction.type === "brush-active") {
+          const undonePixels = pointsToPixels(
+            undoAction.points,
+            undoAction.colorRef,
+          );
+          unsetPixels = unsetPixels.filter(
+            (pixel) =>
+              !undonePixels.find(
+                (undonePixel) =>
+                  undonePixel.x === pixel.x && undonePixel.y === pixel.y,
+              ),
+          );
+        } else if (undoAction.type === "erasure-active") {
+          const undonePixels = pointsToPixels(
+            undoAction.points,
+            TRANSPARENT_REF,
+          );
+          unsetPixels = unsetPixels.filter(
+            (pixel) =>
+              !undonePixels.find(
+                (undonePixel) =>
+                  undonePixel.x === pixel.x && undonePixel.y === pixel.y,
+              ),
+          );
+        }
+      }
+    } else if (action.type === "undo") {
+      const action = completedActions.pop();
+
+      if (action != null) {
+        undoStack.push(action);
+        if (action.type === "brush-active") {
+          unsetPixels.push(...pointsToPixels(action.points, action.colorRef));
+        } else if (action.type === "erasure-active") {
+          unsetPixels.push(...pointsToPixels(action.points, TRANSPARENT_REF));
+        }
+      }
+    } else {
+      undoStack = [];
+      completedActions.push(action);
+    }
+  }
+
+  return unsetPixels;
 }
