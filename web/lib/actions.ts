@@ -62,8 +62,8 @@ export function derivePixelsFromActions(actions: Action[]): Pixel[] {
   const completedActions: Action[] = [];
   const pixels: Pixel[] = [];
 
-  for (let index = 0; index < actions.length; index++) {
-    const action = actions[index];
+  for (let i = 0; i < actions.length; i++) {
+    const action = actions[i];
 
     if (action.type === "redo") {
       const undoAction = undoStack.pop();
@@ -83,8 +83,8 @@ export function derivePixelsFromActions(actions: Action[]): Pixel[] {
     }
   }
 
-  for (let index = 0; index < completedActions.length; index++) {
-    const action = completedActions[index];
+  for (let i = 0; i < completedActions.length; i++) {
+    const action = completedActions[i];
 
     if (action.type === "brush-active") {
       pixels.push(...pointsToPixels(action.points, action.colorRef));
@@ -106,8 +106,8 @@ export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
   const completedActions: Action[] = [];
   let unsetPixels: Pixel[] = [];
 
-  for (let index = 0; index < actions.length; index++) {
-    const action = actions[index];
+  for (let i = 0; i < actions.length; i++) {
+    const action = actions[i];
 
     if (action.type === "redo") {
       const undoAction = undoStack.pop();

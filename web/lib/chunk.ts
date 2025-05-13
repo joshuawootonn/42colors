@@ -66,8 +66,8 @@ export function clearChunkPixels(
   chunkCanvases: ChunkCanvases,
   pixels: Pixel[],
 ) {
-  for (let index = 0; index < pixels.length; index++) {
-    const p = pixels[index];
+  for (let i = 0; i < pixels.length; i++) {
+    const p = pixels[i];
     const chunk = chunkCanvases[getChunkKey(p.x, p.y)];
     const chunkPixel = getChunkPixel(p);
     chunk.context.clearRect(chunkPixel.x, chunkPixel.y, 1, 1);

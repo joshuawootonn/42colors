@@ -41,8 +41,8 @@ export function throttleByKey<T extends Omit<ToastProps, "id">>(
       callback(params);
       throttledKeys.push(params.title);
       setTimeout(function () {
-        const index = throttledKeys.indexOf(params.title);
-        if (index > -1) throttledKeys.splice(index, 1);
+        const i = throttledKeys.indexOf(params.title);
+        if (i > -1) throttledKeys.splice(i, 1);
       }, 5000);
     }
   };
