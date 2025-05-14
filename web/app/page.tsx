@@ -96,27 +96,6 @@ export default function Page() {
         <Toolbar />
       </div>
 
-      {user?.email === "jose56wonton@gmail.com" && (
-        <div className="flex flex-col items-end fixed top-1/2 -translate-y-1/2 right-3">
-          <pre>{JSON.stringify({ isSpacePressed, isPressed }, null, 2)}</pre>
-          {/* todo */}
-          {/* <Button onClick={canvas.fetchPixels1}>fetch pixels as json</Button> */}
-          {/* <Button onClick={canvas.fetchPixels2}>fetch pixels as proto</Button> */}
-          {/* <Button onClick={canvas.fetchPixels3}> */}
-          {/*   fetch pixels from memory */}
-          {/* </Button> */}
-          {/* <Button onClick={canvas.fetchPixels4}> */}
-          {/*   fetch pixels from memory pre encoded */}
-          {/* </Button> */}
-          {/* <Button onClick={canvas.fetchPixels5}>fetch pixels from file</Button> */}
-          {/* <Button onClick={canvas.fetchPixels6}> */}
-          {/*   fetch subsection of pixels from file */}
-          {/* </Button> */}
-          {/* <Button onClick={() => canvas.fetchPixels7(0, 0)}> */}
-          {/*   fetch subsection of pixels from file as binary */}
-          {/* </Button> */}
-        </div>
-      )}
       <Footer />
 
       <div className="flex fixed bottom-3 right-3">
