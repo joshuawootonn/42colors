@@ -43,7 +43,7 @@ import {
 } from "./events";
 import { ColorRef, TRANSPARENT_REF } from "./palette";
 import { ErasureTool } from "./tools/erasure";
-import { dedupPixels } from "./utils/dedup-pixels";
+import { dedupePixels } from "./utils/dedupe-pixels";
 import { uuid } from "./utils/uuid";
 import {
   Action,
@@ -538,13 +538,16 @@ export const store = createStore({
         ? context.actions.concat(context.activeAction)
         : context.actions;
 
+      console.log(actions);
+
       const pixels = derivePixelsFromActions(actions);
 
       const unsetPixels = deriveUnsetPixelsFromActions(actions);
 
       unsetChunkPixels(context.canvas.chunkCanvases, unsetPixels);
 
-      const dedupedPixels = dedupPixels(pixels);
+      const dedupedPixels = dedupePixels(pixels);
+      console.log({ actions, pixels, dedupedPixels, unsetPixels });
       redrawPixels(
         context.canvas.realtimeCanvas,
         context.canvas.realtimeCanvasContext,

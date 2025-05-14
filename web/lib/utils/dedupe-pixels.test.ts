@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { Pixel, pixelSchema } from "../pixel";
-import { dedupPixels } from "./dedup-pixels";
+import { dedupePixels } from "./dedupe-pixels";
 
 describe("dedup pixels", () => {
   test("happy path", () => {
@@ -9,6 +9,8 @@ describe("dedup pixels", () => {
       pixelSchema.parse({ x: 1, y: 1, colorRef: 0 }),
     ];
 
-    expect(dedupPixels(arr)).toEqual([]);
+    expect(dedupePixels(arr)).toEqual([
+      pixelSchema.parse({ x: 1, y: 1, colorRef: 0 }),
+    ]);
   });
 });
