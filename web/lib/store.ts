@@ -1,7 +1,7 @@
 import { createStore } from "@xstate/store";
 import { Channel, Socket } from "phoenix";
 import { PencilTool } from "./tools/pencil";
-import { BrushTool } from "./tools/brush";
+import { BrushTool, pointsToPixels } from "./tools/brush";
 import { PanTool } from "./tools/pan";
 import { QueryClient } from "@tanstack/react-query";
 import { CHUNK_LENGTH } from "./constants";
@@ -19,7 +19,7 @@ import {
   getChunkKey,
   unsetChunkPixels,
 } from "./chunk";
-import { Pixel } from "./pixel";
+import { getLastPixelValue, Pixel, pixelSchema } from "./pixel";
 import { draw } from "./draw";
 import { setupChannel, setupSocketConnection } from "./sockets";
 import { fetchAuthedUser, fetchAuthURL } from "./user";
@@ -41,15 +41,20 @@ import {
   onTouch,
   onGesture,
 } from "./events";
-import { ColorRef } from "./palette";
+import { ColorRef, TRANSPARENT_REF } from "./palette";
 import { ErasureTool } from "./tools/erasure";
 import { dedupPixels } from "./utils/dedup-pixels";
 import { uuid } from "./utils/uuid";
 import {
   Action,
+  collapseUndoRedoCombos,
   derivePixelsFromActions,
   deriveUnsetPixelsFromActions,
+  getActionToRedo,
+  getActionToUndo,
+  resolveActions,
 } from "./actions";
+import { newPixels } from "./channel";
 
 export type Camera = { x: number; y: number; zoom: number };
 export type Point = { canvasX: number; canvasY: number; camera: Camera };
@@ -179,6 +184,7 @@ export const store = createStore({
               console.log(`skipping realtime since they came from this store`);
               return;
             }
+            console.log("newRealtimePixels", payload.store_id, payload.pixels);
             store.trigger.newRealtimePixels({ pixels: payload.pixels });
           },
         );
@@ -294,32 +300,8 @@ export const store = createStore({
 
     newPixels: (context, event: { pixels: Pixel[] }) => {
       if (isInitialStore(context)) return;
-      const authURL = context.server.authURL;
 
-      context.server.channel
-        .push("new_pixels", {
-          pixels: event.pixels.map((pixel) => ({
-            ...pixel,
-            color: pixel.colorRef,
-          })),
-          store_id: context.id,
-        })
-        .receive("error", (resp) => {
-          if (resp === ErrorCode.UNAUTHED_USER) {
-            toast({
-              title: "Login (when you are ready)",
-              description: "to save and share your pixels.",
-              button: authURL
-                ? {
-                    label: "login",
-                    onClick: () => {
-                      window.location.href = authURL;
-                    },
-                  }
-                : undefined,
-            });
-          }
-        });
+      newPixels(context, event.pixels);
 
       return context;
     },
@@ -329,9 +311,48 @@ export const store = createStore({
 
       enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
 
+      const actionToUndo = getActionToUndo(context.actions);
+
+      const nextActions = context.actions.concat({ type: "undo" });
+
+      if (actionToUndo == null) {
+        return {
+          ...context,
+          actions: nextActions,
+        };
+      }
+
+      const pixels = pointsToPixels(
+        actionToUndo.points,
+        actionToUndo.type === "erasure-active"
+          ? TRANSPARENT_REF
+          : actionToUndo.colorRef,
+      );
+
+      const resolvedActions = resolveActions(nextActions);
+      const resolvedPixels = derivePixelsFromActions(resolvedActions);
+      const next: Pixel[] = [];
+      for (let i = 0; i < pixels.length; i++) {
+        const pixel = pixels[i];
+        const lastPixelValue =
+          getLastPixelValue(resolvedPixels, pixel) ??
+          getLastPixelValue(
+            context.canvas.chunkCanvases[getChunkKey(pixel.x, pixel.y)].pixels,
+            pixel,
+          ) ??
+          pixelSchema.parse({
+            x: pixel.x,
+            y: pixel.y,
+            colorRef: 0,
+          });
+        next.push(lastPixelValue);
+      }
+
+      newPixels(context, next);
+
       return {
         ...context,
-        actions: context.actions.concat({ type: "undo" }),
+        actions: nextActions,
       };
     },
 
@@ -340,9 +361,48 @@ export const store = createStore({
 
       enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
 
+      const nextActions = context.actions.concat({ type: "redo" });
+
+      const actionToRedo = getActionToRedo(context.actions);
+
+      if (actionToRedo == null) {
+        return {
+          ...context,
+          actions: nextActions,
+        };
+      }
+
+      const pixels = pointsToPixels(
+        actionToRedo.points,
+        actionToRedo.type === "erasure-active"
+          ? TRANSPARENT_REF
+          : actionToRedo.colorRef,
+      );
+
+      const resolvedActions = resolveActions(nextActions);
+      const resolvedPixels = derivePixelsFromActions(resolvedActions);
+      const next: Pixel[] = [];
+      for (let i = 0; i < pixels.length; i++) {
+        const pixel = pixels[i];
+        const lastPixelValue =
+          getLastPixelValue(resolvedPixels, pixel) ??
+          getLastPixelValue(
+            context.canvas.chunkCanvases[getChunkKey(pixel.x, pixel.y)].pixels,
+            pixel,
+          ) ??
+          pixelSchema.parse({
+            x: pixel.x,
+            y: pixel.y,
+            colorRef: 0,
+          });
+        next.push(lastPixelValue);
+      }
+
+      newPixels(context, next);
+
       return {
         ...context,
-        actions: context.actions.concat({ type: "redo" }),
+        actions: nextActions,
       };
     },
 

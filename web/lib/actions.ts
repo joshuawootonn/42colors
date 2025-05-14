@@ -160,3 +160,83 @@ export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
 
   return unsetPixels;
 }
+
+export function collapseUndoRedoCombos(actions: Action[]): Action[] {
+  let undoStack: Action[] = [];
+  const completedActions: Action[] = [];
+
+  for (let i = 0; i < actions.length; i++) {
+    const action = actions[i];
+
+    if (action.type === "redo") {
+      undoStack.pop();
+    } else if (action.type === "undo") {
+      undoStack.push({ type: "undo" });
+    } else {
+      completedActions.push(...undoStack);
+      undoStack = [];
+      completedActions.push(action);
+    }
+  }
+  completedActions.push(...undoStack);
+
+  return completedActions;
+}
+
+export function resolveActions(actions: Action[]): Action[] {
+  let undoStack: Action[] = [];
+  const completedActions: Action[] = [];
+
+  for (let i = 0; i < actions.length; i++) {
+    const action = actions[i];
+
+    if (action.type === "redo") {
+      const undoAction = undoStack.pop();
+
+      if (undoAction != null) {
+        completedActions.push(undoAction);
+      }
+    } else if (action.type === "undo") {
+      const action = completedActions.pop();
+
+      if (action != null) {
+        undoStack.push(action);
+      }
+    } else {
+      undoStack = [];
+      completedActions.push(action);
+    }
+  }
+  return completedActions;
+}
+
+export function getActionToUndo(
+  prevActions: Action[],
+): BrushActive | ErasureActive | null {
+  return (
+    [...resolveActions(prevActions)]
+      .reverse()
+      .find(
+        (action) =>
+          action.type === "brush-active" || action.type === "erasure-active",
+      ) ?? null
+  );
+}
+
+export function getActionToRedo(
+  prevActions: Action[],
+): BrushActive | ErasureActive | null {
+  const reversedCollapsedPrevActions = [
+    ...collapseUndoRedoCombos(prevActions),
+  ].reverse();
+
+  if (reversedCollapsedPrevActions.at(0)?.type != "undo") return null;
+  return (
+    [...resolveActions(prevActions.concat({ type: "redo" }))]
+      .reverse()
+      .find(
+        (action) =>
+          action.type === "brush-active" || action.type === "erasure-active",
+      ) ?? null
+  );
+}
