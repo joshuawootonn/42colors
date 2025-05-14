@@ -23,8 +23,6 @@ import { getLastPixelValue, Pixel, pixelSchema } from "./pixel";
 import { draw } from "./draw";
 import { setupChannel, setupSocketConnection } from "./sockets";
 import { fetchAuthedUser, fetchAuthURL } from "./user";
-import { ErrorCode } from "./error-codes";
-import { toast } from "@/components/ui/toast";
 import { KeyboardCode } from "./keyboard-codes";
 import { isInitialStore } from "./utils/is-initial-store";
 import { WheelTool } from "./tools/wheel";
@@ -47,7 +45,6 @@ import { dedupePixels } from "./utils/dedupe-pixels";
 import { uuid } from "./utils/uuid";
 import {
   Action,
-  collapseUndoRedoCombos,
   derivePixelsFromActions,
   deriveUnsetPixelsFromActions,
   getActionToRedo,
@@ -538,8 +535,6 @@ export const store = createStore({
         ? context.actions.concat(context.activeAction)
         : context.actions;
 
-      console.log(actions);
-
       const pixels = derivePixelsFromActions(actions);
 
       const unsetPixels = deriveUnsetPixelsFromActions(actions);
@@ -547,7 +542,6 @@ export const store = createStore({
       unsetChunkPixels(context.canvas.chunkCanvases, unsetPixels);
 
       const dedupedPixels = dedupePixels(pixels);
-      console.log({ actions, pixels, dedupedPixels, unsetPixels });
       redrawPixels(
         context.canvas.realtimeCanvas,
         context.canvas.realtimeCanvasContext,
