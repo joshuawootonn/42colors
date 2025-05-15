@@ -3,11 +3,11 @@ import {
   clientToCanvas,
 } from "../utils/clientToCanvasConversion";
 import { InitializedStore, store } from "../store";
-import { EnqueueObject } from "@xstate/store";
 import { pixelSchema } from "../pixel";
 import { getZoomMultiplier } from "../camera";
 import { COLOR_TABLE } from "../palette";
 import { getPixelSize } from "../realtime";
+import { EnqueueObject } from "../xstate-internal-types";
 
 function getCanvasXY(
   clientX: number,

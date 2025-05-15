@@ -1,4 +1,3 @@
-import { EnqueueObject } from "@xstate/store";
 import { InitializedStore, Point, store } from "../store";
 import {
   canvasToClient,

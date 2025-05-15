@@ -1,4 +1,3 @@
-import { EnqueueObject } from "@xstate/store";
 import { BLACK_REF, COLOR_TABLE, TRANSPARENT_REF } from "../palette";
 import { InitializedStore, Point, store } from "../store";
 import {
@@ -10,6 +9,7 @@ import {
 import { canvasToClient } from "../utils/clientToCanvasConversion";
 import { getZoomMultiplier } from "../camera";
 import { getPixelSize } from "../realtime";
+import { EnqueueObject } from "../xstate-internal-types";
 
 function redrawTelegraph(
   clientX: number,

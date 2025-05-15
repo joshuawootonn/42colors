@@ -3,7 +3,7 @@ import { isInitialStore } from "../utils/is-initial-store";
 import { ZOOM_MIN, ZOOM_MAX, X_MIN, X_MAX, Y_MIN, Y_MAX } from "../constants";
 import { roundTo1Place } from "../utils/round-to-five";
 import { clamp } from "../utils/clamp";
-import { EnqueueObject } from "@xstate/store";
+import { EnqueueObject } from "../xstate-internal-types";
 
 function fetchPixels() {
   store.trigger.fetchPixels();
