@@ -1,6 +1,6 @@
 import { EnqueueObject } from "@xstate/store";
 import { CANVAS_PIXEL_RATIO } from "../constants";
-import { Camera, InitializedStore, Point, store } from "../store";
+import { InitializedStore, Point, store } from "../store";
 import {
   clientToCanvas,
   canvasToClient,
@@ -8,6 +8,7 @@ import {
 import { COLOR_TABLE, ColorRef } from "../palette";
 import { ErasureActive } from "./erasure";
 import { Pixel, pixelSchema } from "../pixel";
+import { Camera } from "../camera";
 
 export function getCanvasXY(
   clientX: number,

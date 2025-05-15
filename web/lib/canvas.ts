@@ -1,9 +1,9 @@
 import { CANVAS_PIXEL_RATIO } from "./constants";
 import { COLOR_TABLE } from "./palette";
 import { Pixel } from "./pixel";
-import { Camera } from "./store";
 import { canvasToClient } from "./utils/clientToCanvasConversion";
 import { roundTo3Places } from "./utils/round-to-five";
+import { Camera } from "./camera";
 
 export function createCanvas() {
   const canvas = document.createElement("canvas");

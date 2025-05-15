@@ -1,9 +1,10 @@
 import { Pixel } from "./pixel";
-import { Camera, Point, Tool } from "./store";
+import { Point, Tool } from "./store";
 import { BrushActive } from "./tools/brush";
 import { ErasureActive } from "./tools/erasure";
 import { pointsToPixels } from "./tools/brush";
 import { ColorRef, TRANSPARENT_REF } from "./palette";
+import { Camera } from "./camera";
 
 type Undo = { type: "undo" };
 type Redo = { type: "redo" };

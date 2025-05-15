@@ -52,8 +52,8 @@ import {
   resolveActions,
 } from "./actions";
 import { newPixels } from "./channel";
+import { Camera } from "./camera";
 
-export type Camera = { x: number; y: number; zoom: number };
 export type Point = { canvasX: number; canvasY: number; camera: Camera };
 
 export type Tool = "pencil" | "brush" | "erasure";
@@ -149,8 +149,8 @@ export const store = createStore({
         canvas: HTMLCanvasElement;
         apiOrigin: string;
         apiWebsocketOrigin: string;
-        cameraOptions: { x: number; y: number; zoom: number };
         queryClient: QueryClient;
+        cameraOptions: Camera;
       },
       enqueue,
     ) => {

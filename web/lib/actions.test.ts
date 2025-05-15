@@ -9,8 +9,8 @@ import {
   getActionToUndo,
   resolveActions,
 } from "./actions";
-import { Camera } from "./store";
 import { pointsToPixels } from "./tools/brush";
+import { Camera } from "./camera";
 
 const testingCamera: Camera = { x: 0, y: 0, zoom: 100 };
 const camera = testingCamera;
