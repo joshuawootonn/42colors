@@ -4,9 +4,9 @@ import { COLOR_TABLE } from "./palette";
 import { Pixel } from "./pixel";
 import { Camera, getZoomMultiplier, ZoomMultiplier } from "./camera";
 
-export function createCanvas(camera: Camera) {
+export function createRealtimeCanvas(camera: Camera) {
   const canvas = document.createElement("canvas");
-  return resizeCanvas(canvas, camera);
+  return resizeRealtimeCanvas(canvas, camera);
 }
 
 const pixelSizeSchema = z.number().brand<"PixelSize">();
@@ -20,7 +20,10 @@ export function getSizeInPixelsPlusBleed(length: number, pixelSize: PixelSize) {
   return Math.floor(length / pixelSize) + 1;
 }
 
-export function resizeCanvas(canvas: HTMLCanvasElement, camera: Camera) {
+export function resizeRealtimeCanvas(
+  canvas: HTMLCanvasElement,
+  camera: Camera,
+) {
   const pixelSize = getPixelSize(getZoomMultiplier(camera));
 
   canvas.width = getSizeInPixelsPlusBleed(window.innerWidth, pixelSize);
@@ -28,7 +31,7 @@ export function resizeCanvas(canvas: HTMLCanvasElement, camera: Camera) {
   return canvas;
 }
 
-export function redrawPixels(
+export function redrawRealtimePixels(
   canvas: HTMLCanvasElement,
   context: CanvasRenderingContext2D,
   pixels: Pixel[],

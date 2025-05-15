@@ -1,7 +1,7 @@
 import { BACKGROUND_SIZE, CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from "./constants";
 import { canvasToClient } from "./utils/clientToCanvasConversion";
 import { InitializedStore } from "./store";
-import { getPixelSize, getSizeInPixelsPlusBleed } from "./canvas";
+import { getPixelSize, getSizeInPixelsPlusBleed } from "./realtime";
 import { getZoomMultiplier } from "./camera";
 
 export function draw(context: InitializedStore) {
@@ -10,7 +10,10 @@ export function draw(context: InitializedStore) {
   const cameraYStart = Math.floor(context.camera.y);
   context.canvas.rootCanvas.width = window.innerWidth;
   context.canvas.rootCanvas.height = window.innerHeight;
+
   context.canvas.rootCanvasContext.imageSmoothingEnabled = false;
+  context.canvas.rootCanvas.style.imageRendering = "pixelated";
+
   context.canvas.rootCanvasContext.clearRect(
     0,
     0,
@@ -63,7 +66,7 @@ export function draw(context: InitializedStore) {
     context.canvas.telegraphCanvas,
     x,
     y,
-    canvasWidthPlusBleed,
-    canvasHeightPlusBleed,
+    window.innerWidth,
+    window.innerHeight,
   );
 }

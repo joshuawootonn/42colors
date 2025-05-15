@@ -1,14 +1,13 @@
 import { EnqueueObject } from "@xstate/store";
-import { CANVAS_PIXEL_RATIO } from "../constants";
 import { InitializedStore, Point, store } from "../store";
 import {
-  clientToCanvas,
   canvasToClient,
+  clientToCanvas,
 } from "../utils/clientToCanvasConversion";
 import { COLOR_TABLE, ColorRef } from "../palette";
-import { ErasureActive } from "./erasure";
 import { Pixel, pixelSchema } from "../pixel";
-import { Camera } from "../camera";
+import { Camera, getZoomMultiplier } from "../camera";
+import { getPixelSize } from "../realtime";
 
 export function getCanvasXY(
   clientX: number,
@@ -27,26 +26,26 @@ export function getCanvasXY(
   return { canvasX, canvasY };
 }
 
-function drawUnactiveTelegraph(
-  canvasX: number,
-  canvasY: number,
+function redrawTelegraph(
+  clientX: number,
+  clientY: number,
   context: InitializedStore,
 ) {
-  context.canvas.telegraphCanvasContext.clearRect(
-    0,
-    0,
-    context.canvas.telegraphCanvasContext.canvas.width,
-    context.canvas.telegraphCanvasContext.canvas.height,
-  );
+  const { canvasX, canvasY } = getCanvasXY(clientX, clientY, context);
+  const ctx = context.canvas.telegraphCanvasContext;
+  const canvas = context.canvas.telegraphCanvas;
 
-  const zoomMultiplier = context.camera.zoom / 100;
-  context.canvas.telegraphCanvasContext.fillStyle =
-    COLOR_TABLE[context.currentColorRef];
-  context.canvas.telegraphCanvasContext.fillRect(
+  const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
+
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = COLOR_TABLE[context.currentColorRef];
+  ctx.fillRect(
     canvasToClient(canvasX, context.camera.zoom),
     canvasToClient(canvasY, context.camera.zoom),
-    CANVAS_PIXEL_RATIO * zoomMultiplier,
-    CANVAS_PIXEL_RATIO * zoomMultiplier,
+    pixelSize,
+    pixelSize,
   );
 }
 
@@ -165,7 +164,6 @@ function onPointerDown(
   enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
-  drawUnactiveTelegraph(canvasX, canvasY, context);
 
   const nextActiveAction = startBrushAction(canvasX, canvasY, context);
 
@@ -191,7 +189,6 @@ function onPointerMove(
   enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
-  drawUnactiveTelegraph(canvasX, canvasY, context);
 
   if (
     context.activeAction?.type !== "brush-active" ||
@@ -228,7 +225,6 @@ function onWheel(
   enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
-  drawUnactiveTelegraph(canvasX, canvasY, context);
 
   if (
     context.activeAction?.type !== "brush-active" ||
@@ -293,6 +289,7 @@ export const BrushTool = {
   onPointerUp,
   onPointerOut,
   onWheel,
+  redrawTelegraph,
 };
 
 export type BrushTool = typeof BrushTool;

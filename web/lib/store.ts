@@ -26,7 +26,11 @@ import { fetchAuthedUser, fetchAuthURL } from "./user";
 import { KeyboardCode } from "./keyboard-codes";
 import { isInitialStore } from "./utils/is-initial-store";
 import { WheelTool } from "./tools/wheel";
-import { createCanvas, redrawPixels, resizeCanvas } from "./canvas";
+import {
+  createRealtimeCanvas,
+  redrawRealtimePixels,
+  resizeRealtimeCanvas,
+} from "./realtime";
 import {
   onWheel,
   onKeyDown,
@@ -53,6 +57,7 @@ import {
 } from "./actions";
 import { newPixels } from "./channel";
 import { Camera } from "./camera";
+import { createTelegraphCanvas, resizeTelegraphCanvas } from "./telegraph";
 
 export type Point = { canvasX: number; canvasY: number; camera: Camera };
 
@@ -162,11 +167,11 @@ export const store = createStore({
       backgroundCanvasContext.imageSmoothingEnabled = false;
       drawBackgroundCanvas(backgroundCanvas, backgroundCanvasContext);
 
-      const realtimeCanvas = createCanvas(event.cameraOptions);
+      const realtimeCanvas = createRealtimeCanvas(event.cameraOptions);
       const realtimeCanvasContext = realtimeCanvas.getContext("2d")!;
       realtimeCanvasContext.imageSmoothingEnabled = false;
 
-      const telegraphCanvas = createCanvas(event.cameraOptions);
+      const telegraphCanvas = createTelegraphCanvas();
       const telegraphCanvasContext = telegraphCanvas.getContext("2d")!;
       telegraphCanvasContext.imageSmoothingEnabled = false;
 
@@ -530,8 +535,8 @@ export const store = createStore({
 
     resizeRealtimeAndTelegraphCanvases: (context) => {
       if (isInitialStore(context)) return;
-      resizeCanvas(context.canvas.realtimeCanvas, context.camera);
-      resizeCanvas(context.canvas.telegraphCanvas, context.camera);
+      resizeRealtimeCanvas(context.canvas.realtimeCanvas, context.camera);
+      resizeTelegraphCanvas(context.canvas.telegraphCanvas);
     },
 
     redrawRealtimeCanvas: (context) => {
@@ -548,7 +553,7 @@ export const store = createStore({
       unsetChunkPixels(context.canvas.chunkCanvases, unsetPixels);
 
       const dedupedPixels = dedupePixels(pixels);
-      redrawPixels(
+      redrawRealtimePixels(
         context.canvas.realtimeCanvas,
         context.canvas.realtimeCanvasContext,
         dedupedPixels,
@@ -559,11 +564,26 @@ export const store = createStore({
 
     redrawTelegraph: (context) => {
       if (isInitialStore(context)) return;
+      if (context.interaction.cursorPosition == null) return;
+
       const tool = context.currentTool;
       switch (tool) {
         case "pencil":
-          if (context.interaction.cursorPosition == null) break;
           context.tools.pencilTool.redrawTelegraph(
+            context.interaction.cursorPosition.clientX,
+            context.interaction.cursorPosition.clientY,
+            context,
+          );
+          break;
+        case "erasure":
+          context.tools.erasureTool.redrawTelegraph(
+            context.interaction.cursorPosition.clientX,
+            context.interaction.cursorPosition.clientY,
+            context,
+          );
+          break;
+        case "brush":
+          context.tools.brushTool.redrawTelegraph(
             context.interaction.cursorPosition.clientX,
             context.interaction.cursorPosition.clientY,
             context,
@@ -591,6 +611,7 @@ export const store = createStore({
       if (isInitialStore(context)) return;
 
       enqueue.effect(() => {
+        store.trigger.resizeRealtimeAndTelegraphCanvases();
         store.trigger.redrawRealtimeCanvas();
         store.trigger.redrawTelegraph();
       });
@@ -677,9 +698,10 @@ export const store = createStore({
     onPointerMove: (context, { e }: { e: PointerEvent }, enqueue) => {
       if (isInitialStore(context)) return;
 
-      enqueue.effect(() =>
-        store.trigger.setCursorPosition({ cursorPosition: e }),
-      );
+      enqueue.effect(() => {
+        store.trigger.setCursorPosition({ cursorPosition: e });
+        store.trigger.redrawTelegraph();
+      });
       const tool = context.currentTool;
       if (tool === "pencil") {
         context.tools.pencilTool.onPointerMove(e, context, enqueue);

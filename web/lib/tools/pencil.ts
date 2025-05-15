@@ -3,9 +3,11 @@ import {
   clientToCanvas,
 } from "../utils/clientToCanvasConversion";
 import { InitializedStore, store } from "../store";
-import { CANVAS_PIXEL_RATIO } from "../constants";
 import { EnqueueObject } from "@xstate/store";
 import { pixelSchema } from "../pixel";
+import { getZoomMultiplier } from "../camera";
+import { COLOR_TABLE } from "../palette";
+import { getPixelSize } from "../realtime";
 
 function getCanvasXY(
   clientX: number,
@@ -24,34 +26,27 @@ function getCanvasXY(
   return { canvasX, canvasY };
 }
 
-function drawTelegraph(
-  canvasX: number,
-  canvasY: number,
-  context: InitializedStore,
-) {
-  context.canvas.telegraphCanvasContext.clearRect(
-    0,
-    0,
-    context.canvas.telegraphCanvasContext.canvas.width,
-    context.canvas.telegraphCanvasContext.canvas.height,
-  );
-
-  const zoomMultiplier = context.camera.zoom / 100;
-  context.canvas.telegraphCanvasContext.fillRect(
-    canvasToClient(canvasX, context.camera.zoom),
-    canvasToClient(canvasY, context.camera.zoom),
-    CANVAS_PIXEL_RATIO * zoomMultiplier,
-    CANVAS_PIXEL_RATIO * zoomMultiplier,
-  );
-}
-
 export function redrawTelegraph(
   clientX: number,
   clientY: number,
   context: InitializedStore,
 ) {
   const { canvasX, canvasY } = getCanvasXY(clientX, clientY, context);
-  drawTelegraph(canvasX, canvasY, context);
+  const ctx = context.canvas.telegraphCanvasContext;
+  const canvas = context.canvas.telegraphCanvas;
+
+  const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
+
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = COLOR_TABLE[context.currentColorRef];
+  ctx.fillRect(
+    canvasToClient(canvasX, context.camera.zoom),
+    canvasToClient(canvasY, context.camera.zoom),
+    pixelSize,
+    pixelSize,
+  );
 }
 
 function onPointerMove(
@@ -62,7 +57,6 @@ function onPointerMove(
   const camera = context.camera;
 
   const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
-  drawTelegraph(canvasX, canvasY, context);
 
   if (context.interaction.isPressed) {
     const x = Math.floor(camera.x + canvasX);
