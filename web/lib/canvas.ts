@@ -1,18 +1,30 @@
+import { z } from "zod";
 import { CANVAS_PIXEL_RATIO } from "./constants";
 import { COLOR_TABLE } from "./palette";
 import { Pixel } from "./pixel";
-import { canvasToClient } from "./utils/clientToCanvasConversion";
-import { roundTo3Places } from "./utils/round-to-five";
-import { Camera } from "./camera";
+import { Camera, getZoomMultiplier, ZoomMultiplier } from "./camera";
 
-export function createCanvas() {
+export function createCanvas(camera: Camera) {
   const canvas = document.createElement("canvas");
-  return resizeCanvas(canvas);
+  return resizeCanvas(canvas, camera);
 }
 
-export function resizeCanvas(canvas: HTMLCanvasElement) {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+const pixelSizeSchema = z.number().brand<"PixelSize">();
+type PixelSize = z.infer<typeof pixelSizeSchema>;
+
+export function getPixelSize(zoomMultiplier: ZoomMultiplier): PixelSize {
+  return pixelSizeSchema.parse(CANVAS_PIXEL_RATIO * zoomMultiplier);
+}
+
+export function getSizeInPixelsPlusBleed(length: number, pixelSize: PixelSize) {
+  return Math.floor(length / pixelSize) + 1;
+}
+
+export function resizeCanvas(canvas: HTMLCanvasElement, camera: Camera) {
+  const pixelSize = getPixelSize(getZoomMultiplier(camera));
+
+  canvas.width = getSizeInPixelsPlusBleed(window.innerWidth, pixelSize);
+  canvas.height = getSizeInPixelsPlusBleed(window.innerHeight, pixelSize);
   return canvas;
 }
 
@@ -22,9 +34,6 @@ export function redrawPixels(
   pixels: Pixel[],
   camera: Camera,
 ) {
-  const zoomMultiplier = camera.zoom / 100;
-  const pixelSize = roundTo3Places(zoomMultiplier * CANVAS_PIXEL_RATIO);
-
   context.imageSmoothingEnabled = false;
   context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -33,10 +42,10 @@ export function redrawPixels(
 
     context.fillStyle = COLOR_TABLE[block.colorRef];
     context.fillRect(
-      canvasToClient(block.x - Math.floor(camera.x), camera.zoom),
-      canvasToClient(block.y - Math.floor(camera.y), camera.zoom),
-      pixelSize,
-      pixelSize,
+      block.x - Math.floor(camera.x),
+      block.y - Math.floor(camera.y),
+      1,
+      1,
     );
   }
 }

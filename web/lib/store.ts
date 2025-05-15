@@ -162,11 +162,11 @@ export const store = createStore({
       backgroundCanvasContext.imageSmoothingEnabled = false;
       drawBackgroundCanvas(backgroundCanvas, backgroundCanvasContext);
 
-      const realtimeCanvas = createCanvas();
+      const realtimeCanvas = createCanvas(event.cameraOptions);
       const realtimeCanvasContext = realtimeCanvas.getContext("2d")!;
       realtimeCanvasContext.imageSmoothingEnabled = false;
 
-      const telegraphCanvas = createCanvas();
+      const telegraphCanvas = createCanvas(event.cameraOptions);
       const telegraphCanvasContext = telegraphCanvas.getContext("2d")!;
       telegraphCanvasContext.imageSmoothingEnabled = false;
 
@@ -528,6 +528,12 @@ export const store = createStore({
       );
     },
 
+    resizeRealtimeAndTelegraphCanvases: (context) => {
+      if (isInitialStore(context)) return;
+      resizeCanvas(context.canvas.realtimeCanvas, context.camera);
+      resizeCanvas(context.canvas.telegraphCanvas, context.camera);
+    },
+
     redrawRealtimeCanvas: (context) => {
       if (isInitialStore(context)) return;
 
@@ -758,6 +764,11 @@ export const store = createStore({
 
       context.tools.wheelTool.onWheel(context, e, enqueue);
 
+      enqueue.effect(() => {
+        store.trigger.resizeRealtimeAndTelegraphCanvases();
+        store.trigger.redrawRealtimeCanvas();
+        store.trigger.redrawTelegraph();
+      });
       if (context.currentTool === "brush") {
         return context.tools.brushTool.onWheel(e, context, enqueue);
       }
@@ -778,8 +789,7 @@ export const store = createStore({
           context.canvas.backgroundCanvas,
           context.canvas.backgroundCanvasContext,
         );
-        resizeCanvas(context.canvas.realtimeCanvas);
-        resizeCanvas(context.canvas.telegraphCanvas);
+        store.trigger.resizeRealtimeAndTelegraphCanvases();
         store.trigger.redrawRealtimeCanvas();
         store.trigger.redrawTelegraph();
       });

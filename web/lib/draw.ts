@@ -1,9 +1,11 @@
 import { BACKGROUND_SIZE, CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from "./constants";
 import { canvasToClient } from "./utils/clientToCanvasConversion";
 import { InitializedStore } from "./store";
+import { getPixelSize, getSizeInPixelsPlusBleed } from "./canvas";
+import { getZoomMultiplier } from "./camera";
 
 export function draw(context: InitializedStore) {
-  const zoomMultiplier = context.camera.zoom / 100;
+  const zoomMultiplier = getZoomMultiplier(context.camera);
   const cameraXStart = Math.floor(context.camera.x);
   const cameraYStart = Math.floor(context.camera.y);
   context.canvas.rootCanvas.width = window.innerWidth;
@@ -43,19 +45,25 @@ export function draw(context: InitializedStore) {
     );
   });
 
+  const pixelSize = getPixelSize(zoomMultiplier);
+  const canvasWidthPlusBleed =
+    pixelSize * getSizeInPixelsPlusBleed(window.innerWidth, pixelSize);
+  const canvasHeightPlusBleed =
+    pixelSize * getSizeInPixelsPlusBleed(window.innerHeight, pixelSize);
+
   context.canvas.rootCanvasContext.drawImage(
     context.canvas.realtimeCanvas,
     x,
     y,
-    window.innerWidth,
-    window.innerHeight,
+    canvasWidthPlusBleed,
+    canvasHeightPlusBleed,
   );
 
   context.canvas.rootCanvasContext.drawImage(
     context.canvas.telegraphCanvas,
     x,
     y,
-    window.innerWidth,
-    window.innerHeight,
+    canvasWidthPlusBleed,
+    canvasHeightPlusBleed,
   );
 }
