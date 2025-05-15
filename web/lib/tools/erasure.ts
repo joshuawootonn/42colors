@@ -11,6 +11,7 @@ import { getZoomMultiplier } from "../camera";
 import { getPixelSize } from "../realtime";
 import { EnqueueObject } from "../xstate-internal-types";
 import { Point } from "../coord";
+import { dedupeCoords } from "../utils/dedupe-coords";
 
 function redrawTelegraph(
   clientX: number,
@@ -78,7 +79,7 @@ export function nextErasureAction(
 ): ErasureActive {
   return {
     ...activeErasureAction,
-    points: activeErasureAction.points.concat(newPoints),
+    points: dedupeCoords(activeErasureAction.points.concat(newPoints)),
   };
 }
 

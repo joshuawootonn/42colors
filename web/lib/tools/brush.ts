@@ -10,6 +10,7 @@ import { getPixelSize, PixelSize } from "../realtime";
 
 import { createAtom } from "@xstate/store";
 import { EnqueueObject } from "../xstate-internal-types";
+import { dedupeCoords } from "../utils/dedupe-coords";
 
 export const brushSizeState = createAtom(1);
 
@@ -216,7 +217,7 @@ export function nextBrushAction(
 ): BrushActive {
   return {
     ...activeBrushAction,
-    points: activeBrushAction.points.concat(newPoints),
+    points: dedupeCoords(activeBrushAction.points.concat(newPoints)),
   };
 }
 
@@ -302,8 +303,12 @@ function onWheel(
     canvasY,
     context.camera,
   );
+  const dedupedNewPoints = dedupeCoords(newPoints);
 
-  const nextActiveAction = nextBrushAction(context.activeAction, newPoints);
+  const nextActiveAction = nextBrushAction(
+    context.activeAction,
+    dedupedNewPoints,
+  );
   enqueue.effect(() => {
     store.trigger.newPixels({
       pixels: pointsToPixels(newPoints, nextActiveAction.colorRef),
