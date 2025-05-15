@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { dedupe } from "./dedup";
+import { dedupe } from "./dedupe";
 
 describe("dedupe", () => {
   test("happy path", () => {
