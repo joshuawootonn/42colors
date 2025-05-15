@@ -1,5 +1,5 @@
 import { BLACK_REF, COLOR_TABLE, TRANSPARENT_REF } from "../palette";
-import { InitializedStore, Point, store } from "../store";
+import { InitializedStore, store } from "../store";
 import {
   bresenhamLine,
   getCanvasXY,
@@ -10,6 +10,7 @@ import { canvasToClient } from "../utils/clientToCanvasConversion";
 import { getZoomMultiplier } from "../camera";
 import { getPixelSize } from "../realtime";
 import { EnqueueObject } from "../xstate-internal-types";
+import { Point } from "../pixel";
 
 function redrawTelegraph(
   clientX: number,
@@ -41,7 +42,7 @@ export function startErasureAction(
 ): ErasureActive {
   return {
     type: "erasure-active",
-    points: [{ canvasX, canvasY, camera: context.camera }],
+    points: [{ x: canvasX, y: canvasY, camera: context.camera }],
   };
 }
 
@@ -96,8 +97,8 @@ function onPointerMove(
   }
 
   const newPoints = bresenhamLine(
-    context.activeAction.points.at(-1)!.canvasX,
-    context.activeAction.points.at(-1)!.canvasY,
+    context.activeAction.points.at(-1)!.x,
+    context.activeAction.points.at(-1)!.y,
     canvasX,
     canvasY,
     context.camera,
@@ -131,8 +132,8 @@ function onWheel(
   }
 
   const newPoints = bresenhamLine(
-    context.activeAction.points.at(-1)!.canvasX,
-    context.activeAction.points.at(-1)!.canvasY,
+    context.activeAction.points.at(-1)!.x,
+    context.activeAction.points.at(-1)!.y,
     canvasX,
     canvasY,
     context.camera,

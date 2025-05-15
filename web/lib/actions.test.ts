@@ -16,19 +16,19 @@ const testingCamera: Camera = { x: 0, y: 0, zoom: 100 };
 const camera = testingCamera;
 
 const points1to3 = [
-  { canvasX: 1, canvasY: 1, camera },
-  { canvasX: 2, canvasY: 2, camera },
-  { canvasX: 3, canvasY: 3, camera },
+  { x: 1, y: 1, camera },
+  { x: 2, y: 2, camera },
+  { x: 3, y: 3, camera },
 ];
 const points4to6 = [
-  { canvasX: 4, canvasY: 4, camera },
-  { canvasX: 5, canvasY: 5, camera },
-  { canvasX: 6, canvasY: 6, camera },
+  { x: 4, y: 4, camera },
+  { x: 5, y: 5, camera },
+  { x: 6, y: 6, camera },
 ];
 const points7to9 = [
-  { canvasX: 7, canvasY: 7, camera },
-  { canvasX: 8, canvasY: 8, camera },
-  { canvasX: 9, canvasY: 9, camera },
+  { x: 7, y: 7, camera },
+  { x: 8, y: 8, camera },
+  { x: 9, y: 9, camera },
 ];
 
 describe("actions", () => {

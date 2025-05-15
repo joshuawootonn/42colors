@@ -1,5 +1,5 @@
-import { Pixel } from "./pixel";
-import { Point, Tool } from "./store";
+import { Pixel, Point } from "./pixel";
+import { Tool } from "./store";
 import { BrushActive } from "./tools/brush";
 import { ErasureActive } from "./tools/erasure";
 import { pointsToPixels } from "./tools/brush";

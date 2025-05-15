@@ -1,4 +1,4 @@
-import { Point, store } from "./store";
+import { store } from "./store";
 
 export function onGesture(e: Event) {
   // console.log("gesture", e);

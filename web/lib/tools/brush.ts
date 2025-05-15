@@ -1,10 +1,10 @@
-import { InitializedStore, Point, store } from "../store";
+import { InitializedStore, store } from "../store";
 import {
   canvasToClient,
   clientToCanvas,
 } from "../utils/clientToCanvasConversion";
 import { COLOR_TABLE, ColorRef } from "../palette";
-import { Pixel, pixelSchema } from "../pixel";
+import { Pixel, pixelSchema, Point } from "../pixel";
 import { Camera, getZoomMultiplier } from "../camera";
 import { getPixelSize, PixelSize } from "../realtime";
 

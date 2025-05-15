@@ -59,15 +59,13 @@ import { newPixels } from "./channel";
 import { Camera } from "./camera";
 import { createTelegraphCanvas, resizeTelegraphCanvas } from "./telegraph";
 
-export type Point = { canvasX: number; canvasY: number; camera: Camera };
-
 export type Tool = "pencil" | "brush" | "erasure";
 export type PointerState = "default" | "pressed";
 
 export type InitialStore = {
   state: "initial";
   id: undefined;
-  camera: { x: number; y: number; zoom: number };
+  camera: Camera;
   server?: undefined;
   tools?: undefined;
   currentTool: Tool;
@@ -85,7 +83,7 @@ export type InitialStore = {
 
 export type InitializedStore = {
   state: "initialized";
-  camera: { x: number; y: number; zoom: number };
+  camera: Camera;
   server: {
     apiOrigin: string;
     websocketOriginURL: string;
