@@ -4,7 +4,7 @@ import {
   clientToCanvas,
 } from "../utils/clientToCanvasConversion";
 import { COLOR_TABLE, ColorRef } from "../palette";
-import { Pixel, pixelSchema, Point } from "../pixel";
+import { Pixel, pixelSchema, Point } from "../coord";
 import { Camera, getZoomMultiplier } from "../camera";
 import { getPixelSize, PixelSize } from "../realtime";
 
@@ -127,7 +127,7 @@ export function bresenhamLine(
   let err = dx - dy;
 
   while (true) {
-    points.push({ canvasX: x0, canvasY: y0, camera });
+    points.push({ x: x0, y: y0, camera });
 
     if (x0 === x1 && y0 === y1) {
       break;
@@ -154,20 +154,20 @@ export function normalizedPointsToCamera(
   camera: Camera,
 ): Point[] {
   return points.map((point) => {
-    const canvasX2 = (point.canvasX * camera.zoom) / point.camera.zoom;
+    const canvasX2 = (point.x * camera.zoom) / point.camera.zoom;
 
     const cameraX2 = (point.camera.x * camera.zoom) / point.camera.zoom;
 
-    const canvasY2 = (point.canvasY * camera.zoom) / point.camera.zoom;
+    const canvasY2 = (point.y * camera.zoom) / point.camera.zoom;
 
     const cameraY2 = (point.camera.y * camera.zoom) / point.camera.zoom;
 
     const x = Math.floor(canvasX2 + cameraX2 - camera.x);
     const y = Math.floor(canvasY2 + cameraY2 - camera.y);
     return {
-      canvasX: x,
-      canvasY: y,
-      camera: camera,
+      x,
+      y,
+      camera,
     };
   });
 }
@@ -175,8 +175,8 @@ export function normalizedPointsToCamera(
 export function pointsToPixels(points: Point[], colorRef: ColorRef): Pixel[] {
   return points.map((point) =>
     pixelSchema.parse({
-      x: Math.floor(point.canvasX + point.camera.x),
-      y: Math.floor(point.canvasY + point.camera.y),
+      x: Math.floor(point.x + point.camera.x),
+      y: Math.floor(point.y + point.camera.y),
       colorRef: colorRef,
     }),
   );
@@ -195,7 +195,7 @@ export function isDuplicatePoint(
 ) {
   if (context.activeAction?.type !== "brush-active") return false;
   const lastPoint = context.activeAction?.points.at(-1);
-  return lastPoint?.canvasX === canvasX && lastPoint?.canvasX === canvasY;
+  return lastPoint?.x === canvasX && lastPoint?.x === canvasY;
 }
 
 export function startBrushAction(
@@ -206,7 +206,7 @@ export function startBrushAction(
   return {
     type: "brush-active",
     colorRef: context.currentColorRef,
-    points: [{ canvasX, canvasY, camera: context.camera }],
+    points: [{ x: canvasX, y: canvasY, camera: context.camera }],
   };
 }
 
@@ -260,8 +260,8 @@ function onPointerMove(
   }
 
   const newPoints = bresenhamLine(
-    context.activeAction.points.at(-1)!.canvasX,
-    context.activeAction.points.at(-1)!.canvasY,
+    context.activeAction.points.at(-1)!.x,
+    context.activeAction.points.at(-1)!.y,
     canvasX,
     canvasY,
     context.camera,
@@ -296,8 +296,8 @@ function onWheel(
   }
 
   const newPoints = bresenhamLine(
-    context.activeAction.points.at(-1)!.canvasX,
-    context.activeAction.points.at(-1)!.canvasY,
+    context.activeAction.points.at(-1)!.x,
+    context.activeAction.points.at(-1)!.y,
     canvasX,
     canvasY,
     context.camera,

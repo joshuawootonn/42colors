@@ -2,7 +2,7 @@
 import { ChunkPixel, chunkPixelSchema } from "./chunk";
 import { CHUNK_LENGTH } from "./constants";
 import { ColorRef } from "./palette";
-import { Pixel } from "./pixel";
+import { Pixel } from "./coord";
 
 // function fetchPixels1(apiOrigin: string) {
 //   fetch(new URL("/api/pixels", apiOrigin)).then(async (res) => {

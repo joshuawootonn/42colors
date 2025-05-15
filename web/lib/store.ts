@@ -19,7 +19,7 @@ import {
   getChunkKey,
   unsetChunkPixels,
 } from "./chunk";
-import { getLastPixelValue, Pixel, pixelSchema } from "./pixel";
+import { getLastPixelValue, Pixel, pixelSchema } from "./coord";
 import { draw } from "./draw";
 import { setupChannel, setupSocketConnection } from "./sockets";
 import { fetchAuthedUser, fetchAuthURL } from "./user";
@@ -45,7 +45,7 @@ import {
 } from "./events";
 import { ColorRef, TRANSPARENT_REF } from "./palette";
 import { ErasureTool } from "./tools/erasure";
-import { dedupePixels } from "./utils/dedupe-pixels";
+import { dedupeCoords } from "./utils/dedupe-coords";
 import { uuid } from "./utils/uuid";
 import {
   Action,
@@ -550,7 +550,7 @@ export const store = createStore({
 
       unsetChunkPixels(context.canvas.chunkCanvases, unsetPixels);
 
-      const dedupedPixels = dedupePixels(pixels);
+      const dedupedPixels = dedupeCoords(pixels);
       redrawRealtimePixels(
         context.canvas.realtimeCanvas,
         context.canvas.realtimeCanvasContext,

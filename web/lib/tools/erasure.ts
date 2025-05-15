@@ -10,7 +10,7 @@ import { canvasToClient } from "../utils/clientToCanvasConversion";
 import { getZoomMultiplier } from "../camera";
 import { getPixelSize } from "../realtime";
 import { EnqueueObject } from "../xstate-internal-types";
-import { Point } from "../pixel";
+import { Point } from "../coord";
 
 function redrawTelegraph(
   clientX: number,

@@ -1,6 +1,6 @@
 import { toast } from "@/components/ui/toast";
 import { ErrorCode } from "./error-codes";
-import { Pixel } from "./pixel";
+import { Pixel } from "./coord";
 import { InitializedStore } from "./store";
 import { isInitialStore } from "./utils/is-initial-store";
 

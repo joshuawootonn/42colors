@@ -3,7 +3,7 @@ import {
   clientToCanvas,
 } from "../utils/clientToCanvasConversion";
 import { InitializedStore, store } from "../store";
-import { pixelSchema } from "../pixel";
+import { pixelSchema } from "../coord";
 import { getZoomMultiplier } from "../camera";
 import { COLOR_TABLE } from "../palette";
 import { getPixelSize } from "../realtime";

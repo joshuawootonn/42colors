@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { CHUNK_LENGTH } from "./constants";
 import { COLOR_TABLE } from "./palette";
-import { Pixel, pixelSchema } from "./pixel";
+import { Pixel, pixelSchema } from "./coord";
 import { dedupe } from "./utils/dedupe";
 
 export type Chunk = {

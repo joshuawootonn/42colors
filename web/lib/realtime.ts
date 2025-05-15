@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { CANVAS_PIXEL_RATIO } from "./constants";
 import { COLOR_TABLE } from "./palette";
-import { Pixel } from "./pixel";
+import { Pixel } from "./coord";
 import { Camera, getZoomMultiplier, ZoomMultiplier } from "./camera";
 
 export function createRealtimeCanvas(camera: Camera) {
