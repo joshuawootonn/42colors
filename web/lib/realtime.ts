@@ -17,7 +17,7 @@ export function getPixelSize(zoomMultiplier: ZoomMultiplier): PixelSize {
 }
 
 export function getSizeInPixelsPlusBleed(length: number, pixelSize: PixelSize) {
-  return Math.floor(length / pixelSize) + 1;
+  return Math.ceil(length / pixelSize) + 1;
 }
 
 export function resizeRealtimeCanvas(
