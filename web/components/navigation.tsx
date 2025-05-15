@@ -149,7 +149,7 @@ export function Navigation() {
         value={zoom}
         step={10}
         min={50}
-        max={500}
+        max={1000}
         onChange={onChange}
       />
     </div>
