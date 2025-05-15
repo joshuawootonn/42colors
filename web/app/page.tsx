@@ -14,6 +14,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Footer } from "@/components/footer";
 import { Navigation } from "@/components/navigation";
 import { Palette } from "@/components/palette";
+import { BrushPanel } from "@/lib/tools/brush-panel";
 
 const queryClient = new QueryClient();
 
@@ -88,8 +89,9 @@ export default function Page() {
         height="100vh"
         width="100vw"
       ></canvas>
-      <div className="flex fixed top-16 left-3">
+      <div className="flex flex-col space-y-3 fixed top-16 left-3">
         <Palette />
+        {user?.email === "jose56wonton@gmail.com" ? <BrushPanel /> : null}
       </div>
 
       <div className="flex fixed  top-3 right-3">

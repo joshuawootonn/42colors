@@ -10,7 +10,7 @@ export function createRealtimeCanvas(camera: Camera) {
 }
 
 const pixelSizeSchema = z.number().brand<"PixelSize">();
-type PixelSize = z.infer<typeof pixelSizeSchema>;
+export type PixelSize = z.infer<typeof pixelSizeSchema>;
 
 export function getPixelSize(zoomMultiplier: ZoomMultiplier): PixelSize {
   return pixelSizeSchema.parse(CANVAS_PIXEL_RATIO * zoomMultiplier);

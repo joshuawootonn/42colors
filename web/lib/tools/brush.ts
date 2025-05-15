@@ -6,7 +6,12 @@ import {
 import { COLOR_TABLE, ColorRef } from "../palette";
 import { Pixel, pixelSchema } from "../pixel";
 import { Camera, getZoomMultiplier } from "../camera";
-import { getPixelSize } from "../realtime";
+import { getPixelSize, PixelSize } from "../realtime";
+
+import { createAtom } from "@xstate/store";
+import { EnqueueObject } from "../xstate-internal-types";
+
+export const brushSizeState = createAtom(1);
 
 export function getCanvasXY(
   clientX: number,
@@ -25,6 +30,63 @@ export function getCanvasXY(
   return { canvasX, canvasY };
 }
 
+function drawBrush(
+  ctx: CanvasRenderingContext2D,
+  clientX: number,
+  clientY: number,
+  pixelSize: PixelSize,
+) {
+  const brushSize = brushSizeState.get();
+
+  switch (brushSize) {
+    case 1:
+      ctx.fillRect(clientX, clientY, pixelSize, pixelSize);
+      break;
+    case 2:
+      ctx.fillRect(
+        clientX - pixelSize,
+        clientY - pixelSize,
+        pixelSize * 2,
+        pixelSize * 2,
+      );
+      break;
+    case 3:
+      ctx.fillRect(clientX - pixelSize, clientY, pixelSize * 3, pixelSize);
+      ctx.fillRect(clientX, clientY - pixelSize, pixelSize, pixelSize * 3);
+      break;
+    case 4:
+      ctx.fillRect(
+        clientX - pixelSize * 2,
+        clientY - pixelSize,
+        pixelSize * 4,
+        pixelSize * 2,
+      );
+      ctx.fillRect(
+        clientX - pixelSize,
+        clientY - pixelSize * 2,
+        pixelSize * 2,
+        pixelSize * 4,
+      );
+      break;
+    case 5:
+      ctx.fillRect(
+        clientX - pixelSize * 2,
+        clientY - pixelSize,
+        pixelSize * 5,
+        pixelSize * 3,
+      );
+      ctx.fillRect(
+        clientX - pixelSize,
+        clientY - pixelSize * 2,
+        pixelSize * 3,
+        pixelSize * 5,
+      );
+      break;
+    default:
+      break;
+  }
+}
+
 function redrawTelegraph(
   clientX: number,
   clientY: number,
@@ -40,10 +102,11 @@ function redrawTelegraph(
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = COLOR_TABLE[context.currentColorRef];
-  ctx.fillRect(
+
+  drawBrush(
+    ctx,
     canvasToClient(canvasX, context.camera.zoom),
     canvasToClient(canvasY, context.camera.zoom),
-    pixelSize,
     pixelSize,
   );
 }
