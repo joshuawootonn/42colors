@@ -26,7 +26,7 @@ function redrawTelegraph(
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = COLOR_TABLE[BLACK_REF];
-  ctx.fillRect(
+  ctx.strokeRect(
     canvasToClient(canvasX, context.camera.zoom),
     canvasToClient(canvasY, context.camera.zoom),
     pixelSize,
