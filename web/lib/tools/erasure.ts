@@ -38,15 +38,71 @@ function redrawTelegraph(
     y: canvasToClient(canvasY, context.camera.zoom),
     camera: context.camera,
   });
-  const brushPoints = getBrushPoints(
-    [point],
-    erasureSizeState.get(),
-    pixelSize,
-  );
 
-  for (let i = 0; i < brushPoints.length; i++) {
-    const point = brushPoints[i];
+  const erasureSize = erasureSizeState.get();
+
+  if (erasureSize === 1) {
     ctx.strokeRect(point.x, point.y, pixelSize, pixelSize);
+  } else if (erasureSize === 2) {
+    ctx.beginPath();
+    ctx.strokeStyle = "black";
+    ctx.moveTo(point.x - pixelSize, point.y - pixelSize);
+    ctx.lineTo(point.x + pixelSize, point.y - pixelSize);
+    ctx.lineTo(point.x + pixelSize, point.y + pixelSize);
+    ctx.lineTo(point.x - pixelSize, point.y + pixelSize);
+    ctx.lineTo(point.x - pixelSize, point.y - pixelSize);
+    ctx.stroke();
+  } else if (erasureSize === 3) {
+    ctx.beginPath();
+    ctx.strokeStyle = "black";
+    ctx.moveTo(point.x, point.y);
+    ctx.lineTo(point.x, point.y - pixelSize);
+    ctx.lineTo(point.x + pixelSize, point.y - pixelSize);
+    ctx.lineTo(point.x + pixelSize, point.y);
+    ctx.lineTo(point.x + pixelSize * 2, point.y);
+    ctx.lineTo(point.x + pixelSize * 2, point.y + pixelSize);
+    ctx.lineTo(point.x + pixelSize, point.y + pixelSize);
+    ctx.lineTo(point.x + pixelSize, point.y + pixelSize * 2);
+    ctx.lineTo(point.x, point.y + pixelSize * 2);
+    ctx.lineTo(point.x, point.y + pixelSize);
+    ctx.lineTo(point.x - pixelSize, point.y + pixelSize);
+    ctx.lineTo(point.x - pixelSize, point.y);
+    ctx.lineTo(point.x, point.y);
+    ctx.stroke();
+  } else if (erasureSize === 4) {
+    ctx.beginPath();
+    ctx.strokeStyle = "black";
+    ctx.moveTo(point.x - pixelSize, point.y - pixelSize);
+    ctx.lineTo(point.x - pixelSize, point.y - pixelSize * 2);
+    ctx.lineTo(point.x + pixelSize, point.y - pixelSize * 2);
+    ctx.lineTo(point.x + pixelSize, point.y - pixelSize);
+    ctx.lineTo(point.x + pixelSize * 2, point.y - pixelSize);
+    ctx.lineTo(point.x + pixelSize * 2, point.y + pixelSize);
+    ctx.lineTo(point.x + pixelSize, point.y + pixelSize);
+    ctx.lineTo(point.x + pixelSize, point.y + pixelSize * 2);
+    ctx.lineTo(point.x - pixelSize, point.y + pixelSize * 2);
+    ctx.lineTo(point.x - pixelSize, point.y + pixelSize);
+    ctx.lineTo(point.x - pixelSize * 2, point.y + pixelSize);
+    ctx.lineTo(point.x - pixelSize * 2, point.y - pixelSize);
+    ctx.lineTo(point.x - pixelSize, point.y - pixelSize);
+    ctx.stroke();
+  } else if (erasureSize === 5) {
+    ctx.beginPath();
+    ctx.strokeStyle = "black";
+    ctx.moveTo(point.x - pixelSize, point.y - pixelSize);
+    ctx.lineTo(point.x - pixelSize, point.y - pixelSize * 2);
+    ctx.lineTo(point.x + pixelSize * 2, point.y - pixelSize * 2);
+    ctx.lineTo(point.x + pixelSize * 2, point.y - pixelSize);
+    ctx.lineTo(point.x + pixelSize * 3, point.y - pixelSize);
+    ctx.lineTo(point.x + pixelSize * 3, point.y + pixelSize * 2);
+    ctx.lineTo(point.x + pixelSize * 2, point.y + pixelSize * 2);
+    ctx.lineTo(point.x + pixelSize * 2, point.y + pixelSize * 3);
+    ctx.lineTo(point.x - pixelSize, point.y + pixelSize * 3);
+    ctx.lineTo(point.x - pixelSize, point.y + pixelSize * 2);
+    ctx.lineTo(point.x - pixelSize * 2, point.y + pixelSize * 2);
+    ctx.lineTo(point.x - pixelSize * 2, point.y - pixelSize);
+    ctx.lineTo(point.x - pixelSize * 1, point.y - pixelSize);
+    ctx.stroke();
   }
 }
 
