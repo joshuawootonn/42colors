@@ -68,12 +68,22 @@ defmodule Api.Canvas do
 
   """
   def create_many_pixels(attrs \\ %{}) do
-    pixels = Enum.map(attrs, fn pixel ->
-      {:ok, pixel} = create_pixel(pixel)
-      pixel
+    changesets = Enum.map(attrs, fn attr ->
+      %Pixel{} |> Pixel.changeset(attr)
     end)
 
-    {:ok, pixels}
+    result = Enum.reduce(changesets, Ecto.Multi.new(), fn changeset, multi ->
+      Ecto.Multi.insert(multi, {:pixel, System.unique_integer()}, changeset)
+    end)
+    |> Repo.transaction()
+
+    case result do
+      {:ok, changes} ->
+        pixels = changes |> Map.values()
+        {:ok, pixels}
+      {:error, _, changeset, _} ->
+        {:error, changeset}
+    end
   end
 
   @doc """
