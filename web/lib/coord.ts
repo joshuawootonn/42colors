@@ -22,3 +22,7 @@ export const pointSchema = z
 
 export type Coord = { x: number; y: number };
 export type Point = Coord & { camera: Camera };
+
+export function coordSort(a: Coord, b: Coord) {
+  return a.x === b.x ? a.y - b.y : a.x - b.x;
+}
