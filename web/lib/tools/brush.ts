@@ -4,13 +4,14 @@ import {
   clientToCanvas,
 } from "../utils/clientToCanvasConversion";
 import { COLOR_TABLE, ColorRef } from "../palette";
-import { Pixel, pixelSchema, Point } from "../coord";
+import { Pixel, pixelSchema, Point, pointSchema } from "../coord";
 import { Camera, getZoomMultiplier } from "../camera";
-import { getPixelSize, PixelSize } from "../realtime";
+import { getPixelSize } from "../realtime";
 
 import { createAtom } from "@xstate/store";
 import { EnqueueObject } from "../xstate-internal-types";
 import { dedupeCoords } from "../utils/dedupe-coords";
+import { newNewCoords } from "../utils/net-new-coords";
 
 export const brushSizeState = createAtom(1);
 
@@ -31,61 +32,72 @@ export function getCanvasXY(
   return { canvasX, canvasY };
 }
 
-function drawBrush(
-  ctx: CanvasRenderingContext2D,
-  clientX: number,
-  clientY: number,
-  pixelSize: PixelSize,
-) {
-  const brushSize = brushSizeState.get();
+export function getBrushPoints(
+  points: Point[],
+  brushSize: number,
+  pixelSize: number,
+): Point[] {
+  const nextPoints: Point[] = [];
+  for (let i = 0; i < points.length; i++) {
+    const point = points[i];
 
-  switch (brushSize) {
-    case 1:
-      ctx.fillRect(clientX, clientY, pixelSize, pixelSize);
-      break;
-    case 2:
-      ctx.fillRect(
-        clientX - pixelSize,
-        clientY - pixelSize,
-        pixelSize * 2,
-        pixelSize * 2,
-      );
-      break;
-    case 3:
-      ctx.fillRect(clientX - pixelSize, clientY, pixelSize * 3, pixelSize);
-      ctx.fillRect(clientX, clientY - pixelSize, pixelSize, pixelSize * 3);
-      break;
-    case 4:
-      ctx.fillRect(
-        clientX - pixelSize * 2,
-        clientY - pixelSize,
-        pixelSize * 4,
-        pixelSize * 2,
-      );
-      ctx.fillRect(
-        clientX - pixelSize,
-        clientY - pixelSize * 2,
-        pixelSize * 2,
-        pixelSize * 4,
-      );
-      break;
-    case 5:
-      ctx.fillRect(
-        clientX - pixelSize * 2,
-        clientY - pixelSize,
-        pixelSize * 5,
-        pixelSize * 3,
-      );
-      ctx.fillRect(
-        clientX - pixelSize,
-        clientY - pixelSize * 2,
-        pixelSize * 3,
-        pixelSize * 5,
-      );
-      break;
-    default:
-      break;
+    switch (brushSize) {
+      case 1:
+        nextPoints.push({ ...point });
+        break;
+
+      case 2:
+        nextPoints.push({ ...point });
+        nextPoints.push({ ...point, x: point.x - pixelSize });
+        nextPoints.push({ ...point, y: point.y - pixelSize });
+        nextPoints.push({
+          ...point,
+          x: point.x - pixelSize,
+          y: point.y - pixelSize,
+        });
+        break;
+
+      case 3:
+        nextPoints.push({ ...point });
+        nextPoints.push({ ...point, x: point.x - pixelSize });
+        nextPoints.push({ ...point, y: point.y - pixelSize });
+        nextPoints.push({ ...point, x: point.x + pixelSize });
+        nextPoints.push({ ...point, y: point.y + pixelSize });
+        break;
+
+      case 4:
+        for (let i = -2; i <= 1; i++) {
+          for (let j = -2; j <= 1; j++) {
+            if ((i === -2 || i === 1) && (j === 1 || j === -2)) continue;
+            nextPoints.push({
+              x: point.x + i * pixelSize,
+              y: point.y + j * pixelSize,
+              camera: point.camera,
+            });
+          }
+        }
+        break;
+
+      case 5:
+        for (let i = -2; i <= 2; i++) {
+          for (let j = -2; j <= 2; j++) {
+            if (Math.abs(i) === 2 && Math.abs(j) === 2) continue;
+            nextPoints.push({
+              x: point.x + i * pixelSize,
+              y: point.y + j * pixelSize,
+              camera: point.camera,
+            });
+          }
+        }
+
+        break;
+
+      default:
+        break;
+    }
   }
+
+  return dedupeCoords(nextPoints);
 }
 
 function redrawTelegraph(
@@ -104,12 +116,17 @@ function redrawTelegraph(
 
   ctx.fillStyle = COLOR_TABLE[context.currentColorRef];
 
-  drawBrush(
-    ctx,
-    canvasToClient(canvasX, context.camera.zoom),
-    canvasToClient(canvasY, context.camera.zoom),
-    pixelSize,
-  );
+  const point = pointSchema.parse({
+    x: canvasToClient(canvasX, context.camera.zoom),
+    y: canvasToClient(canvasY, context.camera.zoom),
+    camera: context.camera,
+  });
+  const brushPoints = getBrushPoints([point], brushSizeState.get(), pixelSize);
+
+  for (let i = 0; i < brushPoints.length; i++) {
+    const point = brushPoints[i];
+    ctx.fillRect(point.x, point.y, pixelSize, pixelSize);
+  }
 }
 
 export function bresenhamLine(
@@ -187,6 +204,7 @@ export type BrushActive = {
   type: "brush-active";
   colorRef: ColorRef;
   points: Point[];
+  anchorPoints: Point[];
 };
 
 export function isDuplicatePoint(
@@ -200,24 +218,27 @@ export function isDuplicatePoint(
 }
 
 export function startBrushAction(
-  canvasX: number,
-  canvasY: number,
-  context: InitializedStore,
+  anchorPoint: Point,
+  brushPoints: Point[],
+  colorRef: ColorRef,
 ): BrushActive {
   return {
     type: "brush-active",
-    colorRef: context.currentColorRef,
-    points: [{ x: canvasX, y: canvasY, camera: context.camera }],
+    colorRef: colorRef,
+    points: brushPoints,
+    anchorPoints: [anchorPoint],
   };
 }
 
 export function nextBrushAction(
   activeBrushAction: BrushActive,
-  newPoints: Point[],
+  newAnchorPoints: Point[],
+  newBrushPoints: Point[],
 ): BrushActive {
   return {
     ...activeBrushAction,
-    points: dedupeCoords(activeBrushAction.points.concat(newPoints)),
+    anchorPoints: activeBrushAction.anchorPoints.concat(newAnchorPoints),
+    points: activeBrushAction.points.concat(newBrushPoints),
   };
 }
 
@@ -228,7 +249,18 @@ function onPointerDown(
 ): InitializedStore {
   const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
 
-  const nextActiveAction = startBrushAction(canvasX, canvasY, context);
+  const anchorPoint = pointSchema.parse({
+    x: canvasX,
+    y: canvasY,
+    camera: context.camera,
+  });
+  const brushPoints = getBrushPoints([anchorPoint], brushSizeState.get(), 1);
+
+  const nextActiveAction = startBrushAction(
+    anchorPoint,
+    brushPoints,
+    context.currentColorRef,
+  );
 
   enqueue.effect(() => {
     store.trigger.newPixels({
@@ -260,18 +292,31 @@ function onPointerMove(
     return context;
   }
 
-  const newPoints = bresenhamLine(
-    context.activeAction.points.at(-1)!.x,
-    context.activeAction.points.at(-1)!.y,
+  const newAnchorPoints = bresenhamLine(
+    context.activeAction.anchorPoints.at(-1)!.x,
+    context.activeAction.anchorPoints.at(-1)!.y,
     canvasX,
     canvasY,
     context.camera,
   );
 
-  const nextActiveAction = nextBrushAction(context.activeAction, newPoints);
+  const netNewAnchors = newNewCoords(
+    context.activeAction.anchorPoints,
+    newAnchorPoints,
+  );
+  const newBrushPoints = getBrushPoints(netNewAnchors, brushSizeState.get(), 1);
+  const netNewPixels = newNewCoords(
+    context.activeAction.points,
+    newBrushPoints,
+  );
+  const nextActiveAction = nextBrushAction(
+    context.activeAction,
+    newAnchorPoints,
+    newBrushPoints,
+  );
   enqueue.effect(() => {
     store.trigger.newPixels({
-      pixels: pointsToPixels(newPoints, nextActiveAction.colorRef),
+      pixels: pointsToPixels(netNewPixels, nextActiveAction.colorRef),
     });
     store.trigger.redrawRealtimeCanvas();
   });
@@ -296,22 +341,31 @@ function onWheel(
     return context;
   }
 
-  const newPoints = bresenhamLine(
-    context.activeAction.points.at(-1)!.x,
-    context.activeAction.points.at(-1)!.y,
+  const newAnchorPoints = bresenhamLine(
+    context.activeAction.anchorPoints.at(-1)!.x,
+    context.activeAction.anchorPoints.at(-1)!.y,
     canvasX,
     canvasY,
     context.camera,
   );
-  const dedupedNewPoints = dedupeCoords(newPoints);
 
+  const netNewAnchors = newNewCoords(
+    context.activeAction.anchorPoints,
+    newAnchorPoints,
+  );
+  const newBrushPoints = getBrushPoints(netNewAnchors, brushSizeState.get(), 1);
+  const netNewPixels = newNewCoords(
+    context.activeAction.points,
+    newBrushPoints,
+  );
   const nextActiveAction = nextBrushAction(
     context.activeAction,
-    dedupedNewPoints,
+    newAnchorPoints,
+    newBrushPoints,
   );
   enqueue.effect(() => {
     store.trigger.newPixels({
-      pixels: pointsToPixels(newPoints, nextActiveAction.colorRef),
+      pixels: pointsToPixels(netNewPixels, nextActiveAction.colorRef),
     });
     store.trigger.redrawRealtimeCanvas();
   });
