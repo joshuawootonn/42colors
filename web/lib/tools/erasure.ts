@@ -2,6 +2,7 @@ import { BLACK_REF, COLOR_TABLE, TRANSPARENT_REF } from "../palette";
 import { InitializedStore, store } from "../store";
 import {
   bresenhamLine,
+  getBrushPoints,
   getCanvasXY,
   isDuplicatePoint,
   pointsToPixels,
@@ -10,8 +11,11 @@ import { canvasToClient } from "../utils/clientToCanvasConversion";
 import { getZoomMultiplier } from "../camera";
 import { getPixelSize } from "../realtime";
 import { EnqueueObject } from "../xstate-internal-types";
-import { Point } from "../coord";
-import { dedupeCoords } from "../utils/dedupe-coords";
+import { Point, pointSchema } from "../coord";
+import { createAtom } from "@xstate/store";
+import { newNewCoords } from "../utils/net-new-coords";
+
+export const erasureSizeState = createAtom(1);
 
 function redrawTelegraph(
   clientX: number,
@@ -28,22 +32,50 @@ function redrawTelegraph(
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = COLOR_TABLE[BLACK_REF];
-  ctx.strokeRect(
-    canvasToClient(canvasX, context.camera.zoom),
-    canvasToClient(canvasY, context.camera.zoom),
-    pixelSize,
+
+  const point = pointSchema.parse({
+    x: canvasToClient(canvasX, context.camera.zoom),
+    y: canvasToClient(canvasY, context.camera.zoom),
+    camera: context.camera,
+  });
+  const brushPoints = getBrushPoints(
+    [point],
+    erasureSizeState.get(),
     pixelSize,
   );
+
+  for (let i = 0; i < brushPoints.length; i++) {
+    const point = brushPoints[i];
+    ctx.strokeRect(point.x, point.y, pixelSize, pixelSize);
+  }
 }
 
+export type ErasureActive = {
+  type: "erasure-active";
+  points: Point[];
+  anchorPoints: Point[];
+};
+
 export function startErasureAction(
-  canvasX: number,
-  canvasY: number,
-  context: InitializedStore,
+  anchorPoint: Point,
+  erasurePoints: Point[],
 ): ErasureActive {
   return {
     type: "erasure-active",
-    points: [{ x: canvasX, y: canvasY, camera: context.camera }],
+    points: erasurePoints,
+    anchorPoints: [anchorPoint],
+  };
+}
+
+export function nextErasureAction(
+  activeBrushAction: ErasureActive,
+  newAnchorPoints: Point[],
+  newErasurePoints: Point[],
+): ErasureActive {
+  return {
+    ...activeBrushAction,
+    anchorPoints: activeBrushAction.anchorPoints.concat(newAnchorPoints),
+    points: activeBrushAction.points.concat(newErasurePoints),
   };
 }
 
@@ -54,7 +86,14 @@ function onPointerDown(
 ): InitializedStore {
   const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
 
-  const nextActiveAction = startErasureAction(canvasX, canvasY, context);
+  const anchorPoint = pointSchema.parse({
+    x: canvasX,
+    y: canvasY,
+    camera: context.camera,
+  });
+  const brushPoints = getBrushPoints([anchorPoint], erasureSizeState.get(), 1);
+
+  const nextActiveAction = startErasureAction(anchorPoint, brushPoints);
 
   enqueue.effect(() => {
     store.trigger.newPixels({
@@ -65,21 +104,6 @@ function onPointerDown(
   return {
     ...context,
     activeAction: nextActiveAction,
-  };
-}
-
-export type ErasureActive = {
-  type: "erasure-active";
-  points: Point[];
-};
-
-export function nextErasureAction(
-  activeErasureAction: ErasureActive,
-  newPoints: Point[],
-): ErasureActive {
-  return {
-    ...activeErasureAction,
-    points: dedupeCoords(activeErasureAction.points.concat(newPoints)),
   };
 }
 
@@ -97,17 +121,35 @@ function onPointerMove(
     return context;
   }
 
-  const newPoints = bresenhamLine(
-    context.activeAction.points.at(-1)!.x,
-    context.activeAction.points.at(-1)!.y,
+  const newAnchorPoints = bresenhamLine(
+    context.activeAction.anchorPoints.at(-1)!.x,
+    context.activeAction.anchorPoints.at(-1)!.y,
     canvasX,
     canvasY,
     context.camera,
   );
-  const nextActiveAction = nextErasureAction(context.activeAction, newPoints);
+
+  const netNewAnchors = newNewCoords(
+    context.activeAction.anchorPoints,
+    newAnchorPoints,
+  );
+  const newBrushPoints = getBrushPoints(
+    netNewAnchors,
+    erasureSizeState.get(),
+    1,
+  );
+  const netNewPixels = newNewCoords(
+    context.activeAction.points,
+    newBrushPoints,
+  );
+  const nextActiveAction = nextErasureAction(
+    context.activeAction,
+    newAnchorPoints,
+    newBrushPoints,
+  );
   enqueue.effect(() => {
     store.trigger.newPixels({
-      pixels: pointsToPixels(newPoints, TRANSPARENT_REF),
+      pixels: pointsToPixels(netNewPixels, TRANSPARENT_REF),
     });
     store.trigger.redrawRealtimeCanvas();
   });
@@ -132,17 +174,35 @@ function onWheel(
     return context;
   }
 
-  const newPoints = bresenhamLine(
-    context.activeAction.points.at(-1)!.x,
-    context.activeAction.points.at(-1)!.y,
+  const newAnchorPoints = bresenhamLine(
+    context.activeAction.anchorPoints.at(-1)!.x,
+    context.activeAction.anchorPoints.at(-1)!.y,
     canvasX,
     canvasY,
     context.camera,
   );
-  const nextActiveAction = nextErasureAction(context.activeAction, newPoints);
+
+  const netNewAnchors = newNewCoords(
+    context.activeAction.anchorPoints,
+    newAnchorPoints,
+  );
+  const newBrushPoints = getBrushPoints(
+    netNewAnchors,
+    erasureSizeState.get(),
+    1,
+  );
+  const netNewPixels = newNewCoords(
+    context.activeAction.points,
+    newBrushPoints,
+  );
+  const nextActiveAction = nextErasureAction(
+    context.activeAction,
+    newAnchorPoints,
+    newBrushPoints,
+  );
   enqueue.effect(() => {
     store.trigger.newPixels({
-      pixels: pointsToPixels(newPoints, TRANSPARENT_REF),
+      pixels: pointsToPixels(netNewPixels, TRANSPARENT_REF),
     });
     store.trigger.redrawRealtimeCanvas();
   });

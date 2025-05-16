@@ -15,6 +15,7 @@ import { Footer } from "@/components/footer";
 import { Navigation } from "@/components/navigation";
 import { Palette } from "@/components/palette";
 import { BrushPanel } from "@/lib/tools/brush-panel";
+import { ErasurePanel } from "@/lib/tools/erasure-panel";
 
 const queryClient = new QueryClient();
 
@@ -92,6 +93,7 @@ export default function Page() {
       <div className="flex flex-col space-y-3 fixed top-16 left-3">
         <Palette />
         {user?.email === "jose56wonton@gmail.com" ? <BrushPanel /> : null}
+        {user?.email === "jose56wonton@gmail.com" ? <ErasurePanel /> : null}
       </div>
 
       <div className="flex fixed  top-3 right-3">
