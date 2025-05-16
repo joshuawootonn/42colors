@@ -33,12 +33,16 @@ function brush(points: Point[], colorRef: ColorRef): BrushActive {
     type: "brush-active",
     colorRef,
     points,
+    //todo(josh): these shouldn't be faked like this, update the function
+    anchorPoints: points,
   };
 }
 function erase(points: Point[]): ErasureActive {
   return {
     type: "erasure-active",
     points,
+    //todo(josh): these shouldn't be faked like this, update the function
+    anchorPoints: points,
   };
 }
 function undo(): Undo {
