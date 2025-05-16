@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { EventObject } from "@xstate/store";
 
 type AllKeys<T> = T extends any ? keyof T : never;
