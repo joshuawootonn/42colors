@@ -12,6 +12,7 @@ import { createAtom } from "@xstate/store";
 import { EnqueueObject } from "../xstate-internal-types";
 import { dedupeCoords } from "../utils/dedupe-coords";
 import { newNewCoords } from "../utils/net-new-coords";
+import { drawBrushOutline } from "./brush-rendering";
 
 export const brushSizeState = createAtom(1);
 
@@ -121,12 +122,9 @@ function redrawTelegraph(
     y: canvasToClient(canvasY, context.camera.zoom),
     camera: context.camera,
   });
-  const brushPoints = getBrushPoints([point], brushSizeState.get(), pixelSize);
 
-  for (let i = 0; i < brushPoints.length; i++) {
-    const point = brushPoints[i];
-    ctx.fillRect(point.x, point.y, pixelSize, pixelSize);
-  }
+  drawBrushOutline(ctx, point, brushSizeState.get(), pixelSize);
+  ctx.fill();
 }
 
 export function bresenhamLine(

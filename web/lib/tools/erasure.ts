@@ -14,6 +14,7 @@ import { EnqueueObject } from "../xstate-internal-types";
 import { Point, pointSchema } from "../coord";
 import { createAtom } from "@xstate/store";
 import { newNewCoords } from "../utils/net-new-coords";
+import { drawBrushOutline } from "./brush-rendering";
 
 export const erasureSizeState = createAtom(1);
 
@@ -41,69 +42,9 @@ function redrawTelegraph(
 
   const erasureSize = erasureSizeState.get();
 
-  if (erasureSize === 1) {
-    ctx.strokeRect(point.x, point.y, pixelSize, pixelSize);
-  } else if (erasureSize === 2) {
-    ctx.beginPath();
-    ctx.strokeStyle = "black";
-    ctx.moveTo(point.x - pixelSize, point.y - pixelSize);
-    ctx.lineTo(point.x + pixelSize, point.y - pixelSize);
-    ctx.lineTo(point.x + pixelSize, point.y + pixelSize);
-    ctx.lineTo(point.x - pixelSize, point.y + pixelSize);
-    ctx.lineTo(point.x - pixelSize, point.y - pixelSize);
-    ctx.stroke();
-  } else if (erasureSize === 3) {
-    ctx.beginPath();
-    ctx.strokeStyle = "black";
-    ctx.moveTo(point.x, point.y);
-    ctx.lineTo(point.x, point.y - pixelSize);
-    ctx.lineTo(point.x + pixelSize, point.y - pixelSize);
-    ctx.lineTo(point.x + pixelSize, point.y);
-    ctx.lineTo(point.x + pixelSize * 2, point.y);
-    ctx.lineTo(point.x + pixelSize * 2, point.y + pixelSize);
-    ctx.lineTo(point.x + pixelSize, point.y + pixelSize);
-    ctx.lineTo(point.x + pixelSize, point.y + pixelSize * 2);
-    ctx.lineTo(point.x, point.y + pixelSize * 2);
-    ctx.lineTo(point.x, point.y + pixelSize);
-    ctx.lineTo(point.x - pixelSize, point.y + pixelSize);
-    ctx.lineTo(point.x - pixelSize, point.y);
-    ctx.lineTo(point.x, point.y);
-    ctx.stroke();
-  } else if (erasureSize === 4) {
-    ctx.beginPath();
-    ctx.strokeStyle = "black";
-    ctx.moveTo(point.x - pixelSize, point.y - pixelSize);
-    ctx.lineTo(point.x - pixelSize, point.y - pixelSize * 2);
-    ctx.lineTo(point.x + pixelSize, point.y - pixelSize * 2);
-    ctx.lineTo(point.x + pixelSize, point.y - pixelSize);
-    ctx.lineTo(point.x + pixelSize * 2, point.y - pixelSize);
-    ctx.lineTo(point.x + pixelSize * 2, point.y + pixelSize);
-    ctx.lineTo(point.x + pixelSize, point.y + pixelSize);
-    ctx.lineTo(point.x + pixelSize, point.y + pixelSize * 2);
-    ctx.lineTo(point.x - pixelSize, point.y + pixelSize * 2);
-    ctx.lineTo(point.x - pixelSize, point.y + pixelSize);
-    ctx.lineTo(point.x - pixelSize * 2, point.y + pixelSize);
-    ctx.lineTo(point.x - pixelSize * 2, point.y - pixelSize);
-    ctx.lineTo(point.x - pixelSize, point.y - pixelSize);
-    ctx.stroke();
-  } else if (erasureSize === 5) {
-    ctx.beginPath();
-    ctx.strokeStyle = "black";
-    ctx.moveTo(point.x - pixelSize, point.y - pixelSize);
-    ctx.lineTo(point.x - pixelSize, point.y - pixelSize * 2);
-    ctx.lineTo(point.x + pixelSize * 2, point.y - pixelSize * 2);
-    ctx.lineTo(point.x + pixelSize * 2, point.y - pixelSize);
-    ctx.lineTo(point.x + pixelSize * 3, point.y - pixelSize);
-    ctx.lineTo(point.x + pixelSize * 3, point.y + pixelSize * 2);
-    ctx.lineTo(point.x + pixelSize * 2, point.y + pixelSize * 2);
-    ctx.lineTo(point.x + pixelSize * 2, point.y + pixelSize * 3);
-    ctx.lineTo(point.x - pixelSize, point.y + pixelSize * 3);
-    ctx.lineTo(point.x - pixelSize, point.y + pixelSize * 2);
-    ctx.lineTo(point.x - pixelSize * 2, point.y + pixelSize * 2);
-    ctx.lineTo(point.x - pixelSize * 2, point.y - pixelSize);
-    ctx.lineTo(point.x - pixelSize * 1, point.y - pixelSize);
-    ctx.stroke();
-  }
+  ctx.strokeStyle = "black";
+  drawBrushOutline(ctx, point, erasureSize, pixelSize);
+  ctx.stroke();
 }
 
 export type ErasureActive = {
