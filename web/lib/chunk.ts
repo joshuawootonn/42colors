@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { CHUNK_LENGTH } from "./constants";
 import { COLOR_TABLE } from "./palette";
-import { Pixel, pixelSchema } from "./coord";
+import { Coord, Pixel, pixelSchema } from "./coord";
 import { dedupe } from "./utils/dedupe";
 
 export type Chunk = {
@@ -68,8 +68,10 @@ export function clearChunkPixels(
 ) {
   for (let i = 0; i < pixels.length; i++) {
     const p = pixels[i];
+    const chunkOrigin = getChunkOrigin(p.x, p.y);
     const chunk = chunkCanvases[getChunkKey(p.x, p.y)];
-    const chunkPixel = getChunkPixel(p);
+    const chunkPixel = getChunkPixel(chunkOrigin, p);
+
     chunk.context.clearRect(chunkPixel.x, chunkPixel.y, 1, 1);
   }
 }
@@ -77,17 +79,22 @@ export function clearChunkPixels(
 export const chunkPixelSchema = pixelSchema.brand<"ChunkPixel">();
 export type ChunkPixel = z.infer<typeof chunkPixelSchema>;
 
-function getChunkPixel(pixel: Pixel): ChunkPixel {
+function getChunkPixel(chunkOrigin: Coord, pixel: Pixel): ChunkPixel {
   return chunkPixelSchema.parse({
     ...pixel,
-    x: pixel.x - Math.floor(pixel.x / CHUNK_LENGTH),
-    y: pixel.y - Math.floor(pixel.y / CHUNK_LENGTH),
+    x: pixel.x - chunkOrigin.x,
+    y: pixel.y - chunkOrigin.y,
     type: "chunk",
   });
 }
 
-export function getChunkKey(x: number, y: number) {
+export function getChunkOrigin(x: number, y: number): Coord {
   const chunkX = Math.floor(x / CHUNK_LENGTH) * CHUNK_LENGTH;
   const chunkY = Math.floor(y / CHUNK_LENGTH) * CHUNK_LENGTH;
-  return `x: ${chunkX} y: ${chunkY}`;
+  return { x: chunkX, y: chunkY };
+}
+
+export function getChunkKey(x: number, y: number): string {
+  const chunkOrigin = getChunkOrigin(x, y);
+  return `x: ${chunkOrigin.x} y: ${chunkOrigin.y}`;
 }
