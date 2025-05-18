@@ -37,6 +37,7 @@ export default async function RootLayout({
           name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
         />
+        <link rel="icon" href="/favicon.png" type="image/png" sizes="96x96" />
       </head>
       <body className={`${space.variable} font-sans`}>
         <div className="flex fixed top-[10px] left-[10px]">
