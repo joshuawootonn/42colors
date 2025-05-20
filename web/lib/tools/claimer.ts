@@ -1,8 +1,31 @@
 import { InitializedStore, store } from "../store";
-import { getCanvasXY } from "./brush";
+import { getCameraOffset, getCanvasXY } from "./brush";
 import { EnqueueObject } from "../xstate-internal-types";
-import { Point, pointSchema } from "../coord";
-import { canvasToClient } from "../utils/clientToCanvasConversion";
+import { absolutePointSchema } from "../coord";
+import { Rect, rectSchema } from "../rect";
+import { getPixelSize } from "../realtime";
+import { Camera, getZoomMultiplier } from "../camera";
+
+function redrawRectTelegraph(
+  ctx: CanvasRenderingContext2D,
+  rect: Rect,
+  pixelSize: number,
+  camera: Camera,
+) {
+  const { xOffset, yOffset } = getCameraOffset(camera);
+  const oX = (rect.origin.x - camera.x + xOffset) * pixelSize;
+  const oY = (rect.origin.y - camera.y + yOffset) * pixelSize;
+  const tX = (rect.target.x - camera.x + xOffset) * pixelSize;
+  const tY = (rect.target.y - camera.y + yOffset) * pixelSize;
+  ctx.beginPath();
+  ctx.lineWidth = pixelSize / 3;
+  ctx.moveTo(oX, oY);
+  ctx.lineTo(tX, oY);
+  ctx.lineTo(tX, tY);
+  ctx.lineTo(oX, tY);
+  ctx.lineTo(oX, oY);
+  ctx.stroke();
+}
 
 function redrawTelegraph(context: InitializedStore) {
   const ctx = context.canvas.telegraphCanvasContext;
@@ -17,50 +40,80 @@ function redrawTelegraph(context: InitializedStore) {
 
   ctx.strokeStyle = "yellow";
 
-  const o = context.activeAction.origin;
-  const t = context.activeAction.target;
+  const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
+  for (let i = 0; i < context.activeAction.rects.length; i++) {
+    const rect = context.activeAction.rects[i];
 
-  const origin = pointSchema.parse({
-    x: canvasToClient(o.x, context.camera.zoom),
-    y: canvasToClient(o.y, context.camera.zoom),
-    camera: context.camera,
-  });
-  const target = pointSchema.parse({
-    x: canvasToClient(t.x, context.camera.zoom),
-    y: canvasToClient(t.y, context.camera.zoom),
-    camera: context.camera,
-  });
-  ctx.beginPath();
-  ctx.lineWidth = 6;
-  ctx.moveTo(origin.x, origin.y);
-  ctx.lineTo(target.x, origin.y);
-  ctx.lineTo(target.x, target.y);
-  ctx.lineTo(origin.x, target.y);
-  ctx.lineTo(origin.x, origin.y);
-  ctx.stroke();
+    redrawRectTelegraph(ctx, rect, pixelSize, context.camera);
+  }
+
+  if (context.activeAction.nextRect != null) {
+    redrawRectTelegraph(
+      ctx,
+      context.activeAction.nextRect,
+      pixelSize,
+      context.camera,
+    );
+  }
 }
+
+export type ClaimerComplete = {
+  type: "claimer-complete";
+  rects: Rect[];
+};
 
 export type ClaimerActive = {
   type: "claimer-active";
-  origin: Point;
-  target: Point;
+  rects: Rect[];
+  nextRect: Rect | null;
 };
 
-export function startClaimerAction(point: Point): ClaimerActive {
+export function startClaimerAction(rect: Rect): ClaimerActive {
   return {
     type: "claimer-active",
-    origin: point,
-    target: point,
+    rects: [],
+    nextRect: rect,
+  };
+}
+export function newRectAction(
+  activeBrushAction: ClaimerActive,
+  rect: Rect,
+): ClaimerActive {
+  return {
+    type: "claimer-active",
+    rects: activeBrushAction.rects,
+    nextRect: rect,
+  };
+}
+
+export function completeRectAction(
+  activeBrushAction: ClaimerActive,
+): ClaimerActive {
+  return {
+    type: "claimer-active",
+    rects: activeBrushAction.nextRect
+      ? activeBrushAction.rects.concat(activeBrushAction.nextRect)
+      : [],
+    nextRect: null,
   };
 }
 
 export function nextClaimerAction(
   activeBrushAction: ClaimerActive,
-  target: Point,
+  nextRect: Rect,
 ): ClaimerActive {
   return {
     ...activeBrushAction,
-    target,
+    nextRect: nextRect,
+  };
+}
+
+export function completeRectangleClaimerAction(
+  activeBrushAction: ClaimerActive,
+): ClaimerComplete {
+  return {
+    type: "claimer-complete",
+    rects: activeBrushAction.rects,
   };
 }
 
@@ -71,13 +124,21 @@ function onPointerDown(
 ): InitializedStore {
   const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
 
-  const point = pointSchema.parse({
-    x: canvasX,
-    y: canvasY,
+  const point = absolutePointSchema.parse({
+    x: Math.floor(canvasX + context.camera.x),
+    y: Math.floor(canvasY + context.camera.y),
     camera: context.camera,
   });
 
-  const nextActiveAction = startClaimerAction(point);
+  const rect = rectSchema.parse({
+    origin: point,
+    target: point,
+  });
+
+  const nextActiveAction =
+    context.activeAction?.type !== "claimer-active"
+      ? startClaimerAction(rect)
+      : newRectAction(context.activeAction, rect);
 
   enqueue.effect(() => {
     store.trigger.redrawRealtimeCanvas();
@@ -95,16 +156,26 @@ function onPointerMove(
 ): InitializedStore {
   const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
 
-  if (context.activeAction?.type !== "claimer-active") {
+  if (
+    context.activeAction?.type !== "claimer-active" ||
+    context.activeAction.nextRect == null
+  ) {
     return context;
   }
 
-  const point = pointSchema.parse({
-    x: canvasX,
-    y: canvasY,
+  const point = absolutePointSchema.parse({
+    x: Math.floor(canvasX + context.camera.x),
+    y: Math.floor(canvasY + context.camera.y),
     camera: context.camera,
   });
-  const nextActiveAction = nextClaimerAction(context.activeAction, point);
+
+  const rect = rectSchema.parse({
+    origin: context.activeAction.nextRect.origin,
+    target: point,
+  });
+
+  const nextActiveAction = nextClaimerAction(context.activeAction, rect);
+
   enqueue.effect(() => {
     store.trigger.redrawRealtimeCanvas();
   });
@@ -122,16 +193,24 @@ function onWheel(
 ): InitializedStore {
   const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
 
-  if (context.activeAction?.type !== "claimer-active") {
+  if (
+    context.activeAction?.type !== "claimer-active" ||
+    context.activeAction.nextRect == null
+  ) {
     return context;
   }
 
-  const point = pointSchema.parse({
-    x: canvasX,
-    y: canvasY,
+  const point = absolutePointSchema.parse({
+    x: Math.floor(canvasX + context.camera.x),
+    y: Math.floor(canvasY + context.camera.y),
     camera: context.camera,
   });
-  const nextActiveAction = nextClaimerAction(context.activeAction, point);
+  const rect = rectSchema.parse({
+    origin: context.activeAction.nextRect.origin,
+    target: point,
+  });
+
+  const nextActiveAction = nextClaimerAction(context.activeAction, rect);
   enqueue.effect(() => {
     store.trigger.redrawRealtimeCanvas();
   });
@@ -147,12 +226,13 @@ function onPointerOut(
   context: InitializedStore,
   __: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-  if (context.activeAction?.type !== "claimer-active") return context;
+  if (context.activeAction?.type !== "claimer-active") {
+    return context;
+  }
 
   return {
     ...context,
-    activeAction: null,
-    actions: context.actions.concat(context.activeAction),
+    activeAction: completeRectAction(context.activeAction),
   };
 }
 
@@ -161,12 +241,13 @@ function onPointerUp(
   context: InitializedStore,
   __: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-  if (context.activeAction?.type !== "claimer-active") return context;
+  if (context.activeAction?.type !== "claimer-active") {
+    return context;
+  }
 
   return {
     ...context,
-    activeAction: null,
-    actions: context.actions.concat(context.activeAction),
+    activeAction: completeRectAction(context.activeAction),
   };
 }
 
