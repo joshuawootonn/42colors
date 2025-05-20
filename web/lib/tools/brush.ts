@@ -16,20 +16,27 @@ import { drawBrushOutline } from "./brush-rendering";
 
 export const brushSizeState = createAtom(1);
 
-export function getCanvasXY(
-  clientX: number,
-  clientY: number,
-  context: InitializedStore,
-): { canvasX: number; canvasY: number } {
-  const camera = context.camera;
+export function getCameraOffset(camera: Camera): {
+  xOffset: number;
+  yOffset: number;
+} {
   const xFloor = Math.floor(camera.x);
   const yFloor = Math.floor(camera.y);
 
   const xOffset = camera.x - xFloor;
   const yOffset = camera.y - yFloor;
+  return { xOffset, yOffset };
+}
 
-  const canvasX = clientToCanvas(clientX, camera.zoom, xOffset);
-  const canvasY = clientToCanvas(clientY, camera.zoom, yOffset);
+export function getCanvasXY(
+  clientX: number,
+  clientY: number,
+  context: InitializedStore,
+): { canvasX: number; canvasY: number } {
+  const { xOffset, yOffset } = getCameraOffset(context.camera);
+
+  const canvasX = clientToCanvas(clientX, context.camera.zoom, xOffset);
+  const canvasY = clientToCanvas(clientY, context.camera.zoom, yOffset);
   return { canvasX, canvasY };
 }
 
