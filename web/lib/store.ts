@@ -590,9 +590,9 @@ export const store = createStore({
             context,
           );
           break;
-
         case "claimer":
           context.tools.claimerTool.redrawTelegraph(context);
+          break;
         default:
           console.log("default case of the redrawTelegraph");
       }
