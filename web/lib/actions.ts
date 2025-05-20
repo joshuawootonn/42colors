@@ -5,6 +5,7 @@ import { ErasureActive } from "./tools/erasure";
 import { pointsToPixels } from "./tools/brush";
 import { ColorRef, TRANSPARENT_REF } from "./palette";
 import { Camera } from "./camera";
+import { ClaimerActive } from "./tools/claimer";
 
 type Undo = { type: "undo" };
 type Redo = { type: "redo" };
@@ -12,6 +13,7 @@ type Redo = { type: "redo" };
 export type Action =
   | ErasureActive
   | BrushActive
+  | ClaimerActive
   | {
       type: "realtime-active";
       pixels: Pixel[];

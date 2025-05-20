@@ -58,6 +58,7 @@ import {
 import { newPixels } from "./channel";
 import { Camera } from "./camera";
 import { createTelegraphCanvas, resizeTelegraphCanvas } from "./telegraph";
+import { ClaimerTool } from "./tools/claimer";
 
 export type Tool = "pencil" | "brush" | "erasure" | "claimer";
 export type PointerState = "default" | "pressed";
@@ -95,6 +96,7 @@ export type InitializedStore = {
     pencilTool: PencilTool;
     brushTool: BrushTool;
     erasureTool: ErasureTool;
+    claimerTool: ClaimerTool;
     panTool: PanTool;
     wheelTool: WheelTool;
   };
@@ -213,6 +215,7 @@ export const store = createStore({
           erasureTool: ErasureTool,
           brushTool: BrushTool,
           pencilTool: PencilTool,
+          claimerTool: ClaimerTool,
           panTool: PanTool,
           wheelTool: WheelTool,
         },
@@ -588,6 +591,8 @@ export const store = createStore({
           );
           break;
 
+        case "claimer":
+          context.tools.claimerTool.redrawTelegraph(context);
         default:
           console.log("default case of the redrawTelegraph");
       }
@@ -691,6 +696,10 @@ export const store = createStore({
       if (context.currentTool === "erasure") {
         return context.tools.erasureTool.onPointerDown(e, context, enqueue);
       }
+
+      if (context.currentTool === "claimer") {
+        return context.tools.claimerTool.onPointerDown(e, context, enqueue);
+      }
     },
 
     onPointerMove: (context, { e }: { e: PointerEvent }, enqueue) => {
@@ -712,6 +721,10 @@ export const store = createStore({
       if (tool === "erasure") {
         return context.tools.erasureTool.onPointerMove(e, context, enqueue);
       }
+
+      if (tool === "claimer") {
+        return context.tools.claimerTool.onPointerMove(e, context, enqueue);
+      }
     },
 
     onPointerUp: (context, { e }: { e: PointerEvent }, enqueue) => {
@@ -728,6 +741,10 @@ export const store = createStore({
       if (context.currentTool === "erasure") {
         return context.tools.erasureTool.onPointerUp(e, context, enqueue);
       }
+
+      if (context.currentTool === "claimer") {
+        return context.tools.claimerTool.onPointerUp(e, context, enqueue);
+      }
     },
 
     onPointerOut: (context, { e }: { e: PointerEvent }, enqueue) => {
@@ -742,6 +759,10 @@ export const store = createStore({
 
       if (context.currentTool === "erasure") {
         return context.tools.erasureTool.onPointerOut(e, context, enqueue);
+      }
+
+      if (context.currentTool === "claimer") {
+        return context.tools.claimerTool.onPointerOut(e, context, enqueue);
       }
     },
 
@@ -795,6 +816,10 @@ export const store = createStore({
 
       if (context.currentTool === "erasure") {
         return context.tools.erasureTool.onWheel(e, context, enqueue);
+      }
+
+      if (context.currentTool === "claimer") {
+        return context.tools.claimerTool.onWheel(e, context, enqueue);
       }
 
       return context;
