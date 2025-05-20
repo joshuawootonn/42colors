@@ -95,6 +95,26 @@ export function Toolbar() {
             <path d="m5 11 9 9" />
           </svg>
         </ToolIconButton>
+        <ToolIconButton
+          active={tool === "claimer"}
+          onClick={() => store.trigger.changeTool({ tool: "claimer" })}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="32"
+            height="32"
+            fill="none"
+            viewBox="-3.5 -4 32 32"
+            className="stroke-primary"
+            strokeWidth="1.75"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5"
+            />
+          </svg>
+        </ToolIconButton>
       </div>
     </div>
   );

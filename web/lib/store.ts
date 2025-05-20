@@ -59,7 +59,7 @@ import { newPixels } from "./channel";
 import { Camera } from "./camera";
 import { createTelegraphCanvas, resizeTelegraphCanvas } from "./telegraph";
 
-export type Tool = "pencil" | "brush" | "erasure";
+export type Tool = "pencil" | "brush" | "erasure" | "claimer";
 export type PointerState = "default" | "pressed";
 
 export type InitialStore = {
