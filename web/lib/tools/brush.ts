@@ -165,29 +165,6 @@ export function bresenhamLine(
   return points;
 }
 
-export function normalizedPointsToCamera(
-  points: Point[],
-  camera: Camera,
-): Point[] {
-  return points.map((point) => {
-    const canvasX2 = (point.x * camera.zoom) / point.camera.zoom;
-
-    const cameraX2 = (point.camera.x * camera.zoom) / point.camera.zoom;
-
-    const canvasY2 = (point.y * camera.zoom) / point.camera.zoom;
-
-    const cameraY2 = (point.camera.y * camera.zoom) / point.camera.zoom;
-
-    const x = Math.floor(canvasX2 + cameraX2 - camera.x);
-    const y = Math.floor(canvasY2 + cameraY2 - camera.y);
-    return {
-      x,
-      y,
-      camera,
-    };
-  });
-}
-
 export function pointsToPixels(points: Point[], colorRef: ColorRef): Pixel[] {
   return points.map((point) =>
     pixelSchema.parse({
