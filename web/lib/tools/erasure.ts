@@ -2,8 +2,9 @@ import { BLACK_REF, COLOR_TABLE, TRANSPARENT_REF } from "../palette";
 import { InitializedStore, store } from "../store";
 import {
   bresenhamLine,
+  getAbsolutePoint,
   getBrushPoints,
-  getCanvasXY,
+  getRelativePoint,
   isDuplicatePoint,
   pointsToPixels,
 } from "./brush";
@@ -11,7 +12,7 @@ import { canvasToClient } from "../utils/clientToCanvasConversion";
 import { getZoomMultiplier } from "../camera";
 import { getPixelSize } from "../realtime";
 import { EnqueueObject } from "../xstate-internal-types";
-import { Point, pointSchema } from "../coord";
+import { AbsolutePoint, cursorPositionSchema } from "../coord";
 import { createAtom } from "@xstate/store";
 import { newNewCoords } from "../utils/net-new-coords";
 import { drawBrushOutline } from "./brush-rendering";
@@ -23,7 +24,7 @@ function redrawTelegraph(
   clientY: number,
   context: InitializedStore,
 ) {
-  const { canvasX, canvasY } = getCanvasXY(clientX, clientY, context);
+  const relativePoint = getRelativePoint(clientX, clientY, context);
   const ctx = context.canvas.telegraphCanvasContext;
   const canvas = context.canvas.telegraphCanvas;
 
@@ -34,28 +35,28 @@ function redrawTelegraph(
 
   ctx.fillStyle = COLOR_TABLE[BLACK_REF];
 
-  const point = pointSchema.parse({
-    x: canvasToClient(canvasX, context.camera.zoom),
-    y: canvasToClient(canvasY, context.camera.zoom),
+  const cursorPosition = cursorPositionSchema.parse({
+    x: canvasToClient(relativePoint.x, context.camera.zoom),
+    y: canvasToClient(relativePoint.y, context.camera.zoom),
     camera: context.camera,
   });
 
   const erasureSize = erasureSizeState.get();
 
   ctx.strokeStyle = "black";
-  drawBrushOutline(ctx, point, erasureSize, pixelSize);
+  drawBrushOutline(ctx, cursorPosition, erasureSize, pixelSize);
   ctx.stroke();
 }
 
 export type ErasureActive = {
   type: "erasure-active";
-  points: Point[];
-  anchorPoints: Point[];
+  points: AbsolutePoint[];
+  anchorPoints: AbsolutePoint[];
 };
 
 export function startErasureAction(
-  anchorPoint: Point,
-  erasurePoints: Point[],
+  anchorPoint: AbsolutePoint,
+  erasurePoints: AbsolutePoint[],
 ): ErasureActive {
   return {
     type: "erasure-active",
@@ -66,8 +67,8 @@ export function startErasureAction(
 
 export function nextErasureAction(
   activeBrushAction: ErasureActive,
-  newAnchorPoints: Point[],
-  newErasurePoints: Point[],
+  newAnchorPoints: AbsolutePoint[],
+  newErasurePoints: AbsolutePoint[],
 ): ErasureActive {
   return {
     ...activeBrushAction,
@@ -81,13 +82,8 @@ function onPointerDown(
   context: InitializedStore,
   enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-  const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
+  const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
-  const anchorPoint = pointSchema.parse({
-    x: canvasX,
-    y: canvasY,
-    camera: context.camera,
-  });
   const brushPoints = getBrushPoints([anchorPoint], erasureSizeState.get(), 1);
 
   const nextActiveAction = startErasureAction(anchorPoint, brushPoints);
@@ -109,11 +105,11 @@ function onPointerMove(
   context: InitializedStore,
   enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-  const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
+  const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
   if (
     context.activeAction?.type !== "erasure-active" ||
-    isDuplicatePoint(canvasX, canvasY, context)
+    isDuplicatePoint(anchorPoint.x, anchorPoint.y, context)
   ) {
     return context;
   }
@@ -121,9 +117,8 @@ function onPointerMove(
   const newAnchorPoints = bresenhamLine(
     context.activeAction.anchorPoints.at(-1)!.x,
     context.activeAction.anchorPoints.at(-1)!.y,
-    canvasX,
-    canvasY,
-    context.camera,
+    anchorPoint.x,
+    anchorPoint.y,
   );
 
   const netNewAnchors = newNewCoords(
@@ -162,11 +157,11 @@ function onWheel(
   context: InitializedStore,
   enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-  const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
+  const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
   if (
     context.activeAction?.type !== "erasure-active" ||
-    isDuplicatePoint(canvasX, canvasY, context)
+    isDuplicatePoint(anchorPoint.x, anchorPoint.y, context)
   ) {
     return context;
   }
@@ -174,9 +169,8 @@ function onWheel(
   const newAnchorPoints = bresenhamLine(
     context.activeAction.anchorPoints.at(-1)!.x,
     context.activeAction.anchorPoints.at(-1)!.y,
-    canvasX,
-    canvasY,
-    context.camera,
+    anchorPoint.x,
+    anchorPoint.y,
   );
 
   const netNewAnchors = newNewCoords(

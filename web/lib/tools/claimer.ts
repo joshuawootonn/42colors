@@ -1,7 +1,6 @@
 import { InitializedStore, store } from "../store";
-import { getCameraOffset, getCanvasXY } from "./brush";
+import { getAbsolutePoint, getCameraOffset } from "./brush";
 import { EnqueueObject } from "../xstate-internal-types";
-import { absolutePointSchema } from "../coord";
 import { Rect, rectSchema } from "../rect";
 import { getPixelSize } from "../realtime";
 import { Camera, getZoomMultiplier } from "../camera";
@@ -122,17 +121,11 @@ function onPointerDown(
   context: InitializedStore,
   enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-  const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
-
-  const point = absolutePointSchema.parse({
-    x: Math.floor(canvasX + context.camera.x),
-    y: Math.floor(canvasY + context.camera.y),
-    camera: context.camera,
-  });
+  const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
   const rect = rectSchema.parse({
-    origin: point,
-    target: point,
+    origin: absolutePoint,
+    target: absolutePoint,
   });
 
   const nextActiveAction =
@@ -154,7 +147,7 @@ function onPointerMove(
   context: InitializedStore,
   enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-  const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
+  const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
   if (
     context.activeAction?.type !== "claimer-active" ||
@@ -163,15 +156,9 @@ function onPointerMove(
     return context;
   }
 
-  const point = absolutePointSchema.parse({
-    x: Math.floor(canvasX + context.camera.x),
-    y: Math.floor(canvasY + context.camera.y),
-    camera: context.camera,
-  });
-
   const rect = rectSchema.parse({
     origin: context.activeAction.nextRect.origin,
-    target: point,
+    target: absolutePoint,
   });
 
   const nextActiveAction = nextClaimerAction(context.activeAction, rect);
@@ -191,7 +178,7 @@ function onWheel(
   context: InitializedStore,
   enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-  const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
+  const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
   if (
     context.activeAction?.type !== "claimer-active" ||
@@ -200,14 +187,9 @@ function onWheel(
     return context;
   }
 
-  const point = absolutePointSchema.parse({
-    x: Math.floor(canvasX + context.camera.x),
-    y: Math.floor(canvasY + context.camera.y),
-    camera: context.camera,
-  });
   const rect = rectSchema.parse({
     origin: context.activeAction.nextRect.origin,
-    target: point,
+    target: absolutePoint,
   });
 
   const nextActiveAction = nextClaimerAction(context.activeAction, rect);

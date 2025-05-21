@@ -15,6 +15,9 @@ export function isSamePixel(a: Pixel, b: Pixel) {
 export function getLastPixelValue(pixels: Pixel[], pixel: Pixel): Pixel | null {
   return [...pixels].reverse().find((p) => isSamePixel(p, pixel)) ?? null;
 }
+export const cursorPositionSchema = z
+  .object({ x: z.number(), y: z.number() })
+  .brand<"CursorPosition">();
 
 export const absolutePointSchema = z
   .object({ x: z.number(), y: z.number() })
@@ -25,6 +28,7 @@ export const pointSchema = z
   .brand<"Point">();
 
 export type Coord = { x: number; y: number };
+export type CursorPosition = z.infer<typeof cursorPositionSchema>;
 export type Point = z.infer<typeof pointSchema>;
 export type AbsolutePoint = z.infer<typeof absolutePointSchema>;
 

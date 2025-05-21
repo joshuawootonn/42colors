@@ -1,4 +1,4 @@
-import { Pixel, Point } from "./coord";
+import { AbsolutePoint, Pixel } from "./coord";
 import { Tool } from "./store";
 import { BrushActive } from "./tools/brush";
 import { ErasureActive } from "./tools/erasure";
@@ -31,7 +31,7 @@ export type Action =
   | Undo
   | Redo;
 
-function brush(points: Point[], colorRef: ColorRef): BrushActive {
+function brush(points: AbsolutePoint[], colorRef: ColorRef): BrushActive {
   return {
     type: "brush-active",
     colorRef,
@@ -40,7 +40,7 @@ function brush(points: Point[], colorRef: ColorRef): BrushActive {
     anchorPoints: points,
   };
 }
-function erase(points: Point[]): ErasureActive {
+function erase(points: AbsolutePoint[]): ErasureActive {
   return {
     type: "erasure-active",
     points,

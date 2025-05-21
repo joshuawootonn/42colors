@@ -4,7 +4,15 @@ import {
   clientToCanvas,
 } from "../utils/clientToCanvasConversion";
 import { COLOR_TABLE, ColorRef } from "../palette";
-import { Pixel, pixelSchema, Point, pointSchema } from "../coord";
+import {
+  AbsolutePoint,
+  absolutePointSchema,
+  cursorPositionSchema,
+  Pixel,
+  pixelSchema,
+  Point,
+  pointSchema,
+} from "../coord";
 import { Camera, getZoomMultiplier } from "../camera";
 import { getPixelSize } from "../realtime";
 
@@ -19,33 +27,47 @@ export const brushSizeState = createAtom(1);
 export function getCameraOffset(camera: Camera): {
   xOffset: number;
   yOffset: number;
+  xFloor: number;
+  yFloor: number;
 } {
   const xFloor = Math.floor(camera.x);
   const yFloor = Math.floor(camera.y);
 
   const xOffset = camera.x - xFloor;
   const yOffset = camera.y - yFloor;
-  return { xOffset, yOffset };
+  return { xOffset, yOffset, xFloor, yFloor };
 }
 
-export function getCanvasXY(
+export function getRelativePoint(
   clientX: number,
   clientY: number,
   context: InitializedStore,
-): { canvasX: number; canvasY: number } {
+): Point {
   const { xOffset, yOffset } = getCameraOffset(context.camera);
 
-  const canvasX = clientToCanvas(clientX, context.camera.zoom, xOffset);
-  const canvasY = clientToCanvas(clientY, context.camera.zoom, yOffset);
-  return { canvasX, canvasY };
+  const x = clientToCanvas(clientX, context.camera.zoom, xOffset);
+  const y = clientToCanvas(clientY, context.camera.zoom, yOffset);
+  return pointSchema.parse({ x, y, camera: context.camera });
+}
+
+export function getAbsolutePoint(
+  clientX: number,
+  clientY: number,
+  context: InitializedStore,
+): AbsolutePoint {
+  const { xOffset, yOffset, xFloor, yFloor } = getCameraOffset(context.camera);
+
+  const x = clientToCanvas(clientX, context.camera.zoom, xOffset) + xFloor;
+  const y = clientToCanvas(clientY, context.camera.zoom, yOffset) + yFloor;
+  return absolutePointSchema.parse({ x, y });
 }
 
 export function getBrushPoints(
-  points: Point[],
+  points: AbsolutePoint[],
   brushSize: number,
   pixelSize: number,
-): Point[] {
-  const nextPoints: Point[] = [];
+): AbsolutePoint[] {
+  const nextPoints: AbsolutePoint[] = [];
   for (let i = 0; i < points.length; i++) {
     const point = points[i];
 
@@ -77,11 +99,12 @@ export function getBrushPoints(
         for (let i = -2; i <= 1; i++) {
           for (let j = -2; j <= 1; j++) {
             if ((i === -2 || i === 1) && (j === 1 || j === -2)) continue;
-            nextPoints.push({
-              x: point.x + i * pixelSize,
-              y: point.y + j * pixelSize,
-              camera: point.camera,
-            });
+            nextPoints.push(
+              absolutePointSchema.parse({
+                x: point.x + i * pixelSize,
+                y: point.y + j * pixelSize,
+              }),
+            );
           }
         }
         break;
@@ -90,11 +113,12 @@ export function getBrushPoints(
         for (let i = -2; i <= 2; i++) {
           for (let j = -2; j <= 2; j++) {
             if (Math.abs(i) === 2 && Math.abs(j) === 2) continue;
-            nextPoints.push({
-              x: point.x + i * pixelSize,
-              y: point.y + j * pixelSize,
-              camera: point.camera,
-            });
+            nextPoints.push(
+              absolutePointSchema.parse({
+                x: point.x + i * pixelSize,
+                y: point.y + j * pixelSize,
+              }),
+            );
           }
         }
 
@@ -113,7 +137,7 @@ function redrawTelegraph(
   clientY: number,
   context: InitializedStore,
 ) {
-  const { canvasX, canvasY } = getCanvasXY(clientX, clientY, context);
+  const relativePoint = getRelativePoint(clientX, clientY, context);
   const ctx = context.canvas.telegraphCanvasContext;
   const canvas = context.canvas.telegraphCanvas;
 
@@ -124,13 +148,12 @@ function redrawTelegraph(
 
   ctx.fillStyle = COLOR_TABLE[context.currentColorRef];
 
-  const point = pointSchema.parse({
-    x: canvasToClient(canvasX, context.camera.zoom),
-    y: canvasToClient(canvasY, context.camera.zoom),
-    camera: context.camera,
+  const cursorPosition = cursorPositionSchema.parse({
+    x: canvasToClient(relativePoint.x, context.camera.zoom),
+    y: canvasToClient(relativePoint.y, context.camera.zoom),
   });
 
-  drawBrushOutline(ctx, point, brushSizeState.get(), pixelSize);
+  drawBrushOutline(ctx, cursorPosition, brushSizeState.get(), pixelSize);
   ctx.fill();
 }
 
@@ -139,9 +162,8 @@ export function bresenhamLine(
   y0: number,
   x1: number,
   y1: number,
-  camera: Camera,
-): Point[] {
-  const points: Point[] = [];
+): AbsolutePoint[] {
+  const points: AbsolutePoint[] = [];
 
   const dx = Math.abs(x1 - x0);
   const dy = Math.abs(y1 - y0);
@@ -150,7 +172,7 @@ export function bresenhamLine(
   let err = dx - dy;
 
   while (true) {
-    points.push({ x: x0, y: y0, camera });
+    points.push(absolutePointSchema.parse({ x: x0, y: y0 }));
 
     if (x0 === x1 && y0 === y1) {
       break;
@@ -172,11 +194,13 @@ export function bresenhamLine(
   return points;
 }
 
-export function pointsToPixels(points: Point[], colorRef: ColorRef): Pixel[] {
+export function pointsToPixels(
+  points: AbsolutePoint[],
+  colorRef: ColorRef,
+): Pixel[] {
   return points.map((point) =>
     pixelSchema.parse({
-      x: Math.floor(point.x + point.camera.x),
-      y: Math.floor(point.y + point.camera.y),
+      ...point,
       colorRef: colorRef,
     }),
   );
@@ -185,8 +209,8 @@ export function pointsToPixels(points: Point[], colorRef: ColorRef): Pixel[] {
 export type BrushActive = {
   type: "brush-active";
   colorRef: ColorRef;
-  points: Point[];
-  anchorPoints: Point[];
+  points: AbsolutePoint[];
+  anchorPoints: AbsolutePoint[];
 };
 
 export function isDuplicatePoint(
@@ -200,8 +224,8 @@ export function isDuplicatePoint(
 }
 
 export function startBrushAction(
-  anchorPoint: Point,
-  brushPoints: Point[],
+  anchorPoint: AbsolutePoint,
+  brushPoints: AbsolutePoint[],
   colorRef: ColorRef,
 ): BrushActive {
   return {
@@ -214,8 +238,8 @@ export function startBrushAction(
 
 export function nextBrushAction(
   activeBrushAction: BrushActive,
-  newAnchorPoints: Point[],
-  newBrushPoints: Point[],
+  newAnchorPoints: AbsolutePoint[],
+  newBrushPoints: AbsolutePoint[],
 ): BrushActive {
   return {
     ...activeBrushAction,
@@ -229,13 +253,8 @@ function onPointerDown(
   context: InitializedStore,
   enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-  const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
+  const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
-  const anchorPoint = pointSchema.parse({
-    x: canvasX,
-    y: canvasY,
-    camera: context.camera,
-  });
   const brushPoints = getBrushPoints([anchorPoint], brushSizeState.get(), 1);
 
   const nextActiveAction = startBrushAction(
@@ -265,11 +284,11 @@ function onPointerMove(
   context: InitializedStore,
   enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-  const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
+  const { x, y } = getAbsolutePoint(e.clientX, e.clientY, context);
 
   if (
     context.activeAction?.type !== "brush-active" ||
-    isDuplicatePoint(canvasX, canvasY, context)
+    isDuplicatePoint(x, y, context)
   ) {
     return context;
   }
@@ -277,9 +296,8 @@ function onPointerMove(
   const newAnchorPoints = bresenhamLine(
     context.activeAction.anchorPoints.at(-1)!.x,
     context.activeAction.anchorPoints.at(-1)!.y,
-    canvasX,
-    canvasY,
-    context.camera,
+    x,
+    y,
   );
 
   const netNewAnchors = newNewCoords(
@@ -314,11 +332,11 @@ function onWheel(
   context: InitializedStore,
   enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-  const { canvasX, canvasY } = getCanvasXY(e.clientX, e.clientY, context);
+  const { x, y } = getAbsolutePoint(e.clientX, e.clientY, context);
 
   if (
     context.activeAction?.type !== "brush-active" ||
-    isDuplicatePoint(canvasX, canvasY, context)
+    isDuplicatePoint(x, y, context)
   ) {
     return context;
   }
@@ -326,9 +344,8 @@ function onWheel(
   const newAnchorPoints = bresenhamLine(
     context.activeAction.anchorPoints.at(-1)!.x,
     context.activeAction.anchorPoints.at(-1)!.y,
-    canvasX,
-    canvasY,
-    context.camera,
+    x,
+    y,
   );
 
   const netNewAnchors = newNewCoords(

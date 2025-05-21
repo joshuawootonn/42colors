@@ -10,26 +10,26 @@ import {
   resolveActions,
 } from "./actions";
 import { pointsToPixels } from "./tools/brush";
-import { Camera } from "./camera";
+import { absolutePointSchema } from "./coord";
+import { z } from "zod";
 
-const testingCamera: Camera = { x: 0, y: 0, zoom: 100 };
-const camera = testingCamera;
+const bunchOfPointsSchema = z.array(absolutePointSchema);
 
-const points1to3 = [
-  { x: 1, y: 1, camera },
-  { x: 2, y: 2, camera },
-  { x: 3, y: 3, camera },
-];
-const points4to6 = [
-  { x: 4, y: 4, camera },
-  { x: 5, y: 5, camera },
-  { x: 6, y: 6, camera },
-];
-const points7to9 = [
-  { x: 7, y: 7, camera },
-  { x: 8, y: 8, camera },
-  { x: 9, y: 9, camera },
-];
+const points1to3 = bunchOfPointsSchema.parse([
+  { x: 1, y: 1 },
+  { x: 2, y: 2 },
+  { x: 3, y: 3 },
+]);
+const points4to6 = bunchOfPointsSchema.parse([
+  { x: 4, y: 4 },
+  { x: 5, y: 5 },
+  { x: 6, y: 6 },
+]);
+const points7to9 = bunchOfPointsSchema.parse([
+  { x: 7, y: 7 },
+  { x: 8, y: 8 },
+  { x: 9, y: 9 },
+]);
 
 describe("actions", () => {
   test("brushing and undoing unsets pixels", () => {
