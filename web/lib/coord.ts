@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { colorRefSchema } from "./palette";
-import { Camera, cameraSchema } from "./camera";
+import { cameraSchema } from "./camera";
 
 export const pixelSchema = z
   .object({ x: z.number(), y: z.number(), colorRef: colorRefSchema })
@@ -25,8 +25,8 @@ export const pointSchema = z
   .brand<"Point">();
 
 export type Coord = { x: number; y: number };
-export type Point = Coord & { camera: Camera };
-export type AbsolutePoint = Coord;
+export type Point = z.infer<typeof pointSchema>;
+export type AbsolutePoint = z.infer<typeof absolutePointSchema>;
 
 export function coordSort(a: Coord, b: Coord) {
   return a.x === b.x ? a.y - b.y : a.x - b.x;
