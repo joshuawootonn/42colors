@@ -29,25 +29,6 @@ export function Toolbar() {
     <div className="flex flex-row justify-end items-start">
       <div className={cn("p-0.5 grid grid-cols-2")}>
         <ToolIconButton
-          active={tool === "pencil"}
-          onClick={() => store.trigger.changeTool({ tool: "pencil" })}
-        >
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 32 32"
-            fill="currentColor"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M23.4576 12.8967L11.7578 24.3561L8.83289 25.1574M23.4576 12.8967C25.7815 11.0536 26.2382 8.98528 24.6596 7.52761C23.1089 6.09567 21.2939 7.04679 19.4508 8.97005M23.4576 12.8967L19.4508 8.97005M19.4508 8.97005L7.83117 20.3493L6.98882 22.8062M6.98882 22.8062L5.90796 25.9588L8.83289 25.1574M6.98882 22.8062C6.98882 22.8062 7.88216 23.3063 8.25973 23.8153M8.83289 25.1574C8.83289 25.1574 8.59928 24.273 8.25973 23.8153M8.25973 23.8153L6.98882 24.9066"
-              className="stroke-primary"
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </ToolIconButton>
-        <ToolIconButton
           active={tool === "brush"}
           onClick={() => store.trigger.changeTool({ tool: "brush" })}
         >

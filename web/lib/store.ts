@@ -1,6 +1,5 @@
 import { createStore } from "@xstate/store";
 import { Channel, Socket } from "phoenix";
-import { PencilTool } from "./tools/pencil";
 import { BrushTool, pointsToPixels } from "./tools/brush";
 import { PanTool } from "./tools/pan";
 import { QueryClient } from "@tanstack/react-query";
@@ -60,7 +59,7 @@ import { Camera } from "./camera";
 import { createTelegraphCanvas, resizeTelegraphCanvas } from "./telegraph";
 import { ClaimerTool } from "./tools/claimer";
 
-export type Tool = "pencil" | "brush" | "erasure" | "claimer";
+export type Tool = "brush" | "erasure" | "claimer";
 export type PointerState = "default" | "pressed";
 
 export type InitialStore = {
@@ -93,7 +92,6 @@ export type InitializedStore = {
     channel: Channel;
   };
   tools: {
-    pencilTool: PencilTool;
     brushTool: BrushTool;
     erasureTool: ErasureTool;
     claimerTool: ClaimerTool;
@@ -214,7 +212,6 @@ export const store = createStore({
         tools: {
           erasureTool: ErasureTool,
           brushTool: BrushTool,
-          pencilTool: PencilTool,
           claimerTool: ClaimerTool,
           panTool: PanTool,
           wheelTool: WheelTool,
@@ -569,13 +566,6 @@ export const store = createStore({
 
       const tool = context.currentTool;
       switch (tool) {
-        case "pencil":
-          context.tools.pencilTool.redrawTelegraph(
-            context.interaction.cursorPosition.clientX,
-            context.interaction.cursorPosition.clientY,
-            context,
-          );
-          break;
         case "erasure":
           context.tools.erasureTool.redrawTelegraph(
             context.interaction.cursorPosition.clientX,
@@ -710,9 +700,6 @@ export const store = createStore({
         store.trigger.redrawTelegraph();
       });
       const tool = context.currentTool;
-      if (tool === "pencil") {
-        context.tools.pencilTool.onPointerMove(e, context, enqueue);
-      }
 
       if (tool === "brush") {
         return context.tools.brushTool.onPointerMove(e, context, enqueue);
