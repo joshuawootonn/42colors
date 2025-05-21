@@ -20,10 +20,23 @@ function redrawRectTelegraph(
   ctx.lineWidth = pixelSize / 3;
   ctx.moveTo(oX, oY);
   ctx.lineTo(tX, oY);
+  ctx.stroke();
+  ctx.moveTo(tX, oY);
+  ctx.lineTo(tX, tY);
+  ctx.stroke();
+  ctx.moveTo(tX, tY);
+  ctx.lineTo(oX, tY);
+  ctx.stroke();
+  ctx.moveTo(oX, tY);
+  ctx.lineTo(oX, oY);
+  ctx.stroke();
+
+  ctx.moveTo(oX, oY);
+  ctx.lineTo(tX, oY);
   ctx.lineTo(tX, tY);
   ctx.lineTo(oX, tY);
   ctx.lineTo(oX, oY);
-  ctx.stroke();
+  ctx.fill();
 }
 
 function redrawTelegraph(context: InitializedStore) {
@@ -37,7 +50,8 @@ function redrawTelegraph(context: InitializedStore) {
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  ctx.strokeStyle = "yellow";
+  ctx.strokeStyle = "rgb(246, 240, 74)";
+  ctx.fillStyle = "rgba(246, 240, 74, 0.2)";
 
   const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
   for (let i = 0; i < context.activeAction.rects.length; i++) {
