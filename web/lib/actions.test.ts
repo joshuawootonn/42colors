@@ -10,10 +10,7 @@ import {
   resolveActions,
 } from "./actions";
 import { pointsToPixels } from "./tools/brush";
-import { absolutePointSchema } from "./coord";
-import { z } from "zod";
-
-const bunchOfPointsSchema = z.array(absolutePointSchema);
+import { bunchOfPointsSchema } from "./utils/testing";
 
 const points1to3 = bunchOfPointsSchema.parse([
   { x: 1, y: 1 },
