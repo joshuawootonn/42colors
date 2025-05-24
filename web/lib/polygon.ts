@@ -23,7 +23,7 @@ export function sortIntoClockwiseOrder(points: AbsolutePoint[]) {
   }));
 
   // Sort points by angular value
-  const sorted = pointsAndAngs.sort((a, b) => a.ang - b.ang).map((a) => a.p);
+  const sorted = pointsAndAngs.sort((a, b) => b.ang - a.ang).map((a) => a.p);
 
   return sorted;
 }
