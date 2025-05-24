@@ -4,6 +4,7 @@ import {
   areRectsIntersecting,
   findRectilinearShapes,
   getIntersectionPoints,
+  inside,
 } from "./rectilinear";
 import { absolutePointSchema } from "./coord";
 
@@ -82,5 +83,18 @@ describe("getIntersectionPoints", () => {
       absolutePointSchema.parse({ x: 15, y: 0 }),
       absolutePointSchema.parse({ x: 15, y: 10 }),
     ]);
+  });
+});
+
+describe("inside", () => {
+  test("no", () => {
+    expect(
+      inside(absolutePointSchema.parse({ x: 20, y: 20 }), rect1),
+    ).toBeFalsy();
+  });
+  test("yes", () => {
+    expect(
+      inside(absolutePointSchema.parse({ x: 5, y: 5 }), rect1),
+    ).toBeTruthy();
   });
 });

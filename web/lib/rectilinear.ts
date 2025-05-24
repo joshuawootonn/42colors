@@ -145,3 +145,24 @@ export function getIntersectionPoints(
 
   return intersectionPoints;
 }
+
+/*
+  ray-casting algorithm based on
+  https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html
+*/
+export function inside(point: AbsolutePoint, rect: Rect) {
+  const { x, y } = point;
+  const vs = rectToPolygonSchema.parse(rect).vertices;
+
+  let inside = false;
+  for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+    const { x: xi, y: yi } = vs[i];
+    const { x: xj, y: yj } = vs[j];
+
+    const intersect =
+      yi > y != yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+    if (intersect) inside = !inside;
+  }
+
+  return inside;
+}
