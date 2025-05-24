@@ -3,10 +3,12 @@ import { rectSchema } from "./rect";
 import {
   areRectsIntersecting,
   findRectilinearShapes,
+  getCompositePolygon,
   getIntersectionPoints,
   inside,
 } from "./rectilinear";
 import { absolutePointSchema } from "./coord";
+import { polygonSchema } from "./polygon";
 
 const rect1 = rectSchema.parse({
   origin: { x: 0, y: 0 },
@@ -78,9 +80,9 @@ describe("getIntersectionPoints", () => {
   });
   test("many overlapping points", () => {
     expect(getIntersectionPoints(rect2, rect3)).toEqual([
+      absolutePointSchema.parse({ x: 15, y: 0 }),
       absolutePointSchema.parse({ x: 20, y: 0 }),
       absolutePointSchema.parse({ x: 20, y: 10 }),
-      absolutePointSchema.parse({ x: 15, y: 0 }),
       absolutePointSchema.parse({ x: 15, y: 10 }),
     ]);
   });
@@ -96,5 +98,48 @@ describe("inside", () => {
     expect(
       inside(absolutePointSchema.parse({ x: 5, y: 5 }), rect1),
     ).toBeTruthy();
+  });
+});
+
+describe("getCompositePolygon", () => {
+  test("no", () => {
+    expect(getCompositePolygon(rect1, rect5)).toEqual(
+      polygonSchema.parse({
+        vertices: [
+          {
+            x: 5,
+            y: 15,
+          },
+          {
+            x: 5,
+            y: 10,
+          },
+          {
+            x: 0,
+            y: 10,
+          },
+          {
+            x: 0,
+            y: 0,
+          },
+          {
+            x: 10,
+            y: 0,
+          },
+          {
+            x: 10,
+            y: 5,
+          },
+          {
+            x: 15,
+            y: 5,
+          },
+          {
+            x: 15,
+            y: 15,
+          },
+        ],
+      }),
+    );
   });
 });

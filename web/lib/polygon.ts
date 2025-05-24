@@ -2,15 +2,13 @@ import { z } from "zod";
 import { AbsolutePoint, absolutePointSchema } from "./coord";
 import { rectSchema } from "./rect";
 
-export const polygon = z
+export const polygonSchema = z
   .object({
-    origin: absolutePointSchema,
-    target: absolutePointSchema,
     vertices: z.array(absolutePointSchema),
   })
   .brand<"Polygon">();
 
-export type Polygon = z.infer<typeof polygon>;
+export type Polygon = z.infer<typeof polygonSchema>;
 
 export function sortIntoClockwiseOrder(points: AbsolutePoint[]) {
   const centerX = points.reduce((p, c) => p + c.x, 0) / points.length;
@@ -29,7 +27,7 @@ export function sortIntoClockwiseOrder(points: AbsolutePoint[]) {
 }
 
 export const rectToPolygonSchema = rectSchema.transform((rect) =>
-  polygon.parse({
+  polygonSchema.parse({
     ...rect,
     vertices: sortIntoClockwiseOrder([
       absolutePointSchema.parse({ x: rect.origin.x, y: rect.origin.y }),

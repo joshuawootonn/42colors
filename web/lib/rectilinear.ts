@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { Rect, rectSchema } from "./rect";
 import { AbsolutePoint, absolutePointSchema } from "./coord";
-import { rectToPolygonSchema } from "./polygon";
+import {
+  polygonSchema,
+  Polygon,
+  rectToPolygonSchema,
+  sortIntoClockwiseOrder,
+} from "./polygon";
 
 export const rectilinearShapeSchema = z
   .object({
@@ -165,4 +170,24 @@ export function inside(point: AbsolutePoint, rect: Rect) {
   }
 
   return inside;
+}
+
+export function getCompositePolygon(rect1: Rect, rect2: Rect): Polygon | null {
+  const intersectionPoints = getIntersectionPoints(rect1, rect2);
+
+  if (intersectionPoints.length === 0) return null;
+
+  const a = rectToPolygonSchema.parse(rect1);
+  const b = rectToPolygonSchema.parse(rect2);
+
+  const aPointsNotWithinB = a.vertices.filter((point) => !inside(point, rect2));
+  const bPointsNotWithinA = b.vertices.filter((point) => !inside(point, rect1));
+
+  const vertices = sortIntoClockwiseOrder([
+    ...intersectionPoints,
+    ...aPointsNotWithinB,
+    ...bPointsNotWithinA,
+  ]);
+
+  return polygonSchema.parse({ vertices });
 }
