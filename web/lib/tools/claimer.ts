@@ -4,8 +4,7 @@ import { EnqueueObject } from "../xstate-internal-types";
 import { Rect, rectSchema } from "../rect";
 import { getPixelSize } from "../realtime";
 import { Camera, getZoomMultiplier } from "../camera";
-import { Polygon, rectToPolygonSchema } from "../polygon";
-import { getCompositePolygon, getCompositePolygons } from "../rectilinear";
+import { getCompositePolygons, Polygon, rectToPolygonSchema } from "../polygon";
 
 function redrawRectTelegraph(
   ctx: CanvasRenderingContext2D,

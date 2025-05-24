@@ -1,14 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { rectSchema } from "./rect";
-import {
-  areRectsIntersecting,
-  findRectilinearShapes,
-  getCompositePolygon,
-  getIntersectionPoints,
-  inside,
-} from "./rectilinear";
-import { absolutePointSchema } from "./coord";
-import { polygonSchema } from "./polygon";
+import { areRectsIntersecting } from "./rectilinear";
 
 export const rect1 = rectSchema.parse({
   origin: { x: 0, y: 0 },
@@ -44,26 +36,5 @@ describe("areRectsIntersecting", () => {
 
   test("overlapping", () => {
     expect(areRectsIntersecting(rect2, rect3)).toBeTruthy();
-  });
-});
-
-describe("findRectilinearShape", () => {
-  test("no", () => {
-    expect(findRectilinearShapes([rect1, rect3])).toEqual({
-      rectilinearShapes: [],
-      rects: [rect1, rect3],
-    });
-  });
-  test.skip("touching", () => {
-    expect(findRectilinearShapes([rect1, rect2])).toEqual({
-      rectilinearShapes: [
-        {
-          //skip
-          rects: [rect1, rect2],
-          points: [rect1.origin, rect2.target],
-        },
-      ],
-      rects: [],
-    });
   });
 });

@@ -4,15 +4,12 @@ import {
   polygonSchema,
   rectToPolygonSchema,
   sortIntoClockwiseOrder,
-} from "./polygon";
-import { absolutePointSchema } from "./coord";
-import { rectSchema } from "./rect";
-import {
   getIntersectionPoints,
   inside,
   getCompositePolygon,
   getCompositePolygons,
-} from "./rectilinear";
+} from "./polygon";
+import { absolutePointSchema } from "./coord";
 import { rect1, rect2, rect3, rect4, rect5 } from "./rectilinear.test";
 
 const sortedPoints = bunchOfPointsSchema.parse([
