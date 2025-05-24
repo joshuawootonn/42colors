@@ -4,6 +4,8 @@ import { EnqueueObject } from "../xstate-internal-types";
 import { Rect, rectSchema } from "../rect";
 import { getPixelSize } from "../realtime";
 import { Camera, getZoomMultiplier } from "../camera";
+import { Polygon, rectToPolygonSchema } from "../polygon";
+import { getCompositePolygon, getCompositePolygons } from "../rectilinear";
 
 function redrawRectTelegraph(
   ctx: CanvasRenderingContext2D,
@@ -39,6 +41,47 @@ function redrawRectTelegraph(
   ctx.fill();
 }
 
+function redrawPolygonTelegraph(
+  ctx: CanvasRenderingContext2D,
+  polygon: Polygon,
+  pixelSize: number,
+  camera: Camera,
+) {
+  const { xOffset, yOffset } = getCameraOffset(camera);
+
+  ctx.beginPath();
+  ctx.lineWidth = pixelSize / 3;
+
+  for (let i = 0; i < polygon.vertices.length; i++) {
+    const { x: x1, y: y1 } = polygon.vertices[i];
+    const { x: x2, y: y2 } =
+      polygon.vertices[(i + 1) % polygon.vertices.length];
+    ctx.moveTo(
+      (x1 - camera.x + xOffset) * pixelSize,
+      (y1 - camera.y + yOffset) * pixelSize,
+    );
+    ctx.lineTo(
+      (x2 - camera.x + xOffset) * pixelSize,
+      (y2 - camera.y + yOffset) * pixelSize,
+    );
+    ctx.stroke();
+  }
+
+  const lastVertice = polygon.vertices[polygon.vertices.length - 1];
+  ctx.moveTo(
+    (lastVertice.x - camera.x + xOffset) * pixelSize,
+    (lastVertice.y - camera.y + xOffset) * pixelSize,
+  );
+  for (let i = 0; i < polygon.vertices.length; i++) {
+    const { x: x1, y: y1 } = polygon.vertices[i];
+    ctx.lineTo(
+      (x1 - camera.x + xOffset) * pixelSize,
+      (y1 - camera.y + xOffset) * pixelSize,
+    );
+  }
+  ctx.fill();
+}
+
 function redrawTelegraph(context: InitializedStore) {
   const ctx = context.canvas.telegraphCanvasContext;
   const canvas = context.canvas.telegraphCanvas;
@@ -54,16 +97,20 @@ function redrawTelegraph(context: InitializedStore) {
   ctx.fillStyle = "rgba(246, 240, 74, 0.2)";
 
   const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
-  for (let i = 0; i < context.activeAction.rects.length; i++) {
-    const rect = context.activeAction.rects[i];
 
-    redrawRectTelegraph(ctx, rect, pixelSize, context.camera);
+  const rects = [...context.activeAction.rects];
+  if (context.activeAction.nextRect != null) {
+    rects.push(context.activeAction.nextRect);
   }
 
-  if (context.activeAction.nextRect != null) {
-    redrawRectTelegraph(
+  let polygons = rects.map((rect) => rectToPolygonSchema.parse(rect));
+
+  const aggregatedPolygons = getCompositePolygons(polygons);
+
+  for (let i = 0; i < aggregatedPolygons.length; i++) {
+    redrawPolygonTelegraph(
       ctx,
-      context.activeAction.nextRect,
+      aggregatedPolygons[i],
       pixelSize,
       context.camera,
     );

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Rect, rectSchema } from "./rect";
+import { Rect as Rect, rectSchema } from "./rect";
 import { AbsolutePoint, absolutePointSchema } from "./coord";
 import {
   polygonSchema,
@@ -125,21 +125,19 @@ function intersect(
 }
 
 export function getIntersectionPoints(
-  rect1: Rect,
-  rect2: Rect,
+  polygon1: Polygon,
+  polygon2: Polygon,
 ): AbsolutePoint[] {
   // todo(josh): what if they are the same rect?
 
   const intersectionPoints: AbsolutePoint[] = [];
-  const a = rectToPolygonSchema.parse(rect1);
-  const b = rectToPolygonSchema.parse(rect2);
 
-  for (let i = 0; i < a.vertices.length; i++) {
-    for (let j = 0; j < b.vertices.length; j++) {
-      const a1 = a.vertices[i];
-      const a2 = a.vertices[(i + 1) % a.vertices.length];
-      const b1 = b.vertices[j];
-      const b2 = b.vertices[(j + 1) % a.vertices.length];
+  for (let i = 0; i < polygon1.vertices.length; i++) {
+    for (let j = 0; j < polygon2.vertices.length; j++) {
+      const a1 = polygon1.vertices[i];
+      const a2 = polygon1.vertices[(i + 1) % polygon1.vertices.length];
+      const b1 = polygon2.vertices[j];
+      const b2 = polygon2.vertices[(j + 1) % polygon2.vertices.length];
 
       const check = intersect(a1.x, a1.y, a2.x, a2.y, b1.x, b1.y, b2.x, b2.y);
       if (check) {
@@ -155,9 +153,9 @@ export function getIntersectionPoints(
   ray-casting algorithm based on
   https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html
 */
-export function inside(point: AbsolutePoint, rect: Rect) {
+export function inside(point: AbsolutePoint, polygon: Polygon) {
   const { x, y } = point;
-  const vs = rectToPolygonSchema.parse(rect).vertices;
+  const vs = polygon.vertices;
 
   let inside = false;
   for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
@@ -172,16 +170,20 @@ export function inside(point: AbsolutePoint, rect: Rect) {
   return inside;
 }
 
-export function getCompositePolygon(rect1: Rect, rect2: Rect): Polygon | null {
-  const intersectionPoints = getIntersectionPoints(rect1, rect2);
+export function getCompositePolygon(
+  polygon1: Polygon,
+  polygon2: Polygon,
+): Polygon | null {
+  const intersectionPoints = getIntersectionPoints(polygon1, polygon2);
 
   if (intersectionPoints.length === 0) return null;
 
-  const a = rectToPolygonSchema.parse(rect1);
-  const b = rectToPolygonSchema.parse(rect2);
-
-  const aPointsNotWithinB = a.vertices.filter((point) => !inside(point, rect2));
-  const bPointsNotWithinA = b.vertices.filter((point) => !inside(point, rect1));
+  const aPointsNotWithinB = polygon1.vertices.filter(
+    (point) => !inside(point, polygon2),
+  );
+  const bPointsNotWithinA = polygon2.vertices.filter(
+    (point) => !inside(point, polygon1),
+  );
 
   const vertices = sortIntoClockwiseOrder([
     ...intersectionPoints,
@@ -190,4 +192,34 @@ export function getCompositePolygon(rect1: Rect, rect2: Rect): Polygon | null {
   ]);
 
   return polygonSchema.parse({ vertices });
+}
+
+export function getCompositePolygons(_polygons: Polygon[]): Polygon[] {
+  let polygons = _polygons.slice();
+  const polygonsToDraw: Polygon[] = [];
+
+  for (let i = 0; i < polygons.length; i++) {
+    let polygon = polygons[0];
+    let polygonsToSearch = polygons.slice(1);
+    const indexesToCombined: number[] = [0];
+    for (let j = 0; j < polygonsToSearch.length; j++) {
+      const nextPolygon = polygonsToSearch[j];
+      const compositePolygon = getCompositePolygon(polygon, nextPolygon);
+
+      if (compositePolygon != null) {
+        polygon = compositePolygon;
+      } else {
+        indexesToCombined.push(j);
+      }
+    }
+
+    polygonsToDraw.push(polygon);
+    const next = [];
+    for (let j = 0; j < indexesToCombined.length; j++) {
+      next.push(polygonsToSearch[indexesToCombined[j]]);
+    }
+    polygons = next;
+  }
+
+  return polygonsToDraw;
 }

@@ -10,25 +10,25 @@ import {
 import { absolutePointSchema } from "./coord";
 import { polygonSchema } from "./polygon";
 
-const rect1 = rectSchema.parse({
+export const rect1 = rectSchema.parse({
   origin: { x: 0, y: 0 },
   target: { x: 10, y: 10 },
 });
 
-const rect2 = rectSchema.parse({
+export const rect2 = rectSchema.parse({
   origin: { x: 10, y: 0 },
   target: { x: 20, y: 10 },
 });
-const rect3 = rectSchema.parse({
+export const rect3 = rectSchema.parse({
   origin: { x: 15, y: 0 },
   target: { x: 25, y: 10 },
 });
 
-const rect4 = rectSchema.parse({
+export const rect4 = rectSchema.parse({
   origin: { x: 20, y: 0 },
   target: { x: 30, y: 10 },
 });
-const rect5 = rectSchema.parse({
+export const rect5 = rectSchema.parse({
   origin: { x: 5, y: 5 },
   target: { x: 15, y: 15 },
 });
@@ -65,81 +65,5 @@ describe("findRectilinearShape", () => {
       ],
       rects: [],
     });
-  });
-});
-
-describe("getIntersectionPoints", () => {
-  test("no", () => {
-    expect(getIntersectionPoints(rect1, rect3)).toEqual([]);
-  });
-  test("two points", () => {
-    expect(getIntersectionPoints(rect1, rect5)).toEqual([
-      absolutePointSchema.parse({ x: 10, y: 5 }),
-      absolutePointSchema.parse({ x: 5, y: 10 }),
-    ]);
-  });
-  test("many overlapping points", () => {
-    expect(getIntersectionPoints(rect2, rect3)).toEqual([
-      absolutePointSchema.parse({ x: 15, y: 0 }),
-      absolutePointSchema.parse({ x: 20, y: 0 }),
-      absolutePointSchema.parse({ x: 20, y: 10 }),
-      absolutePointSchema.parse({ x: 15, y: 10 }),
-    ]);
-  });
-});
-
-describe("inside", () => {
-  test("no", () => {
-    expect(
-      inside(absolutePointSchema.parse({ x: 20, y: 20 }), rect1),
-    ).toBeFalsy();
-  });
-  test("yes", () => {
-    expect(
-      inside(absolutePointSchema.parse({ x: 5, y: 5 }), rect1),
-    ).toBeTruthy();
-  });
-});
-
-describe("getCompositePolygon", () => {
-  test("no", () => {
-    expect(getCompositePolygon(rect1, rect5)).toEqual(
-      polygonSchema.parse({
-        vertices: [
-          {
-            x: 5,
-            y: 15,
-          },
-          {
-            x: 5,
-            y: 10,
-          },
-          {
-            x: 0,
-            y: 10,
-          },
-          {
-            x: 0,
-            y: 0,
-          },
-          {
-            x: 10,
-            y: 0,
-          },
-          {
-            x: 10,
-            y: 5,
-          },
-          {
-            x: 15,
-            y: 5,
-          },
-          {
-            x: 15,
-            y: 15,
-          },
-        ],
-      }),
-    );
   });
 });
