@@ -132,7 +132,11 @@ export type InitializedStore = {
 
 export type Store = InitialStore | InitializedStore;
 
-const initialCamera: Camera = { x: 0, y: 0, zoom: 100 };
+const initialCamera: Camera = {
+  x: 0,
+  y: 0,
+  zoom: process.env.NODE_ENV === "development" ? 500 : 100,
+};
 
 const initialialStoreContext: Store = {
   state: "initial",
