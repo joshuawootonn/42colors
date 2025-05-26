@@ -51,10 +51,12 @@ function redrawPolygonTelegraph(
   ctx.beginPath();
   ctx.lineWidth = pixelSize / 3;
 
-  for (let i = 0; i < polygon.vertices.length; i++) {
-    const { x: x1, y: y1 } = polygon.vertices[i];
-    const { x: x2, y: y2 } =
-      polygon.vertices[(i + 1) % polygon.vertices.length];
+  for (let i = 0; i < polygon.lines.length; i++) {
+    const line = polygon.lines[i];
+    const x1 = line[0][0],
+      y1 = line[0][1];
+    const x2 = line[1][0],
+      y2 = line[1][1];
     ctx.moveTo(
       (x1 - camera.x + xOffset) * pixelSize,
       (y1 - camera.y + yOffset) * pixelSize,
@@ -66,16 +68,20 @@ function redrawPolygonTelegraph(
     ctx.stroke();
   }
 
-  const lastVertice = polygon.vertices[polygon.vertices.length - 1];
-  ctx.moveTo(
-    (lastVertice.x - camera.x + xOffset) * pixelSize,
-    (lastVertice.y - camera.y + xOffset) * pixelSize,
-  );
-  for (let i = 0; i < polygon.vertices.length; i++) {
-    const { x: x1, y: y1 } = polygon.vertices[i];
-    ctx.lineTo(
+  ctx.beginPath();
+  for (let i = 0; i < polygon.lines.length; i++) {
+    const line = polygon.lines[i];
+    const x1 = line[0][0],
+      y1 = line[0][1];
+    const x2 = line[1][0],
+      y2 = line[1][1];
+    ctx.moveTo(
       (x1 - camera.x + xOffset) * pixelSize,
-      (y1 - camera.y + xOffset) * pixelSize,
+      (y1 - camera.y + yOffset) * pixelSize,
+    );
+    ctx.lineTo(
+      (x2 - camera.x + xOffset) * pixelSize,
+      (y2 - camera.y + yOffset) * pixelSize,
     );
   }
   ctx.fill();
@@ -102,9 +108,11 @@ function redrawTelegraph(context: InitializedStore) {
     rects.push(context.activeAction.nextRect);
   }
 
-  let polygons = rects.map((rect) => rectToPolygonSchema.parse(rect));
+  const polygons = rects.map((rect) => rectToPolygonSchema.parse(rect));
 
   const aggregatedPolygons = getCompositePolygons(polygons);
+
+  console.log(aggregatedPolygons);
 
   for (let i = 0; i < aggregatedPolygons.length; i++) {
     redrawPolygonTelegraph(

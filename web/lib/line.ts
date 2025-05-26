@@ -1,28 +1,28 @@
 import { z } from "zod";
-import { AbsolutePoint, absolutePointSchema } from "./coord";
+
+export const absolutePointTupleSchema = z
+  .tuple([z.number(), z.number()])
+  .brand<"Absolute Point in Tuple">();
+
+export type AbsolutePointTuple = z.infer<typeof absolutePointTupleSchema>;
 
 export const lineSchema = z
-  .tuple([absolutePointSchema, absolutePointSchema])
+  .tuple([absolutePointTupleSchema, absolutePointTupleSchema])
   .brand<"Line">();
 
 export type Line = z.infer<typeof lineSchema>;
 
-function distance(a: AbsolutePoint, b: AbsolutePoint): number {
+function distance(a: AbsolutePointTuple, b: AbsolutePointTuple): number {
   return Math.sqrt(
-    Math.pow(Math.abs(a.x - b.x), 2) + Math.pow(Math.abs(a.y - b.y), 2),
+    Math.pow(Math.abs(a[0] - b[0]), 2) + Math.pow(Math.abs(a[1] - b[1]), 2),
   );
 }
 
-function length(line: Line): number {
+export function length(line: Line): number {
   return distance(line[0], line[1]);
 }
 
-export function insideLine(point: AbsolutePoint, line: Line): boolean {
-  console.log({
-    total: length(line),
-    one: distance(line[0], point),
-    two: distance(line[1], point),
-  });
+export function insideLine(point: AbsolutePointTuple, line: Line): boolean {
   if (length(line) === distance(line[0], point) + distance(line[1], point))
     return true;
 

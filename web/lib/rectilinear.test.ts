@@ -25,6 +25,15 @@ export const rect5 = rectSchema.parse({
   target: { x: 15, y: 15 },
 });
 
+export const rect6 = rectSchema.parse({
+  origin: { x:5, y: 20},
+  target: { x: 15, y: 40 },
+});
+export const rect7 = rectSchema.parse({
+  origin: { x: 10, y: 25 },
+  target: { x: 20, y: 35 },
+});
+
 describe("areRectsIntersecting", () => {
   test("no", () => {
     expect(areRectsIntersecting(rect1, rect3)).toBeFalsy();
