@@ -4,41 +4,9 @@ import { EnqueueObject } from "../xstate-internal-types";
 import { Rect, rectSchema } from "../rect";
 import { getPixelSize } from "../realtime";
 import { Camera, getZoomMultiplier } from "../camera";
-import { getCompositePolygons, Polygon, rectToPolygonSchema } from "../polygon";
-
-function redrawRectTelegraph(
-  ctx: CanvasRenderingContext2D,
-  rect: Rect,
-  pixelSize: number,
-  camera: Camera,
-) {
-  const { xOffset, yOffset } = getCameraOffset(camera);
-  const oX = (rect.origin.x - camera.x + xOffset) * pixelSize;
-  const oY = (rect.origin.y - camera.y + yOffset) * pixelSize;
-  const tX = (rect.target.x - camera.x + xOffset) * pixelSize;
-  const tY = (rect.target.y - camera.y + yOffset) * pixelSize;
-  ctx.beginPath();
-  ctx.lineWidth = pixelSize / 3;
-  ctx.moveTo(oX, oY);
-  ctx.lineTo(tX, oY);
-  ctx.stroke();
-  ctx.moveTo(tX, oY);
-  ctx.lineTo(tX, tY);
-  ctx.stroke();
-  ctx.moveTo(tX, tY);
-  ctx.lineTo(oX, tY);
-  ctx.stroke();
-  ctx.moveTo(oX, tY);
-  ctx.lineTo(oX, oY);
-  ctx.stroke();
-
-  ctx.moveTo(oX, oY);
-  ctx.lineTo(tX, oY);
-  ctx.lineTo(tX, tY);
-  ctx.lineTo(oX, tY);
-  ctx.lineTo(oX, oY);
-  ctx.fill();
-}
+import { Polygon, rectToPolygonSchema } from "../polygon";
+import { getCompositePolygons } from "../polygon2";
+import { throttle } from "../utils/throttle";
 
 function redrawPolygonTelegraph(
   ctx: CanvasRenderingContext2D,
@@ -66,6 +34,7 @@ function redrawPolygonTelegraph(
       (y2 - camera.y + yOffset) * pixelSize,
     );
     ctx.stroke();
+    ctx.closePath();
   }
 
   ctx.beginPath();
@@ -75,15 +44,18 @@ function redrawPolygonTelegraph(
       y1 = line[0][1];
     const x2 = line[1][0],
       y2 = line[1][1];
-    ctx.moveTo(
-      (x1 - camera.x + xOffset) * pixelSize,
-      (y1 - camera.y + yOffset) * pixelSize,
-    );
+    if (i === 0) {
+      ctx.moveTo(
+        (x1 - camera.x + xOffset) * pixelSize,
+        (y1 - camera.y + yOffset) * pixelSize,
+      );
+    }
     ctx.lineTo(
       (x2 - camera.x + xOffset) * pixelSize,
       (y2 - camera.y + yOffset) * pixelSize,
     );
   }
+  ctx.fillStyle = "rgba(246, 240, 74, 0.2)";
   ctx.fill();
 }
 
@@ -111,8 +83,6 @@ function redrawTelegraph(context: InitializedStore) {
   const polygons = rects.map((rect) => rectToPolygonSchema.parse(rect));
 
   const aggregatedPolygons = getCompositePolygons(polygons);
-
-  console.log(aggregatedPolygons);
 
   for (let i = 0; i < aggregatedPolygons.length; i++) {
     redrawPolygonTelegraph(
@@ -307,7 +277,7 @@ export const ClaimerTool = {
   onPointerUp,
   onPointerOut,
   onWheel,
-  redrawTelegraph,
+  redrawTelegraph: throttle(redrawTelegraph, 17),
 };
 
 export type ClaimerTool = typeof ClaimerTool;
