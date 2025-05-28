@@ -4,8 +4,7 @@ import { EnqueueObject } from "../xstate-internal-types";
 import { Rect, rectSchema } from "../rect";
 import { getPixelSize } from "../realtime";
 import { Camera, getZoomMultiplier } from "../camera";
-import { Polygon, rectToPolygonSchema } from "../polygon";
-import { getCompositePolygons } from "../polygon2";
+import { getCompositePolygons, Polygon, rectToPolygonSchema } from "../polygon";
 import { throttle } from "../utils/throttle";
 
 function redrawPolygonTelegraph(
