@@ -20,6 +20,9 @@ import { ErasurePanel } from "@/lib/tools/erasure-panel";
 const queryClient = new QueryClient();
 
 export default function Page() {
+  const state = useSelector(store, (state) => {
+    return state.context.state;
+  });
   useEffect(() => {
     const element = document.getElementById("my-house");
     if (element instanceof HTMLCanvasElement) {
@@ -70,7 +73,7 @@ export default function Page() {
         requestAnimationFrame(draw);
       }
     }
-  }, []);
+  }, [state]);
 
   const user = useSelector(store, (state) => state.context.user);
 
