@@ -147,7 +147,7 @@ function redrawTelegraph(
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = COLOR_TABLE[context.currentColorRef];
+  ctx.fillStyle = COLOR_TABLE[context.toolSettings.palette.currentColorRef];
 
   const cursorPosition = cursorPositionSchema.parse({
     x: canvasToClient(relativePoint.x, context.camera.zoom),
@@ -270,7 +270,7 @@ function onPointerDown(
   const nextActiveAction = startBrushAction(
     anchorPoint,
     brushPoints,
-    context.currentColorRef,
+    context.toolSettings.palette.currentColorRef,
   );
 
   enqueue.effect(() => {

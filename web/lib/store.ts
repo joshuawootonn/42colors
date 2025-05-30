@@ -42,7 +42,7 @@ import {
   onTouch,
   onGesture,
 } from "./events";
-import { ColorRef, TRANSPARENT_REF } from "./palette";
+import { TRANSPARENT_REF } from "./palette";
 import { ErasureSettings, ErasureTool } from "./tools/erasure";
 import { dedupeCoords } from "./utils/dedupe-coords";
 import { uuid } from "./utils/uuid";
@@ -63,6 +63,7 @@ import {
   ToolSettings,
   updateToolSettings,
 } from "./tool-settings";
+import { PaletteSettings } from "./tools/palette";
 
 export type Tool = "brush" | "erasure" | "claimer";
 export type PointerState = "default" | "pressed";
@@ -73,7 +74,6 @@ export type InitialStore = {
   camera: Camera;
   server?: undefined;
   currentTool: Tool;
-  currentColorRef: ColorRef;
   currentPointerState: PointerState;
   realtime?: undefined;
   interaction?: undefined;
@@ -97,7 +97,6 @@ export type InitializedStore = {
     channel: Channel;
   };
   toolSettings: ToolSettings;
-  currentColorRef: ColorRef;
   currentTool: Tool;
   currentPointerState: PointerState;
   id: string;
@@ -138,6 +137,7 @@ const initialCamera: Camera = {
 };
 
 const initialialStoreContext: Store = {
+  id: undefined,
   state: "initial",
   camera: initialCamera,
   currentTool: "brush",
@@ -217,6 +217,7 @@ export const store = createStore({
         toolSettings: {
           brush: event.toolSettings.brush,
           erasure: event.toolSettings.erasure,
+          palette: event.toolSettings.palette,
         },
         interaction: {
           isPressed: false,
@@ -624,11 +625,22 @@ export const store = createStore({
       return { ...context, currentTool: event.tool };
     },
 
-    setCurrentColor: (context, { colorRef }: { colorRef: ColorRef }) => {
+    updatePaletteSettings: (
+      context,
+      { palette }: { palette: Partial<PaletteSettings> },
+    ) => {
       if (isInitialStore(context)) return;
+
+      const toolSettings = {
+        ...context.toolSettings,
+        palette: { ...context.toolSettings.palette, ...palette },
+      };
+
+      updateToolSettings(toolSettings);
+
       return {
         ...context,
-        currentColorRef: colorRef,
+        toolSettings,
       };
     },
 

@@ -19,7 +19,7 @@ export function IconButton({
 }) {
   const currentColor = useSelector(
     store,
-    (state) => state.context.currentColorRef,
+    (state) => state.context.toolSettings.palette.currentColorRef,
   );
   const colorString = useMemo(
     () => new Color(COLOR_TABLE[colorRef]).to("lch").toString(),
@@ -108,11 +108,13 @@ const item: Variants = {
 };
 
 export function Palette() {
-  const [isOpen, setIsOpen] = useState(true);
-
+  const isOpen = useSelector(
+    store,
+    (state) => state.context.toolSettings.palette.isOpen,
+  );
   const currentColor = useSelector(
     store,
-    (state) => state.context.currentColorRef as ColorRef,
+    (state) => state.context.toolSettings.palette.currentColorRef,
   );
 
   return (
@@ -126,7 +128,11 @@ export function Palette() {
         <div>
           <ToolIconButton
             key={currentColor}
-            onClick={() => setIsOpen((prev) => !prev)}
+            onClick={() =>
+              store.trigger.updatePaletteSettings({
+                palette: { isOpen: !isOpen },
+              })
+            }
             active={false}
           >
             <svg
@@ -157,7 +163,13 @@ export function Palette() {
           <motion.div variants={row} key={i} className="flex flex-row">
             {colorChunk.map((colorRef) => (
               <IconButton
-                onClick={() => store.trigger.setCurrentColor({ colorRef })}
+                onClick={() =>
+                  store.trigger.updatePaletteSettings({
+                    palette: {
+                      currentColorRef: colorRef,
+                    },
+                  })
+                }
                 key={colorRef}
                 colorRef={colorRef}
                 showCurrentColorIndicator={true}
