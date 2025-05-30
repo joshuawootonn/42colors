@@ -24,6 +24,11 @@ import { drawBrushOutline } from "./brush-rendering";
 
 export const brushSizeState = createAtom(1);
 
+export type BrushSettings = {
+  size: number;
+  currentColorRef: ColorRef;
+};
+
 export function getCameraOffset(camera: Camera): {
   xOffset: number;
   yOffset: number;

@@ -1,6 +1,6 @@
 import { createStore } from "@xstate/store";
 import { Channel, Socket } from "phoenix";
-import { BrushTool, pointsToPixels } from "./tools/brush";
+import { BrushSettings, BrushTool, pointsToPixels } from "./tools/brush";
 import { PanTool } from "./tools/pan";
 import { QueryClient } from "@tanstack/react-query";
 import { CHUNK_LENGTH } from "./constants";
@@ -43,7 +43,7 @@ import {
   onGesture,
 } from "./events";
 import { ColorRef, TRANSPARENT_REF } from "./palette";
-import { ErasureTool } from "./tools/erasure";
+import { ErasureSettings, ErasureTool } from "./tools/erasure";
 import { dedupeCoords } from "./utils/dedupe-coords";
 import { uuid } from "./utils/uuid";
 import {
@@ -67,7 +67,7 @@ export type InitialStore = {
   id: undefined;
   camera: Camera;
   server?: undefined;
-  tools?: undefined;
+  toolSettings?: undefined;
   currentTool: Tool;
   currentColorRef: ColorRef;
   currentPointerState: PointerState;
@@ -91,12 +91,9 @@ export type InitializedStore = {
     socket: Socket;
     channel: Channel;
   };
-  tools: {
-    brushTool: BrushTool;
-    erasureTool: ErasureTool;
-    claimerTool: ClaimerTool;
-    panTool: PanTool;
-    wheelTool: WheelTool;
+  toolSettings: {
+    brush: BrushSettings;
+    erasure: ErasureSettings;
   };
   currentColorRef: ColorRef;
   currentTool: Tool;
@@ -158,6 +155,10 @@ export const store = createStore({
         apiWebsocketOrigin: string;
         queryClient: QueryClient;
         cameraOptions: Camera;
+        toolSettings: {
+          brush: BrushSettings;
+          erasure: ErasureSettings;
+        };
       },
       enqueue,
     ) => {
@@ -197,7 +198,7 @@ export const store = createStore({
         store.trigger.fetchUser();
       });
 
-      return {
+      const initialized: InitializedStore = {
         ...context,
         state: "initialized" as const,
         id: uuid(),
@@ -213,12 +214,9 @@ export const store = createStore({
           socket,
           channel,
         },
-        tools: {
-          erasureTool: ErasureTool,
-          brushTool: BrushTool,
-          claimerTool: ClaimerTool,
-          panTool: PanTool,
-          wheelTool: WheelTool,
+        toolSettings: {
+          brush: event.toolSettings.brush,
+          erasure: event.toolSettings.erasure,
         },
         interaction: {
           isPressed: false,
@@ -227,7 +225,6 @@ export const store = createStore({
         },
         actions: [],
         activeAction: null,
-        pixels: [],
         canvas: {
           bodyElement: event.body,
           rootCanvas: event.canvas,
@@ -242,6 +239,8 @@ export const store = createStore({
         },
         queryClient: event.queryClient,
       };
+
+      return initialized;
     },
 
     listen: (
@@ -570,22 +569,22 @@ export const store = createStore({
 
       const tool = context.currentTool;
       switch (tool) {
-        case "erasure":
-          context.tools.erasureTool.redrawTelegraph(
+        case "brush":
+          BrushTool.redrawTelegraph(
             context.interaction.cursorPosition.clientX,
             context.interaction.cursorPosition.clientY,
             context,
           );
           break;
-        case "brush":
-          context.tools.brushTool.redrawTelegraph(
+        case "erasure":
+          ErasureTool.redrawTelegraph(
             context.interaction.cursorPosition.clientX,
             context.interaction.cursorPosition.clientY,
             context,
           );
           break;
         case "claimer":
-          context.tools.claimerTool.redrawTelegraph(context);
+          ClaimerTool.redrawTelegraph(context);
           break;
         default:
           console.log("default case of the redrawTelegraph");
@@ -679,20 +678,19 @@ export const store = createStore({
       enqueue.effect(() => store.trigger.setIsPressed({ isPressed: true }));
 
       if (context.interaction.isSpacePressed) {
-        context.tools.panTool.onPointerDown(e, context);
-        return;
+        return PanTool.onPointerDown(e, context);
       }
 
       if (context.currentTool === "brush") {
-        return context.tools.brushTool.onPointerDown(e, context, enqueue);
+        return BrushTool.onPointerDown(e, context, enqueue);
       }
 
       if (context.currentTool === "erasure") {
-        return context.tools.erasureTool.onPointerDown(e, context, enqueue);
+        return ErasureTool.onPointerDown(e, context, enqueue);
       }
 
       if (context.currentTool === "claimer") {
-        return context.tools.claimerTool.onPointerDown(e, context, enqueue);
+        return ClaimerTool.onPointerDown(e, context, enqueue);
       }
     },
 
@@ -706,15 +704,15 @@ export const store = createStore({
       const tool = context.currentTool;
 
       if (tool === "brush") {
-        return context.tools.brushTool.onPointerMove(e, context, enqueue);
+        return BrushTool.onPointerMove(e, context, enqueue);
       }
 
       if (tool === "erasure") {
-        return context.tools.erasureTool.onPointerMove(e, context, enqueue);
+        return ErasureTool.onPointerMove(e, context, enqueue);
       }
 
       if (tool === "claimer") {
-        return context.tools.claimerTool.onPointerMove(e, context, enqueue);
+        return ClaimerTool.onPointerMove(e, context, enqueue);
       }
     },
 
@@ -726,15 +724,15 @@ export const store = createStore({
       });
 
       if (context.currentTool === "brush") {
-        return context.tools.brushTool.onPointerUp(e, context, enqueue);
+        return BrushTool.onPointerUp(e, context, enqueue);
       }
 
       if (context.currentTool === "erasure") {
-        return context.tools.erasureTool.onPointerUp(e, context, enqueue);
+        return ErasureTool.onPointerUp(e, context, enqueue);
       }
 
       if (context.currentTool === "claimer") {
-        return context.tools.claimerTool.onPointerUp(e, context, enqueue);
+        return ClaimerTool.onPointerUp(e, context, enqueue);
       }
     },
 
@@ -745,15 +743,15 @@ export const store = createStore({
       enqueue.effect(() => store.trigger.clearCursor());
 
       if (context.currentTool === "brush") {
-        return context.tools.brushTool.onPointerOut(e, context, enqueue);
+        return BrushTool.onPointerOut(e, context, enqueue);
       }
 
       if (context.currentTool === "erasure") {
-        return context.tools.erasureTool.onPointerOut(e, context, enqueue);
+        return ErasureTool.onPointerOut(e, context, enqueue);
       }
 
       if (context.currentTool === "claimer") {
-        return context.tools.claimerTool.onPointerOut(e, context, enqueue);
+        return ClaimerTool.onPointerOut(e, context, enqueue);
       }
     },
 
@@ -794,7 +792,7 @@ export const store = createStore({
     onWheel: (context, { e }: { e: WheelEvent }, enqueue) => {
       if (isInitialStore(context)) return;
 
-      context.tools.wheelTool.onWheel(context, e, enqueue);
+      WheelTool.onWheel(context, e, enqueue);
 
       enqueue.effect(() => {
         store.trigger.resizeRealtimeAndTelegraphCanvases();
@@ -802,15 +800,15 @@ export const store = createStore({
         store.trigger.redrawTelegraph();
       });
       if (context.currentTool === "brush") {
-        return context.tools.brushTool.onWheel(e, context, enqueue);
+        return BrushTool.onWheel(e, context, enqueue);
       }
 
       if (context.currentTool === "erasure") {
-        return context.tools.erasureTool.onWheel(e, context, enqueue);
+        return ErasureTool.onWheel(e, context, enqueue);
       }
 
       if (context.currentTool === "claimer") {
-        return context.tools.claimerTool.onWheel(e, context, enqueue);
+        return ClaimerTool.onWheel(e, context, enqueue);
       }
 
       return context;

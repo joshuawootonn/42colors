@@ -46,6 +46,15 @@ export default function Page() {
           "https://api.42colors.com",
         cameraOptions: { x, y, zoom },
         queryClient,
+        toolSettings: {
+          erasure: {
+            size: 2,
+          },
+          brush: {
+            size: 2,
+            currentColorRef: 4,
+          },
+        },
       });
 
       const rafId = requestAnimationFrame(draw);

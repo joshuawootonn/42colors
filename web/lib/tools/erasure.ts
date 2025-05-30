@@ -19,6 +19,10 @@ import { drawBrushOutline } from "./brush-rendering";
 
 export const erasureSizeState = createAtom(1);
 
+export type ErasureSettings = {
+  size: number;
+};
+
 function redrawTelegraph(
   clientX: number,
   clientY: number,
