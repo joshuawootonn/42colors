@@ -3,7 +3,7 @@
 import { About } from "@/app/(marketing)/about/component";
 import { dialogProse } from "@/components/dialog-prose";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { INTRO_SEEN } from "@/lib/cookies";
+import { INTRO_SEEN } from "@/lib/storage-keys";
 import { cn } from "@/lib/utils";
 import { setCookie } from "cookies-next";
 import { useRouter } from "next/navigation";

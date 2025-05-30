@@ -5,7 +5,7 @@ import { Dialog, DialogContent } from "./ui/dialog";
 import { dialogProse } from "./dialog-prose";
 
 import { setCookie } from "cookies-next";
-import { INTRO_SEEN } from "@/lib/cookies";
+import { INTRO_SEEN } from "@/lib/storage-keys";
 import { About } from "@/app/(marketing)/about/component";
 
 export function Intro({ defaultOpen }: { defaultOpen: boolean }) {

@@ -5,7 +5,7 @@ import { Fathom } from "@/components/fathom";
 import { Intro } from "@/components/intro";
 import { Link } from "@/components/link";
 import { Providers } from "./providers";
-import { INTRO_SEEN } from "@/lib/cookies";
+import { INTRO_SEEN } from "@/lib/storage-keys";
 import { cookies } from "next/headers";
 import { Toaster } from "sonner";
 import { Logo } from "@/components/logo";
