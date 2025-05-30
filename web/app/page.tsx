@@ -55,7 +55,6 @@ export default function Page() {
           },
           brush: {
             size: 2,
-            currentColorRef: 4,
           },
         },
       });

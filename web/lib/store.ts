@@ -632,6 +632,28 @@ export const store = createStore({
       };
     },
 
+    updateBrushSettings: (context, event: Partial<BrushSettings>) => {
+      if (isInitialStore(context)) return;
+      return {
+        ...context,
+        toolSettings: {
+          ...context.toolSettings,
+          brush: { ...context.toolSettings.brush, ...event },
+        },
+      };
+    },
+
+    updateErasureSettings: (context, event: Partial<ErasureSettings>) => {
+      if (isInitialStore(context)) return;
+      return {
+        ...context,
+        toolSettings: {
+          ...context.toolSettings,
+          erasure: { ...context.toolSettings.erasure, ...event },
+        },
+      };
+    },
+
     clearCursor: (context) => {
       if (isInitialStore(context)) return;
       return {

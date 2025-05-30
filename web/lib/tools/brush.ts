@@ -16,17 +16,13 @@ import {
 import { Camera, getZoomMultiplier } from "../camera";
 import { getPixelSize } from "../realtime";
 
-import { createAtom } from "@xstate/store";
 import { EnqueueObject } from "../xstate-internal-types";
 import { dedupeCoords } from "../utils/dedupe-coords";
 import { newNewCoords } from "../utils/net-new-coords";
 import { drawBrushOutline } from "./brush-rendering";
 
-export const brushSizeState = createAtom(1);
-
 export type BrushSettings = {
   size: number;
-  currentColorRef: ColorRef;
 };
 
 export function getCameraOffset(camera: Camera): {
@@ -158,7 +154,12 @@ function redrawTelegraph(
     y: canvasToClient(relativePoint.y, context.camera.zoom),
   });
 
-  drawBrushOutline(ctx, cursorPosition, brushSizeState.get(), pixelSize);
+  drawBrushOutline(
+    ctx,
+    cursorPosition,
+    context.toolSettings.brush.size,
+    pixelSize,
+  );
   ctx.fill();
 }
 
@@ -260,7 +261,11 @@ function onPointerDown(
 ): InitializedStore {
   const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
-  const brushPoints = getBrushPoints([anchorPoint], brushSizeState.get(), 1);
+  const brushPoints = getBrushPoints(
+    [anchorPoint],
+    context.toolSettings.brush.size,
+    1,
+  );
 
   const nextActiveAction = startBrushAction(
     anchorPoint,
@@ -309,7 +314,11 @@ function onPointerMove(
     context.activeAction.anchorPoints,
     newAnchorPoints,
   );
-  const newBrushPoints = getBrushPoints(netNewAnchors, brushSizeState.get(), 1);
+  const newBrushPoints = getBrushPoints(
+    netNewAnchors,
+    context.toolSettings.brush.size,
+    1,
+  );
   const netNewPixels = newNewCoords(
     context.activeAction.points,
     newBrushPoints,
@@ -357,7 +366,11 @@ function onWheel(
     context.activeAction.anchorPoints,
     newAnchorPoints,
   );
-  const newBrushPoints = getBrushPoints(netNewAnchors, brushSizeState.get(), 1);
+  const newBrushPoints = getBrushPoints(
+    netNewAnchors,
+    context.toolSettings.brush.size,
+    1,
+  );
   const netNewPixels = newNewCoords(
     context.activeAction.points,
     newBrushPoints,

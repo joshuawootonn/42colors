@@ -1,9 +1,12 @@
 import { NumberInput } from "@/components/ui/number-input";
 import { useSelector } from "@xstate/store/react";
-import { brushSizeState } from "./brush";
+import { store } from "../store";
 
 export function BrushPanel() {
-  const brushSize = useSelector(brushSizeState, (s) => s);
+  const brushSize = useSelector(
+    store,
+    (s) => s.context.toolSettings?.brush.size,
+  );
 
   return (
     <div className="flex flex-col items-start justify-start">
@@ -13,7 +16,11 @@ export function BrushPanel() {
         step={1}
         min={1}
         max={5}
-        onChange={(e) => brushSizeState.set(parseInt(e.currentTarget.value))}
+        onChange={(e) =>
+          store.trigger.updateBrushSettings({
+            size: parseInt(e.currentTarget.value),
+          })
+        }
       />
     </div>
   );

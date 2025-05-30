@@ -13,11 +13,8 @@ import { getZoomMultiplier } from "../camera";
 import { getPixelSize } from "../realtime";
 import { EnqueueObject } from "../xstate-internal-types";
 import { AbsolutePoint, cursorPositionSchema } from "../coord";
-import { createAtom } from "@xstate/store";
 import { newNewCoords } from "../utils/net-new-coords";
 import { drawBrushOutline } from "./brush-rendering";
-
-export const erasureSizeState = createAtom(1);
 
 export type ErasureSettings = {
   size: number;
@@ -45,10 +42,13 @@ function redrawTelegraph(
     camera: context.camera,
   });
 
-  const erasureSize = erasureSizeState.get();
-
   ctx.strokeStyle = "black";
-  drawBrushOutline(ctx, cursorPosition, erasureSize, pixelSize);
+  drawBrushOutline(
+    ctx,
+    cursorPosition,
+    context.toolSettings.erasure.size,
+    pixelSize,
+  );
   ctx.stroke();
 }
 
@@ -88,7 +88,11 @@ function onPointerDown(
 ): InitializedStore {
   const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
-  const brushPoints = getBrushPoints([anchorPoint], erasureSizeState.get(), 1);
+  const brushPoints = getBrushPoints(
+    [anchorPoint],
+    context.toolSettings.erasure.size,
+    1,
+  );
 
   const nextActiveAction = startErasureAction(anchorPoint, brushPoints);
 
@@ -131,7 +135,7 @@ function onPointerMove(
   );
   const newBrushPoints = getBrushPoints(
     netNewAnchors,
-    erasureSizeState.get(),
+    context.toolSettings.erasure.size,
     1,
   );
   const netNewPixels = newNewCoords(
@@ -183,7 +187,7 @@ function onWheel(
   );
   const newBrushPoints = getBrushPoints(
     netNewAnchors,
-    erasureSizeState.get(),
+    context.toolSettings.erasure.size,
     1,
   );
   const netNewPixels = newNewCoords(
