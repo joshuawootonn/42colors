@@ -58,6 +58,11 @@ import { newPixels } from "./channel";
 import { Camera } from "./camera";
 import { createTelegraphCanvas, resizeTelegraphCanvas } from "./telegraph";
 import { ClaimerTool } from "./tools/claimer";
+import {
+  DEFAULT_TOOL_SETTINGS,
+  ToolSettings,
+  updateToolSettings,
+} from "./tool-settings";
 
 export type Tool = "brush" | "erasure" | "claimer";
 export type PointerState = "default" | "pressed";
@@ -67,7 +72,6 @@ export type InitialStore = {
   id: undefined;
   camera: Camera;
   server?: undefined;
-  toolSettings?: undefined;
   currentTool: Tool;
   currentColorRef: ColorRef;
   currentPointerState: PointerState;
@@ -79,6 +83,7 @@ export type InitialStore = {
   activeAction?: undefined;
   queryClient?: QueryClient;
   eventLoopRafId?: number;
+  toolSettings: ToolSettings;
 };
 
 export type InitializedStore = {
@@ -91,10 +96,7 @@ export type InitializedStore = {
     socket: Socket;
     channel: Channel;
   };
-  toolSettings: {
-    brush: BrushSettings;
-    erasure: ErasureSettings;
-  };
+  toolSettings: ToolSettings;
   currentColorRef: ColorRef;
   currentTool: Tool;
   currentPointerState: PointerState;
@@ -141,6 +143,7 @@ const initialialStoreContext: Store = {
   currentTool: "brush",
   currentColorRef: 1,
   currentPointerState: "default",
+  toolSettings: DEFAULT_TOOL_SETTINGS,
 } as Store;
 
 export const store = createStore({
@@ -155,10 +158,7 @@ export const store = createStore({
         apiWebsocketOrigin: string;
         queryClient: QueryClient;
         cameraOptions: Camera;
-        toolSettings: {
-          brush: BrushSettings;
-          erasure: ErasureSettings;
-        };
+        toolSettings: ToolSettings;
       },
       enqueue,
     ) => {
@@ -632,25 +632,40 @@ export const store = createStore({
       };
     },
 
-    updateBrushSettings: (context, event: Partial<BrushSettings>) => {
+    updateBrushSettings: (
+      context,
+      { brush }: { brush: Partial<BrushSettings> },
+    ) => {
       if (isInitialStore(context)) return;
+
+      const toolSettings = {
+        ...context.toolSettings,
+        brush: { ...context.toolSettings.brush, ...brush },
+      };
+
+      updateToolSettings(toolSettings);
+
       return {
         ...context,
-        toolSettings: {
-          ...context.toolSettings,
-          brush: { ...context.toolSettings.brush, ...event },
-        },
+        toolSettings,
       };
     },
 
-    updateErasureSettings: (context, event: Partial<ErasureSettings>) => {
+    updateErasureSettings: (
+      context,
+      { erasure }: { erasure: Partial<ErasureSettings> },
+    ) => {
       if (isInitialStore(context)) return;
+      const toolSettings = {
+        ...context.toolSettings,
+        erasure: { ...context.toolSettings.erasure, ...erasure },
+      };
+
+      updateToolSettings(toolSettings);
+
       return {
         ...context,
-        toolSettings: {
-          ...context.toolSettings,
-          erasure: { ...context.toolSettings.erasure, ...event },
-        },
+        toolSettings,
       };
     },
 

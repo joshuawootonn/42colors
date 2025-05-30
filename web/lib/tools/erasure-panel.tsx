@@ -5,7 +5,7 @@ import { store } from "../store";
 export function ErasurePanel() {
   const brushSize = useSelector(
     store,
-    (s) => s.context.toolSettings?.erasure.size,
+    (s) => s.context.toolSettings.erasure.size,
   );
 
   return (
@@ -18,7 +18,9 @@ export function ErasurePanel() {
         max={5}
         onChange={(e) =>
           store.trigger.updateErasureSettings({
-            size: parseInt(e.currentTarget.value),
+            erasure: {
+              size: parseInt(e.currentTarget.value),
+            },
           })
         }
       />

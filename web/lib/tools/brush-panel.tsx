@@ -5,7 +5,7 @@ import { store } from "../store";
 export function BrushPanel() {
   const brushSize = useSelector(
     store,
-    (s) => s.context.toolSettings?.brush.size,
+    (s) => s.context.toolSettings.brush.size,
   );
 
   return (
@@ -18,7 +18,9 @@ export function BrushPanel() {
         max={5}
         onChange={(e) =>
           store.trigger.updateBrushSettings({
-            size: parseInt(e.currentTarget.value),
+            brush: {
+              size: parseInt(e.currentTarget.value),
+            },
           })
         }
       />

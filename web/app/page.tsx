@@ -16,6 +16,7 @@ import { Navigation } from "@/components/navigation";
 import { Palette } from "@/components/palette";
 import { BrushPanel } from "@/lib/tools/brush-panel";
 import { ErasurePanel } from "@/lib/tools/erasure-panel";
+import { DEFAULT_TOOL_SETTINGS, getToolSettings } from "@/lib/tool-settings";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,9 @@ export default function Page() {
 
       const body = document.body as HTMLBodyElement;
 
+      const toolSettings = getToolSettings();
+
+
       store.trigger.initializeStore({
         body,
         canvas: element,
@@ -49,14 +53,7 @@ export default function Page() {
           "https://api.42colors.com",
         cameraOptions: { x, y, zoom },
         queryClient,
-        toolSettings: {
-          erasure: {
-            size: 2,
-          },
-          brush: {
-            size: 2,
-          },
-        },
+        toolSettings: toolSettings ?? DEFAULT_TOOL_SETTINGS,
       });
 
       const rafId = requestAnimationFrame(draw);
