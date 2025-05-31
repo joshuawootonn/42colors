@@ -28,6 +28,8 @@ export function Toolbar() {
     store,
     (state) => state.context.toolSettings.currentTool,
   );
+  const state = useSelector(store, (state) => state.context.state);
+  if (state !== "initialized") return null;
   return (
     <div className="flex flex-row justify-end items-start">
       <div className={cn("p-0.5 grid grid-cols-2")}>

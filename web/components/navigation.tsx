@@ -61,6 +61,9 @@ export function Navigation() {
 
   useCameraSearchParams(x, y, zoom);
 
+  const state = useSelector(store, (state) => state.context.state);
+  if (state !== "initialized") return null;
+
   return (
     <div
       className={cn(

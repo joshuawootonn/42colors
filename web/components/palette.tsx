@@ -117,12 +117,15 @@ export function Palette() {
     (state) => state.context.toolSettings.palette.currentColorRef,
   );
 
+  const state = useSelector(store, (state) => state.context.state);
+  if (state !== "initialized") return null;
+
   return (
     <div className="flex flex-row justify-end">
       <motion.div
         className={cn("p-0.5 flex flex-col")}
         variants={container}
-        initial="show"
+        initial={isOpen ? "show" : "hidden"}
         animate={isOpen ? "show" : "hidden"}
       >
         <div>
