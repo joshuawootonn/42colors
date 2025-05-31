@@ -60,12 +60,12 @@ import { createTelegraphCanvas, resizeTelegraphCanvas } from "./telegraph";
 import { ClaimerTool } from "./tools/claimer";
 import {
   DEFAULT_TOOL_SETTINGS,
+  Tool,
   ToolSettings,
   updateToolSettings,
 } from "./tool-settings";
 import { PaletteSettings } from "./tools/palette";
 
-export type Tool = "brush" | "erasure" | "claimer";
 export type PointerState = "default" | "pressed";
 
 export type InitialStore = {
@@ -73,7 +73,6 @@ export type InitialStore = {
   id: undefined;
   camera: Camera;
   server?: undefined;
-  currentTool: Tool;
   currentPointerState: PointerState;
   realtime?: undefined;
   interaction?: undefined;
@@ -97,7 +96,6 @@ export type InitializedStore = {
     channel: Channel;
   };
   toolSettings: ToolSettings;
-  currentTool: Tool;
   currentPointerState: PointerState;
   id: string;
   canvas: {
@@ -214,11 +212,7 @@ export const store = createStore({
           socket,
           channel,
         },
-        toolSettings: {
-          brush: event.toolSettings.brush,
-          erasure: event.toolSettings.erasure,
-          palette: event.toolSettings.palette,
-        },
+        toolSettings: event.toolSettings,
         interaction: {
           isPressed: false,
           isSpacePressed: false,
@@ -568,7 +562,7 @@ export const store = createStore({
       if (isInitialStore(context)) return;
       if (context.interaction.cursorPosition == null) return;
 
-      const tool = context.currentTool;
+      const tool = context.toolSettings.currentTool;
       switch (tool) {
         case "brush":
           BrushTool.redrawTelegraph(
@@ -622,7 +616,19 @@ export const store = createStore({
     },
 
     changeTool: (context, event: { tool: Tool }) => {
-      return { ...context, currentTool: event.tool };
+      if (isInitialStore(context)) return;
+
+      const toolSettings: ToolSettings = {
+        ...context.toolSettings,
+        currentTool: event.tool,
+      };
+
+      updateToolSettings(toolSettings);
+
+      return {
+        ...context,
+        toolSettings,
+      };
     },
 
     updatePaletteSettings: (
@@ -729,16 +735,17 @@ export const store = createStore({
       if (context.interaction.isSpacePressed) {
         return PanTool.onPointerDown(e, context);
       }
+      const tool = context.toolSettings.currentTool;
 
-      if (context.currentTool === "brush") {
+      if (tool === "brush") {
         return BrushTool.onPointerDown(e, context, enqueue);
       }
 
-      if (context.currentTool === "erasure") {
+      if (tool === "erasure") {
         return ErasureTool.onPointerDown(e, context, enqueue);
       }
 
-      if (context.currentTool === "claimer") {
+      if (tool === "claimer") {
         return ClaimerTool.onPointerDown(e, context, enqueue);
       }
     },
@@ -750,7 +757,7 @@ export const store = createStore({
         store.trigger.setCursorPosition({ cursorPosition: e });
         store.trigger.redrawTelegraph();
       });
-      const tool = context.currentTool;
+      const tool = context.toolSettings.currentTool;
 
       if (tool === "brush") {
         return BrushTool.onPointerMove(e, context, enqueue);
@@ -771,16 +778,17 @@ export const store = createStore({
       enqueue.effect(() => {
         return store.trigger.setIsPressed({ isPressed: false });
       });
+      const tool = context.toolSettings.currentTool;
 
-      if (context.currentTool === "brush") {
+      if (tool === "brush") {
         return BrushTool.onPointerUp(e, context, enqueue);
       }
 
-      if (context.currentTool === "erasure") {
+      if (tool === "erasure") {
         return ErasureTool.onPointerUp(e, context, enqueue);
       }
 
-      if (context.currentTool === "claimer") {
+      if (tool === "claimer") {
         return ClaimerTool.onPointerUp(e, context, enqueue);
       }
     },
@@ -790,16 +798,17 @@ export const store = createStore({
 
       enqueue.effect(() => store.trigger.setIsPressed({ isPressed: false }));
       enqueue.effect(() => store.trigger.clearCursor());
+      const tool = context.toolSettings.currentTool;
 
-      if (context.currentTool === "brush") {
+      if (tool === "brush") {
         return BrushTool.onPointerOut(e, context, enqueue);
       }
 
-      if (context.currentTool === "erasure") {
+      if (tool === "erasure") {
         return ErasureTool.onPointerOut(e, context, enqueue);
       }
 
-      if (context.currentTool === "claimer") {
+      if (tool === "claimer") {
         return ClaimerTool.onPointerOut(e, context, enqueue);
       }
     },
@@ -848,15 +857,17 @@ export const store = createStore({
         store.trigger.redrawRealtimeCanvas();
         store.trigger.redrawTelegraph();
       });
-      if (context.currentTool === "brush") {
+      const tool = context.toolSettings.currentTool;
+
+      if (tool === "brush") {
         return BrushTool.onWheel(e, context, enqueue);
       }
 
-      if (context.currentTool === "erasure") {
+      if (tool === "erasure") {
         return ErasureTool.onWheel(e, context, enqueue);
       }
 
-      if (context.currentTool === "claimer") {
+      if (tool === "claimer") {
         return ClaimerTool.onWheel(e, context, enqueue);
       }
 

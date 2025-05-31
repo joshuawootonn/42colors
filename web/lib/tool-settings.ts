@@ -1,33 +1,9 @@
 import { z } from "zod";
 import { TOOL_SETTINGS } from "./storage-keys";
-import { BrushSettings, BrushTool } from "./tools/brush";
+import { BrushSettings } from "./tools/brush";
 import { ErasureSettings } from "./tools/erasure";
 import { PaletteSettings } from "./tools/palette";
 import { colorRefSchema } from "./palette";
-const toolSettingsSchema = z.object({
-  brush: z.object({ size: z.number() }),
-  erasure: z.object({ size: z.number() }),
-  palette: z.object({ isOpen: z.boolean(), currentColorRef: colorRefSchema }),
-});
-
-export type ToolSettings = {
-  brush: BrushSettings;
-  erasure: ErasureSettings;
-  palette: PaletteSettings;
-};
-
-export const DEFAULT_TOOL_SETTINGS = toolSettingsSchema.parse({
-  erasure: {
-    size: 2,
-  },
-  brush: {
-    size: 2,
-  },
-  palette: {
-    isOpen: true,
-    currentColorRef: 1,
-  },
-});
 
 function createToolKey(key: string) {
   return `${TOOL_SETTINGS}-${key}`;
@@ -41,6 +17,7 @@ const BRUSH_SIZE = "brush-size";
 const ERASURE_SIZE = "erasure-size";
 const PALETTE_IS_OPEN = "palette-is-open";
 const PALETTE_CURRENT_COLOR_REF = "palette-current-color-ref";
+const CURRENT_TOOL = "current-tool";
 
 export function updateToolSettings(toolSettings: ToolSettings) {
   window.localStorage.setItem(
@@ -59,6 +36,10 @@ export function updateToolSettings(toolSettings: ToolSettings) {
     createToolKey(PALETTE_CURRENT_COLOR_REF),
     toolSettings.palette.currentColorRef.toString(),
   );
+  window.localStorage.setItem(
+    createToolKey(CURRENT_TOOL),
+    toolSettings.currentTool,
+  );
 }
 
 const stringToNumberSchema = z
@@ -73,7 +54,48 @@ const stringToColorRefSchema = stringToNumberSchema.transform(
   (val) => colorRefSchema.safeParse(val).data,
 );
 
+const toolSchema = z.union([
+  z.literal("brush"),
+  z.literal("erasure"),
+  z.literal("claimer"),
+]);
+
+export type Tool = z.infer<typeof toolSchema>;
+
+const stringToToolSchema = z
+  .string()
+  .transform((val) => toolSchema.safeParse(val).data);
+
+const toolSettingsSchema = z.object({
+  brush: z.object({ size: z.number() }),
+  erasure: z.object({ size: z.number() }),
+  palette: z.object({ isOpen: z.boolean(), currentColorRef: colorRefSchema }),
+  currentTool: toolSchema,
+});
+
+export type ToolSettings = {
+  brush: BrushSettings;
+  erasure: ErasureSettings;
+  palette: PaletteSettings;
+  currentTool: Tool;
+};
+
+export const DEFAULT_TOOL_SETTINGS = toolSettingsSchema.parse({
+  erasure: {
+    size: 2,
+  },
+  brush: {
+    size: 2,
+  },
+  palette: {
+    isOpen: true,
+    currentColorRef: 1,
+  },
+  currentTool: "brush",
+});
+
 export function getToolSettings(): ToolSettings | undefined {
+  const currentTool = stringToToolSchema.safeParse(getByKey(CURRENT_TOOL));
   const brushSize = stringToNumberSchema.safeParse(getByKey(BRUSH_SIZE));
   const erasureSize = stringToNumberSchema.safeParse(getByKey(ERASURE_SIZE));
   const paletteIsOpen = stringToBooleanSchema.safeParse(
@@ -96,6 +118,7 @@ export function getToolSettings(): ToolSettings | undefined {
         paletteCurrentColorRef.data ??
         DEFAULT_TOOL_SETTINGS.palette.currentColorRef,
     },
+    currentTool: currentTool.data ?? DEFAULT_TOOL_SETTINGS.currentTool,
   };
 
   return toolSettings;

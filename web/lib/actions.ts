@@ -1,11 +1,11 @@
 import { AbsolutePoint, Pixel } from "./coord";
-import { Tool } from "./store";
 import { BrushActive } from "./tools/brush";
 import { ErasureActive } from "./tools/erasure";
 import { pointsToPixels } from "./tools/brush";
 import { ColorRef, TRANSPARENT_REF } from "./palette";
 import { Camera } from "./camera";
 import { ClaimerActive, ClaimerComplete } from "./tools/claimer";
+import { Tool } from "./tool-settings";
 
 type Undo = { type: "undo" };
 type Redo = { type: "redo" };

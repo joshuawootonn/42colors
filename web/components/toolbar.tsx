@@ -24,7 +24,10 @@ export function ToolIconButton({
 }
 
 export function Toolbar() {
-  const tool = useSelector(store, (state) => state.context.currentTool);
+  const tool = useSelector(
+    store,
+    (state) => state.context.toolSettings.currentTool,
+  );
   return (
     <div className="flex flex-row justify-end items-start">
       <div className={cn("p-0.5 grid grid-cols-2")}>
