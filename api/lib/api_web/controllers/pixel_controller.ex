@@ -1,7 +1,6 @@
 defmodule ApiWeb.PixelController do
   use ApiWeb, :controller
 
-  alias Api.Accounts
   alias Api.Canvas
   alias Api.Canvas.Pixel
 
@@ -12,35 +11,9 @@ defmodule ApiWeb.PixelController do
     render(conn, :index, pixels: pixels)
   end
 
-  def create(conn, %{"pixel" => pixel_params}) do
-    with ["Bearer: " <> token] <- get_req_header(conn, "authorization") do
-      with {:ok, user} <- Accounts.get_user_by_session_token(token) do
-        with {:ok, %Pixel{} = pixel} <-
-               Canvas.create_pixel(%{
-                 x: pixel_params.x,
-                 y: pixel_params,
-                 user_id: user.id
-               }) do
-          conn
-          |> put_status(:created)
-          |> put_resp_header("location", ~p"/api/pixels/#{pixel}")
-          |> render(:show, pixel: pixel)
-        end
-      end
-    end
-  end
-
   def show(conn, %{"id" => id}) do
     pixel = Canvas.get_pixel!(id)
     render(conn, :show, pixel: pixel)
-  end
-
-  def update(conn, %{"id" => id, "pixel" => pixel_params}) do
-    pixel = Canvas.get_pixel!(id)
-
-    with {:ok, %Pixel{} = pixel} <- Canvas.update_pixel(pixel, pixel_params) do
-      render(conn, :show, pixel: pixel)
-    end
   end
 
   def delete(conn, %{"id" => id}) do

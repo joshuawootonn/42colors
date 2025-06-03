@@ -111,10 +111,10 @@ defmodule AssertionTest do
   describe "read binary from file" do
     test "positive numbers" do
       initial_list = [
-        %{x: 1, y: 1},
-        %{x: 2, y: 2},
-        %{x: 3, y: 3},
-        %{x: 4, y: 4}
+        %{x: 1, y: 1, color: 1},
+        %{x: 2, y: 2, color: 1},
+        %{x: 3, y: 3, color: 1},
+        %{x: 4, y: 4, color: 1}
       ]
 
       PixelCache.initialize_file()
@@ -128,10 +128,10 @@ defmodule AssertionTest do
 
     test "negative numbers" do
       initial_list = [
-        %{x: -1, y: 1},
-        %{x: -2, y: -2},
-        %{x: 3, y: -3},
-        %{x: -4, y: -4}
+        %{x: -1, y: 1, color: 1},
+        %{x: -2, y: -2, color: 1},
+        %{x: 3, y: -3, color: 1},
+        %{x: -4, y: -4, color: 1}
       ]
 
       PixelCache.initialize_file()
@@ -143,11 +143,11 @@ defmodule AssertionTest do
 
     test "edge cases" do
       initial_list = [
-        %{x: 4, y: 4},
-        %{x: 0, y: 0},
-        %{x: -5, y: -5},
-        %{x: 4, y: -5},
-        %{x: -5, y: 4}
+        %{x: 4, y: 4, color: 1},
+        %{x: 0, y: 0, color: 1},
+        %{x: -5, y: -5, color: 1},
+        %{x: 4, y: -5, color: 1},
+        %{x: -5, y: 4, color: 1}
       ]
 
       PixelCache.initialize_file()

@@ -1,6 +1,8 @@
 defmodule ApiWeb.Router do
   use ApiWeb, :router
 
+  import ApiWeb.UserAuth
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -15,17 +17,14 @@ defmodule ApiWeb.Router do
   pipeline :api do
     plug :accepts, ["json"]
     plug CORSPlug, origin: app_url
+    plug :fetch_session
+    plug :fetch_current_user
   end
 
   scope "/", ApiWeb do
     pipe_through :browser
 
     get "/", PageController, :home
-  end
-
-  scope "/auth", ApiWeb do
-    pipe_through :browser
-
   end
 
   # Other scopes may use custom stacks.
@@ -38,7 +37,23 @@ defmodule ApiWeb.Router do
     resources "/pixels6", PixelSubSectionInFile, except: [:new, :edit]
     resources "/pixels7", PixelSubSectionInFileAsBinary, except: [:new, :edit]
 
-    get "/me", MeController, :show
+    post "/users/confirm/:token", UserConfirmationController, :update
+    delete "/users/log_out", UserSessionController, :delete
+  end
+
+  scope "/api", ApiWeb do
+    pipe_through [:api, :redirect_if_user_is_authenticated]
+
+    post "/users/log_in", UserSessionController, :create
+    post "/users/register", UserRegistrationController, :create
+    post "/users/reset_password", UserResetPasswordController, :create
+    put "/users/reset_password/:token", UserResetPasswordController, :update
+  end
+
+  scope "/api", ApiWeb do
+    pipe_through [:api, :require_authenticated_user]
+
+    get "/users/me", UserSessionController, :read
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
