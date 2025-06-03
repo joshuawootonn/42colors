@@ -1,7 +1,6 @@
 defmodule ApiWeb.PixelSocket do
   use Phoenix.Socket
 
-  alias Api.Canvas
   alias Api.Accounts
 
   # A Socket handler
@@ -38,7 +37,7 @@ defmodule ApiWeb.PixelSocket do
   # performing token verification on connect.
   @impl true
   def connect(%{"token" => token}, socket, _connect_info) do
-    case Accounts.get_user_by_token(token) do
+    case Accounts.get_user_by_session_token(token) do
       {:ok, account} ->
         {:ok, assign(socket, :current_user_id, account.user_id)}
 

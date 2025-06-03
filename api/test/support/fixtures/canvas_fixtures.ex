@@ -3,16 +3,22 @@ defmodule Api.CanvasFixtures do
   This module defines test helpers for creating
   entities via the `Api.Canvas` context.
   """
-
+  def unique_user_email, do: "user#{System.unique_integer()}@example.com"
+  def valid_user_password, do: "hello world!"
+  def valid_user_attributes(attrs \\ %{}) do
+    Enum.into(attrs, %{
+      email: unique_user_email(),
+      password: valid_user_password()
+    })
+  end
   @doc """
   Generate a pixel.
   """
   def pixel_fixture(attrs \\ %{}) do
     {:ok, user} =
-      Api.Accounts.register_oauth_user(%{
-        email: "meaning@42colors.com",
-        name: "meaning"
-      })
+      attrs
+      |> valid_user_attributes()
+      |> Api.Accounts.register_user()
 
     {:ok, pixel} =
       attrs

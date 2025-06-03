@@ -26,8 +26,6 @@ defmodule ApiWeb.Router do
   scope "/auth", ApiWeb do
     pipe_through :browser
 
-    get "/google/callback", GoogleAuthController, :index
-    # get "/", GoogleAuthController, :auth
   end
 
   # Other scopes may use custom stacks.
@@ -41,8 +39,6 @@ defmodule ApiWeb.Router do
     resources "/pixels7", PixelSubSectionInFileAsBinary, except: [:new, :edit]
 
     get "/me", MeController, :show
-
-    get "/auth_url", GoogleAuthController, :show
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

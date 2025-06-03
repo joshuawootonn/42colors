@@ -14,14 +14,12 @@ defmodule ApiWeb.PixelController do
 
   def create(conn, %{"pixel" => pixel_params}) do
     with ["Bearer: " <> token] <- get_req_header(conn, "authorization") do
-      with {:ok, account} <- Accounts.get_user_by_token(token) do
-        user = Accounts.get_user(account.user_id)
-
+      with {:ok, user} <- Accounts.get_user_by_session_token(token) do
         with {:ok, %Pixel{} = pixel} <-
                Canvas.create_pixel(%{
                  x: pixel_params.x,
                  y: pixel_params,
-                 user_id: account.user_id
+                 user_id: user.id
                }) do
           conn
           |> put_status(:created)
