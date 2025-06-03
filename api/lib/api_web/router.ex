@@ -30,11 +30,6 @@ defmodule ApiWeb.Router do
   # Other scopes may use custom stacks.
   scope "/api", ApiWeb do
     pipe_through :api
-    resources "/pixels", PixelController, except: [:new, :edit]
-    resources "/pixels2", PixelProtobufController, except: [:new, :edit]
-    resources "/pixels3", PixelInMemoryController, except: [:new, :edit]
-    resources "/pixels4", PixelInMemoryControllerPreEncoded, except: [:new, :edit]
-    resources "/pixels6", PixelSubSectionInFile, except: [:new, :edit]
     resources "/pixels7", PixelSubSectionInFileAsBinary, except: [:new, :edit]
 
     post "/users/confirm/:token", UserConfirmationController, :update
