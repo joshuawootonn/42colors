@@ -46,7 +46,7 @@ defmodule ApiWeb.Router do
   end
 
   scope "/api", ApiWeb do
-    pipe_through [:api, :require_authenticated_user]
+    pipe_through [:api, :require_authenticated_user, :put_channel_token]
 
     get "/users/me", UserSessionController, :read
   end
@@ -65,6 +65,15 @@ defmodule ApiWeb.Router do
 
       live_dashboard "/dashboard", metrics: ApiWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
+    end
+  end
+
+  defp put_channel_token(conn, _) do
+    if current_user = conn.assigns[:current_user] do
+      token = Phoenix.Token.sign(conn, "pixel socket", current_user.id)
+      assign(conn, :channel_token, token)
+    else
+      conn
     end
   end
 end

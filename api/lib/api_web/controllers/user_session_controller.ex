@@ -29,6 +29,7 @@ defmodule ApiWeb.UserSessionController do
     end
   end
 
+  @spec delete(Plug.Conn.t(), any()) :: Plug.Conn.t()
   def delete(conn, _params) do
     conn
     |> UserAuth.log_out_user()
@@ -40,11 +41,13 @@ defmodule ApiWeb.UserSessionController do
 
   def read(conn, _params) do
     user = conn.assigns.current_user
+    channel_token = conn.assigns.channel_token
     json(conn, %{
       status: "success",
       user: %{
         email: user.email,
-        id: user.id
+        id: user.id,
+        channel_token: channel_token
       }
     })
   end

@@ -37,9 +37,9 @@ defmodule ApiWeb.PixelSocket do
   # performing token verification on connect.
   @impl true
   def connect(%{"token" => token}, socket, _connect_info) do
-    case Accounts.get_user_by_session_token(token) do
-      {:ok, account} ->
-        {:ok, assign(socket, :current_user_id, account.user_id)}
+    case Phoenix.Token.verify(socket, "pixel socket", token, max_age: 1_209_600) do
+      {:ok, user_id} ->
+        {:ok, assign(socket, :current_user_id, user_id)}
 
       {:error, :unauthorized} ->
         {:ok, socket}
