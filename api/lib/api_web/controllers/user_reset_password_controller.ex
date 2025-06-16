@@ -9,7 +9,7 @@ defmodule ApiWeb.UserResetPasswordController do
     if user = Accounts.get_user_by_email(email) do
       Accounts.deliver_user_reset_password_instructions(
         user,
-        fn token -> "http://localhost:3000/forgot-password/#{token}" end
+        fn token -> "#{Application.get_env(:api, :app_url)}/forgot-password/#{token}" end
       )
     end
 

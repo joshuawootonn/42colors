@@ -10,7 +10,7 @@ defmodule ApiWeb.UserRegistrationController do
         {:ok, _} =
           Accounts.deliver_user_confirmation_instructions(
             user,
-            fn token -> "http://localhost:3000/confirm-email/#{token}" end
+            fn token -> "#{Application.get_env(:api, :app_url)}/confirm-email/#{token}" end
           )
 
         conn
