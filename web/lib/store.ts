@@ -21,7 +21,7 @@ import {
 import { getLastPixelValue, Pixel, pixelSchema } from "./coord";
 import { draw } from "./draw";
 import { setupChannel, setupSocketConnection } from "./sockets";
-import { fetchAuthedUser, fetchAuthURL } from "./user";
+import { fetchAuthedUser } from "./user";
 import { KeyboardCode } from "./keyboard-codes";
 import { isInitialStore } from "./utils/is-initial-store";
 import { WheelTool } from "./tools/wheel";
@@ -65,6 +65,7 @@ import {
   updateToolSettings,
 } from "./tool-settings";
 import { PaletteSettings } from "./tools/palette";
+import authService from "./auth";
 
 export type PointerState = "default" | "pressed";
 
@@ -119,9 +120,8 @@ export type InitializedStore = {
   };
   user?: {
     email: string;
-    name: string;
     id: number;
-  };
+  } | null;
   queryClient: QueryClient;
   eventLoopRafId?: number;
 };
@@ -192,7 +192,6 @@ export const store = createStore({
           },
         );
         store.trigger.fetchPixels();
-        store.trigger.fetchAuthURL();
         store.trigger.fetchUser();
       });
 
@@ -406,7 +405,7 @@ export const store = createStore({
 
     setUser: (
       context,
-      event: { user: { email: string; name: string; id: number } },
+      event: { user: { email: string; id: number } | null },
     ) => {
       if (isInitialStore(context)) return;
       return {
@@ -421,9 +420,11 @@ export const store = createStore({
         context.queryClient
           .fetchQuery({
             queryKey: ["user"],
-            queryFn: () => fetchAuthedUser(context.server.apiOrigin),
+            queryFn: () => authService.getCurrentUser(context.server.apiOrigin),
           })
-          .then((user) => store.trigger.setUser({ user })),
+          .then((json) => {
+            store.trigger.setUser({ user: json ? json.user : null });
+          }),
       );
     },
 
@@ -433,18 +434,6 @@ export const store = createStore({
         ...context,
         server: { ...context.server, authURL },
       };
-    },
-
-    fetchAuthURL: (context, _, enqueue) => {
-      if (isInitialStore(context)) return;
-      enqueue.effect(() =>
-        context.queryClient
-          .fetchQuery({
-            queryKey: ["auth_url"],
-            queryFn: () => fetchAuthURL(context.server.apiOrigin),
-          })
-          .then((authURL) => store.trigger.setAuthURL({ authURL })),
-      );
     },
 
     fetchPixels: (context, _, enqueue) => {

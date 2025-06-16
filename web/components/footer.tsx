@@ -8,16 +8,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link } from "./link";
 import NextLink from "next/link";
-import { deleteCookie } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { useSelector } from "@xstate/store/react";
 import { store } from "@/lib/store";
+import authService from "@/lib/auth";
 
 export function Footer() {
   const searchParams = useSearchParams();
 
   const user = useSelector(store, (state) => state.context.user);
-  const authUrl = useSelector(store, (state) => state.context.server?.authURL);
 
   return (
     <footer className="fixed bottom-3 left-3 flex w-min flex-col items-center justify-between text-md font-medium text-primary sm:flex-row">
@@ -70,24 +69,24 @@ export function Footer() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <div>/</div>
-
-        {user?.name ? (
-          <div className="flex-shrink-0">{user.name}</div>
-        ) : authUrl ? (
-          <Link href={authUrl}>login</Link>
-        ) : null}
-        {user != null && (
+        <div>/ </div>
+        {user != null ? (
           <>
+            <div>{user.email}</div>
             <div>/</div>
-            <button
-              onClick={() => {
-                deleteCookie("token");
-                document.location = "/";
-              }}
+            <button onClick={authService.logout}>logout</button>
+          </>
+        ) : (
+          <>
+            <Link href={{ pathname: "/login", query: searchParams.toString() }}>
+              login
+            </Link>
+            <div>or</div>
+            <Link
+              href={{ pathname: "/signup", query: searchParams.toString() }}
             >
-              logout
-            </button>
+              signup
+            </Link>
           </>
         )}
       </div>
