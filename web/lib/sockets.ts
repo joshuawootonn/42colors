@@ -1,10 +1,11 @@
-import { parse } from "cookie";
 import { Channel, Socket } from "phoenix";
 
-export function setupSocketConnection(apiWebsocketOrigin: string): Socket {
-  const token = parse(document.cookie)["token"] ?? null;
+export function setupSocketConnection(
+  apiWebsocketOrigin: string,
+  token?: string,
+): Socket {
   const socket = new Socket(new URL("/socket", apiWebsocketOrigin).href, {
-    params: { token },
+    params: { token: token ?? null },
   });
   socket.connect();
 

@@ -19,19 +19,25 @@ export interface ForgotPasswordCredentials {
   email: string;
 }
 
-export interface User {
+export interface AuthUser {
   id: number;
   email: string;
 }
 
+export interface User {
+  id: number;
+  email: string;
+  channel_token: string;
+}
+
 export interface AuthResponse {
-  user: User;
+  user: AuthUser;
   status: string;
 }
 
 export interface UserResponse {
-  status: string;
   user: User;
+  status: string;
 }
 
 export interface UpdatePasswordCredentials {
@@ -137,7 +143,7 @@ const authService = {
     return response.json();
   },
 
-  async getCurrentUser(origin: string): Promise<AuthResponse | null> {
+  async getCurrentUser(origin: string): Promise<UserResponse | null> {
     try {
       const response = await fetch(`${origin}/api/users/me`, {
         credentials: "include",
@@ -148,7 +154,7 @@ const authService = {
       }
 
       return response.json();
-    } catch (error) {
+    } catch (_) {
       return null;
     }
   },

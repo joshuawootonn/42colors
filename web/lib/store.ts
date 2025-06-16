@@ -21,7 +21,6 @@ import {
 import { getLastPixelValue, Pixel, pixelSchema } from "./coord";
 import { draw } from "./draw";
 import { setupChannel, setupSocketConnection } from "./sockets";
-import { fetchAuthedUser } from "./user";
 import { KeyboardCode } from "./keyboard-codes";
 import { isInitialStore } from "./utils/is-initial-store";
 import { WheelTool } from "./tools/wheel";
@@ -93,8 +92,8 @@ export type InitializedStore = {
     apiOrigin: string;
     websocketOriginURL: string;
     authURL?: string;
-    socket: Socket;
-    channel: Channel;
+    socket?: Socket;
+    channel?: Channel;
   };
   toolSettings: ToolSettings;
   currentPointerState: PointerState;
@@ -121,6 +120,7 @@ export type InitializedStore = {
   user?: {
     email: string;
     id: number;
+    channel_token: string;
   } | null;
   queryClient: QueryClient;
   eventLoopRafId?: number;
@@ -176,21 +176,7 @@ export const store = createStore({
       const telegraphCanvasContext = telegraphCanvas.getContext("2d")!;
       telegraphCanvasContext.imageSmoothingEnabled = false;
 
-      const socket = setupSocketConnection(event.apiWebsocketOrigin);
-      const channel = setupChannel(socket);
-
       enqueue.effect(() => {
-        channel.on(
-          "new_pixels",
-          (payload: { pixels: Pixel[]; store_id: string }) => {
-            if (payload.store_id === store.getSnapshot().context.id) {
-              console.log(`skipping realtime since they came from this store`);
-              return;
-            }
-            console.log("newRealtimePixels", payload.store_id, payload.pixels);
-            store.trigger.newRealtimePixels({ pixels: payload.pixels });
-          },
-        );
         store.trigger.fetchPixels();
         store.trigger.fetchUser();
       });
@@ -208,8 +194,6 @@ export const store = createStore({
         server: {
           apiOrigin: event.apiOrigin,
           websocketOriginURL: event.apiWebsocketOrigin,
-          socket,
-          channel,
         },
         toolSettings: event.toolSettings,
         interaction: {
@@ -405,12 +389,49 @@ export const store = createStore({
 
     setUser: (
       context,
-      event: { user: { email: string; id: number } | null },
+      event: {
+        user: { email: string; id: number; channel_token: string } | null;
+      },
     ) => {
       if (isInitialStore(context)) return;
       return {
         ...context,
         user: event.user,
+      };
+    },
+
+    reconnectToSocket: (
+      context,
+      event: {
+        channel_token?: string;
+      },
+    ) => {
+      if (isInitialStore(context)) return;
+      const socket = setupSocketConnection(
+        context.server.websocketOriginURL,
+        event.channel_token,
+      );
+      const channel = setupChannel(socket);
+
+      channel.on(
+        "new_pixels",
+        (payload: { pixels: Pixel[]; store_id: string }) => {
+          if (payload.store_id === store.getSnapshot().context.id) {
+            console.log(`skipping realtime since they came from this store`);
+            return;
+          }
+          console.log("newRealtimePixels", payload.store_id, payload.pixels);
+          store.trigger.newRealtimePixels({ pixels: payload.pixels });
+        },
+      );
+
+      return {
+        ...context,
+        server: {
+          ...context.server,
+          socket,
+          channel,
+        },
       };
     },
 
@@ -424,6 +445,9 @@ export const store = createStore({
           })
           .then((json) => {
             store.trigger.setUser({ user: json ? json.user : null });
+            store.trigger.reconnectToSocket({
+              channel_token: json?.user.channel_token,
+            });
           }),
       );
     },
