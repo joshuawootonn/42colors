@@ -16,7 +16,8 @@ defmodule ApiWeb.UserResetPasswordController do
     conn
     |> json(%{
       status: "success",
-      message: "If your email is in our system, you will receive instructions to reset your password shortly."
+      message:
+        "If your email is in our system, you will receive instructions to reset your password shortly."
     })
   end
 
@@ -38,13 +39,13 @@ defmodule ApiWeb.UserResetPasswordController do
           }
         })
 
-      {:error, changeset} ->
+      {:error, _} ->
         conn
         |> put_status(:unprocessable_entity)
         |> json(%{
           status: "error",
           message: "Password reset failed",
-          errors: translate_changeset_errors(changeset)
+          errors: []
         })
     end
   end
@@ -63,13 +64,5 @@ defmodule ApiWeb.UserResetPasswordController do
       })
       |> halt()
     end
-  end
-
-  defp translate_changeset_errors(changeset) do
-    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-      Enum.reduce(opts, msg, fn {key, value}, acc ->
-        String.replace(acc, "%{#{key}}", to_string(value))
-      end)
-    end)
   end
 end
