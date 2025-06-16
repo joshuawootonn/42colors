@@ -83,3 +83,8 @@ Logger.info("Config loaded with #{app_url} / #{api_url} / #{client_secret} / #{c
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
+
+config :cors_plug,
+  origin: [app_url],
+  max_age: 86400,
+  methods: ["GET", "POST", "DELETE", "PUT"]
