@@ -16,7 +16,8 @@ defmodule Api.PlotsFixtures do
       Enum.into(attrs, %{
         name: "Test Plot #{System.unique_integer([:positive])}",
         description: "Test Description",
-        user_id: user
+        user_id: user,
+        polygon: %Geo.Polygon{coordinates: [[{0, 0}, {0, 1}, {1, 1}, {1, 0}, {0, 0}]], srid: 4326}
       })
 
     {:ok, plot} = Api.Plots.create_plot(attrs)
