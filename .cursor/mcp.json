@@ -1,0 +1,10 @@
+{
+    "mcpServers": {
+      "tidewave": {
+        "command": "/Users/work/source/42colors/api/mcp-proxy",
+        "args": [
+          "http://localhost:4000/tidewave/mcp"
+        ]
+      }
+    }
+  }

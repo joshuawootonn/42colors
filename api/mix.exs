@@ -63,7 +63,8 @@ defmodule Api.MixProject do
       {:cors_plug, "~> 3.0"},
       {:elixir_auth_google, "~> 1.6.9"},
       {:protobuf, "~> 0.14.0"},
-      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false}
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:tidewave, "~> 0.1", only: :dev}
     ]
   end
 
