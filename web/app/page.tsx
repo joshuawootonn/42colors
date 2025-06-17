@@ -17,6 +17,7 @@ import { Palette } from "@/components/palette";
 import { BrushPanel } from "@/lib/tools/brush-panel";
 import { ErasurePanel } from "@/lib/tools/erasure-panel";
 import { DEFAULT_TOOL_SETTINGS, getToolSettings } from "@/lib/tool-settings";
+import { ClaimerPanel } from "@/lib/tools/claimer-panel";
 
 const queryClient = new QueryClient();
 
@@ -98,8 +99,10 @@ export default function Page() {
         height="100vh"
         width="100vw"
       ></canvas>
+
       <div className="flex flex-col space-y-3 fixed top-16 left-3">
         <Palette />
+        <ClaimerPanel />
         {user?.email === "jose56wonton@gmail.com" ? <BrushPanel /> : null}
         {user?.email === "jose56wonton@gmail.com" ? <ErasurePanel /> : null}
       </div>

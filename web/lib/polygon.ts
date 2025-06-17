@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { rectSchema } from "./rect";
-import {
-  AbsolutePointTuple,
-  absolutePointTupleSchema,
-} from "./line";
+import { AbsolutePointTuple, absolutePointTupleSchema } from "./line";
 import { clipArray } from "polyclip-js";
 
 export const polygonSchema = z
@@ -65,6 +62,13 @@ export function inside(point: AbsolutePointTuple, polygon: Polygon) {
   return inside;
 }
 
+/**
+ * This function should only be used before sending polygons to the backend.
+ */
+export function completePolygonRing(polygon: Polygon): Polygon {
+  return { ...polygon, vertices: [...polygon.vertices, polygon.vertices[0]] };
+}
+
 export function getCompositePolygon(
   polygon1: Polygon,
   polygon2: Polygon,
@@ -78,7 +82,6 @@ export function getCompositePolygon(
     if (result.length !== 1) return null;
 
     const compo = result[0];
-
 
     return polygonSchema.parse({ vertices: compo });
   } catch (_) {

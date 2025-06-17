@@ -16,6 +16,19 @@ defmodule ApiWeb.PlotController do
     user = conn.assigns.current_user
     plot_params = Map.put(plot_params, "user_id", user.id)
 
+    plot_params =
+      Map.put(plot_params, "polygon", %Geo.Polygon{
+        coordinates: [
+          plot_params["polygon"]
+          |> Map.get("vertices", [])
+          |> Enum.map(fn vertex ->
+            # Convert character list to numeric coordinate tuple
+            {List.first(vertex) - ?0, List.last(vertex) - ?0}
+          end)
+        ],
+        srid: 4326
+      })
+
     with {:ok, %Plot{} = plot} <- Plots.create_plot(plot_params) do
       conn
       |> put_status(:created)
@@ -25,9 +38,11 @@ defmodule ApiWeb.PlotController do
 
   def show(conn, %{"id" => id}) do
     user = conn.assigns.current_user
+
     case Plots.get_user_plot!(id, user.id) do
       nil ->
         send_resp(conn, :not_found, "Not found")
+
       plot ->
         render(conn, :show, plot: plot)
     end
@@ -35,9 +50,11 @@ defmodule ApiWeb.PlotController do
 
   def update(conn, %{"id" => id, "plot" => plot_params}) do
     user = conn.assigns.current_user
+
     case Plots.get_user_plot!(id, user.id) do
       nil ->
         send_resp(conn, :not_found, "Not found")
+
       plot ->
         with {:ok, %Plot{} = plot} <- Plots.update_plot(plot, plot_params) do
           render(conn, :show, plot: plot)
@@ -47,9 +64,11 @@ defmodule ApiWeb.PlotController do
 
   def delete(conn, %{"id" => id}) do
     user = conn.assigns.current_user
+
     case Plots.get_user_plot!(id, user.id) do
       nil ->
         send_resp(conn, :not_found, "Not found")
+
       plot ->
         with {:ok, %Plot{}} <- Plots.delete_plot(plot) do
           send_resp(conn, :no_content, "")

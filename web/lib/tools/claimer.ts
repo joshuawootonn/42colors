@@ -100,7 +100,7 @@ function redrawTelegraph(context: InitializedStore) {
 
 export type ClaimerComplete = {
   type: "claimer-complete";
-  rects: Rect[];
+  polygons: Polygon[];
 };
 
 export type ClaimerActive = {
@@ -134,7 +134,7 @@ export function completeRectAction(
     type: "claimer-active",
     rects: activeBrushAction.nextRect
       ? activeBrushAction.rects.concat(activeBrushAction.nextRect)
-      : [],
+      : activeBrushAction.rects,
     nextRect: null,
   };
 }
@@ -145,16 +145,16 @@ export function nextClaimerAction(
 ): ClaimerActive {
   return {
     ...activeBrushAction,
-    nextRect: nextRect,
+    nextRect,
   };
 }
 
 export function completeRectangleClaimerAction(
-  activeBrushAction: ClaimerActive,
+  polygons: Polygon[],
 ): ClaimerComplete {
   return {
     type: "claimer-complete",
-    rects: activeBrushAction.rects,
+    polygons,
   };
 }
 

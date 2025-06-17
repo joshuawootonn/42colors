@@ -56,7 +56,6 @@ import {
 import { newPixels } from "./channel";
 import { Camera } from "./camera";
 import { createTelegraphCanvas, resizeTelegraphCanvas } from "./telegraph";
-import { ClaimerTool } from "./tools/claimer";
 import {
   DEFAULT_TOOL_SETTINGS,
   Tool,
@@ -65,6 +64,8 @@ import {
 } from "./tool-settings";
 import { PaletteSettings } from "./tools/palette";
 import authService from "./auth";
+import { ClaimerTool, completeRectangleClaimerAction } from "./tools/claimer";
+import { getCompositePolygons, rectToPolygonSchema } from "./polygon";
 
 export type PointerState = "default" | "pressed";
 
@@ -739,6 +740,36 @@ export const store = createStore({
         interaction: { ...context.interaction, isSpacePressed },
       };
     },
+
+    completeClaim: (context, _) => {
+      if (isInitialStore(context)) return;
+
+      if (context.activeAction?.type !== "claimer-active") {
+        throw new Error(
+          "Attempted to complete a claim when there isn't on active",
+        );
+      }
+
+      const rects = [...context.activeAction.rects];
+      if (context.activeAction.nextRect != null) {
+        rects.push(context.activeAction.nextRect);
+      }
+      return {
+        ...context,
+        actions: context.actions.concat(
+          completeRectangleClaimerAction(
+            getCompositePolygons(
+              rects.map((rect) => rectToPolygonSchema.parse(rect)),
+            ),
+          ),
+        ),
+        activeAction: null,
+      };
+    },
+
+    //////////////////////////////////////////////
+    // Event handlers
+    //////////////////////////////////////////////
 
     onPointerDown: (context, { e }: { e: PointerEvent }, enqueue) => {
       if (isInitialStore(context)) return;
