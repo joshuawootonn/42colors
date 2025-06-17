@@ -25,25 +25,35 @@ defmodule ApiWeb.PlotController do
 
   def show(conn, %{"id" => id}) do
     user = conn.assigns.current_user
-    plot = Plots.get_user_plot!(id, user.id)
-    render(conn, :show, plot: plot)
+    case Plots.get_user_plot!(id, user.id) do
+      nil ->
+        send_resp(conn, :not_found, "Not found")
+      plot ->
+        render(conn, :show, plot: plot)
+    end
   end
 
   def update(conn, %{"id" => id, "plot" => plot_params}) do
     user = conn.assigns.current_user
-    plot = Plots.get_user_plot!(id, user.id)
-
-    with {:ok, %Plot{} = plot} <- Plots.update_plot(plot, plot_params) do
-      render(conn, :show, plot: plot)
+    case Plots.get_user_plot!(id, user.id) do
+      nil ->
+        send_resp(conn, :not_found, "Not found")
+      plot ->
+        with {:ok, %Plot{} = plot} <- Plots.update_plot(plot, plot_params) do
+          render(conn, :show, plot: plot)
+        end
     end
   end
 
   def delete(conn, %{"id" => id}) do
     user = conn.assigns.current_user
-    plot = Plots.get_user_plot!(id, user.id)
-
-    with {:ok, %Plot{}} <- Plots.delete_plot(plot) do
-      send_resp(conn, :no_content, "")
+    case Plots.get_user_plot!(id, user.id) do
+      nil ->
+        send_resp(conn, :not_found, "Not found")
+      plot ->
+        with {:ok, %Plot{}} <- Plots.delete_plot(plot) do
+          send_resp(conn, :no_content, "")
+        end
     end
   end
 end
