@@ -7,6 +7,9 @@ import { isInitialStore } from "./utils/is-initial-store";
 export function newPixels(context: InitializedStore, pixels: Pixel[]) {
   if (isInitialStore(context)) return;
   const authURL = context.server.authURL;
+
+  if (context.server.channel == null) return;
+
   context.server.channel
     .push("new_pixels", {
       pixels: pixels.map((pixel) => ({
