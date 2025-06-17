@@ -1,0 +1,49 @@
+defmodule ApiWeb.PlotController do
+  use ApiWeb, :controller
+
+  alias Api.Plots
+  alias Api.Plots.Plot
+
+  action_fallback ApiWeb.FallbackController
+
+  def index(conn, _params) do
+    user = conn.assigns.current_user
+    plots = Plots.list_user_plots(user.id)
+    render(conn, :index, plots: plots)
+  end
+
+  def create(conn, %{"plot" => plot_params}) do
+    user = conn.assigns.current_user
+    plot_params = Map.put(plot_params, "user_id", user.id)
+
+    with {:ok, %Plot{} = plot} <- Plots.create_plot(plot_params) do
+      conn
+      |> put_status(:created)
+      |> render(:show, plot: plot)
+    end
+  end
+
+  def show(conn, %{"id" => id}) do
+    user = conn.assigns.current_user
+    plot = Plots.get_user_plot!(id, user.id)
+    render(conn, :show, plot: plot)
+  end
+
+  def update(conn, %{"id" => id, "plot" => plot_params}) do
+    user = conn.assigns.current_user
+    plot = Plots.get_user_plot!(id, user.id)
+
+    with {:ok, %Plot{} = plot} <- Plots.update_plot(plot, plot_params) do
+      render(conn, :show, plot: plot)
+    end
+  end
+
+  def delete(conn, %{"id" => id}) do
+    user = conn.assigns.current_user
+    plot = Plots.get_user_plot!(id, user.id)
+
+    with {:ok, %Plot{}} <- Plots.delete_plot(plot) do
+      send_resp(conn, :no_content, "")
+    end
+  end
+end

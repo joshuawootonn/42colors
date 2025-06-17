@@ -51,6 +51,12 @@ defmodule ApiWeb.Router do
     get "/users/me", UserSessionController, :read
   end
 
+  scope "/api", ApiWeb do
+    pipe_through [:api, :require_authenticated_user]
+
+    resources "/plots", PlotController, except: [:new, :edit]
+  end
+
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:api, :dev_routes) do
     # If you want to use the LiveDashboard in production, you should put

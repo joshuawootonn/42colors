@@ -7,6 +7,7 @@ defmodule Api.Canvas.Pixel do
     field(:x, :integer)
     field(:color, :integer)
     field(:user_id, :integer)
+    belongs_to :plot, Api.Plots.Plot
 
     timestamps(type: :utc_datetime)
   end
@@ -14,7 +15,7 @@ defmodule Api.Canvas.Pixel do
   @doc false
   def changeset(pixel, attrs) do
     pixel
-    |> cast(attrs, [:x, :y, :color, :user_id])
+    |> cast(attrs, [:x, :y, :color, :user_id, :plot_id])
     |> validate_required([:x, :y, :color, :user_id])
   end
 end
