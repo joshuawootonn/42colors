@@ -18,12 +18,15 @@ function redrawPolygonTelegraph(
   ctx.beginPath();
   ctx.lineWidth = pixelSize / 3;
 
-  for (let i = 0; i < polygon.lines.length; i++) {
-    const line = polygon.lines[i];
-    const x1 = line[0][0],
-      y1 = line[0][1];
-    const x2 = line[1][0],
-      y2 = line[1][1];
+
+  for (let i = 1; i < polygon.vertices.length + 1; i++) {
+    const prev = polygon.vertices[i - 1];
+    const point = polygon.vertices[i % polygon.vertices.length];
+
+    const x1 = prev[0],
+      y1 = prev[1];
+    const x2 = point[0],
+      y2 = point[1];
     ctx.moveTo(
       (x1 - camera.x + xOffset) * pixelSize,
       (y1 - camera.y + yOffset) * pixelSize,
@@ -37,12 +40,14 @@ function redrawPolygonTelegraph(
   }
 
   ctx.beginPath();
-  for (let i = 0; i < polygon.lines.length; i++) {
-    const line = polygon.lines[i];
-    const x1 = line[0][0],
-      y1 = line[0][1];
-    const x2 = line[1][0],
-      y2 = line[1][1];
+  for (let i = 1; i < polygon.vertices.length + 1; i++) {
+    const prev = polygon.vertices[i - 1];
+    const point = polygon.vertices[i % polygon.vertices.length];
+
+    const x1 = prev[0],
+      y1 = prev[1];
+    const x2 = point[0],
+      y2 = point[1];
     if (i === 0) {
       ctx.moveTo(
         (x1 - camera.x + xOffset) * pixelSize,

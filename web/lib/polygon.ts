@@ -3,14 +3,12 @@ import { rectSchema } from "./rect";
 import {
   AbsolutePointTuple,
   absolutePointTupleSchema,
-  lineSchema,
 } from "./line";
 import { clipArray } from "polyclip-js";
 
 export const polygonSchema = z
   .object({
     vertices: z.array(absolutePointTupleSchema),
-    lines: z.array(lineSchema),
   })
   .brand<"Polygon">();
 
@@ -39,12 +37,6 @@ export const rectToPolygonSchema = rectSchema.transform((rect) => {
   const p4 = absolutePointTupleSchema.parse([rect.origin.x, rect.target.y]);
   return polygonSchema.parse({
     ...rect,
-    lines: [
-      [p1, p2],
-      [p2, p3],
-      [p3, p4],
-      [p4, p1],
-    ],
     vertices: sortIntoClockwiseOrder([p1, p2, p3, p4]),
   });
 });
@@ -87,14 +79,8 @@ export function getCompositePolygon(
 
     const compo = result[0];
 
-    const lines = [];
-    for (let i = 1; i < compo.length + 1; i++) {
-      const prev = compo[i - 1];
-      const point = compo[i % compo.length];
-      lines.push([prev, point]);
-    }
 
-    return polygonSchema.parse({ vertices: compo, lines });
+    return polygonSchema.parse({ vertices: compo });
   } catch (_) {
     console.log(`Failed to find polygon union of:
 
