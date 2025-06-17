@@ -6,6 +6,7 @@ import { getPixelSize } from "../realtime";
 import { Camera, getZoomMultiplier } from "../camera";
 import { getCompositePolygons, Polygon, rectToPolygonSchema } from "../polygon";
 import { throttle } from "../utils/throttle";
+import { getUserPlots } from "./claimer.rest";
 
 function redrawPolygonTelegraph(
   ctx: CanvasRenderingContext2D,
@@ -285,3 +286,5 @@ export const ClaimerTool = {
 };
 
 export type ClaimerTool = typeof ClaimerTool;
+
+export { getUserPlots };

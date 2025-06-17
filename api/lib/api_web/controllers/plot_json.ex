@@ -21,8 +21,11 @@ defmodule ApiWeb.PlotJSON do
       name: plot.name,
       description: plot.description,
       user_id: plot.user_id,
-      inserted_at: plot.inserted_at,
-      updated_at: plot.updated_at
+      insertedAt: plot.inserted_at,
+      updatedAt: plot.updated_at,
+      polygon: %{
+        vertices: plot.polygon.coordinates |> List.first() |> Enum.map(fn {x, y} -> [x, y] end)
+      }
     }
   end
 end

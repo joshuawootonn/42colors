@@ -55,6 +55,7 @@ defmodule ApiWeb.Router do
     pipe_through [:api, :require_authenticated_user]
 
     post "/plots", PlotController, :create
+    get "/plots", PlotController, :index
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

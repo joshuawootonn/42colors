@@ -2,7 +2,6 @@ import { z } from "zod";
 import {
   completePolygonRing,
   getCompositePolygons,
-  Polygon,
   polygonSchema,
   rectToPolygonSchema,
 } from "../polygon";
@@ -14,7 +13,7 @@ const plotSchema = z.object({
   id: z.number(),
   name: z.string(),
   description: z.string(),
-  polygons: polygonSchema,
+  polygon: polygonSchema,
   insertedAt: z.string(),
   updatedAt: z.string(),
 });
@@ -59,10 +58,27 @@ export async function createPlot(): Promise<Plot> {
     },
   );
 
-  const jsonBlob = await response.json();
-  const plot = plotSchema.parse(jsonBlob);
-
-  console.log(plot);
+  const json = await response.json();
+  const plot = plotSchema.parse(json);
 
   return plot;
+}
+
+export async function getUserPlots(): Promise<Plot[]> {
+  const context = store.getSnapshot().context;
+  if (isInitialStore(context)) {
+    throw new Error("Server context is not initialized");
+  }
+
+  const response = await fetch(
+    new URL(`/api/plots`, context.server.apiOrigin),
+    {
+      method: "GET",
+      credentials: "include",
+    },
+  );
+
+  const json = await response.json();
+
+  return z.object({ data: z.array(plotSchema) }).parse(json).data;
 }

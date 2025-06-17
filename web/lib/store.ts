@@ -66,6 +66,7 @@ import { PaletteSettings } from "./tools/palette";
 import authService from "./auth";
 import { ClaimerTool, completeRectangleClaimerAction } from "./tools/claimer";
 import { getCompositePolygons, rectToPolygonSchema } from "./polygon";
+import { getUserPlots } from "./tools/claimer.rest";
 
 export type PointerState = "default" | "pressed";
 
@@ -180,6 +181,7 @@ export const store = createStore({
       enqueue.effect(() => {
         store.trigger.fetchPixels();
         store.trigger.fetchUser();
+        store.trigger.fetchUserPlots();
       });
 
       const initialized: InitializedStore = {
@@ -436,12 +438,26 @@ export const store = createStore({
       };
     },
 
+    fetchUserPlots: (context, _, enqueue) => {
+      if (isInitialStore(context)) return;
+      enqueue.effect(() =>
+        context.queryClient
+          .fetchQuery({
+            queryKey: ["user", "plots"],
+            queryFn: getUserPlots,
+          })
+          .then((json) => {
+            console.log(json);
+          }),
+      );
+    },
+
     fetchUser: (context, _, enqueue) => {
       if (isInitialStore(context)) return;
       enqueue.effect(() =>
         context.queryClient
           .fetchQuery({
-            queryKey: ["user"],
+            queryKey: ["user", "me"],
             queryFn: () => authService.getCurrentUser(context.server.apiOrigin),
           })
           .then((json) => {
