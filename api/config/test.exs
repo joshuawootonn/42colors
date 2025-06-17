@@ -15,7 +15,8 @@ config :api, Api.Repo,
   port: 5434,
   database: "api_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: System.schedulers_online() * 2
+  pool_size: System.schedulers_online() * 2,
+  types: Api.PostgresTypes
 
 config :api, Api.PixelCache,
   canvas_height: 10,
