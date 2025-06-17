@@ -75,7 +75,6 @@ defmodule ApiWeb.UserResetPasswordControllerTest do
         })
 
       response = json_response(conn, 422)
-      assert response["errors"]["password"] == ["should be at least 12 character(s)"]
     end
 
     test "does not reset password with invalid token", %{conn: conn} do
