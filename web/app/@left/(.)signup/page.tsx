@@ -18,7 +18,7 @@ export default function Page() {
         }
       }}
     >
-      <DialogContent className={cn(...dialogProse, "w-157")}>
+      <DialogContent className={cn(...dialogProse, "w-100")}>
         <H1>Sign up</H1>
         <Signup />
       </DialogContent>

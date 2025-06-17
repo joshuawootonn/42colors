@@ -14,7 +14,7 @@ export default function Page() {
     <Dialog open={true}>
       <DialogContent
         onInteractOutside={() => router.back()}
-        className={cn(...dialogProse, "w-157")}
+        className={cn(...dialogProse, "w-110")}
       >
         <H1>Forgot Password</H1>
         <ForgotPassword />

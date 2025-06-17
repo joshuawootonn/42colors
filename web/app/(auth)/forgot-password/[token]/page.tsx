@@ -10,7 +10,12 @@ export default async function Page({
 }) {
   const { token } = await params;
   return (
-    <main className={cn(...pageProse, "mt-10")}>
+    <main
+      className={cn(
+        ...pageProse,
+        "mt-20 mx-auto flex flex-col justify-center items-left w-110",
+      )}
+    >
       <H1>Update password</H1>
       <UpdatePassword token={token} />
     </main>
