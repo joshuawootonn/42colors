@@ -16,16 +16,21 @@ defmodule ApiWeb.PlotJSON do
   end
 
   defp data(%Plot{} = plot) do
+    polygon_data = case plot.polygon do
+      nil -> nil
+      polygon -> %{
+        vertices: polygon.coordinates |> List.first() |> Enum.map(fn {x, y} -> [x, y] end)
+      }
+    end
+
     %{
       id: plot.id,
       name: plot.name,
       description: plot.description,
-      user_id: plot.user_id,
+      userId: plot.user_id,
       insertedAt: plot.inserted_at,
       updatedAt: plot.updated_at,
-      polygon: %{
-        vertices: plot.polygon.coordinates |> List.first() |> Enum.map(fn {x, y} -> [x, y] end)
-      }
+      polygon: polygon_data
     }
   end
 end

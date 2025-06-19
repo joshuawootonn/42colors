@@ -16,23 +16,31 @@ defmodule ApiWeb.PlotController do
     user = conn.assigns.current_user
     plot_params = Map.put(plot_params, "user_id", user.id)
 
-    plot_params =
-      Map.put(plot_params, "polygon", %Geo.Polygon{
-        coordinates: [
-          plot_params["polygon"]
-          |> Map.get("vertices", [])
-          |> Enum.map(fn vertex ->
-            # Convert character list to numeric coordinate tuple
-            {List.first(vertex) - ?0, List.last(vertex) - ?0}
-          end)
-        ],
-        srid: 4326
-      })
+    case Map.get(plot_params, "polygon") do
+      nil ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{error: "polygon is required"})
 
-    with {:ok, %Plot{} = plot} <- Plots.create_plot(plot_params) do
-      conn
-      |> put_status(:created)
-      |> render(:show, plot: plot)
+      polygon ->
+        plot_params =
+          Map.put(plot_params, "polygon", %Geo.Polygon{
+            coordinates: [
+              polygon
+              |> Map.get("vertices", [])
+              |> Enum.map(fn vertex ->
+                # Convert string coordinates to numeric coordinate tuple
+                {String.to_integer(List.first(vertex)), String.to_integer(List.last(vertex))}
+              end)
+            ],
+            srid: 4326
+          })
+
+        with {:ok, %Plot{} = plot} <- Plots.create_plot(plot_params) do
+          conn
+          |> put_status(:created)
+          |> render(:show, plot: plot)
+        end
     end
   end
 

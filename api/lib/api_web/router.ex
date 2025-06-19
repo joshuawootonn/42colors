@@ -56,6 +56,9 @@ defmodule ApiWeb.Router do
 
     post "/plots", PlotController, :create
     get "/plots", PlotController, :index
+    get "/plots/:id", PlotController, :show
+    put "/plots/:id", PlotController, :update
+    delete "/plots/:id", PlotController, :delete
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
