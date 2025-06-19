@@ -56,11 +56,7 @@ import {
 } from "./actions";
 import { newPixels } from "./channel";
 import { Camera } from "./camera";
-import {
-  clearTelegraphCanvas,
-  createTelegraphCanvas,
-  resizeTelegraphCanvas,
-} from "./telegraph";
+import { createTelegraphCanvas, resizeTelegraphCanvas } from "./telegraph";
 import {
   DEFAULT_TOOL_SETTINGS,
   Tool,
