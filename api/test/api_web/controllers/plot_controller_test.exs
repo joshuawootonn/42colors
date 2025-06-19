@@ -25,8 +25,16 @@ defmodule ApiWeb.PlotControllerTest do
       assert resp_plot["name"] == plot.name
       assert resp_plot["description"] == plot.description
       assert resp_plot["userId"] == user.id
-      assert String.starts_with?(resp_plot["insertedAt"], NaiveDateTime.to_iso8601(plot.inserted_at))
-      assert String.starts_with?(resp_plot["updatedAt"], NaiveDateTime.to_iso8601(plot.updated_at))
+
+      assert String.starts_with?(
+               resp_plot["insertedAt"],
+               NaiveDateTime.to_iso8601(plot.inserted_at)
+             )
+
+      assert String.starts_with?(
+               resp_plot["updatedAt"],
+               NaiveDateTime.to_iso8601(plot.updated_at)
+             )
     end
   end
 
@@ -34,24 +42,27 @@ defmodule ApiWeb.PlotControllerTest do
     test "renders plot when data is valid with polygon", %{conn: conn, user: user} do
       polygon = %{
         "vertices" => [
-          ["0", "0"],
-          ["0", "1"],
-          ["1", "1"],
-          ["1", "0"],
-          ["0", "0"]
+          [0, 0],
+          [0, 1],
+          [1, 1],
+          [1, 0],
+          [0, 0]
         ]
       }
+
       attrs = Map.put(@create_attrs, :polygon, polygon)
       conn = post(conn, ~p"/api/plots", plot: attrs)
       assert %{"id" => id} = json_response(conn, 201)["data"]
 
       conn = get(conn, ~p"/api/plots/#{id}")
+
       assert %{
-        "id" => id2,
-        "name" => "Test Plot",
-        "description" => "Test Description",
-        "userId" => user_id2
-      } = json_response(conn, 200)["data"]
+               "id" => id2,
+               "name" => "Test Plot",
+               "description" => "Test Description",
+               "userId" => user_id2
+             } = json_response(conn, 200)["data"]
+
       assert id2 == id
       assert user_id2 == user.id
     end
@@ -66,16 +77,17 @@ defmodule ApiWeb.PlotControllerTest do
       assert json_response(conn, 400)["error"] == "polygon is required"
     end
 
-    test "creates plot with polygon", %{conn: conn, user: user} do
+    test "creates plot with polygon", %{conn: conn} do
       polygon = %{
         "vertices" => [
-          ["0", "0"],
-          ["0", "1"],
-          ["1", "1"],
-          ["1", "0"],
-          ["0", "0"]
+          [0, 0],
+          [0, 1],
+          [1, 1],
+          [1, 0],
+          [0, 0]
         ]
       }
+
       attrs = Map.put(@create_attrs, :polygon, polygon)
       conn = post(conn, ~p"/api/plots", plot: attrs)
       assert %{"id" => id} = json_response(conn, 201)["data"]
@@ -87,10 +99,33 @@ defmodule ApiWeb.PlotControllerTest do
       expected_vertices = [[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]]
       assert resp["polygon"]["vertices"] == expected_vertices
     end
+
+    test "creates plot with rectangular polygon", %{conn: conn} do
+      polygon = %{
+        "vertices" => [
+          [22, 14],
+          [22, 27],
+          [41, 27],
+          [41, 14],
+          [22, 14]
+        ]
+      }
+
+      attrs = Map.put(@create_attrs, :polygon, polygon)
+      conn = post(conn, ~p"/api/plots", plot: attrs)
+      assert %{"id" => id} = json_response(conn, 201)["data"]
+
+      conn = get(conn, ~p"/api/plots/#{id}")
+      resp = json_response(conn, 200)["data"]
+      assert resp["id"] == id
+      assert resp["polygon"] != nil
+      expected_vertices = [[22, 14], [22, 27], [41, 27], [41, 14], [22, 14]]
+      assert resp["polygon"]["vertices"] == expected_vertices
+    end
   end
 
   describe "update plot" do
-    setup %{ user: user} do
+    setup %{user: user} do
       plot = plot_fixture(%{user_id: user.id})
       %{plot: plot}
     end
@@ -100,11 +135,13 @@ defmodule ApiWeb.PlotControllerTest do
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
       conn = get(conn, ~p"/api/plots/#{id}")
+
       assert %{
-        "id" => id2,
-        "name" => "Updated Plot",
-        "description" => "Updated Description"
-      } = json_response(conn, 200)["data"]
+               "id" => id2,
+               "name" => "Updated Plot",
+               "description" => "Updated Description"
+             } = json_response(conn, 200)["data"]
+
       assert id2 == id
     end
 
@@ -115,7 +152,7 @@ defmodule ApiWeb.PlotControllerTest do
   end
 
   describe "delete plot" do
-    setup %{ user: user} do
+    setup %{user: user} do
       plot = plot_fixture(%{user_id: user.id})
       %{plot: plot}
     end

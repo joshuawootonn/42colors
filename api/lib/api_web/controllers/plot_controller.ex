@@ -29,8 +29,8 @@ defmodule ApiWeb.PlotController do
               polygon
               |> Map.get("vertices", [])
               |> Enum.map(fn vertex ->
-                # Convert string coordinates to numeric coordinate tuple
-                {String.to_integer(List.first(vertex)), String.to_integer(List.last(vertex))}
+                # Convert coordinates to numeric coordinate tuple
+                {List.first(vertex), List.last(vertex)}
               end)
             ],
             srid: 4326
