@@ -60,7 +60,9 @@ env:
 
 # Use a different ssh user than root
 #
-# ssh:
+ssh:
+  port:
+    - SSH_PORT
 #   user: app
 
 # Use a persistent storage volume.
