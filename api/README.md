@@ -20,3 +20,24 @@
 ## How I added a volume in and setup auto mounting
 
 - https://docs.digitalocean.com/products/volumes/how-to/mount/
+
+# Provision a new server
+
+For these examples I'm changing the default SSH port to be 7777
+
+## Enable firewall
+
+- `sudo ufw default deny incoming`
+- `sudo ufw default allow outgoing`
+- `sudo ufw allow 7777`
+- `sudo ufw allow 7777/tcp`
+- `sudo ufw show added`
+- `sudo ufw enable`
+
+## Change default ssh port
+
+- `sudo vim /etc/ssh/sshd_config`
+- Uncomment the `#Port 22` and change it to be `Port 7777`
+- `sudo systemctl restart ssh`
+- `systemctl daemon-reload`
+- `systemctl restart ssh.socket`
