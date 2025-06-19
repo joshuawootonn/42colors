@@ -1,6 +1,5 @@
 "use client";
 
-// import { Navigation } from "@/components/navigation";
 import { Toolbar } from "@/components/toolbar";
 import { cn } from "@/lib/utils";
 import {
@@ -10,7 +9,6 @@ import {
 import { store } from "@/lib/store";
 import { useEffect } from "react";
 import { useSelector } from "@xstate/store/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Footer } from "@/components/footer";
 import { Navigation } from "@/components/navigation";
 import { Palette } from "@/components/palette";
@@ -18,13 +16,15 @@ import { BrushPanel } from "@/lib/tools/brush-panel";
 import { ErasurePanel } from "@/lib/tools/erasure-panel";
 import { DEFAULT_TOOL_SETTINGS, getToolSettings } from "@/lib/tool-settings";
 import { ClaimerPanel } from "@/lib/tools/claimer-panel";
-
-const queryClient = new QueryClient();
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Page() {
   const state = useSelector(store, (state) => {
     return state.context.state;
   });
+
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     const element = document.getElementById("my-house");
     if (element instanceof HTMLCanvasElement) {
@@ -41,7 +41,6 @@ export default function Page() {
       const body = document.body as HTMLBodyElement;
 
       const toolSettings = getToolSettings();
-
 
       store.trigger.initializeStore({
         body,
@@ -70,7 +69,7 @@ export default function Page() {
         requestAnimationFrame(draw);
       }
     }
-  }, [state]);
+  }, [queryClient, state]);
 
   const user = useSelector(store, (state) => state.context.user);
 
@@ -85,7 +84,7 @@ export default function Page() {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <>
       <canvas
         id="my-house"
         className={cn(
@@ -116,6 +115,6 @@ export default function Page() {
       <div className="flex fixed bottom-3 right-3">
         <Navigation />
       </div>
-    </QueryClientProvider>
+    </>
   );
 }
