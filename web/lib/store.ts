@@ -590,23 +590,14 @@ export const store = createStore({
 
     redrawTelegraph: (context) => {
       if (isInitialStore(context)) return;
-      if (context.interaction.cursorPosition == null) return;
 
       const tool = context.toolSettings.currentTool;
       switch (tool) {
         case "brush":
-          BrushTool.redrawTelegraph(
-            context.interaction.cursorPosition.clientX,
-            context.interaction.cursorPosition.clientY,
-            context,
-          );
+          BrushTool.redrawTelegraph(context);
           break;
         case "erasure":
-          ErasureTool.redrawTelegraph(
-            context.interaction.cursorPosition.clientX,
-            context.interaction.cursorPosition.clientY,
-            context,
-          );
+          ErasureTool.redrawTelegraph(context);
           break;
         case "claimer":
           ClaimerTool.redrawTelegraph(context);

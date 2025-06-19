@@ -20,11 +20,16 @@ export type ErasureSettings = {
   size: number;
 };
 
-function redrawTelegraph(
-  clientX: number,
-  clientY: number,
-  context: InitializedStore,
-) {
+function redrawTelegraph(context: InitializedStore) {
+  if (context.interaction.cursorPosition == null) {
+    console.info(
+      "Skipping erasure telegraph draw since `cursorPosition` is null",
+    );
+    return;
+  }
+
+  const clientX = context.interaction.cursorPosition.clientX;
+  const clientY = context.interaction.cursorPosition.clientY;
   const relativePoint = getRelativePoint(clientX, clientY, context);
   const ctx = context.canvas.telegraphCanvasContext;
   const canvas = context.canvas.telegraphCanvas;
