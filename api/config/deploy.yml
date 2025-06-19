@@ -61,7 +61,7 @@ env:
 # Use a different ssh user than root
 #
 ssh:
-  port: <%= ENV['SSH_PORT'] %>
+  port: 3386
 #   user: app
 
 # Use a persistent storage volume.
