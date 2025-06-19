@@ -25,6 +25,7 @@ defmodule ApiWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/up", PageController, :health_check
   end
 
   # Other scopes may use custom stacks.

@@ -6,4 +6,8 @@ defmodule ApiWeb.PageController do
     # so skip the default app layout.
     render(conn, :home, layout: false)
   end
+
+  def health_check(conn, _params) do
+    send_resp(conn, 200, "OK")
+  end
 end
