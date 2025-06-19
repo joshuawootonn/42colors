@@ -56,7 +56,11 @@ import {
 } from "./actions";
 import { newPixels } from "./channel";
 import { Camera } from "./camera";
-import { createTelegraphCanvas, resizeTelegraphCanvas } from "./telegraph";
+import {
+  clearTelegraphCanvas,
+  createTelegraphCanvas,
+  resizeTelegraphCanvas,
+} from "./telegraph";
 import {
   DEFAULT_TOOL_SETTINGS,
   Tool,
@@ -182,7 +186,7 @@ export const store = createStore({
       enqueue.effect(() => {
         store.trigger.fetchPixels();
         store.trigger.fetchUser();
-        store.trigger.fetchUserPlots();
+        store.trigger.subscribeToUserPlots();
       });
 
       const initialized: InitializedStore = {
@@ -439,16 +443,21 @@ export const store = createStore({
       };
     },
 
-    fetchUserPlots: (context, _, enqueue) => {
+    subscribeToUserPlots: (context, _, enqueue) => {
       if (isInitialStore(context)) return;
-      enqueue.effect(() =>
-        context.queryClient
-          .fetchQuery({
-            queryKey: ["user", "plots"],
-            queryFn: getUserPlots,
-          })
-          .then(() => redrawUserPlots(context)),
-      );
+      const key = ["user", "plots"];
+
+      enqueue.effect(() => {
+        context.queryClient.getQueryCache().subscribe((event) => {
+          if (event.query.queryKey === key) {
+            store.trigger.redrawRealtimeCanvas();
+          }
+        });
+      });
+      context.queryClient.fetchQuery({
+        queryKey: key,
+        queryFn: getUserPlots,
+      });
     },
 
     fetchUser: (context, _, enqueue) => {
@@ -748,7 +757,7 @@ export const store = createStore({
       };
     },
 
-    completeClaim: (context, _) => {
+    completeClaim: (context, _, enqueue) => {
       if (isInitialStore(context)) return;
 
       if (context.activeAction?.type !== "claimer-active") {
@@ -761,6 +770,10 @@ export const store = createStore({
       if (context.activeAction.nextRect != null) {
         rects.push(context.activeAction.nextRect);
       }
+
+      context.queryClient.refetchQueries({ queryKey: ["user", "plots"] });
+      enqueue.effect(() => store.trigger.redrawTelegraph());
+
       return {
         ...context,
         actions: context.actions.concat(

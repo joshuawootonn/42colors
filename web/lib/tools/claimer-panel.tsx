@@ -1,7 +1,7 @@
 import { useSelector } from "@xstate/store/react";
 import { store } from "../store";
 import { Button } from "@/components/ui/button";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createPlot } from "./claimer.rest";
 
 export function ClaimerPanel() {
@@ -12,12 +12,17 @@ export function ClaimerPanel() {
 
   if (activeAction?.type !== "claimer-active") return null;
 
-
   return <ClaimButton />;
 }
 
 function ClaimButton() {
-  const { mutate } = useMutation({ mutationFn: createPlot });
+  const { mutate } = useMutation({
+    mutationFn: createPlot,
+    onSettled: () => {
+      store.trigger.completeClaim();
+    },
+  });
+  const queryClient = useQueryClient();
 
   return (
     <div className="flex flex-col items-start justify-start">
