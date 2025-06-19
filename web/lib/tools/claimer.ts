@@ -113,12 +113,12 @@ function redrawTelegraph(context: InitializedStore) {
   const ctx = context.canvas.telegraphCanvasContext;
   const canvas = context.canvas.telegraphCanvas;
 
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   if (context.activeAction?.type !== "claimer-active") {
     return context;
   }
-
-  ctx.imageSmoothingEnabled = false;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.strokeStyle = "rgb(246, 240, 74)";
   ctx.fillStyle = "rgba(246, 240, 74, 0.2)";
@@ -250,7 +250,6 @@ function onPointerMove(
   });
 
   const nextActiveAction = nextClaimerAction(context.activeAction, rect);
-  console.log(nextActiveAction);
   enqueue.effect(() => {
     store.trigger.redrawRealtimeCanvas();
   });
