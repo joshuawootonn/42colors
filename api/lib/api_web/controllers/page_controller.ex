@@ -8,6 +8,6 @@ defmodule ApiWeb.PageController do
   end
 
   def health_check(conn, _params) do
-    send_resp(conn, 200, "What's up brother?!")
+    send_resp(conn, 200, "What's up brother?!!")
   end
 end
