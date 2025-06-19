@@ -27,6 +27,7 @@ import { WheelTool } from "./tools/wheel";
 import {
   createRealtimeCanvas,
   redrawRealtimePixels,
+  redrawUserPlots,
   resizeRealtimeCanvas,
 } from "./realtime";
 import {
@@ -446,9 +447,7 @@ export const store = createStore({
             queryKey: ["user", "plots"],
             queryFn: getUserPlots,
           })
-          .then((json) => {
-            console.log(json);
-          }),
+          .then(() => redrawUserPlots(context)),
       );
     },
 
@@ -585,6 +584,7 @@ export const store = createStore({
         dedupedPixels,
         context.camera,
       );
+      redrawUserPlots(context);
       clearChunkPixels(context.canvas.chunkCanvases, dedupedPixels);
     },
 

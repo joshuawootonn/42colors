@@ -18,7 +18,7 @@ const plotSchema = z.object({
   updatedAt: z.string(),
 });
 
-type Plot = z.infer<typeof plotSchema>;
+export type Plot = z.infer<typeof plotSchema>;
 
 export async function createPlot(): Promise<Plot> {
   const context = store.getSnapshot().context;

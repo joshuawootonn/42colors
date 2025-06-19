@@ -3,6 +3,9 @@ import { CANVAS_PIXEL_RATIO } from "./constants";
 import { COLOR_TABLE } from "./palette";
 import { Pixel } from "./coord";
 import { Camera, getZoomMultiplier, ZoomMultiplier } from "./camera";
+import { InitializedStore } from "./store";
+import { Plot } from "./tools/claimer.rest";
+import { redrawPolygonRealtime } from "./tools/claimer";
 
 export function createRealtimeCanvas(camera: Camera) {
   const canvas = document.createElement("canvas");
@@ -50,5 +53,26 @@ export function redrawRealtimePixels(
       1,
       1,
     );
+  }
+}
+
+export function redrawUserPlots(context: InitializedStore) {
+  const ctx = context.canvas.realtimeCanvasContext;
+  const userPlotData: Plot[] | undefined = context.queryClient.getQueryData([
+    "user",
+    "plots",
+  ]);
+
+  if (userPlotData == null) {
+    return context;
+  }
+
+  ctx.imageSmoothingEnabled = false;
+
+  ctx.fillStyle = "rgba(0,0,0,0.0)";
+  ctx.strokeStyle = "rgba(0,0,0,1)";
+
+  for (let i = 0; i < userPlotData.length; i++) {
+    redrawPolygonRealtime(ctx, userPlotData[i].polygon, context.camera);
   }
 }
