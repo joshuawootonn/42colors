@@ -1,6 +1,14 @@
 # Api
 
-## How to deploy
+## How to deploy with Kamal
+
+- `kamal app stop`
+  - This is only necessary if you are running on a 4gb machine
+- `export $(xargs <.env.prod) && mix deps.get --only prod && MIX_ENV=prod mix compile && kamal deploy`
+
+## How to manually deploy
+
+Only do this if something goes really wrong with Kamal
 
 - `docker build -t joshuawootonn/42colors --platform=linux/amd64 .`
 - `docker push joshuawootonn/42colors`
