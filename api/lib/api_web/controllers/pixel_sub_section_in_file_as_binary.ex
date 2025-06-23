@@ -3,7 +3,6 @@ defmodule ApiWeb.PixelSubSectionInFileAsBinary do
 
   alias ApiWeb.TelemetryHelper
   alias ApiWeb.PixelCacheSupervisor
-  alias Pixels
 
   def index(conn, _params) do
     x = String.to_integer(Map.get(conn.params, "x"))

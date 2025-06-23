@@ -25,7 +25,7 @@ defmodule ApiWeb.UserRegistrationControllerTest do
           "user" => %{"email" => "with spaces", "password" => "too short"}
         })
 
-      response = json_response(conn, 422)
+      json_response(conn, 422)
     end
   end
 end

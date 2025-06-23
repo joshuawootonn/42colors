@@ -1,12 +1,12 @@
-defmodule Api.Plots do
+defmodule Api.Canvas.Plot.Repo do
   @moduledoc """
-  The Plots context.
+  The Plot context.
   """
 
   import Ecto.Query, warn: false
   alias Api.Repo
 
-  alias Api.Plots.Plot
+  alias Api.Canvas.Plot
 
   @doc """
   Returns the list of plots for a user.

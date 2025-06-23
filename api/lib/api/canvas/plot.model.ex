@@ -1,4 +1,4 @@
-defmodule Api.Plots.Plot do
+defmodule Api.Canvas.Plot do
   use Ecto.Schema
   import Ecto.Changeset
 

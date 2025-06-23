@@ -15,7 +15,7 @@ defmodule ApiWeb.RegionChannel do
       {:reply, {:error, "unauthed_user"}, socket}
     else
       {:ok, pixel_changsets} =
-        Canvas.create_many_pixels(
+        Canvas.Pixel.Repo.create_many_pixels(
           Enum.map(pixels, fn pixel ->
             %{
               x: Map.get(pixel, "x"),

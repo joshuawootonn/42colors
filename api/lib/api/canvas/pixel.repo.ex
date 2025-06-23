@@ -1,4 +1,4 @@
-defmodule Api.Canvas do
+defmodule Api.Canvas.Pixel.Repo do
   @moduledoc """
   The Canvas context.
   """

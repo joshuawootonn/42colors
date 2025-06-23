@@ -1,14 +1,13 @@
 defmodule ApiWeb.PlotController do
   use ApiWeb, :controller
 
-  alias Api.Plots
-  alias Api.Plots.Plot
+  alias Api.Canvas.Plot
 
   action_fallback ApiWeb.FallbackController
 
   def index(conn, _params) do
     user = conn.assigns.current_user
-    plots = Plots.list_user_plots(user.id)
+    plots = Plot.Repo.list_user_plots(user.id)
     render(conn, :index, plots: plots)
   end
 
@@ -36,7 +35,7 @@ defmodule ApiWeb.PlotController do
             srid: 4326
           })
 
-        with {:ok, %Plot{} = plot} <- Plots.create_plot(plot_params) do
+        with {:ok, %Plot{} = plot} <- Plot.Repo.create_plot(plot_params) do
           conn
           |> put_status(:created)
           |> render(:show, plot: plot)
@@ -47,7 +46,7 @@ defmodule ApiWeb.PlotController do
   def show(conn, %{"id" => id}) do
     user = conn.assigns.current_user
 
-    case Plots.get_user_plot!(id, user.id) do
+    case Plot.Repo.get_user_plot!(id, user.id) do
       nil ->
         send_resp(conn, :not_found, "Not found")
 
@@ -59,12 +58,12 @@ defmodule ApiWeb.PlotController do
   def update(conn, %{"id" => id, "plot" => plot_params}) do
     user = conn.assigns.current_user
 
-    case Plots.get_user_plot!(id, user.id) do
+    case Plot.Repo.get_user_plot!(id, user.id) do
       nil ->
         send_resp(conn, :not_found, "Not found")
 
       plot ->
-        with {:ok, %Plot{} = plot} <- Plots.update_plot(plot, plot_params) do
+        with {:ok, %Plot{} = plot} <- Plot.Repo.update_plot(plot, plot_params) do
           render(conn, :show, plot: plot)
         end
     end
@@ -73,12 +72,12 @@ defmodule ApiWeb.PlotController do
   def delete(conn, %{"id" => id}) do
     user = conn.assigns.current_user
 
-    case Plots.get_user_plot!(id, user.id) do
+    case Plot.Repo.get_user_plot!(id, user.id) do
       nil ->
         send_resp(conn, :not_found, "Not found")
 
       plot ->
-        with {:ok, %Plot{}} <- Plots.delete_plot(plot) do
+        with {:ok, %Plot{}} <- Plot.Repo.delete_plot(plot) do
           send_resp(conn, :no_content, "")
         end
     end

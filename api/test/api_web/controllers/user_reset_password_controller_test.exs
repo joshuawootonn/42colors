@@ -74,7 +74,7 @@ defmodule ApiWeb.UserResetPasswordControllerTest do
           }
         })
 
-      response = json_response(conn, 422)
+      json_response(conn, 422)
     end
 
     test "does not reset password with invalid token", %{conn: conn} do

@@ -1,5 +1,5 @@
 defmodule ApiWeb.PlotJSON do
-  alias Api.Plots.Plot
+  alias Api.Canvas.Plot
 
   @doc """
   Renders a list of plots.

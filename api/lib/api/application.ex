@@ -19,7 +19,6 @@ defmodule Api.Application do
       # {Api.Worker, arg},
       # Start to serve requests, typically the last entry
       ApiWeb.Endpoint,
-      ApiWeb.PixelSupervisor,
       ApiWeb.PixelCacheSupervisor
     ]
 

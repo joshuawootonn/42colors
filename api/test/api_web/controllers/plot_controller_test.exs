@@ -1,9 +1,9 @@
 defmodule ApiWeb.PlotControllerTest do
   use ApiWeb.ConnCase
 
-  alias Api.Plots.Plot
+  alias Api.Canvas.Plot
 
-  import Api.PlotsFixtures
+  import Api.CanvasFixtures
   import Api.AccountsFixtures
 
   @create_attrs %{name: "Test Plot", description: "Test Description"}

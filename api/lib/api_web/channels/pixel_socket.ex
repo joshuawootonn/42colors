@@ -1,8 +1,6 @@
 defmodule ApiWeb.PixelSocket do
   use Phoenix.Socket
 
-  alias Api.Accounts
-
   # A Socket handler
   #
   # It's possible to control the websocket connection and

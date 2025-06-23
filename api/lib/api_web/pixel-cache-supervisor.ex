@@ -2,7 +2,7 @@ defmodule ApiWeb.PixelCacheSupervisor do
   require Logger
   use GenServer
   alias ApiWeb.TelemetryHelper
-  alias Api.Canvas
+  alias Api.Canvas.Pixel
   alias Api.PixelCache
 
   def start_link(arg) do
@@ -25,7 +25,7 @@ defmodule ApiWeb.PixelCacheSupervisor do
 
   @impl true
   def init(_init_args) do
-    pixels = Canvas.list_pixels()
+    pixels = Pixel.Repo.list_pixels()
 
     TelemetryHelper.instrument(:initialize_file, fn -> PixelCache.initialize_file() end)
 
