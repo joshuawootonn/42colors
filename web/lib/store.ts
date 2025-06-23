@@ -808,6 +808,8 @@ export const store = createStore({
       if (tool === "claimer") {
         return ClaimerTool.onPointerDown(e, context, enqueue);
       }
+
+      return context;
     },
 
     onPointerMove: (context, { e }: { e: PointerEvent }, enqueue) => {
@@ -830,6 +832,8 @@ export const store = createStore({
       if (tool === "claimer") {
         return ClaimerTool.onPointerMove(e, context, enqueue);
       }
+
+      return context;
     },
 
     onPointerUp: (context, { e }: { e: PointerEvent }, enqueue) => {
@@ -851,6 +855,8 @@ export const store = createStore({
       if (tool === "claimer") {
         return ClaimerTool.onPointerUp(e, context, enqueue);
       }
+
+      return context;
     },
 
     onPointerOut: (context, { e }: { e: PointerEvent }, enqueue) => {
@@ -871,6 +877,8 @@ export const store = createStore({
       if (tool === "claimer") {
         return ClaimerTool.onPointerOut(e, context, enqueue);
       }
+
+      return context;
     },
 
     onKeyDown: (context, { e }: { e: KeyboardEvent }, enqueue) => {
@@ -947,6 +955,8 @@ export const store = createStore({
         store.trigger.redrawRealtimeCanvas();
         store.trigger.redrawTelegraph();
       });
+
+      return context;
     },
   },
 });
