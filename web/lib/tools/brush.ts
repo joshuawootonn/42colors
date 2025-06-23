@@ -280,12 +280,6 @@ function onPointerDown(
   );
 
   enqueue.effect(() => {
-    store.trigger.newPixels({
-      pixels: pointsToPixels(
-        nextActiveAction.points,
-        nextActiveAction.colorRef,
-      ),
-    });
     store.trigger.redrawRealtimeCanvas();
   });
 
@@ -320,24 +314,20 @@ function onPointerMove(
     context.activeAction.anchorPoints,
     newAnchorPoints,
   );
+
   const newBrushPoints = getBrushPoints(
     netNewAnchors,
     context.toolSettings.brush.size,
     1,
   );
-  const netNewPixels = newNewCoords(
-    context.activeAction.points,
-    newBrushPoints,
-  );
+
   const nextActiveAction = nextBrushAction(
     context.activeAction,
     newAnchorPoints,
     newBrushPoints,
   );
+
   enqueue.effect(() => {
-    store.trigger.newPixels({
-      pixels: pointsToPixels(netNewPixels, nextActiveAction.colorRef),
-    });
     store.trigger.redrawRealtimeCanvas();
   });
 
@@ -372,24 +362,20 @@ function onWheel(
     context.activeAction.anchorPoints,
     newAnchorPoints,
   );
+
   const newBrushPoints = getBrushPoints(
     netNewAnchors,
     context.toolSettings.brush.size,
     1,
   );
-  const netNewPixels = newNewCoords(
-    context.activeAction.points,
-    newBrushPoints,
-  );
+
   const nextActiveAction = nextBrushAction(
     context.activeAction,
     newAnchorPoints,
     newBrushPoints,
   );
+
   enqueue.effect(() => {
-    store.trigger.newPixels({
-      pixels: pointsToPixels(netNewPixels, nextActiveAction.colorRef),
-    });
     store.trigger.redrawRealtimeCanvas();
   });
 
@@ -402,10 +388,16 @@ function onWheel(
 function onPointerOut(
   _: PointerEvent,
   context: InitializedStore,
-  __: EnqueueObject<{ type: string }>,
+  enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   if (context.activeAction?.type !== "brush-active") return context;
-
+  const colorRef = context.activeAction.colorRef;
+  const points = context.activeAction.points;
+  enqueue.effect(() => {
+    store.trigger.newPixels({
+      pixels: pointsToPixels(points, colorRef),
+    });
+  });
   return {
     ...context,
     activeAction: null,
@@ -416,10 +408,17 @@ function onPointerOut(
 function onPointerUp(
   _: PointerEvent,
   context: InitializedStore,
-  __: EnqueueObject<{ type: string }>,
+  enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   if (context.activeAction?.type !== "brush-active") return context;
 
+  const colorRef = context.activeAction.colorRef;
+  const points = context.activeAction.points;
+  enqueue.effect(() => {
+    store.trigger.newPixels({
+      pixels: pointsToPixels(points, colorRef),
+    });
+  });
   return {
     ...context,
     activeAction: null,

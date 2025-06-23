@@ -37,7 +37,6 @@ function redrawTelegraph(context: InitializedStore) {
   const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
 
   ctx.imageSmoothingEnabled = false;
-  console.log("clear erasure");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = COLOR_TABLE[BLACK_REF];
@@ -103,9 +102,6 @@ function onPointerDown(
   const nextActiveAction = startErasureAction(anchorPoint, brushPoints);
 
   enqueue.effect(() => {
-    store.trigger.newPixels({
-      pixels: pointsToPixels(nextActiveAction.points, TRANSPARENT_REF),
-    });
     store.trigger.redrawRealtimeCanvas();
   });
   return {
@@ -139,24 +135,20 @@ function onPointerMove(
     context.activeAction.anchorPoints,
     newAnchorPoints,
   );
+
   const newBrushPoints = getBrushPoints(
     netNewAnchors,
     context.toolSettings.erasure.size,
     1,
   );
-  const netNewPixels = newNewCoords(
-    context.activeAction.points,
-    newBrushPoints,
-  );
+
   const nextActiveAction = nextErasureAction(
     context.activeAction,
     newAnchorPoints,
     newBrushPoints,
   );
+
   enqueue.effect(() => {
-    store.trigger.newPixels({
-      pixels: pointsToPixels(netNewPixels, TRANSPARENT_REF),
-    });
     store.trigger.redrawRealtimeCanvas();
   });
 
@@ -191,24 +183,20 @@ function onWheel(
     context.activeAction.anchorPoints,
     newAnchorPoints,
   );
+
   const newBrushPoints = getBrushPoints(
     netNewAnchors,
     context.toolSettings.erasure.size,
     1,
   );
-  const netNewPixels = newNewCoords(
-    context.activeAction.points,
-    newBrushPoints,
-  );
+
   const nextActiveAction = nextErasureAction(
     context.activeAction,
     newAnchorPoints,
     newBrushPoints,
   );
+
   enqueue.effect(() => {
-    store.trigger.newPixels({
-      pixels: pointsToPixels(netNewPixels, TRANSPARENT_REF),
-    });
     store.trigger.redrawRealtimeCanvas();
   });
 
@@ -221,9 +209,17 @@ function onWheel(
 function onPointerOut(
   _: PointerEvent,
   context: InitializedStore,
-  __: EnqueueObject<{ type: string }>,
+  enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   if (context.activeAction?.type !== "erasure-active") return context;
+
+  const points = context.activeAction.points;
+  enqueue.effect(() => {
+    store.trigger.newPixels({
+      pixels: pointsToPixels(points, TRANSPARENT_REF),
+    });
+    store.trigger.redrawRealtimeCanvas();
+  });
 
   return {
     ...context,
@@ -235,9 +231,17 @@ function onPointerOut(
 function onPointerUp(
   _: PointerEvent,
   context: InitializedStore,
-  __: EnqueueObject<{ type: string }>,
+  enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   if (context.activeAction?.type !== "erasure-active") return context;
+
+  const points = context.activeAction.points;
+  enqueue.effect(() => {
+    store.trigger.newPixels({
+      pixels: pointsToPixels(points, TRANSPARENT_REF),
+    });
+    store.trigger.redrawRealtimeCanvas();
+  });
 
   return {
     ...context,
