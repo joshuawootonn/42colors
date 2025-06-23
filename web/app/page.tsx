@@ -102,8 +102,16 @@ export default function Page() {
       <div className="flex flex-col space-y-3 fixed top-16 left-3">
         <Palette />
         <ClaimerPanel />
-        {user?.email === "jose56wonton@gmail.com" ? <BrushPanel /> : null}
-        {user?.email === "jose56wonton@gmail.com" ? <ErasurePanel /> : null}
+        {user?.email === "jose56wonton@gmail.com" ||
+        user?.email === "mytwistedbiscuits@gmail.com" ||
+        user?.email === "maxwellwever@gmail.com" ? (
+          <BrushPanel />
+        ) : null}
+        {user?.email === "jose56wonton@gmail.com" ||
+        user?.email === "mytwistedbiscuits@gmail.com" ||
+        user?.email === "maxwellwever@gmail.com" ? (
+          <ErasurePanel />
+        ) : null}
       </div>
 
       <div className="flex fixed  top-3 right-3">
