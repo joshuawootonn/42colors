@@ -1,11 +1,10 @@
-import { InitializedStore, store } from "../store";
+import { InitializedStore } from "../store";
 import { getAbsolutePoint, getCameraOffset } from "./brush";
 import { EnqueueObject } from "../xstate-internal-types";
 import { Rect, rectSchema } from "../rect";
 import { getPixelSize } from "../realtime";
 import { Camera, getZoomMultiplier } from "../camera";
 import { getCompositePolygons, Polygon, rectToPolygonSchema } from "../polygon";
-import { throttle } from "../utils/throttle";
 import { getUserPlots } from "./claimer.rest";
 
 export function redrawPolygonTelegraph(
@@ -114,6 +113,7 @@ function redrawTelegraph(context: InitializedStore) {
   const canvas = context.canvas.telegraphCanvas;
 
   ctx.imageSmoothingEnabled = false;
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   if (context.activeAction?.type !== "claimer-active") {
@@ -207,7 +207,7 @@ export function completeRectangleClaimerAction(
 function onPointerDown(
   e: PointerEvent,
   context: InitializedStore,
-  enqueue: EnqueueObject<{ type: string }>,
+  _: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
@@ -221,9 +221,6 @@ function onPointerDown(
       ? startClaimerAction(rect)
       : newRectAction(context.activeAction, rect);
 
-  enqueue.effect(() => {
-    store.trigger.redrawRealtimeCanvas();
-  });
   return {
     ...context,
     activeAction: nextActiveAction,
@@ -233,7 +230,7 @@ function onPointerDown(
 function onPointerMove(
   e: PointerEvent,
   context: InitializedStore,
-  enqueue: EnqueueObject<{ type: string }>,
+  _: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
@@ -250,9 +247,6 @@ function onPointerMove(
   });
 
   const nextActiveAction = nextClaimerAction(context.activeAction, rect);
-  enqueue.effect(() => {
-    store.trigger.redrawRealtimeCanvas();
-  });
 
   return {
     ...context,
@@ -263,7 +257,7 @@ function onPointerMove(
 function onWheel(
   e: WheelEvent,
   context: InitializedStore,
-  enqueue: EnqueueObject<{ type: string }>,
+  _: EnqueueObject<{ type: string }>,
 ): InitializedStore {
   const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
@@ -280,9 +274,6 @@ function onWheel(
   });
 
   const nextActiveAction = nextClaimerAction(context.activeAction, rect);
-  enqueue.effect(() => {
-    store.trigger.redrawRealtimeCanvas();
-  });
 
   return {
     ...context,
@@ -326,7 +317,7 @@ export const ClaimerTool = {
   onPointerUp,
   onPointerOut,
   onWheel,
-  redrawTelegraph: throttle(redrawTelegraph, 17),
+  redrawTelegraph,
 };
 
 export type ClaimerTool = typeof ClaimerTool;
