@@ -1,4 +1,4 @@
-import { CursorPosition } from "../coord";
+import { CursorPosition } from "../geometry/coord";
 
 export function drawBrushOutline(
   ctx: CanvasRenderingContext2D,

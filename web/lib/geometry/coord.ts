@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { colorRefSchema } from "./palette";
-import { cameraSchema } from "./camera";
+import { colorRefSchema } from "../palette";
+import { cameraSchema } from "../camera";
 
 export const pixelSchema = z
   .object({ x: z.number(), y: z.number(), colorRef: colorRefSchema })

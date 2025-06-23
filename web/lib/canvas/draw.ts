@@ -1,9 +1,13 @@
-import { BACKGROUND_SIZE, CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from "./constants";
-import { canvasToClient } from "./utils/clientToCanvasConversion";
-import { InitializedStore } from "./store";
+import {
+  BACKGROUND_SIZE,
+  CANVAS_PIXEL_RATIO,
+  CHUNK_LENGTH,
+} from "../constants";
+import { canvasToClient } from "../utils/clientToCanvasConversion";
+import { InitializedStore } from "../store";
 import { getPixelSize, getSizeInPixelsPlusBleed } from "./realtime";
-import { getZoomMultiplier } from "./camera";
-import { TELEGRAPH_BLEED } from "./telegraph";
+import { getZoomMultiplier } from "../camera";
+import { TELEGRAPH_BLEED } from "../canvas/telegraph";
 
 export function draw(context: InitializedStore) {
   const zoomMultiplier = getZoomMultiplier(context.camera);

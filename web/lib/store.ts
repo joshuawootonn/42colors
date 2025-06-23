@@ -9,7 +9,7 @@ import {
   createBackgroundCanvas,
   drawBackgroundCanvas,
   resizeBackgroundCanvas,
-} from "./background";
+} from "./canvas/background";
 import {
   ChunkCanvases,
   clearChunkPixels,
@@ -17,10 +17,10 @@ import {
   drawToChunkCanvas,
   getChunkKey,
   unsetChunkPixels,
-} from "./chunk";
-import { getLastPixelValue, Pixel, pixelSchema } from "./coord";
-import { draw } from "./draw";
-import { setupChannel, setupSocketConnection } from "./sockets";
+} from "./canvas/chunk";
+import { getLastPixelValue, Pixel, pixelSchema } from "./geometry/coord";
+import { draw } from "./canvas/draw";
+import { setupChannel, setupSocketConnection } from "./geometry/sockets";
 import { KeyboardCode } from "./keyboard-codes";
 import { isInitialStore } from "./utils/is-initial-store";
 import { WheelTool } from "./tools/wheel";
@@ -29,7 +29,7 @@ import {
   redrawRealtimePixels,
   redrawUserPlots,
   resizeRealtimeCanvas,
-} from "./realtime";
+} from "./canvas/realtime";
 import {
   onWheel,
   onKeyDown,
@@ -56,7 +56,10 @@ import {
 } from "./actions";
 import { newPixels } from "./channel";
 import { Camera } from "./camera";
-import { createTelegraphCanvas, resizeTelegraphCanvas } from "./telegraph";
+import {
+  createTelegraphCanvas,
+  resizeTelegraphCanvas,
+} from "./canvas/telegraph";
 import {
   DEFAULT_TOOL_SETTINGS,
   Tool,
@@ -66,7 +69,7 @@ import {
 import { PaletteSettings } from "./tools/palette";
 import authService from "./auth";
 import { ClaimerTool, completeRectangleClaimerAction } from "./tools/claimer";
-import { getCompositePolygons, rectToPolygonSchema } from "./polygon";
+import { getCompositePolygons, rectToPolygonSchema } from "./geometry/polygon";
 import { getUserPlots } from "./tools/claimer.rest";
 
 export type PointerState = "default" | "pressed";

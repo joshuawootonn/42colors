@@ -12,9 +12,9 @@ import {
   pixelSchema,
   Point,
   pointSchema,
-} from "../coord";
+} from "../geometry/coord";
 import { Camera, getZoomMultiplier } from "../camera";
-import { getPixelSize } from "../realtime";
+import { getPixelSize } from "../canvas/realtime";
 
 import { EnqueueObject } from "../xstate-internal-types";
 import { dedupeCoords } from "../utils/dedupe-coords";

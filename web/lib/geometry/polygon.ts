@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { rectSchema } from "./rect";
-import { AbsolutePointTuple, absolutePointTupleSchema } from "./line";
+import { AbsolutePointTuple, absolutePointTupleSchema } from "../line";
 import { clipArray } from "polyclip-js";
 
 export const polygonSchema = z

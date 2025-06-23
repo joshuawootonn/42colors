@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { CHUNK_LENGTH } from "./constants";
-import { COLOR_TABLE } from "./palette";
-import { Coord, Pixel, pixelSchema } from "./coord";
-import { dedupe } from "./utils/dedupe";
+import { CHUNK_LENGTH } from "../constants";
+import { COLOR_TABLE } from "../palette";
+import { Coord, Pixel, pixelSchema } from "../geometry/coord";
+import { dedupe } from "../utils/dedupe";
 
 export type Chunk = {
   element: HTMLCanvasElement;

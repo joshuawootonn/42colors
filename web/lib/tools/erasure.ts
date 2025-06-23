@@ -10,9 +10,9 @@ import {
 } from "./brush";
 import { canvasToClient } from "../utils/clientToCanvasConversion";
 import { getZoomMultiplier } from "../camera";
-import { getPixelSize } from "../realtime";
+import { getPixelSize } from "../canvas/realtime";
 import { EnqueueObject } from "../xstate-internal-types";
-import { AbsolutePoint, cursorPositionSchema } from "../coord";
+import { AbsolutePoint, cursorPositionSchema } from "../geometry/coord";
 import { newNewCoords } from "../utils/net-new-coords";
 import { drawBrushOutline } from "./brush-rendering";
 
@@ -37,6 +37,7 @@ function redrawTelegraph(context: InitializedStore) {
   const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
 
   ctx.imageSmoothingEnabled = false;
+  console.log("clear erasure");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = COLOR_TABLE[BLACK_REF];

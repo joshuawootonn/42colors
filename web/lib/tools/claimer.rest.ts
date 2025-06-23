@@ -4,7 +4,7 @@ import {
   getCompositePolygons,
   polygonSchema,
   rectToPolygonSchema,
-} from "../polygon";
+} from "../geometry/polygon";
 import { store } from "../store";
 import { isInitialStore } from "../utils/is-initial-store";
 import { completeRectangleClaimerAction } from "./claimer";

@@ -1,8 +1,8 @@
 // import protobuf from "protobufjs";
-import { ChunkPixel, chunkPixelSchema } from "./chunk";
+import { ChunkPixel, chunkPixelSchema } from "./canvas/chunk";
 import { CHUNK_LENGTH } from "./constants";
 import { ColorRef } from "./palette";
-import { Pixel } from "./coord";
+import { Pixel } from "./geometry/coord";
 
 // function fetchPixels1(apiOrigin: string) {
 //   fetch(new URL("/api/pixels", apiOrigin)).then(async (res) => {

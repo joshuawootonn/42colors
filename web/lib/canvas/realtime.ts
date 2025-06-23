@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { CANVAS_PIXEL_RATIO } from "./constants";
-import { COLOR_TABLE } from "./palette";
-import { Pixel } from "./coord";
-import { Camera, getZoomMultiplier, ZoomMultiplier } from "./camera";
-import { InitializedStore } from "./store";
-import { Plot } from "./tools/claimer.rest";
-import { redrawPolygonRealtime } from "./tools/claimer";
+import { CANVAS_PIXEL_RATIO } from "../constants";
+import { COLOR_TABLE } from "../palette";
+import { Pixel } from "../geometry/coord";
+import { Camera, getZoomMultiplier, ZoomMultiplier } from "../camera";
+import { InitializedStore } from "../store";
+import { Plot } from "../tools/claimer.rest";
+import { redrawPolygonRealtime } from "../tools/claimer";
 
 export function createRealtimeCanvas(camera: Camera) {
   const canvas = document.createElement("canvas");

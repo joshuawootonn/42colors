@@ -1,4 +1,4 @@
-import { AbsolutePoint, Pixel } from "./coord";
+import { AbsolutePoint, Pixel } from "./geometry/coord";
 import { BrushActive } from "./tools/brush";
 import { ErasureActive } from "./tools/erasure";
 import { pointsToPixels } from "./tools/brush";

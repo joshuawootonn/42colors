@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { absolutePointTupleSchema } from "./line";
+import { absolutePointTupleSchema } from "../line";
 import {
   sortIntoClockwiseOrder,
   inside,
@@ -17,7 +17,7 @@ import {
   rect6,
   rect7,
 } from "./rectilinear.test";
-import { bunchOfTuplePointsSchema } from "./utils/testing";
+import { bunchOfTuplePointsSchema } from "../utils/testing";
 
 const sortedPoints = bunchOfTuplePointsSchema.parse([
   [-1, 1],

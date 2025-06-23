@@ -1,4 +1,4 @@
-import { Coord } from "../coord";
+import { Coord } from "../geometry/coord";
 
 export function newNewCoords<T extends Coord>(
   coords: T[],

@@ -1,4 +1,4 @@
-import { Coord } from "../coord";
+import { Coord } from "../geometry/coord";
 
 export function dedupeCoords<T extends Coord>(coords: T[]): T[] {
   const cache: Record<string, boolean> = {};

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { Pixel, pixelSchema, Point, pointSchema } from "../coord";
+import { Pixel, pixelSchema, Point, pointSchema } from "../geometry/coord";
 import { dedupeCoords } from "./dedupe-coords";
 
 describe("dedupe pixels", () => {

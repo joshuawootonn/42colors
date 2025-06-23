@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { absolutePointSchema } from "../coord";
+import { absolutePointSchema } from "../geometry/coord";
 import { absolutePointTupleSchema } from "../line";
 
 export const bunchOfPointsSchema = z.array(absolutePointSchema);
