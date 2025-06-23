@@ -7,7 +7,7 @@ image: joshuawootonn/42colors
 # Deploy to these servers.
 servers:
   web:
-    - 143.198.180.43
+    - 5.161.205.79
   # job:
   #   hosts:
   #     - 192.168.0.1
