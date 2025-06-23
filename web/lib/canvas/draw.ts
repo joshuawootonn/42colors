@@ -7,7 +7,7 @@ import { canvasToClient } from "../utils/clientToCanvasConversion";
 import { InitializedStore } from "../store";
 import { getPixelSize, getSizeInPixelsPlusBleed } from "./realtime";
 import { getZoomMultiplier } from "../camera";
-import { TELEGRAPH_BLEED } from "../canvas/telegraph";
+import { FULLSIZE_CANVAS_BLEED } from "./fullsize";
 
 export function draw(context: InitializedStore) {
   const zoomMultiplier = getZoomMultiplier(context.camera);
@@ -71,7 +71,7 @@ export function draw(context: InitializedStore) {
     context.canvas.telegraphCanvas,
     x,
     y,
-    window.innerWidth + TELEGRAPH_BLEED,
-    window.innerHeight + TELEGRAPH_BLEED,
+    window.innerWidth + FULLSIZE_CANVAS_BLEED,
+    window.innerHeight + FULLSIZE_CANVAS_BLEED,
   );
 }

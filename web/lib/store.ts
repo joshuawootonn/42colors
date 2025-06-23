@@ -56,10 +56,7 @@ import {
 } from "./actions";
 import { newPixels } from "./channel";
 import { Camera } from "./camera";
-import {
-  createTelegraphCanvas,
-  resizeTelegraphCanvas,
-} from "./canvas/telegraph";
+import { createFullsizeCanvas, resizeFullsizeCanvas } from "./canvas/fullsize";
 import {
   DEFAULT_TOOL_SETTINGS,
   Tool,
@@ -178,7 +175,7 @@ export const store = createStore({
       const realtimeCanvasContext = realtimeCanvas.getContext("2d")!;
       realtimeCanvasContext.imageSmoothingEnabled = false;
 
-      const telegraphCanvas = createTelegraphCanvas();
+      const telegraphCanvas = createFullsizeCanvas();
       const telegraphCanvasContext = telegraphCanvas.getContext("2d")!;
       telegraphCanvasContext.imageSmoothingEnabled = false;
 
@@ -569,7 +566,7 @@ export const store = createStore({
     resizeRealtimeAndTelegraphCanvases: (context) => {
       if (isInitialStore(context)) return;
       resizeRealtimeCanvas(context.canvas.realtimeCanvas, context.camera);
-      resizeTelegraphCanvas(context.canvas.telegraphCanvas);
+      resizeFullsizeCanvas(context.canvas.telegraphCanvas);
     },
 
     redrawRealtimeCanvas: (context) => {
