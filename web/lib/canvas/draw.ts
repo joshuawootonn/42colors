@@ -74,4 +74,12 @@ export function draw(context: InitializedStore) {
     window.innerWidth + FULLSIZE_CANVAS_BLEED,
     window.innerHeight + FULLSIZE_CANVAS_BLEED,
   );
+
+  context.canvas.rootCanvasContext.drawImage(
+    context.canvas.nonPixelCanvas,
+    x,
+    y,
+    window.innerWidth + FULLSIZE_CANVAS_BLEED,
+    window.innerHeight + FULLSIZE_CANVAS_BLEED,
+  );
 }

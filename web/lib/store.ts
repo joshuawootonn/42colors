@@ -111,6 +111,8 @@ export type InitializedStore = {
     realtimeCanvasContext: CanvasRenderingContext2D;
     telegraphCanvas: HTMLCanvasElement;
     telegraphCanvasContext: CanvasRenderingContext2D;
+    nonPixelCanvas: HTMLCanvasElement;
+    nonPixelCanvasContext: CanvasRenderingContext2D;
     chunkCanvases: ChunkCanvases;
   };
   actions: Action[];
@@ -179,6 +181,10 @@ export const store = createStore({
       const telegraphCanvasContext = telegraphCanvas.getContext("2d")!;
       telegraphCanvasContext.imageSmoothingEnabled = false;
 
+      const nonPixelCanvas = createFullsizeCanvas();
+      const nonPixelCanvasContext = telegraphCanvas.getContext("2d")!;
+      nonPixelCanvasContext.imageSmoothingEnabled = false;
+
       enqueue.effect(() => {
         store.trigger.fetchPixels();
         store.trigger.fetchUser();
@@ -217,6 +223,8 @@ export const store = createStore({
           realtimeCanvasContext,
           telegraphCanvas,
           telegraphCanvasContext,
+          nonPixelCanvas,
+          nonPixelCanvasContext,
           chunkCanvases: {},
         },
         queryClient: event.queryClient,
