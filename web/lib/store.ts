@@ -182,7 +182,7 @@ export const store = createStore({
       telegraphCanvasContext.imageSmoothingEnabled = false;
 
       const nonPixelCanvas = createFullsizeCanvas();
-      const nonPixelCanvasContext = telegraphCanvas.getContext("2d")!;
+      const nonPixelCanvasContext = nonPixelCanvas.getContext("2d")!;
       nonPixelCanvasContext.imageSmoothingEnabled = false;
 
       enqueue.effect(() => {
@@ -575,6 +575,7 @@ export const store = createStore({
       if (isInitialStore(context)) return;
       resizeRealtimeCanvas(context.canvas.realtimeCanvas, context.camera);
       resizeFullsizeCanvas(context.canvas.telegraphCanvas);
+      resizeFullsizeCanvas(context.canvas.nonPixelCanvas);
     },
 
     redrawRealtimeCanvas: (context) => {
@@ -596,6 +597,14 @@ export const store = createStore({
         context.canvas.realtimeCanvasContext,
         dedupedPixels,
         context.camera,
+      );
+
+      context.canvas.nonPixelCanvasContext.imageSmoothingEnabled = false;
+      context.canvas.nonPixelCanvasContext.clearRect(
+        0,
+        0,
+        context.canvas.nonPixelCanvas.width,
+        context.canvas.nonPixelCanvas.height,
       );
       redrawUserPlots(context);
       clearChunkPixels(context.canvas.chunkCanvases, dedupedPixels);

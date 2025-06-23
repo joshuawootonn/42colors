@@ -20,7 +20,7 @@ export function redrawPolygonTelegraph(
   const { xOffset, yOffset } = getCameraOffset(camera);
 
   ctx.beginPath();
-  ctx.lineWidth = pixelSize / 3;
+  ctx.lineWidth = pixelSize / 5;
 
   for (let i = 1; i < polygon.vertices.length + 1; i++) {
     const prev = polygon.vertices[i - 1];
@@ -61,53 +61,6 @@ export function redrawPolygonTelegraph(
       (x2 - camera.x + xOffset) * pixelSize,
       (y2 - camera.y + yOffset) * pixelSize,
     );
-  }
-  ctx.fill();
-}
-
-export function redrawPolygonRealtime(
-  ctx: CanvasRenderingContext2D,
-  polygon: Polygon,
-  camera: Camera,
-) {
-  ctx.beginPath();
-
-  ctx.fillStyle = "rgba(0,0,0,0)";
-  for (let i = 1; i < polygon.vertices.length; i++) {
-    const prev = polygon.vertices[i - 1];
-    const point = polygon.vertices[i % polygon.vertices.length];
-
-    const x1 = prev[0],
-      y1 = prev[1];
-    const x2 = point[0],
-      y2 = point[1];
-    if (i === 1) {
-      ctx.moveTo(
-        x1 - Math.floor(camera.x) + 0.5,
-        y1 - Math.floor(camera.y) + 0.5,
-      );
-    }
-    ctx.lineTo(
-      x2 - Math.floor(camera.x) + 0.5,
-      y2 - Math.floor(camera.y) + 0.5,
-    );
-  }
-  ctx.stroke();
-  ctx.closePath();
-
-  ctx.beginPath();
-  for (let i = 1; i < polygon.vertices.length; i++) {
-    const prev = polygon.vertices[i - 1];
-    const point = polygon.vertices[i % polygon.vertices.length];
-
-    const x1 = prev[0],
-      y1 = prev[1];
-    const x2 = point[0],
-      y2 = point[1];
-    if (i === 0) {
-      ctx.moveTo(x1 - Math.floor(camera.x), y1 - Math.floor(camera.y));
-    }
-    ctx.lineTo(x2 - Math.floor(camera.x), y2 - Math.floor(camera.y));
   }
   ctx.fill();
 }
