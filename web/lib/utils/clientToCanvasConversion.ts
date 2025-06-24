@@ -1,5 +1,5 @@
 import { CANVAS_PIXEL_RATIO, ZOOM_DEFAULT } from "../constants";
-import { roundTo3Places } from "./round-to-five";
+import { roundTo3Places } from "../round-to-five";
 
 export function clientToCanvas(
   clientPosition: number,

@@ -5,7 +5,7 @@ import { useCameraSearchParams } from "./use-camera-search-params";
 import { z } from "zod";
 import { useSelector } from "@xstate/store/react";
 import { store } from "@/lib/store";
-import { roundTo1Place } from "@/lib/utils/round-to-five";
+import { roundTo1Place } from "@/lib/round-to-five";
 import { clamp } from "@/lib/utils/clamp";
 import { X_MAX, X_MIN, Y_MAX, Y_MIN } from "@/lib/constants";
 

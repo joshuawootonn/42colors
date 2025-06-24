@@ -3,7 +3,7 @@ import {
   BACKGROUND_SIZE,
   CANVAS_PIXEL_RATIO,
 } from "../constants";
-import { roundToTen } from "../utils/round-to-five";
+import { roundToTen } from "../round-to-five";
 
 export function createBackgroundCanvas() {
   const canvas = document.createElement("canvas");

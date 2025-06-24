@@ -1,7 +1,7 @@
 defmodule ApiWeb.RegionChannel do
   use Phoenix.Channel
 
-  alias Api.Canvas
+  alias Api.Canvas.PixelService
   alias ApiWeb.PixelCacheSupervisor
 
   def join("region:general", _message, socket) do
@@ -14,23 +14,45 @@ defmodule ApiWeb.RegionChannel do
     if current_user_id == nil do
       {:reply, {:error, "unauthed_user"}, socket}
     else
-      {:ok, pixel_changsets} =
-        Canvas.Pixel.Repo.create_many_pixels(
-          Enum.map(pixels, fn pixel ->
-            %{
-              x: Map.get(pixel, "x"),
-              y: Map.get(pixel, "y"),
-              color: Map.get(pixel, "color"),
-              user_id: current_user_id
-            }
-          end)
-        )
+      # Transform pixels to the format expected by PixelService
+      pixel_attrs = Enum.map(pixels, fn pixel ->
+        %{
+          x: Map.get(pixel, "x"),
+          y: Map.get(pixel, "y"),
+          color: Map.get(pixel, "color")
+        }
+      end)
 
-      PixelCacheSupervisor.write_pixels_to_file(pixel_changsets)
+      case PixelService.create_many(pixel_attrs, current_user_id) do
+        {:ok, pixel_changesets} ->
+          # All pixels were valid and created
+          PixelCacheSupervisor.write_pixels_to_file(pixel_changesets)
+          valid_pixel_coords = Enum.map(pixel_changesets, fn p -> %{"x" => p.x, "y" => p.y, "color" => p.color} end)
+          broadcast!(socket, "new_pixels", %{pixels: valid_pixel_coords, store_id: store_id})
+          {:noreply, socket}
 
-      broadcast!(socket, "new_pixels", %{pixels: pixels, store_id: store_id})
+        {:ok, pixel_changesets, invalid_pixels} ->
+          # Some pixels were valid and created, some were invalid
+          PixelCacheSupervisor.write_pixels_to_file(pixel_changesets)
 
-      {:noreply, socket}
+          # Only broadcast the valid pixels that were actually created
+          valid_pixel_coords = Enum.map(pixel_changesets, fn p -> %{"x" => p.x, "y" => p.y, "color" => p.color} end)
+          broadcast!(socket, "new_pixels", %{pixels: valid_pixel_coords, store_id: store_id})
+
+          {:reply, {:ok, %{created: length(pixel_changesets), rejected: length(invalid_pixels), invalid_pixels: invalid_pixels}}, socket}
+
+        {:error, :no_plots} ->
+          {:reply, {:error, "user_has_no_plots"}, socket}
+
+        {:error, :all_invalid, invalid_pixels} ->
+          {:reply, {:error, "all_pixels_outside_plots", %{invalid_pixels: invalid_pixels}}, socket}
+
+        {:error, :invalid_arguments} ->
+          {:reply, {:error, "invalid_arguments"}, socket}
+
+        {:error, changeset} ->
+          {:reply, {:error, "validation_failed", %{errors: changeset.errors}}, socket}
+      end
     end
   end
 end

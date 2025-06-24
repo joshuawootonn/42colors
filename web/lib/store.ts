@@ -20,7 +20,7 @@ import {
 } from "./canvas/chunk";
 import { getLastPixelValue, Pixel, pixelSchema } from "./geometry/coord";
 import { draw } from "./canvas/draw";
-import { setupChannel, setupSocketConnection } from "./geometry/sockets";
+import { newPixels, setupChannel, setupSocketConnection } from "./sockets";
 import { KeyboardCode } from "./keyboard-codes";
 import { isInitialStore } from "./utils/is-initial-store";
 import { WheelTool } from "./tools/wheel";
@@ -54,7 +54,6 @@ import {
   getActionToUndo,
   resolveActions,
 } from "./actions";
-import { newPixels } from "./channel";
 import { Camera } from "./camera";
 import { createFullsizeCanvas, resizeFullsizeCanvas } from "./canvas/fullsize";
 import {
@@ -424,18 +423,6 @@ export const store = createStore({
         event.channel_token,
       );
       const channel = setupChannel(socket);
-
-      channel.on(
-        "new_pixels",
-        (payload: { pixels: Pixel[]; store_id: string }) => {
-          if (payload.store_id === store.getSnapshot().context.id) {
-            console.log(`skipping realtime since they came from this store`);
-            return;
-          }
-          console.log("newRealtimePixels", payload.store_id, payload.pixels);
-          store.trigger.newRealtimePixels({ pixels: payload.pixels });
-        },
-      );
 
       return {
         ...context,
