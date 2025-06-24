@@ -15,7 +15,7 @@ defmodule ApiWeb.Endpoint do
     websocket: [connect_info: [session: @session_options]],
     longpoll: [connect_info: [session: @session_options]]
 
-  socket "/socket", ApiWeb.PixelSocket,
+  socket "/socket", ApiWeb.CanvasSocket,
     websocket: true,
     longpoll: false
 

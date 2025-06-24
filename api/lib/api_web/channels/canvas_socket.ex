@@ -1,4 +1,4 @@
-defmodule ApiWeb.PixelSocket do
+defmodule ApiWeb.CanvasSocket do
   use Phoenix.Socket
 
   # A Socket handler
