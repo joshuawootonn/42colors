@@ -9,7 +9,10 @@ defmodule Api.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      preferred_cli_env: [
+        "test.watch": :test
+      ]
     ]
   end
 
@@ -65,7 +68,8 @@ defmodule Api.MixProject do
       {:cors_plug, "~> 3.0"},
       {:elixir_auth_google, "~> 1.6.9"},
       {:protobuf, "~> 0.14.0"},
-      {:tidewave, "~> 0.1", only: :dev}
+      {:tidewave, "~> 0.1", only: :dev},
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false}
     ]
   end
 
