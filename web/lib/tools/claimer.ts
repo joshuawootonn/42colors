@@ -30,14 +30,34 @@ export function redrawPolygonTelegraph(
       y1 = prev[1];
     const x2 = point[0],
       y2 = point[1];
+
+    const xDiff = x2 - x1;
+    const yDiff = y2 - y1;
+
+    const diffType =
+      xDiff === 0
+        ? yDiff === 0
+          ? "zero"
+          : yDiff > 0
+            ? "positiveY"
+            : "negativeY"
+        : xDiff > 0
+          ? "positiveX"
+          : "negativeX";
+
     ctx.moveTo(
-      (x1 - camera.x + xOffset) * pixelSize,
-      (y1 - camera.y + yOffset) * pixelSize,
+      (x1 - camera.x + xOffset) * pixelSize +
+        (diffType === "negativeX" || diffType === "positiveY" ? pixelSize : 0),
+      (y1 - camera.y + yOffset) * pixelSize +
+        (diffType === "negativeX" || diffType === "negativeY" ? pixelSize : 0),
     );
     ctx.lineTo(
-      (x2 - camera.x + xOffset) * pixelSize,
-      (y2 - camera.y + yOffset) * pixelSize,
+      (x2 - camera.x + xOffset) * pixelSize +
+        (diffType === "positiveX" || diffType === "positiveY" ? pixelSize : 0),
+      (y2 - camera.y + yOffset) * pixelSize +
+        (diffType === "negativeX" || diffType === "positiveY" ? pixelSize : 0),
     );
+
     ctx.stroke();
     ctx.closePath();
   }
@@ -51,15 +71,32 @@ export function redrawPolygonTelegraph(
       y1 = prev[1];
     const x2 = point[0],
       y2 = point[1];
-    if (i === 0) {
-      ctx.moveTo(
-        (x1 - camera.x + xOffset) * pixelSize,
-        (y1 - camera.y + yOffset) * pixelSize,
-      );
-    }
+
+    const xDiff = x2 - x1;
+    const yDiff = y2 - y1;
+
+    const diffType =
+      xDiff === 0
+        ? yDiff === 0
+          ? "zero"
+          : yDiff > 0
+            ? "positiveY"
+            : "negativeY"
+        : xDiff > 0
+          ? "positiveX"
+          : "negativeX";
+
+    ctx.moveTo(
+      (x1 - camera.x + xOffset) * pixelSize +
+        (diffType === "negativeX" || diffType === "positiveY" ? pixelSize : 0),
+      (y1 - camera.y + yOffset) * pixelSize +
+        (diffType === "negativeX" || diffType === "negativeY" ? pixelSize : 0),
+    );
     ctx.lineTo(
-      (x2 - camera.x + xOffset) * pixelSize,
-      (y2 - camera.y + yOffset) * pixelSize,
+      (x2 - camera.x + xOffset) * pixelSize +
+        (diffType === "positiveX" || diffType === "positiveY" ? pixelSize : 0),
+      (y2 - camera.y + yOffset) * pixelSize +
+        (diffType === "negativeX" || diffType === "positiveY" ? pixelSize : 0),
     );
   }
   ctx.fill();
