@@ -27,7 +27,9 @@ export function sortIntoClockwiseOrder(points: AbsolutePointTuple[]) {
   return sorted;
 }
 
-export function sortPolygonVerticesIntoClockwiseOrder(polygon: Polygon): Polygon {
+export function sortPolygonVerticesIntoClockwiseOrder(
+  polygon: Polygon,
+): Polygon {
   if (polygon.vertices.length < 3) {
     return polygon;
   }
@@ -43,12 +45,15 @@ export function sortPolygonVerticesIntoClockwiseOrder(polygon: Polygon): Polygon
 
   const isAvgPointInside = inside(avgPoint, polygon);
 
-  const crossProduct = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
+  const crossProduct =
+    (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
 
   // If cross product is positive (counterclockwise) and avg point is outside,
   // or if cross product is negative (clockwise) and avg point is inside,
   // then we need to reverse the vertices
-  const shouldReverse = (crossProduct > 0 && !isAvgPointInside) || (crossProduct < 0 && isAvgPointInside);
+  const shouldReverse =
+    (crossProduct > 0 && !isAvgPointInside) ||
+    (crossProduct < 0 && isAvgPointInside);
 
   if (shouldReverse) {
     return {
@@ -59,8 +64,6 @@ export function sortPolygonVerticesIntoClockwiseOrder(polygon: Polygon): Polygon
 
   return polygon;
 }
-
-
 
 export const rectToPolygonSchema = rectSchema.transform((rect) => {
   const p1 = absolutePointTupleSchema.parse([rect.origin.x, rect.origin.y]);
@@ -118,9 +121,11 @@ export function getCompositePolygon(
 
     const compo = result[0];
 
-    return sortPolygonVerticesIntoClockwiseOrder(polygonSchema.parse({
-      vertices: compo,
-    }));
+    return sortPolygonVerticesIntoClockwiseOrder(
+      polygonSchema.parse({
+        vertices: compo,
+      }),
+    );
   } catch (_) {
     console.log(`Failed to find polygon union of:
 
