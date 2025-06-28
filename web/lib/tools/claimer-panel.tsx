@@ -1,8 +1,8 @@
 import { useSelector } from "@xstate/store/react";
 import { store } from "../store";
 import { Button } from "@/components/ui/button";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createPlot } from "./claimer.rest";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createPlot, getUserPlots } from "./claimer.rest";
 
 export function ClaimerPanel() {
   const activeAction = useSelector(
@@ -10,9 +10,22 @@ export function ClaimerPanel() {
     (state) => state.context.activeAction,
   );
 
-  if (activeAction?.type !== "claimer-active") return null;
+  const { data: plots } = useQuery({
+    queryKey: ["user", "plots"],
+    queryFn: getUserPlots,
+  });
 
-  return <ClaimButton />;
+  return (
+    <div>
+      {activeAction?.type === "claimer-active" && <ClaimButton />}
+
+      <div className="flex flex-col items-start justify-start">
+        {plots?.map((plot) => (
+          <div key={plot.id}>{plot.name}</div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function ClaimButton() {
@@ -22,7 +35,6 @@ function ClaimButton() {
       store.trigger.completeClaim();
     },
   });
-  const queryClient = useQueryClient();
 
   return (
     <div className="flex flex-col items-start justify-start">
