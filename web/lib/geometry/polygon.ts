@@ -11,6 +11,28 @@ export const polygonSchema = z
 
 export type Polygon = z.infer<typeof polygonSchema>;
 
+/**
+ * Calculates the center point (centroid) of a polygon.
+ * The centroid is the arithmetic mean of all vertices.
+ * 
+ * @param polygon - The polygon to find the center point of
+ * @returns The center point as an AbsolutePointTuple [x, y]
+ * @throws Error if the polygon has no vertices
+ */
+export function getCenterPoint(polygon: Polygon): AbsolutePointTuple {
+  if (polygon.vertices.length === 0) {
+    throw new Error("Cannot calculate center point of polygon with no vertices");
+  }
+
+  const sumX = polygon.vertices.reduce((sum, vertex) => sum + vertex[0], 0);
+  const sumY = polygon.vertices.reduce((sum, vertex) => sum + vertex[1], 0);
+
+  const centerX = sumX / polygon.vertices.length;
+  const centerY = sumY / polygon.vertices.length;
+
+  return absolutePointTupleSchema.parse([centerX, centerY]);
+}
+
 export function sortIntoClockwiseOrder(points: AbsolutePointTuple[]) {
   const centerX = points.reduce((p, c) => p + c[0], 0) / points.length;
   const centerY = points.reduce((p, c) => p + c[1], 0) / points.length;

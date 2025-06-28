@@ -6,6 +6,8 @@ import {
   rectToPolygonSchema,
   isEligiblePolygon,
   isIneligiblePolygon,
+  getCenterPoint,
+  polygonSchema,
 } from "./polygon";
 import { rectSchema } from "./rect";
 import {
@@ -139,5 +141,164 @@ describe("isIneligiblePolygon", () => {
 
   test("line", () => {
     expect(isIneligiblePolygon(polygon9)).toBeTruthy();
+  });
+});
+
+describe("getCenterPoint", () => {
+  test("square polygon - should return center", () => {
+    const square = polygonSchema.parse({
+      vertices: [
+        [0, 0],
+        [10, 0],
+        [10, 10],
+        [0, 10],
+      ],
+    });
+    
+    const center = getCenterPoint(square);
+    expect(center).toEqual([5, 5]);
+  });
+
+  test("triangle polygon - should return centroid", () => {
+    const triangle = polygonSchema.parse({
+      vertices: [
+        [0, 0],
+        [6, 0],
+        [3, 6],
+      ],
+    });
+    
+    const center = getCenterPoint(triangle);
+    expect(center).toEqual([3, 2]);
+  });
+
+  test("rectangle polygon - should return center", () => {
+    const rectangle = polygonSchema.parse({
+      vertices: [
+        [2, 3],
+        [8, 3],
+        [8, 7],
+        [2, 7],
+      ],
+    });
+    
+    const center = getCenterPoint(rectangle);
+    expect(center).toEqual([5, 5]);
+  });
+
+  test("single point polygon - should return the point", () => {
+    const singlePoint = polygonSchema.parse({
+      vertices: [[5, 3]],
+    });
+    
+    const center = getCenterPoint(singlePoint);
+    expect(center).toEqual([5, 3]);
+  });
+
+  test("two point polygon - should return midpoint", () => {
+    const twoPoints = polygonSchema.parse({
+      vertices: [
+        [0, 0],
+        [10, 6],
+      ],
+    });
+    
+    const center = getCenterPoint(twoPoints);
+    expect(center).toEqual([5, 3]);
+  });
+
+  test("irregular polygon - should return average of vertices", () => {
+    const irregular = polygonSchema.parse({
+      vertices: [
+        [1, 1],
+        [4, 1],
+        [5, 3],
+        [3, 5],
+        [0, 4],
+      ],
+    });
+    
+    // Sum: x = 1+4+5+3+0 = 13, y = 1+1+3+5+4 = 14
+    // Average: x = 13/5 = 2.6, y = 14/5 = 2.8
+    const center = getCenterPoint(irregular);
+    expect(center).toEqual([2.6, 2.8]);
+  });
+
+  test("polygon with negative coordinates", () => {
+    const negativeCoords = polygonSchema.parse({
+      vertices: [
+        [-5, -5],
+        [5, -5],
+        [5, 5],
+        [-5, 5],
+      ],
+    });
+    
+    const center = getCenterPoint(negativeCoords);
+    expect(center).toEqual([0, 0]);
+  });
+
+  test("polygon with decimal coordinates", () => {
+    const decimalCoords = polygonSchema.parse({
+      vertices: [
+        [1.5, 2.5],
+        [3.7, 1.2],
+        [2.8, 4.9],
+      ],
+    });
+    
+    // Sum: x = 1.5+3.7+2.8 = 8.0, y = 2.5+1.2+4.9 = 8.6
+    // Average: x = 8.0/3 ≈ 2.6667, y = 8.6/3 ≈ 2.8667
+    const center = getCenterPoint(decimalCoords);
+    expect(center[0]).toBeCloseTo(2.6667, 4);
+    expect(center[1]).toBeCloseTo(2.8667, 4);
+  });
+
+  test("empty polygon - should throw error", () => {
+    const emptyPolygon = polygonSchema.parse({
+      vertices: [],
+    });
+    
+    expect(() => getCenterPoint(emptyPolygon)).toThrow(
+      "Cannot calculate center point of polygon with no vertices"
+    );
+  });
+
+  test("polygon from rect1 - should match expected center", () => {
+    const polygon = rectToPolygonSchema.parse(rect1);
+    const center = getCenterPoint(polygon);
+    
+    // rect1 is from (0,0) to (10,10), so center should be (5, 5)
+    expect(center).toEqual([5, 5]);
+  });
+
+  test("polygon from rect2 - should match expected center", () => {
+    const polygon = rectToPolygonSchema.parse(rect2);
+    const center = getCenterPoint(polygon);
+    
+    // rect2 is from (10,0) to (20,10), so center should be (15, 5)
+    expect(center).toEqual([15, 5]);
+  });
+
+  test("polygon from rect5 - should match expected center", () => {
+    const polygon = rectToPolygonSchema.parse(rect5);
+    const center = getCenterPoint(polygon);
+    
+    // rect5 is from (5,5) to (15,15), so center should be (10, 10)
+    expect(center).toEqual([10, 10]);
+  });
+
+  test("large coordinates polygon", () => {
+    const largeCoords = polygonSchema.parse({
+      vertices: [
+        [1000, 2000],
+        [3000, 2000],
+        [3000, 4000],
+        [1000, 4000],
+      ],
+    });
+    
+    const center = getCenterPoint(largeCoords);
+    expect(center).toEqual([2000, 3000]);
   });
 });
