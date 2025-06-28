@@ -17,6 +17,7 @@ import { ErasurePanel } from "@/lib/tools/erasure-panel";
 import { DEFAULT_TOOL_SETTINGS, getToolSettings } from "@/lib/tool-settings";
 import { ClaimerPanel } from "@/lib/tools/claimer-panel";
 import { useQueryClient } from "@tanstack/react-query";
+import { useFeatureFlagEnabled } from "posthog-js/react";
 
 export default function Page() {
   const state = useSelector(store, (state) => {
@@ -87,6 +88,8 @@ export default function Page() {
     store,
     (state) => state.context.toolSettings.currentTool,
   );
+
+  const flagEnabled = useFeatureFlagEnabled("my-flag");
 
   return (
     <>
