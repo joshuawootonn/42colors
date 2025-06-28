@@ -1,3 +1,4 @@
+import analytics from "./analytics";
 import { store } from "./store";
 
 const API_URL =
@@ -68,8 +69,16 @@ const authService = {
       throw new Error("Login failed");
     }
 
+    const result = await response.json();
+
+    
+    analytics.trackEvent("user_logged_in", {
+      email: credentials.email,
+      remember_me: credentials.remember_me,
+    });
+
     store.trigger.fetchUser();
-    return response.json();
+    return result;
   },
 
   async register(credentials: RegisterCredentials): Promise<AuthResponse> {
@@ -86,8 +95,14 @@ const authService = {
       throw new Error("Registration failed");
     }
 
+    const result = await response.json();
+
+    analytics.trackEvent("user_registered", {
+      email: credentials.email,
+    });
+
     store.trigger.fetchUser();
-    return response.json();
+    return result;
   },
 
   async forgotPassword(
@@ -105,6 +120,10 @@ const authService = {
       throw new Error("Failed to send reset password email");
     }
 
+    analytics.trackEvent("user_forgot_password", {
+      email: credentials.email,
+    });
+
     return response.json();
   },
 
@@ -117,6 +136,8 @@ const authService = {
     if (!response.ok) {
       throw new Error("Logout failed");
     }
+
+    analytics.trackEvent("user_logged_out");
 
     store.trigger.fetchUser();
   },
@@ -136,6 +157,8 @@ const authService = {
       },
     );
 
+    analytics.trackEvent("user_updated_password");
+
     if (!response.ok) {
       throw new Error("Failed to update password");
     }
@@ -153,7 +176,14 @@ const authService = {
         return null;
       }
 
-      return response.json();
+      const result = await response.json();
+
+      analytics.identifyUser({
+        email: result.user.email,
+        id: result.user.id,
+      });
+
+      return result;
     } catch (_) {
       return null;
     }
@@ -166,6 +196,8 @@ const authService = {
         "Content-Type": "application/json",
       },
     });
+
+    analytics.trackEvent("user_confirmed_email");
 
     if (!response.ok) {
       throw new Error("Failed to confirm email");
