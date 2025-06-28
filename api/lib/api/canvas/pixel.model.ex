@@ -6,7 +6,7 @@ defmodule Api.Canvas.Pixel do
     field(:y, :integer)
     field(:x, :integer)
     field(:color, :integer)
-    field(:user_id, :integer)
+    belongs_to :user, Api.User.User
     belongs_to :plot, Api.Canvas.Plot
 
     timestamps(type: :utc_datetime)
