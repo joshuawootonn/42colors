@@ -80,6 +80,9 @@ export function redrawUserPlots(context: InitializedStore) {
       userPlotData[i].polygon,
       pixelSize,
       context.camera,
+      {
+        containsMatchingEndpoints: true,
+      },
     );
   }
 }
