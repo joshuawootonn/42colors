@@ -107,14 +107,14 @@ export default function Page() {
         width="100vw"
       ></canvas>
 
-      <div className="flex flex-col items-start space-y-3 fixed top-16 left-3">
+      <div className="flex flex-col items-start space-y-3 fixed top-16 bottom-12 left-3">
         <Palette />
         {currentTool === "claimer" && <ClaimerPanel />}
         {currentTool === "brush" && <BrushPanel />}
         {currentTool === "erasure" && <ErasurePanel />}
       </div>
 
-      <div className="flex fixed  top-3 right-3">
+      <div className="flex fixed top-3 right-3">
         <Toolbar />
       </div>
 
