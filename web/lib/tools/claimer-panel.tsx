@@ -3,7 +3,9 @@ import { store } from "../store";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createPlot, getUserPlots } from "./claimer.rest";
-import { ArrowRightIcon, ArrowUpRight, TrashIcon } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+import { getCenterPoint } from "../geometry/polygon";
+import { centerCameraOnPoint } from "../camera-utils";
 
 export function ClaimerPanel() {
   const activeAction = useSelector(
@@ -22,8 +24,22 @@ export function ClaimerPanel() {
 
       <div className="flex flex-col items-start justify-start space-y-1">
         {plots?.map((plot) => (
-          <div key={plot.id} className="isolate relative z-0 flex group flex-row space-x-1">
-            <Button variant="link" className="">{plot.name} <ArrowUpRight className="hidden group-hover:block group-focus:block w-3 h-3" /></Button>
+          <div
+            key={plot.id}
+            className="isolate relative z-0 flex group flex-row space-x-1"
+          >
+            <Button
+              variant="link"
+              className=""
+              onClick={() => {
+                store.trigger.moveCamera({
+                  camera: centerCameraOnPoint(getCenterPoint(plot.polygon), store.getSnapshot().context.camera),
+                });
+              }}
+            >
+              {plot.name} {getCenterPoint(plot.polygon)}{" "}
+              <ArrowUpRight className="hidden group-hover:block group-focus:block w-3 h-3" />
+            </Button>
           </div>
         ))}
       </div>
