@@ -56,35 +56,56 @@ defmodule Api.Canvas.Pixel.Repo do
   end
 
   @doc """
-  Creates many pixel.
+  Creates many pixels using a single bulk INSERT query.
 
   ## Examples
 
-      iex> create_many_pixels(pixel(%{field: value})
+      iex> create_many_pixels([%{x: 1, y: 1, color: 1, user_id: 1}])
       {:ok, [%Pixel{}, ...]}
 
-      iex> create_many_pixels(%{field: bad_value})
+      iex> create_many_pixels([%{x: 1, y: 1}])  # missing required fields
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_many_pixels(attrs \\ %{}) do
-    changesets = Enum.map(attrs, fn attr ->
+  def create_many_pixels(attrs_list) when is_list(attrs_list) do
+    changesets = Enum.map(attrs_list, fn attr ->
       %Pixel{} |> Pixel.changeset(attr)
     end)
 
-    result = Enum.reduce(changesets, Ecto.Multi.new(), fn changeset, multi ->
-      Ecto.Multi.insert(multi, {:pixel, System.unique_integer()}, changeset)
-    end)
-    |> Repo.transaction()
+    case Enum.find(changesets, fn changeset -> not changeset.valid? end) do
+            nil ->
+        # insert_all doesn't auto-generate timestamps
+        now = DateTime.utc_now() |> DateTime.truncate(:second)
 
-    case result do
-      {:ok, changes} ->
-        pixels = changes |> Map.values()
-        {:ok, pixels}
-      {:error, _, changeset, _} ->
-        {:error, changeset}
+        insert_data = Enum.map(changesets, fn changeset ->
+          changes = changeset.changes
+          %{
+            x: changes.x,
+            y: changes.y,
+            color: changes.color,
+            user_id: changes.user_id,
+            plot_id: Map.get(changes, :plot_id),
+            inserted_at: now,
+            updated_at: now
+          }
+        end)
+
+        # Use insert_all for bulk insert - this generates a single INSERT statement
+        {count, pixels} = Repo.insert_all(Pixel, insert_data, returning: true)
+
+        if count == length(attrs_list) do
+          {:ok, pixels}
+        else
+          {:error, "Partial insert failure"}
+        end
+
+
+      invalid_changeset ->
+        {:error, invalid_changeset}
     end
   end
+
+  def create_many_pixels(_), do: {:error, :invalid_arguments}
 
   @doc """
   Updates a pixel.
