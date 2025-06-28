@@ -83,6 +83,11 @@ export default function Page() {
     (state) => state.context.interaction?.isSpacePressed,
   );
 
+  const currentTool = useSelector(
+    store,
+    (state) => state.context.toolSettings.currentTool,
+  );
+
   return (
     <>
       <canvas
@@ -99,19 +104,11 @@ export default function Page() {
         width="100vw"
       ></canvas>
 
-      <div className="flex flex-col space-y-3 fixed top-16 left-3">
+      <div className="flex flex-col items-start space-y-3 fixed top-16 left-3">
         <Palette />
-        <ClaimerPanel />
-        {user?.email === "jose56wonton@gmail.com" ||
-        user?.email === "mytwistedbiscuits@gmail.com" ||
-        user?.email === "maxwellwever@gmail.com" ? (
-          <BrushPanel />
-        ) : null}
-        {user?.email === "jose56wonton@gmail.com" ||
-        user?.email === "mytwistedbiscuits@gmail.com" ||
-        user?.email === "maxwellwever@gmail.com" ? (
-          <ErasurePanel />
-        ) : null}
+        {currentTool === "claimer" && <ClaimerPanel />}
+        {currentTool === "brush" && <BrushPanel />}
+        {currentTool === "erasure" && <ErasurePanel />}
       </div>
 
       <div className="flex fixed  top-3 right-3">
