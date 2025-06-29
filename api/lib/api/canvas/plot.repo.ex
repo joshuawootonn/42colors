@@ -4,7 +4,6 @@ defmodule Api.Canvas.Plot.Repo do
   """
 
   import Ecto.Query, warn: false
-  import Geo.PostGIS
   alias Api.Repo
 
   alias Api.Canvas.Plot

@@ -4,10 +4,10 @@ defmodule ApiWeb.PageController do
   def home(conn, _params) do
     # The home page is often custom made,
     # so skip the default app layout.
-    render(conn, :home, layout: false)
+    send_resp(conn, 200, "What's up brother!")
   end
 
   def health_check(conn, _params) do
-    send_resp(conn, 200, "What's up brother?!!")
+    send_resp(conn, 200, "We are up and running!")
   end
 end

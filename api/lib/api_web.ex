@@ -84,7 +84,6 @@ defmodule ApiWeb do
       # HTML escaping functionality
       import Phoenix.HTML
       # Core UI components and translation
-      import ApiWeb.CoreComponents
       import ApiWeb.Gettext
 
       # Shortcut for generating JS commands
