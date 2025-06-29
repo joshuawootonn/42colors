@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { coordSort, Pixel, pixelSchema } from "../coord";
+import { coordSort, Pixel, pixelSchema } from "../geometry/coord";
 import { newNewCoords } from "./net-new-coords";
 
 describe("net new pixels", () => {

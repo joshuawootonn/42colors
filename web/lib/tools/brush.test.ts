@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { AbsolutePoint, absolutePointSchema, coordSort } from "../coord";
 import { getBrushPoints } from "./brush";
+import {
+  AbsolutePoint,
+  absolutePointSchema,
+  coordSort,
+} from "../geometry/coord";
 
 const arr: AbsolutePoint[] = [
   absolutePointSchema.parse({ x: 1, y: 1 }),
