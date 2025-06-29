@@ -27,6 +27,14 @@ export default function Changelog() {
       <hr className="w-full border-t-2 border-black dark:border-white" />
       <ul>
         <li>
+          <DateComponent date={new Date("6/29/2025")} />
+          <ul>
+            <li>
+             Nobody cares until I actually have the MVP done. Lots of changes have happened, but you'll just have to wait until I ship the v1. 
+            </li>
+          </ul>
+        </li>
+        <li>
           <DateComponent date={new Date("3/10/2025")} />
           <ul>
             <li>
