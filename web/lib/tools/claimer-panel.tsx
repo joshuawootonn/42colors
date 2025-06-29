@@ -18,7 +18,13 @@ import {
 import { IconButton } from "@/components/ui/icon-button";
 import { X } from "@/components/icons/x";
 import * as Tooltip from "@/components/ui/tooltip";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 
 export function ClaimerPanel() {
   const activeAction = useSelector(
@@ -47,29 +53,16 @@ export function ClaimerPanel() {
     },
   });
 
-  const { mutate: updateSelectedPlot } = useMutation({
-    mutationFn: ({
-      plotId,
-      plot,
-    }: {
-      plotId: number;
-      plot: Partial<Pick<Plot, "name" | "description">>;
-    }) => updatePlot(plotId, plot),
-    onSuccess: () => {
-      store.getSnapshot().context.queryClient?.invalidateQueries({
-        queryKey: ["user", "plots"],
-      });
-      store.trigger.redrawRealtimeCanvas();
-    },
-  });
-
-  const selectedPlot = useMemo(() => plots?.find((plot) => plot.id === selectedPlotId), [plots, selectedPlotId]);
+  const selectedPlot = useMemo(
+    () => plots?.find((plot) => plot.id === selectedPlotId),
+    [plots, selectedPlotId],
+  );
 
   return (
     <div className="flex-grow flex flex-row items-start justify-start">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="link" className="">
+          <Button variant="outline">
             {activeAction?.type === "claimer-active" ? (
               "New Claim"
             ) : selectedPlot ? (
@@ -87,6 +80,7 @@ export function ClaimerPanel() {
                   strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  className="-mr-2"
                 >
                   <path d="M7 7h10v10" />
                   <path d="M7 17 17 7" />
@@ -126,54 +120,12 @@ export function ClaimerPanel() {
       ) : selectedPlot ? (
         <>
           <Tooltip.Provider>
-            <Tooltip.Root>
-              <Tooltip.Trigger
-                render={
-                  <IconButton
-                    className="text-black"
-                    onClick={() => {
-                      if (selectedPlotId) {
-                        updateSelectedPlot({
-                          plotId: selectedPlotId,
-                          plot: {
-                            name: "Updated Plot",
-                            description: "Updated Description",
-                          },
-                        });
-                      }
-                    }}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="32"
-                      height="32"
-                      viewBox="-4 -4 32 32"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
-                      <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
-                    </svg>
-                  </IconButton>
-                }
-              />
-              <Tooltip.Portal>
-                <Tooltip.Positioner>
-                  <Tooltip.Popup>
-                    <Tooltip.Arrow />
-                    Update
-                  </Tooltip.Popup>
-                </Tooltip.Positioner>
-              </Tooltip.Portal>
-            </Tooltip.Root>
+            <EditPlotForm plot={selectedPlot} />
 
             <Tooltip.Root>
               <Tooltip.Trigger>
                 <IconButton
-                  className="text-black -translate-x-[1px]"
+                  className="text-black -translate-x-[2px]"
                   onClick={() => {
                     if (selectedPlotId) {
                       deleteSelectedPlot(selectedPlotId);
@@ -204,7 +156,7 @@ export function ClaimerPanel() {
                 <Tooltip.Positioner>
                   <Tooltip.Popup>
                     <Tooltip.Arrow />
-                    Delete
+                    Update
                   </Tooltip.Popup>
                 </Tooltip.Positioner>
               </Tooltip.Portal>
@@ -213,6 +165,134 @@ export function ClaimerPanel() {
         </>
       ) : null}
     </div>
+  );
+}
+
+function EditPlotForm({ plot }: { plot: Plot }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState(plot.name);
+  const [description, setDescription] = useState(plot.description);
+
+  const { mutate: updatePlotMutation, isPending } = useMutation({
+    mutationFn: ({
+      plotId,
+      plot,
+    }: {
+      plotId: number;
+      plot: Partial<Pick<Plot, "name" | "description">>;
+    }) => updatePlot(plotId, plot),
+    onSuccess: () => {
+      store.getSnapshot().context.queryClient?.invalidateQueries({
+        queryKey: ["user", "plots"],
+      });
+      store.trigger.redrawRealtimeCanvas();
+      setIsOpen(false);
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updatePlotMutation({
+      plotId: plot.id,
+      plot: {
+        name,
+        description,
+      },
+    });
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (open) {
+      // Reset form to current plot values when opening
+      setName(plot.name);
+      setDescription(plot.description);
+    }
+  };
+
+  return (
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
+      <Tooltip.Root>
+        <Tooltip.Trigger
+          render={
+            <PopoverTrigger asChild>
+              <IconButton className="text-black -translate-x-[1px]">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="32"
+                  height="32"
+                  viewBox="-4 -4 32 32"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+                  <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+                </svg>
+              </IconButton>
+            </PopoverTrigger>
+          }
+        />
+        <Tooltip.Portal>
+          <Tooltip.Positioner>
+            <Tooltip.Popup>
+              <Tooltip.Arrow />
+              Edit
+            </Tooltip.Popup>
+          </Tooltip.Positioner>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+
+      <PopoverContent className="w-80 px-3 py-2 bg-background border-1.5 border-primary">
+        <form onSubmit={handleSubmit} className="space-y-2">
+          <div>
+            <h3 className="font-semibold mb-2">Edit Plot</h3>
+          </div>
+          
+          <div className="space-y-1">
+            <label htmlFor="name" className="text-sm font-medium">
+              Name
+            </label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Name"
+              disabled={isPending}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="description" className="text-sm font-medium">
+              Description
+            </label>
+            <Input
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Description"
+              disabled={isPending}
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        </form>
+      </PopoverContent>
+    </Popover>
   );
 }
 
