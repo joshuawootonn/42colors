@@ -34,7 +34,7 @@ export function Toolbar() {
   if (state !== "initialized") return null;
   return (
     <div className="flex flex-row justify-end items-start">
-      <div className={cn("p-0.5 grid grid-cols-2")}>
+      <div className={cn("grid grid-cols-2")}>
         <ToolIconButton
           active={tool === "brush"}
           onClick={() => store.trigger.changeTool({ tool: "brush" })}

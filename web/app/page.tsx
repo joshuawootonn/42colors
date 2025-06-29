@@ -110,7 +110,7 @@ export default function Page() {
         )}
       </div>
 
-      <div className="flex flex-row space-x-3 fixed top-2 left-60">
+      <div className="flex flex-row space-x-3 fixed top-3 left-60">
         {currentTool === "claimer" && <ClaimerPanel />}
       </div>
 
