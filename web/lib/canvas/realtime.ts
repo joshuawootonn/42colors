@@ -69,12 +69,17 @@ export function redrawUserPlots(context: InitializedStore) {
 
   ctx.imageSmoothingEnabled = false;
 
-  ctx.fillStyle = "rgba(0,0,0,0)";
-  ctx.strokeStyle = "rgba(0,0,0,1)";
-
   const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
 
   for (let i = 0; i < userPlotData.length; i++) {
+    if (userPlotData[i].id === context.toolSettings.claimer.selectedPlotId) {
+      ctx.fillStyle = "rgba(0,0,0,0)";
+      ctx.strokeStyle = "rgba(0,0,255,1)";
+    } else {
+      ctx.fillStyle = "rgba(0,0,0,0)";
+      ctx.strokeStyle = "rgba(0,0,0,0.05)";
+    }
+
     redrawPolygonTelegraph(
       ctx,
       userPlotData[i].polygon,

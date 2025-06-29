@@ -4,6 +4,7 @@ import { BrushSettings } from "./tools/brush";
 import { ErasureSettings } from "./tools/erasure";
 import { PaletteSettings } from "./tools/palette";
 import { colorRefSchema } from "./palette";
+import { ClaimerSettings, claimerSettingsSchema } from "./tools/claimer";
 
 function createToolKey(key: string) {
   return `${TOOL_SETTINGS}-${key}`;
@@ -17,6 +18,7 @@ const BRUSH_SIZE = "brush-size";
 const ERASURE_SIZE = "erasure-size";
 const PALETTE_IS_OPEN = "palette-is-open";
 const PALETTE_CURRENT_COLOR_REF = "palette-current-color-ref";
+const CLAIMER_SELECTED_PLOT_ID = "claimer-selected-plot-id";
 const CURRENT_TOOL = "current-tool";
 
 export function updateToolSettings(toolSettings: ToolSettings) {
@@ -35,6 +37,10 @@ export function updateToolSettings(toolSettings: ToolSettings) {
   window.localStorage.setItem(
     createToolKey(PALETTE_CURRENT_COLOR_REF),
     toolSettings.palette.currentColorRef.toString(),
+  );
+  window.localStorage.setItem(
+    createToolKey(CLAIMER_SELECTED_PLOT_ID),
+    toolSettings.claimer.selectedPlotId?.toString() ?? "",
   );
   window.localStorage.setItem(
     createToolKey(CURRENT_TOOL),
@@ -70,6 +76,7 @@ const toolSettingsSchema = z.object({
   brush: z.object({ size: z.number() }),
   erasure: z.object({ size: z.number() }),
   palette: z.object({ isOpen: z.boolean(), currentColorRef: colorRefSchema }),
+  claimer: claimerSettingsSchema,
   currentTool: toolSchema,
 });
 
@@ -77,6 +84,7 @@ export type ToolSettings = {
   brush: BrushSettings;
   erasure: ErasureSettings;
   palette: PaletteSettings;
+  claimer: ClaimerSettings;
   currentTool: Tool;
 };
 
@@ -90,6 +98,9 @@ export const DEFAULT_TOOL_SETTINGS = toolSettingsSchema.parse({
   palette: {
     isOpen: true,
     currentColorRef: 1,
+  },
+  claimer: {
+    selectedPlotId: undefined,
   },
   currentTool: "brush",
 });
@@ -117,6 +128,9 @@ export function getToolSettings(): ToolSettings | undefined {
       currentColorRef:
         paletteCurrentColorRef.data ??
         DEFAULT_TOOL_SETTINGS.palette.currentColorRef,
+    },
+    claimer: {
+      selectedPlotId: undefined,
     },
     currentTool: currentTool.data ?? DEFAULT_TOOL_SETTINGS.currentTool,
   };

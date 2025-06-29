@@ -3,7 +3,7 @@ import { store } from "../store";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createPlot, getUserPlots } from "./claimer.rest";
-import { ArrowUpRight, Cog, CogIcon } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
