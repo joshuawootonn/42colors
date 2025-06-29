@@ -30,7 +30,7 @@ export default function Changelog() {
           <DateComponent date={new Date("6/29/2025")} />
           <ul>
             <li>
-             Nobody cares until I actually have the MVP done. Lots of changes have happened, but you'll just have to wait until I ship the v1. 
+             Nobody cares until I actually have the MVP done. Lots of changes have happened, but you&apos;ll just have to wait until I ship the v1. 
             </li>
           </ul>
         </li>

@@ -1,6 +1,6 @@
 import Color from "colorjs.io";
 import { cn } from "@/lib/utils";
-import { ComponentPropsWithoutRef, useMemo, useState } from "react";
+import { ComponentPropsWithoutRef, useMemo } from "react";
 import { motion, Variants } from "motion/react";
 import { store } from "@/lib/store";
 import { useSelector } from "@xstate/store/react";
@@ -107,15 +107,6 @@ const item: Variants = {
 };
 
 export function Palette() {
-  const isOpen = useSelector(
-    store,
-    (state) => state.context.toolSettings.palette.isOpen,
-  );
-  const currentColor = useSelector(
-    store,
-    (state) => state.context.toolSettings.palette.currentColorRef,
-  );
-
   const state = useSelector(store, (state) => state.context.state);
   if (state !== "initialized") return null;
 
@@ -125,7 +116,7 @@ export function Palette() {
         className={cn("p-0.5 flex flex-col")}
         variants={container}
         initial="show"
-        animate={'show'}
+        animate={"show"}
         // initial={isOpen ? "show" : "hidden"}
         // animate={isOpen ? "show" : "hidden"}
       >
