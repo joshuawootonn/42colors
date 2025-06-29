@@ -40,26 +40,28 @@ export default async function RootLayout({
         <link rel="icon" href="/favicon.png" type="image/png" sizes="96x96" />
       </head>
       <body className={`${space.variable} font-sans`}>
-        <div className="flex fixed top-[10px] left-[10px]">
-          <h1 className="text-2xl font-bold flex gap-2">
-            <Link href="/">
-              <Logo />
-            </Link>
-          </h1>
+        <div className="isolate">
+          <div className="flex fixed top-[10px] left-[10px]">
+            <h1 className="text-2xl font-bold flex gap-2">
+              <Link href="/">
+                <Logo />
+              </Link>
+            </h1>
+          </div>
+          {left}
+          <Providers>{children}</Providers>
+          <Fathom />
+          <Intro defaultOpen={defaultOpen} />
+          <Toaster
+            className="w-96"
+            // @ts-expect-error just trying to set an "unknown property"
+            style={{ "--width": "380px" }}
+            offset={12}
+            gap={12}
+            position="bottom-center"
+            expand
+          />
         </div>
-        {left}
-        <Providers>{children}</Providers>
-        <Fathom />
-        <Intro defaultOpen={defaultOpen} />
-        <Toaster
-          className="w-96"
-          // @ts-expect-error just trying to set an "unknown property"
-          style={{ "--width": "380px" }}
-          offset={12}
-          gap={12}
-          position="bottom-center"
-          expand
-        />
       </body>
     </html>
   );

@@ -188,7 +188,10 @@ export const store = createStore({
       enqueue.effect(() => {
         store.trigger.fetchPixels();
         store.trigger.fetchUser();
-        store.trigger.subscribeToUserPlots();
+        event.queryClient.fetchQuery({
+          queryKey: ["user", "plots"],
+          queryFn: getUserPlots,
+        });
       });
 
       const initialized: InitializedStore = {
@@ -433,23 +436,6 @@ export const store = createStore({
           channel,
         },
       };
-    },
-
-    subscribeToUserPlots: (context, _, enqueue) => {
-      if (isInitialStore(context)) return;
-      const key = ["user", "plots"];
-
-      enqueue.effect(() => {
-        context.queryClient.getQueryCache().subscribe((event) => {
-          if (event.query.queryKey === key) {
-            store.trigger.redrawRealtimeCanvas();
-          }
-        });
-      });
-      context.queryClient.fetchQuery({
-        queryKey: key,
-        queryFn: getUserPlots,
-      });
     },
 
     fetchUser: (context, _, enqueue) => {

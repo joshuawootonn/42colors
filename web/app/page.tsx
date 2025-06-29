@@ -54,12 +54,20 @@ export default function Page() {
         toolSettings: toolSettings ?? DEFAULT_TOOL_SETTINGS,
       });
 
+      const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+        const key = ["user", "plots"];
+        if (event.query.queryKey === key) {
+          store.trigger.redrawRealtimeCanvas();
+        }
+      });
+
       const rafId = requestAnimationFrame(draw);
       store.trigger.listen({ element, body });
 
       return () => {
         cancelAnimationFrame(rafId);
         store.trigger.unlisten({ element, body });
+        unsubscribe();
       };
 
       function draw() {
