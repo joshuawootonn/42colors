@@ -3,7 +3,6 @@ import { store } from "../store";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createPlot, getUserPlots } from "./claimer.rest";
-import { ArrowUpRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,10 +32,27 @@ export function ClaimerPanel() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="link" className="">
-            {selectedPlotId
-              ? plots?.find((plot) => plot.id === selectedPlotId)?.name
-              : "Select Plot"}
-            <ArrowUpRight className="hidden group-hover:block group-focus:block w-3 h-3" />
+            {selectedPlotId ? (
+              plots?.find((plot) => plot.id === selectedPlotId)?.name
+            ) : (
+              <>
+                Select Plot{" "}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="32"
+                  height="32"
+                  viewBox="-4 -4 32 32"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M7 7h10v10" />
+                  <path d="M7 17 17 7" />
+                </svg>
+              </>
+            )}
           </Button>
         </DropdownMenuTrigger>
 
