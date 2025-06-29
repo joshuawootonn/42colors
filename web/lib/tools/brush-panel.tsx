@@ -9,7 +9,8 @@ export function BrushPanel() {
   );
 
   return (
-    <div className="flex flex-col items-start justify-start">
+    <div className="flex flex-row items-center justify-start space-x-1">
+      <div>Size:</div>
       <NumberInput
         name="brushSize"
         value={brushSize}
