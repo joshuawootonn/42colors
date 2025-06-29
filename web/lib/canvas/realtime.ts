@@ -77,7 +77,7 @@ export function redrawUserPlots(context: InitializedStore) {
       ctx.strokeStyle = "rgba(0,0,255,1)";
     } else {
       ctx.fillStyle = "rgba(0,0,0,0)";
-      ctx.strokeStyle = "rgba(0,0,0,0.05)";
+      ctx.strokeStyle = "rgba(0,0,0,1)";
     }
 
     redrawPolygonTelegraph(
