@@ -17,14 +17,11 @@ import { ErasurePanel } from "@/lib/tools/erasure-panel";
 import { DEFAULT_TOOL_SETTINGS, getToolSettings } from "@/lib/tool-settings";
 import { ClaimerPanel } from "@/lib/tools/claimer-panel";
 import { useQueryClient } from "@tanstack/react-query";
-import { useFeatureFlagEnabled } from "posthog-js/react";
 
 export default function Page() {
-  const state = useSelector(store, (state) => {
-    return state.context.state;
-  });
-
   const queryClient = useQueryClient();
+
+  const state = useSelector(store, (state) => state.context.state);
 
   useEffect(() => {
     const element = document.getElementById("my-house");
@@ -72,8 +69,6 @@ export default function Page() {
     }
   }, [queryClient, state]);
 
-  const user = useSelector(store, (state) => state.context.user);
-
   const isPressed = useSelector(
     store,
     (state) => state.context.interaction?.isPressed,
@@ -88,8 +83,6 @@ export default function Page() {
     store,
     (state) => state.context.toolSettings.currentTool,
   );
-
-  const flagEnabled = useFeatureFlagEnabled("my-flag");
 
   return (
     <>
@@ -108,10 +101,17 @@ export default function Page() {
       ></canvas>
 
       <div className="flex flex-col items-start space-y-3 fixed top-16 bottom-12 left-3">
-        <Palette />
+        {state !== "initialized" ? null : (
+          <>
+            {currentTool === "brush" && <Palette />}
+            {currentTool === "brush" && <BrushPanel />}
+            {currentTool === "erasure" && <ErasurePanel />}
+          </>
+        )}
+      </div>
+
+      <div className="flex flex-row space-x-3 fixed top-2 left-60">
         {currentTool === "claimer" && <ClaimerPanel />}
-        {currentTool === "brush" && <BrushPanel />}
-        {currentTool === "erasure" && <ErasurePanel />}
       </div>
 
       <div className="flex fixed top-3 right-3">

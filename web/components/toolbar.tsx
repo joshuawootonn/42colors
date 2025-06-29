@@ -6,16 +6,18 @@ import { store } from "@/lib/store";
 export function ToolIconButton({
   children,
   active,
+  className,
   ...props
 }: ComponentPropsWithoutRef<"button"> & { active: boolean }) {
   return (
     <button
       {...props}
       className={cn(
-        "group flex justify-center items-center bg-white text-white size-8 border-1.5 border-black ring-1 ring-black",
+        "group flex justify-center items-center bg-white text-white size-8 border-1.5 border-black ",
         "relative",
         "focus-visible:border-black outline-none rounded-none",
         active && "border-white ring-white invert",
+        className,
       )}
     >
       <div>{children}</div>
@@ -64,6 +66,7 @@ export function Toolbar() {
         <ToolIconButton
           active={tool === "erasure"}
           onClick={() => store.trigger.changeTool({ tool: "erasure" })}
+          className="-translate-x-[1px]"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -84,6 +87,7 @@ export function Toolbar() {
         <ToolIconButton
           active={tool === "claimer"}
           onClick={() => store.trigger.changeTool({ tool: "claimer" })}
+          className="-translate-y-[1px]"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

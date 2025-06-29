@@ -119,7 +119,7 @@ const NumberInput = React.forwardRef<
         type="number"
         className={cn(
           styles.input,
-          "flex h-7.5 min-w-0 border-1.5 border-input bg-transparent text-base",
+          "flex h-7.5 min-w-0 border-[1.5px] border-input bg-transparent text-base",
           "w-[calc(var(--number-input-width)+30px)]",
           "[input\[type=number\]::-webkit-outer-spin-button]:appearance-[textfield]",
           "pl-1",

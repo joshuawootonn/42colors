@@ -6,9 +6,8 @@ import { store } from "@/lib/store";
 import { useSelector } from "@xstate/store/react";
 import { COLOR_ORDER, ColorRef, COLOR_TABLE } from "@/lib/palette";
 import { chunk } from "@/lib/utils/chunk";
-import { ToolIconButton } from "./toolbar";
 
-export function IconButton({
+function IconButton({
   colorRef,
   showCurrentColorIndicator,
   className,
@@ -41,7 +40,7 @@ export function IconButton({
     <motion.button
       {...props}
       className={cn(
-        "relative group flex justify-center items-center bg-white text-white size-8 border-1.5 border-black ring-1 ring-black",
+        "relative group flex justify-center items-center bg-white text-white size-8 border-1 border-black ring-2 ring-black",
         "focus-visible:border-black outline-none rounded-none",
         className,
       )}
@@ -125,11 +124,13 @@ export function Palette() {
       <motion.div
         className={cn("p-0.5 flex flex-col")}
         variants={container}
-        initial={isOpen ? "show" : "hidden"}
-        animate={isOpen ? "show" : "hidden"}
+        initial="show"
+        animate={'show'}
+        // initial={isOpen ? "show" : "hidden"}
+        // animate={isOpen ? "show" : "hidden"}
       >
         <div>
-          <ToolIconButton
+          {/* <ToolIconButton
             key={currentColor}
             onClick={() =>
               store.trigger.updatePaletteSettings({
@@ -160,7 +161,7 @@ export function Palette() {
                 <circle cx="8.5" cy="7.5" r=".5" />
               </g>
             </svg>
-          </ToolIconButton>
+          </ToolIconButton> */}
         </div>
         {chunk(COLOR_ORDER, 4).map((colorChunk, i) => (
           <motion.div variants={row} key={i} className="flex flex-row">
