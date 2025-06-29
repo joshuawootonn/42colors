@@ -18,6 +18,9 @@ const plotSchema = z.object({
   updatedAt: z.string(),
 });
 
+const plotResponseSchema = z.object({ data: plotSchema });
+const arrayPlotResponseSchema = z.object({ data: z.array(plotSchema) });
+
 export type Plot = z.infer<typeof plotSchema>;
 
 export async function createPlot(): Promise<Plot> {
@@ -59,10 +62,10 @@ export async function createPlot(): Promise<Plot> {
   );
 
   const json = await response.json();
-  const plot = plotSchema.parse(json);
-
-  return plot;
+  
+  return plotResponseSchema.parse(json).data;
 }
+
 
 export async function getUserPlots(): Promise<Plot[]> {
   const context = store.getSnapshot().context;
@@ -80,5 +83,45 @@ export async function getUserPlots(): Promise<Plot[]> {
 
   const json = await response.json();
 
-  return z.object({ data: z.array(plotSchema) }).parse(json).data;
+  return arrayPlotResponseSchema.parse(json).data;
+}
+
+
+export async function deletePlot(plotId: number): Promise<void> {
+  const context = store.getSnapshot().context;
+  if (isInitialStore(context)) {
+    throw new Error("Server context is not initialized");
+  }
+
+  await fetch(new URL(`/api/plots/${plotId}`, context.server.apiOrigin), {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  return;
+}
+
+export async function updatePlot(plotId: number, plot: Partial<Pick<Plot, 'name' | 'description'>>): Promise<Plot> {
+  const context = store.getSnapshot().context;
+  if (isInitialStore(context)) {
+    throw new Error("Server context is not initialized");
+  }
+
+  const response = await fetch(
+    new URL(`/api/plots/${plotId}`, context.server.apiOrigin),
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        plot: plot,
+      }),
+    },
+  );
+
+  const json = await response.json();
+
+  return plotResponseSchema.parse(json).data;
 }

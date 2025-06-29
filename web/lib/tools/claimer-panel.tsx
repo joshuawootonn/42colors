@@ -2,7 +2,13 @@ import { useSelector } from "@xstate/store/react";
 import { store } from "../store";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createPlot, getUserPlots } from "./claimer.rest";
+import {
+  createPlot,
+  deletePlot,
+  getUserPlots,
+  updatePlot,
+  type Plot,
+} from "./claimer.rest";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +32,32 @@ export function ClaimerPanel() {
   const { data: plots } = useQuery({
     queryKey: ["user", "plots"],
     queryFn: getUserPlots,
+  });
+
+  const { mutate: deleteSelectedPlot } = useMutation({
+    mutationFn: deletePlot,
+    onSuccess: () => {
+      store
+        .getSnapshot()
+        .context.queryClient?.invalidateQueries({
+          queryKey: ["user", "plots"],
+        });
+      store.trigger.redrawRealtimeCanvas();
+      store.trigger.deselectPlot();
+    },
+  });
+
+  const { mutate: updateSelectedPlot } = useMutation({
+    mutationFn: ({ plotId, plot }: { plotId: number; plot: Partial<Pick<Plot, 'name' | 'description'>> }) =>
+      updatePlot(plotId, plot),
+    onSuccess: () => {
+      store
+        .getSnapshot()
+        .context.queryClient?.invalidateQueries({
+          queryKey: ["user", "plots"],
+        });
+      store.trigger.redrawRealtimeCanvas();
+    },
   });
 
   return (
@@ -88,7 +120,20 @@ export function ClaimerPanel() {
         </>
       ) : (
         <>
-          {/* <IconButton className="text-black">
+          <IconButton
+            className="text-black"
+            onClick={() => {
+              if (selectedPlotId) {
+                updateSelectedPlot({
+                  plotId: selectedPlotId,
+                  plot: {
+                    name: "Updated Plot",
+                    description: "Updated Description",
+                  },
+                });
+              }
+            }}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="32"
@@ -108,7 +153,14 @@ export function ClaimerPanel() {
               <path d="m15 5 4 4" />
             </svg>
           </IconButton>
-          <IconButton className="text-black -translate-x-[1px]">
+          <IconButton
+            className="text-black -translate-x-[1px]"
+            onClick={() => {
+              if (selectedPlotId) {
+                deleteSelectedPlot(selectedPlotId);
+              }
+            }}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="32"
@@ -126,7 +178,7 @@ export function ClaimerPanel() {
               <line x1="10" x2="10" y1="11" y2="17" />
               <line x1="14" x2="14" y1="11" y2="17" />
             </svg>
-          </IconButton> */}
+          </IconButton>
         </>
       )}
     </div>
