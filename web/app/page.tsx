@@ -17,6 +17,7 @@ import { ErasurePanel } from "@/lib/tools/erasure-panel";
 import { DEFAULT_TOOL_SETTINGS, getToolSettings } from "@/lib/tool-settings";
 import { ClaimerPanel } from "@/lib/tools/claimer-panel";
 import { useQueryClient } from "@tanstack/react-query";
+import { keyEquals } from "@/lib/utils/query-key";
 
 export default function Page() {
   const queryClient = useQueryClient();
@@ -56,7 +57,7 @@ export default function Page() {
 
       const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
         const key = ["user", "plots"];
-        if (event.query.queryKey === key) {
+        if (keyEquals(event.query.queryKey, key)) {
           store.trigger.redrawRealtimeCanvas();
         }
       });

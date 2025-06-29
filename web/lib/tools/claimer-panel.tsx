@@ -297,16 +297,104 @@ function EditPlotForm({ plot }: { plot: Plot }) {
 }
 
 function ClaimButton() {
-  const { mutate } = useMutation({
+  return (
+    <div className="flex flex-col items-start justify-start">
+      <CreatePlotForm />
+    </div>
+  );
+}
+
+function CreatePlotForm() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+
+  const { mutate: createPlotMutation, isPending } = useMutation({
     mutationFn: createPlot,
-    onSettled: () => {
+    onSuccess: (plot) => {
+      store.getSnapshot().context.queryClient?.invalidateQueries({
+        queryKey: ["user", "plots"],
+      });
       store.trigger.completeClaim();
+      store.trigger.selectPlot({ plotId: plot.id });
+      store.trigger.redrawRealtimeCanvas();
+      setIsOpen(false);
+      // Reset form
+      setName("");
+      setDescription("");
     },
   });
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createPlotMutation({
+      name: name.trim() || `Plot ${Date.now()}`,
+      description: description.trim() || `Description ${Date.now()}`,
+    });
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      // Reset form when closing
+      setName("");
+      setDescription("");
+    }
+  };
+
   return (
-    <div className="flex flex-col items-start justify-start">
-      <Button onClick={() => mutate()}>Claim</Button>
-    </div>
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        <Button>Claim</Button>
+      </PopoverTrigger>
+
+      <PopoverContent className="w-80 px-3 py-2 bg-background border-1.5 border-primary">
+        <form onSubmit={handleSubmit} className="space-y-2">
+          <div>
+            <h3 className="font-semibold mb-2">Create Plot</h3>
+          </div>
+          
+          <div className="space-y-1">
+            <label htmlFor="create-name" className="text-sm font-medium">
+              Name
+            </label>
+            <Input
+              id="create-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Name"
+              disabled={isPending}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="create-description" className="text-sm font-medium">
+              Description
+            </label>
+            <Input
+              id="create-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Description"
+              disabled={isPending}
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Creating..." : "Create"}
+            </Button>
+          </div>
+        </form>
+      </PopoverContent>
+    </Popover>
   );
 }

@@ -23,7 +23,10 @@ const arrayPlotResponseSchema = z.object({ data: z.array(plotSchema) });
 
 export type Plot = z.infer<typeof plotSchema>;
 
-export async function createPlot(): Promise<Plot> {
+export async function createPlot(plotData: {
+  name: string;
+  description: string;
+}): Promise<Plot> {
   const context = store.getSnapshot().context;
   if (
     isInitialStore(context) ||
@@ -47,8 +50,8 @@ export async function createPlot(): Promise<Plot> {
     {
       body: JSON.stringify({
         plot: {
-          name: `Test Plot ${Date.now()}`,
-          description: `Test Description ${Date.now()}`,
+          name: plotData.name,
+          description: plotData.description,
           // todo(josh): we should add some sort of notice to the user that only their first polygon is going to be used
           polygon: completePolygonRing(polygons[0]),
         },
@@ -62,10 +65,9 @@ export async function createPlot(): Promise<Plot> {
   );
 
   const json = await response.json();
-  
+
   return plotResponseSchema.parse(json).data;
 }
-
 
 export async function getUserPlots(): Promise<Plot[]> {
   const context = store.getSnapshot().context;
@@ -86,7 +88,6 @@ export async function getUserPlots(): Promise<Plot[]> {
   return arrayPlotResponseSchema.parse(json).data;
 }
 
-
 export async function deletePlot(plotId: number): Promise<void> {
   const context = store.getSnapshot().context;
   if (isInitialStore(context)) {
@@ -101,7 +102,10 @@ export async function deletePlot(plotId: number): Promise<void> {
   return;
 }
 
-export async function updatePlot(plotId: number, plot: Partial<Pick<Plot, 'name' | 'description'>>): Promise<Plot> {
+export async function updatePlot(
+  plotId: number,
+  plot: Partial<Pick<Plot, "name" | "description">>,
+): Promise<Plot> {
   const context = store.getSnapshot().context;
   if (isInitialStore(context)) {
     throw new Error("Server context is not initialized");
