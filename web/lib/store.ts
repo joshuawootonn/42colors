@@ -763,6 +763,16 @@ export const store = createStore({
       };
     },
 
+
+    clearClaim: (context, _, enqueue) => {
+      if (isInitialStore(context)) return;
+      enqueue.effect(() => store.trigger.redrawTelegraph());
+      return {
+        ...context,
+        activeAction: null,
+      };
+    },
+
     completeClaim: (context, _, enqueue) => {
       if (isInitialStore(context)) return;
 

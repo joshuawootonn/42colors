@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { IconButton } from "@/components/ui/icon-button";
+import { X } from "@/components/icons/x";
 
 export function ClaimerPanel() {
   const activeAction = useSelector(
@@ -32,7 +33,9 @@ export function ClaimerPanel() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="link" className="">
-            {selectedPlotId ? (
+            {activeAction?.type === "claimer-active" ? (
+              "New Claim"
+            ) : selectedPlotId ? (
               plots?.find((plot) => plot.id === selectedPlotId)?.name
             ) : (
               <>
@@ -72,10 +75,20 @@ export function ClaimerPanel() {
         </DropdownMenuContent>
       </DropdownMenu>
       {activeAction?.type === "claimer-active" ? (
-        <ClaimButton />
+        <>
+          <ClaimButton />
+          <IconButton
+            className="text-black"
+            onClick={() => {
+              store.trigger.clearClaim();
+            }}
+          >
+            <X />
+          </IconButton>
+        </>
       ) : (
         <>
-          <IconButton className="text-black">
+          {/* <IconButton className="text-black">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="32"
@@ -113,7 +126,7 @@ export function ClaimerPanel() {
               <line x1="10" x2="10" y1="11" y2="17" />
               <line x1="14" x2="14" y1="11" y2="17" />
             </svg>
-          </IconButton>
+          </IconButton> */}
         </>
       )}
     </div>

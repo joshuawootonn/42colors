@@ -5,6 +5,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 
 import { cn } from "@/lib/utils";
 import { createContext, useContext } from "react";
+import { X } from "../icons/x";
 
 const Dialog = DialogPrimitive.Root;
 
@@ -51,20 +52,7 @@ const DialogContent = React.forwardRef<
         <div className="w-full overflow-y-auto p-4">{children}</div>
         <DialogPrimitive.Close className="z-10 absolute right-1 top-1 translate-x-1/2 -translate-y-1/2 bg-white border-1.5 border-primary disabled:pointer-events-none svg-outline">
           <div className="relative">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="32"
-              height="32"
-              viewBox="-4 -4 32 32"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
+            <X />
           </div>
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
