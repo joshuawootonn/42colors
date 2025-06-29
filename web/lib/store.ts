@@ -65,8 +65,9 @@ import {
 import { PaletteSettings } from "./tools/palette";
 import authService from "./auth";
 import { ClaimerTool, completeRectangleClaimerAction } from "./tools/claimer";
-import { getCompositePolygons, rectToPolygonSchema } from "./geometry/polygon";
-import { getUserPlots } from "./tools/claimer.rest";
+import { getCenterPoint, getCompositePolygons, rectToPolygonSchema } from "./geometry/polygon";
+import { getUserPlots, Plot } from "./tools/claimer.rest";
+import { centerCameraOnPoint } from "./camera-utils";
 
 export type PointerState = "default" | "pressed";
 
@@ -628,13 +629,18 @@ export const store = createStore({
       );
     },
 
-    moveCamera: (context, event: { camera: Partial<Camera> }, enqueue) => {
+    moveCamera: (context, event: { camera: Partial<Camera>, options?: { deselectPlot: boolean }  }, enqueue) => {
       if (isInitialStore(context)) return;
+
+      const options = { deselectPlot: true, ...event.options };
 
       enqueue.effect(() => {
         store.trigger.resizeRealtimeAndTelegraphCanvases();
         store.trigger.redrawRealtimeCanvas();
         store.trigger.redrawTelegraph();
+        if (options.deselectPlot) {
+          store.trigger.deselectPlot();
+        }
       });
 
       return { ...context, camera: { ...context.camera, ...event.camera } };
@@ -784,6 +790,32 @@ export const store = createStore({
           ),
         ),
         activeAction: null,
+      };
+    },
+
+    selectPlot: (context, { plotId }: { plotId: number }, enqueue) => {
+      if (isInitialStore(context)) return;
+
+      const plots = context.queryClient.getQueryData(["user", "plots"]) as Plot[];
+
+      enqueue.effect(() => {
+        store.trigger.moveCamera({
+          camera: centerCameraOnPoint(getCenterPoint(plots.find((plot) => plot.id === plotId)!.polygon), store.getSnapshot().context.camera),
+          options: { deselectPlot: false },
+        });
+      });
+
+      return {
+        ...context,
+        toolSettings: { ...context.toolSettings, claimer: { selectedPlotId: plotId } },
+      };
+    },
+
+    deselectPlot: (context) => {
+      if (isInitialStore(context)) return;
+      return {
+        ...context,
+        toolSettings: { ...context.toolSettings, claimer: { selectedPlotId: undefined } },
       };
     },
 
