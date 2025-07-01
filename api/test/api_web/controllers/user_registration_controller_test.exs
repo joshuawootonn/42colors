@@ -28,7 +28,7 @@ defmodule ApiWeb.UserRegistrationControllerTest do
       response = json_response(conn, 422)
       assert response["status"] == "error"
       assert response["message"] == "Registration failed"
-      assert response["errors"]["email"] == ["must have the @ sign and no spaces"]
+      assert response["errors"]["email"] == ["Email must have the @ sign and no spaces"]
     end
 
     test "renders errors for short password", %{conn: conn} do
@@ -40,7 +40,12 @@ defmodule ApiWeb.UserRegistrationControllerTest do
       response = json_response(conn, 422)
       assert response["status"] == "error"
       assert response["message"] == "Registration failed"
-      assert response["errors"]["password"] == ["should be at least 12 character(s)"]
+
+      # Short password will have multiple validation errors
+      password_errors = response["errors"]["password"]
+      assert "Password must have at least 12 characters" in password_errors
+      assert "Password must contain at least one digit" in password_errors
+      assert "Password must contain at least one special character" in password_errors
     end
 
     test "renders errors for missing email", %{conn: conn} do
@@ -52,7 +57,7 @@ defmodule ApiWeb.UserRegistrationControllerTest do
       response = json_response(conn, 422)
       assert response["status"] == "error"
       assert response["message"] == "Registration failed"
-      assert response["errors"]["email"] == ["can't be blank"]
+      assert response["errors"]["email"] == ["Email is required"]
     end
 
     test "renders errors for missing password", %{conn: conn} do
@@ -64,7 +69,7 @@ defmodule ApiWeb.UserRegistrationControllerTest do
       response = json_response(conn, 422)
       assert response["status"] == "error"
       assert response["message"] == "Registration failed"
-      assert response["errors"]["password"] == ["can't be blank"]
+      assert response["errors"]["password"] == ["Password is required"]
     end
 
     test "renders multiple errors for multiple invalid fields", %{conn: conn} do
@@ -76,8 +81,13 @@ defmodule ApiWeb.UserRegistrationControllerTest do
       response = json_response(conn, 422)
       assert response["status"] == "error"
       assert response["message"] == "Registration failed"
-      assert response["errors"]["email"] == ["must have the @ sign and no spaces"]
-      assert response["errors"]["password"] == ["should be at least 12 character(s)"]
+      assert response["errors"]["email"] == ["Email must have the @ sign and no spaces"]
+
+      # Short password will have multiple validation errors
+      password_errors = response["errors"]["password"]
+      assert "Password must have at least 12 characters" in password_errors
+      assert "Password must contain at least one digit" in password_errors
+      assert "Password must contain at least one special character" in password_errors
     end
 
     test "renders error for duplicate email", %{conn: conn} do
@@ -91,7 +101,7 @@ defmodule ApiWeb.UserRegistrationControllerTest do
       response = json_response(conn, 422)
       assert response["status"] == "error"
       assert response["message"] == "Registration failed"
-      assert response["errors"]["email"] == ["has already been taken"]
+      assert response["errors"]["email"] == ["Email is already taken"]
     end
 
     test "renders error for email that is too long", %{conn: conn} do
@@ -105,7 +115,62 @@ defmodule ApiWeb.UserRegistrationControllerTest do
       response = json_response(conn, 422)
       assert response["status"] == "error"
       assert response["message"] == "Registration failed"
-      assert response["errors"]["email"] == ["should be at most 160 character(s)"]
+      assert response["errors"]["email"] == ["Email must be less than 160 characters"]
+    end
+
+    test "renders error for password without digit", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/users/register", %{
+          "user" => %{"email" => unique_user_email(), "password" => "longpassword!"}
+        })
+
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Registration failed"
+      assert response["errors"]["password"] == ["Password must contain at least one digit"]
+    end
+
+    test "renders error for password without special character", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/users/register", %{
+          "user" => %{"email" => unique_user_email(), "password" => "longpassword1"}
+        })
+
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Registration failed"
+      assert response["errors"]["password"] == ["Password must contain at least one special character"]
+    end
+
+    test "renders error for password that is too long", %{conn: conn} do
+      long_password = String.duplicate("a", 75) <> "1!"
+
+      conn =
+        post(conn, ~p"/api/users/register", %{
+          "user" => %{"email" => unique_user_email(), "password" => long_password}
+        })
+
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Registration failed"
+      assert response["errors"]["password"] == ["Password must be less than 72 characters"]
+    end
+
+    test "renders multiple password errors", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/users/register", %{
+          "user" => %{"email" => unique_user_email(), "password" => "short"}
+        })
+
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Registration failed"
+
+      # Should have multiple password errors
+      password_errors = response["errors"]["password"]
+      assert "Password must have at least 12 characters" in password_errors
+      assert "Password must contain at least one digit" in password_errors
+      assert "Password must contain at least one special character" in password_errors
     end
   end
 end

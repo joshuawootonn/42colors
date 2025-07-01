@@ -11,7 +11,12 @@ import { Button } from "@/components/ui/button";
 const signupSchema = z
   .object({
     email: z.string().email("Invalid email address"),
-    password: z.string().min(12, "Password must be at least 12 characters"),
+    password: z
+      .string()
+      .min(12, "Password must be at least 12 characters")
+      .max(72, "Password must be less than 72 characters")
+      .regex(/[0-9]/, "Password must contain at least one digit")
+      .regex(/[!?@#$%^&*_]/, "Password must contain at least one special character"),
     password_confirmation: z.string(),
   })
   .refine((data) => data.password === data.password_confirmation, {
