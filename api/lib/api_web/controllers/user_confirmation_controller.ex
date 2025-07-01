@@ -34,7 +34,10 @@ defmodule ApiWeb.UserConfirmationController do
             |> put_status(:unauthorized)
             |> json(%{
               status: "error",
-              message: "User confirmation link is invalid or it has expired."
+              message: "User confirmation link is invalid or it has expired.",
+              errors: %{
+                token: ["User confirmation link is invalid or it has expired."]
+              }
             })
         end
     end

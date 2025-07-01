@@ -42,6 +42,20 @@ defmodule Api.Accounts.User do
     |> validate_password(opts)
   end
 
+  @doc """
+  A user changeset for login validation.
+
+  This validates the basic requirements for login without the complex
+  password rules or uniqueness checks that are needed for registration.
+  """
+  def login_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:email, :password])
+    |> validate_required([:email], message: "Email is required")
+    |> validate_required([:password], message: "Password is required")
+    |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "Invalid email format")
+  end
+
   defp validate_email(changeset, opts) do
     changeset
     |> validate_required([:email], message: "Email is required")
@@ -98,7 +112,7 @@ defmodule Api.Accounts.User do
     |> validate_email(opts)
     |> case do
       %{changes: %{email: _}} = changeset -> changeset
-      %{} = changeset -> add_error(changeset, :email, "did not change")
+      %{} = changeset -> add_error(changeset, :email, "Email did not change")
     end
   end
 
@@ -117,7 +131,7 @@ defmodule Api.Accounts.User do
   def password_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:password])
-    |> validate_confirmation(:password, message: "does not match password")
+    |> validate_confirmation(:password, message: "Passwords do not match")
     |> validate_password(opts)
   end
 
@@ -154,7 +168,7 @@ defmodule Api.Accounts.User do
     if valid_password?(changeset.data, password) do
       changeset
     else
-      add_error(changeset, :current_password, "is not valid")
+      add_error(changeset, :current_password, "Current password is not valid")
     end
   end
 end

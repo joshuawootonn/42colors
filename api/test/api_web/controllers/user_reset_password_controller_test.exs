@@ -51,18 +51,20 @@ defmodule ApiWeb.UserResetPasswordControllerTest do
     end
 
     test "resets password once", %{conn: conn, user: user, token: token} do
+      new_password = "new valid password1!"
+
       conn =
         put(conn, ~p"/api/users/reset_password/#{token}", %{
           "user" => %{
-            "password" => "new valid password",
-            "password_confirmation" => "new valid password"
+            "password" => new_password,
+            "password_confirmation" => new_password
           }
         })
 
       response = json_response(conn, 200)
       assert response["message"] == "Password reset successfully."
       refute get_session(conn, :user_token)
-      assert Accounts.get_user_by_email_and_password(user.email, "new valid password")
+      assert Accounts.get_user_by_email_and_password(user.email, new_password)
     end
 
     test "does not reset password on invalid data", %{conn: conn, token: token} do
@@ -74,7 +76,30 @@ defmodule ApiWeb.UserResetPasswordControllerTest do
           }
         })
 
-      json_response(conn, 422)
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Password reset failed"
+
+      # Should have structured validation errors
+      password_errors = response["errors"]["password"]
+      assert "Password must have at least 12 characters" in password_errors
+      assert "Password must contain at least one digit" in password_errors
+      assert "Password must contain at least one special character" in password_errors
+    end
+
+    test "renders error for password confirmation mismatch", %{conn: conn, token: token} do
+      conn =
+        put(conn, ~p"/api/users/reset_password/#{token}", %{
+          "user" => %{
+            "password" => "new valid password1!",
+            "password_confirmation" => "different password1!"
+          }
+        })
+
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Password reset failed"
+      assert response["errors"]["password_confirmation"] == ["Passwords do not match"]
     end
 
     test "does not reset password with invalid token", %{conn: conn} do

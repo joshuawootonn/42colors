@@ -19,6 +19,10 @@ defmodule ApiWeb.UserSessionControllerTest do
         })
 
       assert get_session(conn, :user_token)
+      response = json_response(conn, 200)
+      assert response["status"] == "success"
+      assert response["message"] == "Welcome back!"
+      assert response["user"]["email"] == user.email
 
       conn = get(conn, ~p"/api/users/me")
       response = json_response(conn, 200)
@@ -45,7 +49,94 @@ defmodule ApiWeb.UserSessionControllerTest do
         })
 
       response = json_response(conn, 401)
+      assert response["status"] == "error"
       assert response["message"] == "Invalid email or password"
+    end
+
+    test "renders errors for missing email", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/users/log_in", %{
+          "user" => %{"password" => "somepassword"}
+        })
+
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Login failed"
+      assert response["errors"]["email"] == ["Email is required"]
+    end
+
+    test "renders errors for empty email", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/users/log_in", %{
+          "user" => %{"email" => "", "password" => "somepassword"}
+        })
+
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Login failed"
+      assert response["errors"]["email"] == ["Email is required"]
+    end
+
+    test "renders errors for invalid email format", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/users/log_in", %{
+          "user" => %{"email" => "invalid email", "password" => "somepassword"}
+        })
+
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Login failed"
+      assert response["errors"]["email"] == ["Invalid email format"]
+    end
+
+    test "renders errors for missing password", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/users/log_in", %{
+          "user" => %{"email" => "test@example.com"}
+        })
+
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Login failed"
+      assert response["errors"]["password"] == ["Password is required"]
+    end
+
+    test "renders errors for empty password", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/users/log_in", %{
+          "user" => %{"email" => "test@example.com", "password" => ""}
+        })
+
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Login failed"
+      assert response["errors"]["password"] == ["Password is required"]
+    end
+
+    test "renders multiple errors for multiple missing fields", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/users/log_in", %{
+          "user" => %{}
+        })
+
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Login failed"
+      assert response["errors"]["email"] == ["Email is required"]
+      assert response["errors"]["password"] == ["Password is required"]
+    end
+
+    test "renders multiple errors for invalid email and missing password", %{conn: conn} do
+      conn =
+        post(conn, ~p"/api/users/log_in", %{
+          "user" => %{"email" => "invalid email"}
+        })
+
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Login failed"
+      assert response["errors"]["email"] == ["Invalid email format"]
+      assert response["errors"]["password"] == ["Password is required"]
     end
   end
 
