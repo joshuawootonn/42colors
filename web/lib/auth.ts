@@ -1,3 +1,4 @@
+import { z } from "zod";
 import analytics from "./analytics";
 import { store } from "./store";
 
@@ -54,6 +55,38 @@ export interface ConfirmEmailResponse {
   };
 }
 
+// Error response schemas
+const errorResponseSchema = z.object({
+  status: z.literal("error"),
+  message: z.string(),
+  errors: z.record(z.array(z.string())),
+});
+
+const successResponseSchema = z.object({
+  status: z.literal("success"),
+  message: z.string(),
+  user: z.object({
+    email: z.string(),
+  }),
+});
+
+const registerResponseSchema = z.union([
+  successResponseSchema,
+  errorResponseSchema,
+]);
+
+// Types are inferred directly in the code where needed
+
+export class RegistrationError extends Error {
+  public readonly errors: Record<string, string[]>;
+
+  constructor(message: string, errors: Record<string, string[]>) {
+    super(message);
+    this.name = "RegistrationError";
+    this.errors = errors;
+  }
+}
+
 const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await fetch(`${API_URL}/api/users/log_in`, {
@@ -81,7 +114,7 @@ const authService = {
     return result;
   },
 
-  async register(credentials: RegisterCredentials): Promise<AuthResponse> {
+  async register(credentials: RegisterCredentials): Promise<{ status: string; message: string; user: { email: string } }> {
     const response = await fetch(`${API_URL}/api/users/register`, {
       method: "POST",
       headers: {
@@ -91,18 +124,32 @@ const authService = {
       body: JSON.stringify({ user: credentials }),
     });
 
-    if (!response.ok) {
-      throw new Error("Registration failed");
+    const rawResult = await response.json();
+    
+    // Parse the response using our schema
+    const parseResult = registerResponseSchema.safeParse(rawResult);
+    
+    if (!parseResult.success) {
+      throw new Error("Invalid response format from server");
     }
+    
+    const result = parseResult.data;
 
-    const result = await response.json();
+    if (result.status === "error") {
+      throw new RegistrationError(result.message, result.errors);
+    }
 
     analytics.trackEvent("user_registered", {
       email: credentials.email,
     });
 
     store.trigger.fetchUser();
-    return result;
+    
+    return {
+      user: result.user,
+      status: result.status,
+      message: result.message,
+    };
   },
 
   async forgotPassword(
