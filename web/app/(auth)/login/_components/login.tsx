@@ -1,71 +1,99 @@
 "use client";
-import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import authService, { LoginCredentials } from "@/lib/auth";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import authService, { AuthError } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/components/link";
 
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+  remember_me: z.boolean().optional(),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+
 export function Login() {
-  const [error, setError] = useState<string>("");
   const searchParams = useSearchParams();
-  const [loading, setLoading] = useState(false);
-  const [credentials, setCredentials] = useState<LoginCredentials>({
-    email: "",
-    password: "",
-    remember_me: false,
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+    clearErrors,
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      remember_me: false,
+    },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+  const onSubmit = async (data: LoginFormData) => {
+    clearErrors();
 
     try {
-      await authService.login(credentials);
+      await authService.login(data);
       location.assign(`/?${searchParams.toString()}`);
-    } catch (_) {
-      setError("Invalid email or password");
-    } finally {
-      setLoading(false);
+    } catch (error: unknown) {
+      if (error instanceof AuthError) {
+        Object.entries(error.errors).forEach(([field, messages]) => {
+          setError(field as keyof LoginFormData, {
+            type: "server",
+            message: messages[0],
+          });
+        });
+      } else {
+        setError("root", {
+          type: "server",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Invalid email or password",
+        });
+      }
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      {error && <div>{error}</div>}
+    <form onSubmit={handleSubmit(onSubmit)}>
+      {errors.root && (
+        <div className="text-red-600 text-sm mb-4">{errors.root.message}</div>
+      )}
 
-      <div className="flex flex-col space-y-1 ">
+      <div className="flex flex-col space-y-1">
         <label htmlFor="email">Email address</label>
         <Input
           id="email"
-          name="email"
           type="email"
-          required
-          value={credentials.email}
-          onChange={(e) =>
-            setCredentials({ ...credentials, email: e.target.value })
-          }
+          {...register("email")}
+          className={errors.email ? "border-red-500" : ""}
         />
+        {errors.email && (
+          <span className="text-red-600 text-sm">{errors.email.message}</span>
+        )}
       </div>
 
       <div className="flex flex-col space-y-1">
         <label htmlFor="password">Password</label>
         <Input
           id="password"
-          name="password"
           type="password"
-          required
-          value={credentials.password}
-          onChange={(e) =>
-            setCredentials({ ...credentials, password: e.target.value })
-          }
+          {...register("password")}
+          className={errors.password ? "border-red-500" : ""}
         />
+        {errors.password && (
+          <span className="text-red-600 text-sm">
+            {errors.password.message}
+          </span>
+        )}
       </div>
 
       <div className="flex items-center space-x-4 pt-4">
-        <Button className="flex-grow" type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Log in"}
+        <Button className="flex-grow" type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Logging in..." : "Log in"}
         </Button>
         <Link
           href={{

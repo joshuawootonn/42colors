@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import authService, { RegistrationError } from "@/lib/auth";
+import authService, { AuthError } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -45,8 +45,7 @@ export function Signup() {
       await authService.register(data);
       router.back();
     } catch (error: unknown) {
-      // Handle backend validation errors
-      if (error instanceof RegistrationError) {
+      if (error instanceof AuthError) {
         Object.entries(error.errors).forEach(([field, messages]) => {
           setError(field as keyof SignupFormData, {
             type: "server",

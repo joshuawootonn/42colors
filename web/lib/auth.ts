@@ -59,7 +59,7 @@ export interface ConfirmEmailResponse {
 const errorResponseSchema = z.object({
   status: z.literal("error"),
   message: z.string(),
-  errors: z.record(z.array(z.string())),
+  errors: z.record(z.array(z.string())).optional(),
 });
 
 const successResponseSchema = z.object({
@@ -75,20 +75,36 @@ const registerResponseSchema = z.union([
   errorResponseSchema,
 ]);
 
-// Types are inferred directly in the code where needed
+const loginResponseSchema = z.union([
+  successResponseSchema,
+  errorResponseSchema,
+]);
 
-export class RegistrationError extends Error {
+const forgotPasswordResponseSchema = z.union([
+  z.object({
+    status: z.literal("success"),
+    message: z.string(),
+  }),
+  errorResponseSchema,
+]);
+
+const updatePasswordResponseSchema = z.union([
+  successResponseSchema,
+  errorResponseSchema,
+]);
+
+export class AuthError extends Error {
   public readonly errors: Record<string, string[]>;
 
-  constructor(message: string, errors: Record<string, string[]>) {
+  constructor(message: string, errors?: Record<string, string[]>) {
     super(message);
-    this.name = "RegistrationError";
-    this.errors = errors;
+    this.name = "AuthError";
+    this.errors = errors ?? {};
   }
 }
 
 const authService = {
-  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+  async login(credentials: LoginCredentials): Promise<{ status: string; message: string; user: { email: string } }> {
     const response = await fetch(`${API_URL}/api/users/log_in`, {
       method: "POST",
       headers: {
@@ -98,23 +114,37 @@ const authService = {
       body: JSON.stringify({ user: credentials }),
     });
 
-    if (!response.ok) {
-      throw new Error("Login failed");
+    const rawResult = await response.json();
+
+    const parseResult = loginResponseSchema.safeParse(rawResult);
+
+    if (!parseResult.success) {
+      throw new Error("Invalid response format from server");
     }
 
-    const result = await response.json();
+    const result = parseResult.data;
 
-    
+    if (result.status === "error") {
+      throw new AuthError(result.message, result.errors);
+    }
+
     analytics.trackEvent("user_logged_in", {
       email: credentials.email,
       remember_me: credentials.remember_me,
     });
 
     store.trigger.fetchUser();
-    return result;
+
+    return {
+      user: result.user, 
+      status: result.status,
+      message: result.message,
+    };
   },
 
-  async register(credentials: RegisterCredentials): Promise<{ status: string; message: string; user: { email: string } }> {
+  async register(
+    credentials: RegisterCredentials,
+  ): Promise<{ status: string; message: string; user: { email: string } }> {
     const response = await fetch(`${API_URL}/api/users/register`, {
       method: "POST",
       headers: {
@@ -125,18 +155,18 @@ const authService = {
     });
 
     const rawResult = await response.json();
-    
+
     // Parse the response using our schema
     const parseResult = registerResponseSchema.safeParse(rawResult);
-    
+
     if (!parseResult.success) {
       throw new Error("Invalid response format from server");
     }
-    
+
     const result = parseResult.data;
 
     if (result.status === "error") {
-      throw new RegistrationError(result.message, result.errors);
+      throw new AuthError(result.message, result.errors);
     }
 
     analytics.trackEvent("user_registered", {
@@ -144,7 +174,7 @@ const authService = {
     });
 
     store.trigger.fetchUser();
-    
+
     return {
       user: result.user,
       status: result.status,
@@ -154,7 +184,7 @@ const authService = {
 
   async forgotPassword(
     credentials: ForgotPasswordCredentials,
-  ): Promise<AuthResponse> {
+  ): Promise<{ status: string; message: string }> {
     const response = await fetch(`${API_URL}/api/users/reset_password`, {
       method: "POST",
       body: JSON.stringify({ user: { email: credentials.email } }),
@@ -163,15 +193,28 @@ const authService = {
       },
     });
 
-    if (!response.ok) {
-      throw new Error("Failed to send reset password email");
+    const rawResult = await response.json();
+
+    const parseResult = forgotPasswordResponseSchema.safeParse(rawResult);
+
+    if (!parseResult.success) {
+      throw new Error("Invalid response format from server");
+    }
+
+    const result = parseResult.data;
+
+    if (result.status === "error") {
+      throw new AuthError(result.message, result.errors);
     }
 
     analytics.trackEvent("user_forgot_password", {
       email: credentials.email,
     });
 
-    return response.json();
+    return {
+      status: result.status,
+      message: result.message,
+    };
   },
 
   async logout(): Promise<void> {
@@ -192,7 +235,7 @@ const authService = {
   async updatePassword(
     token: string,
     credentials: UpdatePasswordCredentials,
-  ): Promise<AuthResponse> {
+  ): Promise<{ status: string; message: string; user: { email: string } }> {
     const response = await fetch(
       `${API_URL}/api/users/reset_password/${token}`,
       {
@@ -204,13 +247,27 @@ const authService = {
       },
     );
 
-    analytics.trackEvent("user_updated_password");
+    const rawResult = await response.json();
 
-    if (!response.ok) {
-      throw new Error("Failed to update password");
+    const parseResult = updatePasswordResponseSchema.safeParse(rawResult);
+
+    if (!parseResult.success) {
+      throw new Error("Invalid response format from server");
     }
 
-    return response.json();
+    const result = parseResult.data;
+
+    if (result.status === "error") {
+      throw new AuthError(result.message, result.errors);
+    }
+
+    analytics.trackEvent("user_updated_password");
+
+    return {
+      status: result.status,
+      message: result.message,
+      user: result.user,
+    };
   },
 
   async getCurrentUser(origin: string): Promise<UserResponse | null> {
