@@ -23,14 +23,22 @@ defmodule ApiWeb.UserRegistrationController do
           }
         })
 
-      {:error, %Ecto.Changeset{} = _} ->
+      {:error, %Ecto.Changeset{} = changeset} ->
         conn
         |> put_status(:unprocessable_entity)
         |> json(%{
           status: "error",
           message: "Registration failed",
-          errors: []
+          errors: format_changeset_errors(changeset)
         })
     end
+  end
+
+  defp format_changeset_errors(changeset) do
+    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
+      Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
+        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+      end)
+    end)
   end
 end
