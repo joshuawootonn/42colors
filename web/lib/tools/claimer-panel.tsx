@@ -8,6 +8,7 @@ import {
   getUserPlots,
   updatePlot,
   type Plot,
+  PlotError,
 } from "./claimer.rest";
 import {
   DropdownMenu,
@@ -25,6 +26,34 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const plotCreateSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .max(255, "Name must be less than 255 characters"),
+  description: z
+    .string()
+    .max(1000, "Description must be less than 1000 characters")
+    .nullable(),
+});
+
+const plotUpdateSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .max(255, "Name must be less than 255 characters"),
+  description: z
+    .string()
+    .max(1000, "Description must be less than 1000 characters")
+    .nullable(),
+});
+
+type PlotCreateForm = z.infer<typeof plotCreateSchema>;
+type PlotUpdateForm = z.infer<typeof plotUpdateSchema>;
 
 export function ClaimerPanel() {
   const activeAction = useSelector(
@@ -170,10 +199,22 @@ export function ClaimerPanel() {
 
 function EditPlotForm({ plot }: { plot: Plot }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [name, setName] = useState(plot.name);
-  const [description, setDescription] = useState(plot.description);
 
-  const { mutate: updatePlotMutation, isPending } = useMutation({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+    reset,
+  } = useForm<PlotUpdateForm>({
+    resolver: zodResolver(plotUpdateSchema),
+    defaultValues: {
+      name: plot.name,
+      description: plot.description,
+    },
+  });
+
+  const { mutate: updatePlotMutation } = useMutation({
     mutationFn: ({
       plotId,
       plot,
@@ -188,25 +229,34 @@ function EditPlotForm({ plot }: { plot: Plot }) {
       store.trigger.redrawRealtimeCanvas();
       setIsOpen(false);
     },
+    onError: (error) => {
+      if (error instanceof PlotError) {
+        Object.entries(error.errors).forEach(([field, messages]) => {
+          if (field === "name" || field === "description") {
+            setError(field, { type: "server", message: messages[0] });
+          }
+        });
+      } else {
+        // Handle general errors
+        setError("root", { type: "server", message: error.message });
+      }
+    },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = (data: PlotUpdateForm) => {
     updatePlotMutation({
       plotId: plot.id,
-      plot: {
-        name,
-        description,
-      },
+      plot: data,
     });
   };
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (open) {
-      // Reset form to current plot values when opening
-      setName(plot.name);
-      setDescription(plot.description);
+      reset({
+        name: plot.name,
+        description: plot.description,
+      });
     }
   };
 
@@ -246,35 +296,49 @@ function EditPlotForm({ plot }: { plot: Plot }) {
       </Tooltip.Root>
 
       <PopoverContent className="w-80 px-3 py-2 bg-background border-1.5 border-primary">
-        <form onSubmit={handleSubmit} className="space-y-2">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
           <div>
             <h3 className="font-semibold mb-2">Edit Plot</h3>
           </div>
-          
+
+          {errors.root && (
+            <div className="text-red-600 text-sm mb-2">
+              {errors.root.message}
+            </div>
+          )}
+
           <div className="space-y-1">
-            <label htmlFor="name" className="text-sm font-medium">
+            <label htmlFor="edit-name" className="text-sm font-medium">
               Name
             </label>
             <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              id="edit-name"
+              {...register("name")}
               placeholder="Name"
-              disabled={isPending}
+              disabled={isSubmitting}
+              className={errors.name ? "border-red-500" : ""}
             />
+            {errors.name && (
+              <div className="text-red-600 text-sm">{errors.name.message}</div>
+            )}
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="description" className="text-sm font-medium">
+            <label htmlFor="edit-description" className="text-sm font-medium">
               Description
             </label>
             <Input
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              id="edit-description"
+              {...register("description")}
               placeholder="Description"
-              disabled={isPending}
+              disabled={isSubmitting}
+              className={errors.description ? "border-red-500" : ""}
             />
+            {errors.description && (
+              <div className="text-red-600 text-sm">
+                {errors.description.message}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-2">
@@ -282,12 +346,12 @@ function EditPlotForm({ plot }: { plot: Plot }) {
               type="button"
               variant="outline"
               onClick={() => setIsOpen(false)}
-              disabled={isPending}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : "Save"}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save"}
             </Button>
           </div>
         </form>
@@ -306,10 +370,22 @@ function ClaimButton() {
 
 function CreatePlotForm() {
   const [isOpen, setIsOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
 
-  const { mutate: createPlotMutation, isPending } = useMutation({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+    reset,
+  } = useForm<PlotCreateForm>({
+    resolver: zodResolver(plotCreateSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+    },
+  });
+
+  const { mutate: createPlotMutation } = useMutation({
     mutationFn: createPlot,
     onSuccess: (plot) => {
       store.getSnapshot().context.queryClient?.invalidateQueries({
@@ -320,16 +396,25 @@ function CreatePlotForm() {
       store.trigger.redrawRealtimeCanvas();
       setIsOpen(false);
       // Reset form
-      setName("");
-      setDescription("");
+      reset();
+    },
+    onError: (error) => {
+      if (error instanceof PlotError) {
+        Object.entries(error.errors).forEach(([field, messages]) => {
+          if (field === "name" || field === "description") {
+            setError(field, { type: "server", message: messages[0] });
+          }
+        });
+      } else {
+        setError("root", { type: "server", message: error.message });
+      }
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = (data: PlotCreateForm) => {
     createPlotMutation({
-      name: name.trim() || `Plot ${Date.now()}`,
-      description: description.trim() || `Description ${Date.now()}`,
+      name: data.name.trim(),
+      description: data.description?.trim(),
     });
   };
 
@@ -337,8 +422,7 @@ function CreatePlotForm() {
     setIsOpen(open);
     if (!open) {
       // Reset form when closing
-      setName("");
-      setDescription("");
+      reset();
     }
   };
 
@@ -349,22 +433,31 @@ function CreatePlotForm() {
       </PopoverTrigger>
 
       <PopoverContent className="w-80 px-3 py-2 bg-background border-1.5 border-primary">
-        <form onSubmit={handleSubmit} className="space-y-2">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
           <div>
             <h3 className="font-semibold mb-2">Create Plot</h3>
           </div>
-          
+
+          {errors.root && (
+            <div className="text-red-600 text-sm mb-2">
+              {errors.root.message}
+            </div>
+          )}
+
           <div className="space-y-1">
             <label htmlFor="create-name" className="text-sm font-medium">
               Name
             </label>
             <Input
               id="create-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              {...register("name")}
               placeholder="Name"
-              disabled={isPending}
+              disabled={isSubmitting}
+              className={errors.name ? "border-red-500" : ""}
             />
+            {errors.name && (
+              <div className="text-red-600 text-sm">{errors.name.message}</div>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -373,11 +466,16 @@ function CreatePlotForm() {
             </label>
             <Input
               id="create-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              {...register("description")}
               placeholder="Description"
-              disabled={isPending}
+              disabled={isSubmitting}
+              className={errors.description ? "border-red-500" : ""}
             />
+            {errors.description && (
+              <div className="text-red-600 text-sm">
+                {errors.description.message}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-2">
@@ -385,12 +483,12 @@ function CreatePlotForm() {
               type="button"
               variant="outline"
               onClick={() => setIsOpen(false)}
-              disabled={isPending}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Creating..." : "Create"}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Creating..." : "Create"}
             </Button>
           </div>
         </form>

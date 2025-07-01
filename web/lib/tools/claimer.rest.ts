@@ -12,20 +12,50 @@ import { completeRectangleClaimerAction } from "./claimer";
 const plotSchema = z.object({
   id: z.number(),
   name: z.string(),
-  description: z.string(),
+  description: z.string().nullable(),
   polygon: polygonSchema,
   insertedAt: z.string(),
   updatedAt: z.string(),
 });
 
-const plotResponseSchema = z.object({ data: plotSchema });
 const arrayPlotResponseSchema = z.object({ data: z.array(plotSchema) });
+
+const errorResponseSchema = z.object({
+  status: z.literal("error"),
+  message: z.string(),
+  errors: z.record(z.array(z.string())),
+});
+
+const successPlotResponseSchema = z.object({
+  status: z.literal("success").optional(),
+  data: plotSchema,
+});
+
+const plotCreateResponseSchema = z.union([
+  successPlotResponseSchema,
+  errorResponseSchema,
+]);
+
+const plotUpdateResponseSchema = z.union([
+  successPlotResponseSchema,
+  errorResponseSchema,
+]);
+
+export class PlotError extends Error {
+  constructor(
+    message: string,
+    public errors: Record<string, string[]>,
+  ) {
+    super(message);
+    this.name = "PlotError";
+  }
+}
 
 export type Plot = z.infer<typeof plotSchema>;
 
 export async function createPlot(plotData: {
   name: string;
-  description: string;
+  description?: string;
 }): Promise<Plot> {
   const context = store.getSnapshot().context;
   if (
@@ -65,8 +95,13 @@ export async function createPlot(plotData: {
   );
 
   const json = await response.json();
+  const parsedResponse = plotCreateResponseSchema.parse(json);
 
-  return plotResponseSchema.parse(json).data;
+  if ("status" in parsedResponse && parsedResponse.status === "error") {
+    throw new PlotError(parsedResponse.message, parsedResponse.errors);
+  }
+
+  return parsedResponse.data;
 }
 
 export async function getUserPlots(): Promise<Plot[]> {
@@ -126,6 +161,11 @@ export async function updatePlot(
   );
 
   const json = await response.json();
+  const parsedResponse = plotUpdateResponseSchema.parse(json);
 
-  return plotResponseSchema.parse(json).data;
+  if ("status" in parsedResponse && parsedResponse.status === "error") {
+    throw new PlotError(parsedResponse.message, parsedResponse.errors);
+  }
+
+  return parsedResponse.data;
 }

@@ -158,7 +158,7 @@ defmodule ApiWeb.PlotControllerTest do
       response = json_response(conn, 422)
       assert response["status"] == "error"
       assert response["message"] == "Plot creation failed"
-      assert response["errors"]["name"] == ["Plot name already exists for this user"]
+      assert response["errors"]["name"] == ["You already have a plot with this name"]
     end
 
     test "creates plot with polygon", %{conn: conn} do
