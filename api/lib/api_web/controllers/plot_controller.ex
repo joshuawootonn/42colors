@@ -35,10 +35,20 @@ defmodule ApiWeb.PlotController do
             srid: 4326
           })
 
-        with {:ok, %Plot{} = plot} <- Plot.Repo.create_plot(plot_params) do
-          conn
-          |> put_status(:created)
-          |> render(:show, plot: plot)
+        case Plot.Repo.create_plot(plot_params) do
+          {:ok, %Plot{} = plot} ->
+            conn
+            |> put_status(:created)
+            |> render(:show, plot: plot)
+
+          {:error, %Ecto.Changeset{} = changeset} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> json(%{
+              status: "error",
+              message: "Plot creation failed",
+              errors: format_changeset_errors(changeset)
+            })
         end
     end
   end
@@ -63,8 +73,18 @@ defmodule ApiWeb.PlotController do
         send_resp(conn, :not_found, "Not found")
 
       plot ->
-        with {:ok, %Plot{} = plot} <- Plot.Repo.update_plot(plot, plot_params) do
-          render(conn, :show, plot: plot)
+        case Plot.Repo.update_plot(plot, plot_params) do
+          {:ok, %Plot{} = plot} ->
+            render(conn, :show, plot: plot)
+
+          {:error, %Ecto.Changeset{} = changeset} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> json(%{
+              status: "error",
+              message: "Plot update failed",
+              errors: format_changeset_errors(changeset)
+            })
         end
     end
   end
@@ -77,9 +97,27 @@ defmodule ApiWeb.PlotController do
         send_resp(conn, :not_found, "Not found")
 
       plot ->
-        with {:ok, %Plot{}} <- Plot.Repo.delete_plot(plot) do
-          send_resp(conn, :no_content, "")
+        case Plot.Repo.delete_plot(plot) do
+          {:ok, %Plot{}} ->
+            send_resp(conn, :no_content, "")
+
+          {:error, %Ecto.Changeset{} = changeset} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> json(%{
+              status: "error",
+              message: "Plot deletion failed",
+              errors: format_changeset_errors(changeset)
+            })
         end
     end
+  end
+
+  defp format_changeset_errors(changeset) do
+    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
+      Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
+        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+      end)
+    end)
   end
 end

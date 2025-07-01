@@ -16,8 +16,11 @@ defmodule Api.Canvas.Plot do
   def changeset(plot, attrs) do
     plot
     |> cast(attrs, [:name, :description, :user_id, :polygon])
-    |> validate_required([:name, :user_id])
-    |> foreign_key_constraint(:user_id)
-    |> unique_constraint([:name, :user_id], name: :plots_name_user_id_index)
+    |> validate_required([:name], message: "Name is required")
+    |> validate_required([:user_id], message: "User is required")
+    |> validate_length(:name, min: 1, max: 255, message: "Name must be between 1 and 255 characters")
+    |> validate_length(:description, max: 1000, message: "Description must be less than 1000 characters")
+    |> foreign_key_constraint(:user_id, message: "User does not exist")
+    |> unique_constraint([:name, :user_id], name: :plots_name_user_id_index, message: "You already have a plot with this name")
   end
 end

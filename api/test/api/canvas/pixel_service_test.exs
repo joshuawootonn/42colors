@@ -9,7 +9,7 @@ defmodule Api.Canvas.PixelServiceTest do
     setup do
       # Create a test user
       {:ok, user} = %User{}
-      |> User.registration_changeset(%{email: "test@example.com", password: "password123456"})
+      |> User.registration_changeset(%{email: "test@example.com", password: "password123456!"})
       |> Repo.insert()
 
       # Create a test plot (square from 0,0 to 10,10)
@@ -79,7 +79,7 @@ defmodule Api.Canvas.PixelServiceTest do
 
     test "returns error when user has no plots" do
       {:ok, user_no_plots} = %User{}
-      |> User.registration_changeset(%{email: "noplot@example.com", password: "password123456"})
+      |> User.registration_changeset(%{email: "noplot@example.com", password: "password123456!"})
       |> Repo.insert()
 
       pixels = [%{x: 5, y: 5, color: 1}]

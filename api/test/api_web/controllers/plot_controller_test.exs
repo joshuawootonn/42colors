@@ -77,6 +77,90 @@ defmodule ApiWeb.PlotControllerTest do
       assert json_response(conn, 400)["error"] == "polygon is required"
     end
 
+    test "renders validation errors when name is missing", %{conn: conn} do
+      polygon = %{
+        "vertices" => [
+          [0, 0],
+          [0, 1],
+          [1, 1],
+          [1, 0],
+          [0, 0]
+        ]
+      }
+
+      attrs = %{description: "Test Description", polygon: polygon}
+      conn = post(conn, ~p"/api/plots", plot: attrs)
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Plot creation failed"
+      assert response["errors"]["name"] == ["Name is required"]
+    end
+
+    test "renders validation errors when name is too long", %{conn: conn} do
+      polygon = %{
+        "vertices" => [
+          [0, 0],
+          [0, 1],
+          [1, 1],
+          [1, 0],
+          [0, 0]
+        ]
+      }
+
+      long_name = String.duplicate("a", 256)
+      attrs = %{name: long_name, description: "Test Description", polygon: polygon}
+      conn = post(conn, ~p"/api/plots", plot: attrs)
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Plot creation failed"
+      assert response["errors"]["name"] == ["Name must be between 1 and 255 characters"]
+    end
+
+    test "renders validation errors when description is too long", %{conn: conn} do
+      polygon = %{
+        "vertices" => [
+          [0, 0],
+          [0, 1],
+          [1, 1],
+          [1, 0],
+          [0, 0]
+        ]
+      }
+
+      long_description = String.duplicate("a", 1001)
+      attrs = %{name: "Test Plot", description: long_description, polygon: polygon}
+      conn = post(conn, ~p"/api/plots", plot: attrs)
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Plot creation failed"
+      assert response["errors"]["description"] == ["Description must be less than 1000 characters"]
+    end
+
+    test "renders error for duplicate plot name", %{conn: conn} do
+      # Create first plot
+      polygon = %{
+        "vertices" => [
+          [0, 0],
+          [0, 1],
+          [1, 1],
+          [1, 0],
+          [0, 0]
+        ]
+      }
+
+      attrs = %{name: "Duplicate Name", description: "First plot", polygon: polygon}
+      conn = post(conn, ~p"/api/plots", plot: attrs)
+      assert json_response(conn, 201)
+
+      # Try to create second plot with same name
+      attrs2 = %{name: "Duplicate Name", description: "Second plot", polygon: polygon}
+      conn = post(conn, ~p"/api/plots", plot: attrs2)
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Plot creation failed"
+      assert response["errors"]["name"] == ["Plot name already exists for this user"]
+    end
+
     test "creates plot with polygon", %{conn: conn} do
       polygon = %{
         "vertices" => [
@@ -147,7 +231,30 @@ defmodule ApiWeb.PlotControllerTest do
 
     test "renders errors when data is invalid", %{conn: conn, plot: plot} do
       conn = put(conn, ~p"/api/plots/#{plot}", plot: @invalid_attrs)
-      assert json_response(conn, 422)["errors"] != %{}
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Plot update failed"
+      assert response["errors"]["name"] == ["Name is required"]
+    end
+
+    test "renders validation errors when name is too long", %{conn: conn, plot: plot} do
+      long_name = String.duplicate("a", 256)
+      attrs = %{name: long_name, description: "Updated Description"}
+      conn = put(conn, ~p"/api/plots/#{plot}", plot: attrs)
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Plot update failed"
+      assert response["errors"]["name"] == ["Name must be between 1 and 255 characters"]
+    end
+
+    test "renders validation errors when description is too long", %{conn: conn, plot: plot} do
+      long_description = String.duplicate("a", 1001)
+      attrs = %{name: "Updated Plot", description: long_description}
+      conn = put(conn, ~p"/api/plots/#{plot}", plot: attrs)
+      response = json_response(conn, 422)
+      assert response["status"] == "error"
+      assert response["message"] == "Plot update failed"
+      assert response["errors"]["description"] == ["Description must be less than 1000 characters"]
     end
   end
 
@@ -162,6 +269,11 @@ defmodule ApiWeb.PlotControllerTest do
       assert response(conn, 204)
 
       conn = get(conn, ~p"/api/plots/#{plot}")
+      assert response(conn, 404)
+    end
+
+    test "returns 404 when trying to delete non-existent plot", %{conn: conn} do
+      conn = delete(conn, ~p"/api/plots/999999")
       assert response(conn, 404)
     end
   end
