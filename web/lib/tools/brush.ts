@@ -9,7 +9,6 @@ import {
   absolutePointSchema,
   cursorPositionSchema,
   Pixel,
-  pixelSchema,
   Point,
   pointSchema,
 } from "../geometry/coord";
@@ -210,12 +209,11 @@ export function pointsToPixels(
   points: AbsolutePoint[],
   colorRef: ColorRef,
 ): Pixel[] {
-  return points.map((point) =>
-    pixelSchema.parse({
-      ...point,
-      colorRef: colorRef,
-    }),
-  );
+  return points.map((point) => ({
+    x: point.x,
+    y: point.y,
+    colorRef: colorRef,
+  } as Pixel));
 }
 
 export type BrushActive = {

@@ -18,7 +18,7 @@ import {
   getChunkKey,
   unsetChunkPixels,
 } from "./canvas/chunk";
-import { getLastPixelValue, Pixel, pixelSchema } from "./geometry/coord";
+import { getLastPixelValue, Pixel } from "./geometry/coord";
 import { draw } from "./canvas/draw";
 import { newPixels, setupChannel, setupSocketConnection } from "./sockets";
 import { KeyboardCode } from "./keyboard-codes";
@@ -65,7 +65,11 @@ import {
 import { PaletteSettings } from "./tools/palette";
 import authService from "./auth";
 import { ClaimerTool, completeRectangleClaimerAction } from "./tools/claimer";
-import { getCenterPoint, getCompositePolygons, rectToPolygonSchema } from "./geometry/polygon";
+import {
+  getCenterPoint,
+  getCompositePolygons,
+  rectToPolygonSchema,
+} from "./geometry/polygon";
 import { getUserPlots, Plot } from "./tools/claimer.rest";
 import { centerCameraOnPoint } from "./camera-utils";
 
@@ -336,11 +340,11 @@ export const store = createStore({
             context.canvas.chunkCanvases[getChunkKey(pixel.x, pixel.y)].pixels,
             pixel,
           ) ??
-          pixelSchema.parse({
+          ({
             x: pixel.x,
             y: pixel.y,
             colorRef: 0,
-          });
+          } as Pixel);
         next.push(lastPixelValue);
       }
 
@@ -386,11 +390,11 @@ export const store = createStore({
             context.canvas.chunkCanvases[getChunkKey(pixel.x, pixel.y)].pixels,
             pixel,
           ) ??
-          pixelSchema.parse({
+          ({
             x: pixel.x,
             y: pixel.y,
             colorRef: 0,
-          });
+          } as Pixel);
         next.push(lastPixelValue);
       }
 
@@ -749,7 +753,6 @@ export const store = createStore({
       };
     },
 
-
     clearClaim: (context, _, enqueue) => {
       if (isInitialStore(context)) return;
       enqueue.effect(() => store.trigger.redrawTelegraph());
@@ -792,18 +795,27 @@ export const store = createStore({
     selectPlot: (context, { plotId }: { plotId: number }, enqueue) => {
       if (isInitialStore(context)) return;
 
-      const plots = context.queryClient.getQueryData(["user", "plots"]) as Plot[];
+      const plots = context.queryClient.getQueryData([
+        "user",
+        "plots",
+      ]) as Plot[];
 
       enqueue.effect(() => {
         store.trigger.moveCamera({
-          camera: centerCameraOnPoint(getCenterPoint(plots.find((plot) => plot.id === plotId)!.polygon), store.getSnapshot().context.camera),
+          camera: centerCameraOnPoint(
+            getCenterPoint(plots.find((plot) => plot.id === plotId)!.polygon),
+            store.getSnapshot().context.camera,
+          ),
           options: { deselectPlot: false },
         });
       });
 
       return {
         ...context,
-        toolSettings: { ...context.toolSettings, claimer: { selectedPlotId: plotId } },
+        toolSettings: {
+          ...context.toolSettings,
+          claimer: { selectedPlotId: plotId },
+        },
       };
     },
 
@@ -811,7 +823,10 @@ export const store = createStore({
       if (isInitialStore(context)) return;
       return {
         ...context,
-        toolSettings: { ...context.toolSettings, claimer: { selectedPlotId: undefined } },
+        toolSettings: {
+          ...context.toolSettings,
+          claimer: { selectedPlotId: undefined },
+        },
       };
     },
 

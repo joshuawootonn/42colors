@@ -80,12 +80,11 @@ export const chunkPixelSchema = pixelSchema.brand<"ChunkPixel">();
 export type ChunkPixel = z.infer<typeof chunkPixelSchema>;
 
 function getChunkPixel(chunkOrigin: Coord, pixel: Pixel): ChunkPixel {
-  return chunkPixelSchema.parse({
-    ...pixel,
+  return {
     x: pixel.x - chunkOrigin.x,
     y: pixel.y - chunkOrigin.y,
-    type: "chunk",
-  });
+    colorRef: pixel.colorRef,
+  } as ChunkPixel;
 }
 
 export function getChunkOrigin(x: number, y: number): Coord {
