@@ -1,0 +1,98 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Elixir Engineer Guidelines
+
+# Elixir Engineer Guidelines
+
+## Overview
+
+Act as an expert senior Elixir engineer. This document provides guidelines and best practices for developing, testing, and deploying Elixir applications. The stack includes Elixir, Phoenix, Docker, PostgreSQL, Tailwind CSS, and various tools for code quality, testing, and deployment.
+
+## Stack
+
+- **Elixir**: The primary programming language.
+- **Phoenix**: Web framework for building scalable applications.
+- **Docker**: Containerization for consistent development and deployment environments.
+- **PostgreSQL**: Primary database for data storage.
+- **Tailwind CSS**: Utility-first CSS framework for responsive design.
+- **LeftHook**: Pre-commit hooks for code quality.
+- **Sobelow**: Security-focused static analysis for Phoenix applications.
+- **Credo**: Static code analysis tool for Elixir.
+- **Ecto**: Database wrapper and query generator.
+- **ExUnit**: Unit testing framework for Elixir.
+- **Plug**: Composable modules for building web applications.
+- **Phoenix LiveView**: Real-time, server-rendered HTML over WebSockets.
+- **Phoenix LiveDashboard**: Real-time monitoring and debugging tool.
+- **Gettext**: Internationalization and localization support.
+- **Jason**: JSON library for Elixir.
+- **Swoosh**: Email library for Elixir.
+- **Finch**: HTTP client for Elixir.
+- **DNS Cluster**: DNS-based service discovery.
+- **File System Watcher**: File system monitoring.
+- **Release Please**: Automated versioning and changelog generation.
+- **ExCoveralls**: Code coverage tool for Elixir.
+
+## Commit Message Format
+
+```
+<type>[optional scope]: <description>
+[optional body]
+[optional footer(s)]
+```
+
+### Where:
+
+- **type**: One of the following:
+  - `feat`: A new feature.
+  - `fix`: A bug fix.
+  - `docs`: Documentation changes.
+  - `style`: Code style changes (e.g., formatting).
+  - `refactor`: Code refactoring.
+  - `test`: Adding or modifying tests.
+  - `chore`: Maintenance tasks.
+- **scope** (optional): A noun describing a section of the codebase (e.g., `fluxcd`, `deployment`).
+- **description**: A brief summary of the change in present tense.
+- **body** (optional): A more detailed explanation of the change.
+- **footer** (optional): One or more footers in the following format:
+  - `BREAKING CHANGE`: Indicates a breaking change.
+  - `Closes #<issue-number>`: Links to an issue.
+
+## Best Practices
+
+- **Code Quality**: Use Credo and Sobelow for static analysis to ensure code quality and security.
+- **Testing**: Write comprehensive unit tests using ExUnit and ensure high code coverage with ExCoveralls.
+- **Documentation**: Maintain up-to-date documentation using ExDoc.
+- **Internationalization**: Use Gettext for internationalization and localization.
+- **Deployment**: Use Docker for containerization and ensure smooth deployment processes.
+- **Monitoring**: Utilize Phoenix LiveDashboard for real-time monitoring and debugging.
+
+## Performance Optimization
+
+- **Database Optimization**: Use Ecto's query optimization techniques to improve database performance.
+- **Caching**: Implement caching strategies to reduce database load.
+- **Concurrency**: Leverage Elixir's concurrency model for efficient task handling.
+
+## Error Handling
+
+- **Global Error Handling**: Implement global error handling using Plug.
+- **Logging**: Use structured logging for better traceability.
+
+## Continuous Integration
+
+- **Pre-commit Hooks**: Use LeftHook to enforce code quality before commits.
+- **Automated Testing**: Integrate ExUnit tests into your CI pipeline.
+- **Code Coverage**: Ensure high code coverage with ExCoveralls.
+
+## Release Management
+
+- **Versioning**: Use Release Please for automated versioning and changelog generation.
+- **Deployment**: Ensure smooth deployment processes with Docker and CI/CD pipelines.
+
+## Conclusion
+
+Following these guidelines will help you build robust, scalable, and maintainable Elixir applications. Always strive for code quality, security, and performance in your development process.
+

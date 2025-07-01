@@ -1,0 +1,94 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+
+# Tailwind CSS (Next.js Guide)
+
+# Tailwind CSS & Next.js Development Guide
+
+## Prompt Generation Rules
+- **Component Requirements Analysis**: Thoroughly analyze the component requirements before starting development.
+- **DaisyUI Component Suggestions**: Include specific DaisyUI component suggestions where applicable.
+- **Tailwind CSS Classes**: Specify desired Tailwind CSS classes for styling.
+- **TypeScript Types/Interfaces**: Mention any required TypeScript types or interfaces.
+- **Responsive Design**: Include instructions for responsive design.
+- **Next.js Features**: Suggest appropriate Next.js features if applicable.
+- **State Management/Hooks**: Specify any necessary state management or hooks.
+- **Accessibility**: Include accessibility considerations.
+- **Icons/Assets**: Mention any required icons or assets.
+- **Error Handling/Loading States**: Suggest error handling and loading states.
+- **Animations/Transitions**: Include instructions for animations or transitions if needed.
+- **API Integrations/Data Fetching**: Specify any required API integrations or data fetching.
+- **Performance Optimization**: Mention performance optimization techniques if applicable.
+- **Testing**: Include instructions for testing the component.
+- **Documentation**: Suggest documentation requirements for the component.
+
+## General Component Creation Guidelines
+- **Reusability and Modularity**: Prioritize reusability and modularity.
+- **Naming Conventions**: Ensure consistent naming conventions.
+- **React Best Practices**: Follow React best practices and patterns.
+- **Prop Validation**: Implement proper prop validation.
+- **Internationalization**: Consider internationalization requirements.
+- **SEO Optimization**: Optimize for SEO when applicable.
+- **Browser/Device Compatibility**: Ensure compatibility with different browsers and devices.
+
+## General Rules
+- **Strict TypeScript**: Enable strict TypeScript (`strict: true` in `tsconfig.json`).
+- **Avoid 'any'**: Prefer 'unknown' with runtime checks.
+- **Explicit Typing**: Explicitly type function inputs and outputs.
+- **Advanced TypeScript Features**: Use advanced TypeScript features (type guards, mapped types, conditional types).
+- **Project Structure**: Organize project structure: components, pages, hooks, utils, styles, contracts, services.
+- **Separation of Concerns**: Separate concerns: presentational components, business logic, side effects.
+- **Biome for Formatting**: Use Biome for code formatting and linting.
+- **Pre-commit Hook**: Configure Biome as a pre-commit hook.
+
+## Next.js Rules
+- **Dynamic Routes**: Use dynamic routes with bracket notation (`[id].tsx`).
+- **Route Parameters**: Validate and sanitize route parameters.
+- **Flat Routes**: Prefer flat, descriptive routes.
+- **Data Fetching**: Use `getServerSideProps` for dynamic data, `getStaticProps`/`getStaticPaths` for static.
+- **ISR**: Implement Incremental Static Regeneration (ISR) where appropriate.
+- **Image Optimization**: Use `next/image` for optimized images.
+- **Image Attributes**: Configure image layout, priority, sizes, and `srcSet` attributes.
+
+## TypeScript Rules
+- **Strict Mode**: Enable all strict mode options in `tsconfig.json`.
+- **Explicit Typing**: Explicitly type all variables, parameters, and return values.
+- **Utility Types**: Use utility types, mapped types, and conditional types.
+- **Interface vs Type**: Prefer 'interface' for extendable object shapes, 'type' for unions, intersections, and primitive compositions.
+- **JSDoc Documentation**: Document complex types with JSDoc.
+- **Discriminated Unions**: Avoid ambiguous union types, use discriminated unions when necessary.
+
+## TailwindCSS and DaisyUI Rules
+- **Utility Classes**: Use TailwindCSS utility classes for styling.
+- **Custom CSS**: Avoid custom CSS unless absolutely necessary.
+- **Class Order**: Maintain consistent order of utility classes.
+- **Responsive Variants**: Use Tailwind's responsive variants for adaptive designs.
+- **DaisyUI Components**: Leverage DaisyUI components for rapid development.
+- **Customization**: Customize DaisyUI components only when necessary.
+- **Design Tokens**: Define and use design tokens in `tailwind.config.js`.
+
+## Development Process
+- **Code Reviews**: Conduct thorough code reviews via Pull Requests.
+- **PR Descriptions**: Include clear PR descriptions with context and screenshots.
+- **Automated Testing**: Implement comprehensive automated testing (unit, integration, e2e).
+- **Meaningful Tests**: Prioritize meaningful tests over high coverage numbers.
+- **Conventional Commits**: Use Conventional Commits for commit messages (`feat:`, `fix:`, `docs:`, `chore:`).
+- **Incremental Commits**: Make small, incremental commits for easier review and debugging.
+
+## Biome Rules
+- **Code Formatting**: Use Biome for code formatting and linting.
+- **Pre-commit Hook**: Configure Biome as a pre-commit hook.
+- **Recommended Rules**: Follow Biome's recommended rules.
+- **Configuration**: Customize Biome configuration in `biome.json` as needed.
+- **Consistent Style**: Ensure consistent code style across the project.
+- **Pre-commit Checks**: Run Biome checks before committing changes.
+- **Address Warnings/Errors**: Address all Biome warnings and errors promptly.
+- **Organize Imports**: Use Biome's organize imports feature to maintain clean import statements.
+- **Advanced Linting**: Leverage Biome's advanced linting capabilities for TypeScript.
+- **CI/CD Integration**: Integrate Biome into the CI/CD pipeline for automated checks.
+- **Updates**: Keep Biome updated to the latest stable version.
+- **Ignore Patterns**: Use Biome's ignore patterns to exclude specific files or directories when necessary.

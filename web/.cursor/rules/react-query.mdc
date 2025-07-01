@@ -1,0 +1,48 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# React (React Query)
+
+# React + React Query Best Practices
+
+## Coding Standards
+- Prefer functional components with hooks.
+- Use TypeScript for type safety with React Query.
+- Implement proper error boundaries for query errors.
+- Utilize React Query DevTools for debugging.
+
+## React Query Best Practices
+1. Use `QueryClient` and `QueryClientProvider` at the root of your app.
+2. Implement custom hooks for queries and mutations.
+3. Utilize query keys for effective caching.
+4. Use prefetching for improved performance.
+5. Implement proper error and loading states.
+6. Use stale-while-revalidate strategy for data freshness.
+7. Implement optimistic updates for mutations.
+8. Use query invalidation for data refetching.
+9. Follow React Query naming conventions for consistency.
+
+## Performance Optimization
+- Use `React.memo` for pure function components.
+- Implement lazy loading for routing components.
+- Optimize `useEffect` dependencies to prevent unnecessary re-renders.
+
+## Testing Requirements
+- Write unit tests using Jest and React Testing Library.
+- Ensure test coverage reaches at least 80%.
+- Use snapshot testing for UI components.
+
+## Documentation
+- Write comments for functions and components in JSDoc format.
+- Components must include PropTypes validation.
+- Each main directory must contain a `README.md` file.
+- Provide both English and Chinese versions of the `README.md` file.
+
+## Error Handling
+- Use `try/catch` blocks to handle asynchronous operations.
+- Implement global error boundary components.
+
+

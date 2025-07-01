@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Bun 
+
+## Coding Standards
+- Always use bun. Never use npm, pnpm, or yarn
