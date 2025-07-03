@@ -86,6 +86,9 @@ export function ClaimerPanel() {
     () => plots?.find((plot) => plot.id === selectedPlotId),
     [plots, selectedPlotId],
   );
+  const user = useSelector(store, (state) => state.context.user);
+
+  if (user == null) return null;
 
   return (
     <div className="flex-grow flex flex-row items-start justify-start">
