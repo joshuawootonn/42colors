@@ -124,9 +124,7 @@ defmodule Api.Canvas.Plot.Repo do
     Plot.changeset(plot, attrs)
   end
 
-
-
-    @doc """
+  @doc """
   Efficiently checks which points are within any of the user's plots using a single query.
 
   ## Parameters
@@ -172,4 +170,29 @@ defmodule Api.Canvas.Plot.Repo do
       end)
     end
   end
+
+  @doc """
+  Returns all plots that are within or intersect with the given polygon.
+
+  ## Parameters
+  - `polygon`: A %Geo.Polygon{} struct representing the search area
+
+  ## Returns
+  - List of %Plot{} structs that are within or intersect with the polygon
+
+  ## Examples
+
+      iex> polygon = %Geo.Polygon{coordinates: [[{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}]], srid: 4326}
+      iex> list_plots_within_polygon(polygon)
+      [%Plot{}, ...]
+
+  """
+  def list_plots_within_polygon(%Geo.Polygon{} = polygon) do
+    Plot
+    |> where([p], not is_nil(p.polygon))
+    |> where([p], fragment("ST_Intersects(?, ?)", p.polygon, ^polygon))
+    |> Repo.all()
+  end
+
+  def list_plots_within_polygon(_), do: {:error, :invalid_polygon}
 end
