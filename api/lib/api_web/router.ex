@@ -55,8 +55,12 @@ defmodule ApiWeb.Router do
   scope "/api", ApiWeb do
     pipe_through [:api, :require_authenticated_user]
 
-    post "/plots", PlotController, :create
+    # User-specific plots route
+    get "/me/plots", PlotController, :me_plots
+
+    # Chunk-based plots route (takes x,y query parameters)
     get "/plots", PlotController, :index
+    post "/plots", PlotController, :create
     get "/plots/:id", PlotController, :show
     put "/plots/:id", PlotController, :update
     delete "/plots/:id", PlotController, :delete

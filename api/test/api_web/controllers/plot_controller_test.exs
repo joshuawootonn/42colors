@@ -16,10 +16,123 @@ defmodule ApiWeb.PlotControllerTest do
     {:ok, conn: conn, user: user}
   end
 
-  describe "index" do
+  describe "index (chunk-based)" do
+    test "returns plots within chunk when x,y parameters provided", %{conn: conn, user: user} do
+      # Create a plot that should be found in the chunk
+      plot = plot_fixture(%{
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{95, 95}, {95, 105}, {105, 105}, {105, 95}, {95, 95}]],
+          srid: 4326
+        }
+      })
+
+      conn = get(conn, ~p"/api/plots?x=100&y=100")
+      response = json_response(conn, 200)["data"]
+
+      plot_ids = Enum.map(response, & &1["id"])
+      assert plot.id in plot_ids
+    end
+
+    test "returns empty list when no plots in chunk", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots?x=1000&y=1000")
+      response = json_response(conn, 200)["data"]
+      assert response == []
+    end
+
+    test "returns error when x parameter is missing", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots?y=100")
+      response = json_response(conn, 400)
+      assert response["error"] == "x and y query parameters are required"
+    end
+
+    test "returns error when y parameter is missing", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots?x=100")
+      response = json_response(conn, 400)
+      assert response["error"] == "x and y query parameters are required"
+    end
+
+    test "returns error when both x and y parameters are missing", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots")
+      response = json_response(conn, 400)
+      assert response["error"] == "x and y query parameters are required"
+    end
+
+    test "returns error for invalid x coordinate", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots?x=abc&y=100")
+      response = json_response(conn, 400)
+      assert response["error"] == "Invalid x,y coordinates. Must be integers."
+    end
+
+    test "returns error for invalid y coordinate", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots?x=100&y=xyz")
+      response = json_response(conn, 400)
+      assert response["error"] == "Invalid x,y coordinates. Must be integers."
+    end
+
+    test "handles string coordinates correctly", %{conn: conn, user: user} do
+      plot = plot_fixture(%{
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{95, 95}, {95, 105}, {105, 105}, {105, 95}, {95, 95}]],
+          srid: 4326
+        }
+      })
+
+      conn = get(conn, ~p"/api/plots?x=100&y=100")
+      response = json_response(conn, 200)["data"]
+
+      plot_ids = Enum.map(response, & &1["id"])
+      assert plot.id in plot_ids
+    end
+
+    test "handles negative coordinates", %{conn: conn, user: user} do
+      plot = plot_fixture(%{
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{-105, -105}, {-105, -95}, {-95, -95}, {-95, -105}, {-105, -105}]],
+          srid: 4326
+        }
+      })
+
+      conn = get(conn, ~p"/api/plots?x=-100&y=-100")
+      response = json_response(conn, 200)["data"]
+
+      plot_ids = Enum.map(response, & &1["id"])
+      assert plot.id in plot_ids
+    end
+
+    test "returns plots from multiple users in chunk", %{conn: conn, user: user} do
+      # Create another user and plot
+      other_user = user_fixture()
+      plot1 = plot_fixture(%{
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{95, 95}, {95, 105}, {105, 105}, {105, 95}, {95, 95}]],
+          srid: 4326
+        }
+      })
+      plot2 = plot_fixture(%{
+        user_id: other_user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{90, 90}, {90, 110}, {110, 110}, {110, 90}, {90, 90}]],
+          srid: 4326
+        }
+      })
+
+      conn = get(conn, ~p"/api/plots?x=100&y=100")
+      response = json_response(conn, 200)["data"]
+
+      plot_ids = Enum.map(response, & &1["id"])
+      assert plot1.id in plot_ids
+      assert plot2.id in plot_ids
+    end
+  end
+
+  describe "me_plots" do
     test "lists all plots for the current user", %{conn: conn, user: user} do
       plot = plot_fixture(%{user_id: user.id})
-      conn = get(conn, ~p"/api/plots")
+      conn = get(conn, ~p"/api/me/plots")
       [resp_plot] = json_response(conn, 200)["data"]
       assert resp_plot["id"] == plot.id
       assert resp_plot["name"] == plot.name
@@ -35,6 +148,50 @@ defmodule ApiWeb.PlotControllerTest do
                resp_plot["updatedAt"],
                NaiveDateTime.to_iso8601(plot.updated_at)
              )
+    end
+
+    test "returns empty list when user has no plots", %{conn: conn} do
+      conn = get(conn, ~p"/api/me/plots")
+      response = json_response(conn, 200)["data"]
+      assert response == []
+    end
+
+    test "only returns plots for the current user", %{conn: conn, user: user} do
+      # Create plots for current user
+      plot1 = plot_fixture(%{user_id: user.id})
+      plot2 = plot_fixture(%{user_id: user.id})
+
+      # Create plot for another user
+      other_user = user_fixture()
+      _other_plot = plot_fixture(%{user_id: other_user.id})
+
+      conn = get(conn, ~p"/api/me/plots")
+      response = json_response(conn, 200)["data"]
+
+      plot_ids = Enum.map(response, & &1["id"])
+      assert plot1.id in plot_ids
+      assert plot2.id in plot_ids
+      assert length(response) == 2
+    end
+
+    test "returns plots with correct structure", %{conn: conn, user: user} do
+      plot = plot_fixture(%{
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}]],
+          srid: 4326
+        }
+      })
+
+      conn = get(conn, ~p"/api/me/plots")
+      [resp_plot] = json_response(conn, 200)["data"]
+
+      assert resp_plot["id"] == plot.id
+      assert resp_plot["name"] == plot.name
+      assert resp_plot["description"] == plot.description
+      assert resp_plot["userId"] == user.id
+      assert resp_plot["polygon"] != nil
+      assert resp_plot["polygon"]["vertices"] == [[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]]
     end
   end
 

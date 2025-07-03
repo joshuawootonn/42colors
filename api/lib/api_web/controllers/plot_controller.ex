@@ -5,7 +5,33 @@ defmodule ApiWeb.PlotController do
 
   action_fallback ApiWeb.FallbackController
 
-  def index(conn, _params) do
+  def index(conn, params) do
+    case {Map.get(params, "x"), Map.get(params, "y")} do
+      {nil, _} ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{error: "x and y query parameters are required"})
+
+      {_, nil} ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{error: "x and y query parameters are required"})
+
+      {x_str, y_str} ->
+        case {parse_integer(x_str), parse_integer(y_str)} do
+          {{:ok, x}, {:ok, y}} ->
+            plots = Plot.Service.list_plots_by_chunk(x, y)
+            render(conn, :index, plots: plots)
+
+          _ ->
+            conn
+            |> put_status(:bad_request)
+            |> json(%{error: "Invalid x,y coordinates. Must be integers."})
+        end
+    end
+  end
+
+  def me_plots(conn, _params) do
     user = conn.assigns.current_user
     plots = Plot.Repo.list_user_plots(user.id)
     render(conn, :index, plots: plots)
@@ -120,4 +146,13 @@ defmodule ApiWeb.PlotController do
       end)
     end)
   end
+
+  defp parse_integer(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, ""} -> {:ok, int}
+      _ -> {:error, :invalid_integer}
+    end
+  end
+
+  defp parse_integer(_), do: {:error, :invalid_integer}
 end
