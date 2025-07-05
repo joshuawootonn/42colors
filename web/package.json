@@ -31,7 +31,6 @@
     "phoenix": "^1.7.14",
     "polyclip-js": "^1.0.1",
     "posthog-js": "^1.255.1",
-    "protobufjs": "^7.4.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.59.0",

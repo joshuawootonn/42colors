@@ -4,7 +4,7 @@ import { BrushSettings, BrushTool, pointsToPixels } from "./tools/brush";
 import { PanTool } from "./tools/pan";
 import { QueryClient } from "@tanstack/react-query";
 import { CHUNK_LENGTH } from "./constants";
-import { fetchPixels7 } from "./fetch-pixels";
+import { fetchPixels } from "./fetch-pixels";
 import {
   createBackgroundCanvas,
   drawBackgroundCanvas,
@@ -523,7 +523,7 @@ export const store = createStore({
               .fetchQuery({
                 queryKey: ["pixels", chunkKey],
                 queryFn: () =>
-                  fetchPixels7(context.server.apiOrigin, chunkX, chunkY),
+                  fetchPixels(context.server.apiOrigin, chunkX, chunkY),
               })
               .then((pixels) =>
                 store.trigger.updateChunk({ chunkKey, pixels }),
