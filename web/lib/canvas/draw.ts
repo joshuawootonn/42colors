@@ -51,6 +51,14 @@ export function draw(context: InitializedStore) {
       CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
       CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
     );
+
+    context.canvas.rootCanvasContext.drawImage(
+      chunk.elementUI,
+      canvasToClient(chunk.x, context.camera.zoom),
+      canvasToClient(chunk.y, context.camera.zoom),
+      CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
+      CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
+    );
   });
 
   const pixelSize = getPixelSize(zoomMultiplier);

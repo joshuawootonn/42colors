@@ -169,3 +169,25 @@ export async function updatePlot(
 
   return parsedResponse.data;
 }
+
+export async function getPlotsByChunk(x: number, y: number): Promise<Plot[]> {
+  const context = store.getSnapshot().context;
+  if (isInitialStore(context)) {
+    throw new Error("Server context is not initialized");
+  }
+
+  const search = new URLSearchParams();
+  search.set("x", x.toString());
+  search.set("y", y.toString());
+
+  const response = await fetch(
+    new URL(`/api/plots?${search}`, context.server.apiOrigin),
+    {
+      method: "GET"
+    },
+  );
+
+  const json = await response.json();
+
+  return arrayPlotResponseSchema.parse(json).data;
+}

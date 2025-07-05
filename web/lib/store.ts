@@ -14,7 +14,9 @@ import {
   ChunkCanvases,
   clearChunkPixels,
   createChunkCanvas,
-  drawToChunkCanvas,
+  createUIChunkCanvas,
+  drawPixelsToChunkCanvas,
+  drawPlotsToUIChunkCanvas,
   getChunkKey,
   unsetChunkPixels,
 } from "./canvas/chunk";
@@ -68,9 +70,10 @@ import { ClaimerTool, completeRectangleClaimerAction } from "./tools/claimer";
 import {
   getCenterPoint,
   getCompositePolygons,
+  polygonSchema,
   rectToPolygonSchema,
 } from "./geometry/polygon";
-import { getUserPlots, Plot } from "./tools/claimer.rest";
+import { getPlotsByChunk, getUserPlots, Plot } from "./tools/claimer.rest";
 import { centerCameraOnPoint } from "./camera-utils";
 
 export type PointerState = "default" | "pressed";
@@ -499,16 +502,23 @@ export const store = createStore({
           const canvasContext = canvas.getContext("2d");
           canvasContext!.imageSmoothingEnabled = false;
 
+          const elementUI = createUIChunkCanvas();
+          const contextUI = elementUI.getContext("2d");
+          contextUI!.imageSmoothingEnabled = false;
+
           context.canvas.chunkCanvases[chunkKey] = {
             element: canvas,
             context: canvasContext!,
+            elementUI: elementUI,
+            contextUI: contextUI!,
             x: chunkX,
             y: chunkY,
             pixels: [],
+            plots: [],
             renderConditions: { zoom: context.camera.zoom },
           };
 
-          enqueue.effect(() =>
+          enqueue.effect(() => {
             context.queryClient
               .fetchQuery({
                 queryKey: ["pixels", chunkKey],
@@ -517,15 +527,38 @@ export const store = createStore({
               })
               .then((pixels) =>
                 store.trigger.updateChunk({ chunkKey, pixels }),
-              ),
-          );
+              );
+
+            context.queryClient
+              .fetchQuery({
+                queryKey: ["plots", chunkKey],
+                queryFn: () => getPlotsByChunk(chunkX, chunkY),
+              })
+              .then((plots) =>
+                store.trigger.updateChunk({
+                  chunkKey,
+                  plots: plots.map((plot) => ({
+                    ...plot,
+                    polygon: polygonSchema.parse({
+                      vertices: plot.polygon.vertices.map((vertex) => {
+                        return [vertex[0] - chunkX, vertex[1] - chunkY];
+                      }),
+                    }),
+                  })),
+                }),
+              );
+          });
         }
       }
     },
 
     updateChunk: (
       context,
-      { chunkKey, pixels }: { chunkKey: string; pixels: Pixel[] },
+      {
+        chunkKey,
+        pixels,
+        plots,
+      }: { chunkKey: string; pixels?: Pixel[]; plots?: Plot[] },
       enqueue,
     ) => {
       if (isInitialStore(context)) return;
@@ -541,12 +574,18 @@ export const store = createStore({
 
       context.canvas.chunkCanvases[chunkKey] = {
         ...prev,
-        pixels: [...prev.pixels, ...pixels],
+        pixels: pixels ? [...prev.pixels, ...pixels] : prev.pixels,
+        plots: plots ? [...prev.plots, ...plots] : prev.plots,
       };
 
-      enqueue.effect(() =>
-        store.trigger.drawToChunkCanvas({ chunkKey, pixels }),
-      );
+      enqueue.effect(() => {
+        if (pixels) {
+          store.trigger.drawPixelsToChunkCanvas({ chunkKey, pixels });
+        }
+        if (plots) {
+          store.trigger.drawPlotsToChunkCanvasUI({ chunkKey, plots });
+        }
+      });
     },
 
     resizeRealtimeAndTelegraphCanvases: (context) => {
@@ -607,19 +646,36 @@ export const store = createStore({
       }
     },
 
-    drawToChunkCanvas: (
+    drawPixelsToChunkCanvas: (
       context,
       event: { chunkKey: string; pixels: Pixel[] },
     ) => {
       if (isInitialStore(context)) return;
-      drawToChunkCanvas(
+      drawPixelsToChunkCanvas(
         context.canvas.chunkCanvases[event.chunkKey].element,
         context.canvas.chunkCanvases[event.chunkKey].context,
         event.pixels,
       );
     },
 
-    moveCamera: (context, event: { camera: Partial<Camera>, options?: { deselectPlot: boolean }  }, enqueue) => {
+    drawPlotsToChunkCanvasUI: (
+      context,
+      event: { chunkKey: string; plots: Plot[] },
+    ) => {
+      if (isInitialStore(context)) return;
+      drawPlotsToUIChunkCanvas(
+        context.canvas.chunkCanvases[event.chunkKey].elementUI,
+        context.canvas.chunkCanvases[event.chunkKey].contextUI,
+        event.plots,
+        context.camera,
+      );
+    },
+
+    moveCamera: (
+      context,
+      event: { camera: Partial<Camera>; options?: { deselectPlot: boolean } },
+      enqueue,
+    ) => {
       if (isInitialStore(context)) return;
 
       const options = { deselectPlot: true, ...event.options };

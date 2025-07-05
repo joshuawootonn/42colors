@@ -1,15 +1,24 @@
 import { z } from "zod";
-import { CHUNK_LENGTH } from "../constants";
+import { CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from "../constants";
 import { COLOR_TABLE } from "../palette";
 import { Coord, Pixel, pixelSchema } from "../geometry/coord";
 import { dedupe } from "../utils/dedupe";
+import { Plot } from "../tools/claimer.rest";
+import { Camera, getZoomMultiplier } from "../camera";
+import {
+  redrawPolygonToUIChunkCanvas,
+} from "../tools/claimer";
+import { getPixelSize } from "./realtime";
 
 export type Chunk = {
-  element: HTMLCanvasElement;
-  context: CanvasRenderingContext2D;
   x: number;
   y: number;
   pixels: Pixel[];
+  element: HTMLCanvasElement;
+  context: CanvasRenderingContext2D;
+  plots: Plot[];
+  elementUI: HTMLCanvasElement;
+  contextUI: CanvasRenderingContext2D;
   renderConditions: {
     zoom: number;
   };
@@ -24,7 +33,14 @@ export function createChunkCanvas(): HTMLCanvasElement {
   return canvas;
 }
 
-export function drawToChunkCanvas(
+export function createUIChunkCanvas(): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = CHUNK_LENGTH * CANVAS_PIXEL_RATIO;
+  canvas.height = CHUNK_LENGTH * CANVAS_PIXEL_RATIO;
+  return canvas;
+}
+
+export function drawPixelsToChunkCanvas(
   canvas: HTMLCanvasElement,
   context: CanvasRenderingContext2D,
   pixels: Pixel[],
@@ -35,6 +51,32 @@ export function drawToChunkCanvas(
     const pixel = pixels[i];
     context.fillStyle = COLOR_TABLE[pixel.colorRef];
     context.fillRect(pixel.x, pixel.y, 1, 1);
+  }
+
+  return canvas;
+}
+
+export function drawPlotsToUIChunkCanvas(
+  canvas: HTMLCanvasElement,
+  context: CanvasRenderingContext2D,
+  plots: Plot[],
+  camera: Camera,
+): HTMLCanvasElement {
+  context.imageSmoothingEnabled = false;
+
+  for (let i = 0; i < plots.length; i++) {
+    const plot = plots[i];
+    const polygon = plot.polygon;
+    context.fillStyle = "rgba(0,0,0,0)";
+    context.strokeStyle = "rgba(0,0,0,1)";
+
+    console.log(polygon);
+
+    const pixelSize = getPixelSize(getZoomMultiplier(camera));
+
+    redrawPolygonToUIChunkCanvas(context, polygon, pixelSize, {
+      containsMatchingEndpoints: true,
+    });
   }
 
   return canvas;
@@ -55,7 +97,7 @@ export function unsetChunkPixels(
   const uniqueChunkKeys = dedupe(chunkKeys);
   for (let i = 0; i < uniqueChunkKeys.length; i++) {
     const chunk = chunkCanvases[uniqueChunkKeys[i]];
-    drawToChunkCanvas(chunk.element, chunk.context, chunk.pixels);
+    drawPixelsToChunkCanvas(chunk.element, chunk.context, chunk.pixels);
   }
 }
 
