@@ -72,9 +72,7 @@ export function drawPlotsToUIChunkCanvas(
 
     console.log(polygon);
 
-    const pixelSize = getPixelSize(getZoomMultiplier(camera));
-
-    redrawPolygonToUIChunkCanvas(context, polygon, pixelSize, {
+    redrawPolygonToUIChunkCanvas(context, polygon, 5, {
       containsMatchingEndpoints: true,
     });
   }
