@@ -111,7 +111,7 @@ export async function getUserPlots(): Promise<Plot[]> {
   }
 
   const response = await fetch(
-    new URL(`/api/plots`, context.server.apiOrigin),
+    new URL(`/api/plots/me`, context.server.apiOrigin),
     {
       method: "GET",
       credentials: "include",
