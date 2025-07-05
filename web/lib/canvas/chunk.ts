@@ -4,11 +4,7 @@ import { COLOR_TABLE } from "../palette";
 import { Coord, Pixel, pixelSchema } from "../geometry/coord";
 import { dedupe } from "../utils/dedupe";
 import { Plot } from "../tools/claimer.rest";
-import { Camera, getZoomMultiplier } from "../camera";
-import {
-  redrawPolygonToUIChunkCanvas,
-} from "../tools/claimer";
-import { getPixelSize } from "./realtime";
+import { redrawPolygon } from "../tools/claimer";
 
 export type Chunk = {
   x: number;
@@ -60,7 +56,6 @@ export function drawPlotsToUIChunkCanvas(
   canvas: HTMLCanvasElement,
   context: CanvasRenderingContext2D,
   plots: Plot[],
-  camera: Camera,
 ): HTMLCanvasElement {
   context.imageSmoothingEnabled = false;
 
@@ -70,9 +65,7 @@ export function drawPlotsToUIChunkCanvas(
     context.fillStyle = "rgba(0,0,0,0)";
     context.strokeStyle = "rgba(0,0,0,1)";
 
-    console.log(polygon);
-
-    redrawPolygonToUIChunkCanvas(context, polygon, 5, {
+    redrawPolygon(context, polygon, {
       containsMatchingEndpoints: true,
     });
   }

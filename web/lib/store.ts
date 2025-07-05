@@ -667,7 +667,6 @@ export const store = createStore({
         context.canvas.chunkCanvases[event.chunkKey].elementUI,
         context.canvas.chunkCanvases[event.chunkKey].contextUI,
         event.plots,
-        context.camera,
       );
     },
 

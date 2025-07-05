@@ -18,23 +18,29 @@ export const claimerSettingsSchema = z.object({
 
 export type ClaimerSettings = z.infer<typeof claimerSettingsSchema>;
 
-export function redrawPolygonTelegraph(
+export function redrawPolygon(
   ctx: CanvasRenderingContext2D,
   polygon: Polygon,
-  pixelSize: number,
-  camera: Camera,
-  options: {
+  {
+    xOffset = 0,
+    yOffset = 0,
+    xCamera = 0,
+    yCamera = 0,
+    pixelSize = 5,
+    containsMatchingEndpoints = false,
+  }: {
+    xOffset?: number;
+    yOffset?: number;
+    xCamera?: number;
+    yCamera?: number;
+    pixelSize?: number;
     containsMatchingEndpoints?: boolean;
-  } = {
-    containsMatchingEndpoints: false,
-  },
+  } = {},
 ) {
-  const { xOffset, yOffset } = getCameraOffset(camera);
-
   ctx.beginPath();
   ctx.lineWidth = pixelSize / 5;
 
-  const points = options.containsMatchingEndpoints
+  const points = containsMatchingEndpoints
     ? polygon.vertices.slice(0, -1)
     : polygon.vertices;
 
@@ -95,11 +101,11 @@ export function redrawPolygonTelegraph(
         ? "positiveX"
         : "negativeX";
 
-    const moveX = x1 - camera.x + xOffset;
-    const moveY = y1 - camera.y + yOffset;
+    const moveX = x1 - xCamera + xOffset;
+    const moveY = y1 - yCamera + yOffset;
 
-    const lineX = x2 - camera.x + xOffset;
-    const lineY = y2 - camera.y + yOffset;
+    const lineX = x2 - xCamera + xOffset;
+    const lineY = y2 - yCamera + yOffset;
 
     if (diffType === "positiveX") {
       if (prevDiffType === "positiveY") {
@@ -194,203 +200,15 @@ export function redrawPolygonTelegraph(
         : "negativeX";
 
     ctx.moveTo(
-      (x1 - camera.x + xOffset) * pixelSize +
+      (x1 - xCamera + xOffset) * pixelSize +
         (diffType === "negativeX" || diffType === "positiveY" ? pixelSize : 0),
-      (y1 - camera.y + yOffset) * pixelSize +
+      (y1 - yCamera + yOffset) * pixelSize +
         (diffType === "negativeX" || diffType === "negativeY" ? pixelSize : 0),
     );
     ctx.lineTo(
-      (x2 - camera.x + xOffset) * pixelSize +
+      (x2 - xCamera + xOffset) * pixelSize +
         (diffType === "positiveX" || diffType === "positiveY" ? pixelSize : 0),
-      (y2 - camera.y + yOffset) * pixelSize +
-        (diffType === "negativeX" || diffType === "positiveY" ? pixelSize : 0),
-    );
-  }
-  ctx.fill();
-}
-
-export function redrawPolygonToUIChunkCanvas(
-  ctx: CanvasRenderingContext2D,
-  polygon: Polygon,
-  pixelSize: number,
-  options: {
-    containsMatchingEndpoints?: boolean;
-  } = {
-    containsMatchingEndpoints: false,
-  },
-) {
-  ctx.beginPath();
-  ctx.lineWidth = pixelSize / 5;
-
-  const points = options.containsMatchingEndpoints
-    ? polygon.vertices.slice(0, -1)
-    : polygon.vertices;
-
-  for (let i = 1; i < points.length + 1; i++) {
-    const prevPrev = points[(i - 1) % points.length];
-    const prev = points[i % points.length];
-    const point = points[(i + 1) % points.length];
-    const next = points[(i + 2) % points.length];
-
-    const x0 = prevPrev[0],
-      y0 = prevPrev[1];
-    const x1 = prev[0],
-      y1 = prev[1];
-    const x2 = point[0],
-      y2 = point[1];
-    const x3 = next[0],
-      y3 = next[1];
-
-    const xDiff0 = x1 - x0;
-    const yDiff0 = y1 - y0;
-
-    const prevDiffType =
-      xDiff0 === 0
-        ? yDiff0 === 0
-          ? "zero"
-          : yDiff0 > 0
-          ? "positiveY"
-          : "negativeY"
-        : xDiff0 > 0
-        ? "positiveX"
-        : "negativeX";
-
-    const xDiff = x2 - x1;
-    const yDiff = y2 - y1;
-
-    const diffType =
-      xDiff === 0
-        ? yDiff === 0
-          ? "zero"
-          : yDiff > 0
-          ? "positiveY"
-          : "negativeY"
-        : xDiff > 0
-        ? "positiveX"
-        : "negativeX";
-
-    const xDiff2 = x3 - x2;
-    const yDiff2 = y3 - y2;
-
-    const nextDiffType =
-      xDiff2 === 0
-        ? yDiff2 === 0
-          ? "zero"
-          : yDiff2 > 0
-          ? "positiveY"
-          : "negativeY"
-        : xDiff2 > 0
-        ? "positiveX"
-        : "negativeX";
-
-    const moveX = x1;
-    const moveY = y1;
-
-    const lineX = x2;
-    const lineY = y2;
-
-    if (diffType === "positiveX") {
-      if (prevDiffType === "positiveY") {
-        ctx.moveTo(moveX * pixelSize + pixelSize, moveY * pixelSize);
-      } else {
-        ctx.moveTo(moveX * pixelSize, moveY * pixelSize);
-      }
-    } else if (diffType === "negativeX") {
-      if (prevDiffType === "positiveY") {
-        ctx.moveTo(
-          moveX * pixelSize + pixelSize,
-          moveY * pixelSize + pixelSize,
-        );
-      } else {
-        ctx.moveTo(moveX * pixelSize, moveY * pixelSize + pixelSize);
-      }
-    } else if (diffType === "positiveY") {
-      if (prevDiffType === "positiveX") {
-        ctx.moveTo(moveX * pixelSize + pixelSize, moveY * pixelSize);
-      } else {
-        ctx.moveTo(
-          moveX * pixelSize + pixelSize,
-          moveY * pixelSize + pixelSize,
-        );
-      }
-    } else if (diffType === "negativeY") {
-      if (prevDiffType === "positiveX") {
-        ctx.moveTo(moveX * pixelSize, moveY * pixelSize);
-      } else {
-        ctx.moveTo(moveX * pixelSize, moveY * pixelSize + pixelSize);
-      }
-    }
-
-    if (diffType === "positiveX") {
-      if (nextDiffType === "positiveY") {
-        ctx.lineTo(lineX * pixelSize + pixelSize, lineY * pixelSize);
-      } else {
-        ctx.lineTo(lineX * pixelSize, lineY * pixelSize);
-      }
-    } else if (diffType === "negativeX") {
-      if (nextDiffType === "positiveY") {
-        ctx.lineTo(
-          lineX * pixelSize + pixelSize,
-          lineY * pixelSize + pixelSize,
-        );
-      } else {
-        ctx.lineTo(lineX * pixelSize, lineY * pixelSize + pixelSize);
-      }
-    } else if (diffType === "positiveY") {
-      if (nextDiffType === "positiveX") {
-        ctx.lineTo(lineX * pixelSize + pixelSize, lineY * pixelSize);
-      } else {
-        ctx.lineTo(
-          lineX * pixelSize + pixelSize,
-          lineY * pixelSize + pixelSize,
-        );
-      }
-    } else if (diffType === "negativeY") {
-      if (nextDiffType === "positiveX") {
-        ctx.lineTo(lineX * pixelSize, lineY * pixelSize);
-      } else {
-        ctx.lineTo(lineX * pixelSize, lineY * pixelSize + pixelSize);
-      }
-    }
-
-    ctx.stroke();
-    ctx.closePath();
-  }
-
-  ctx.beginPath();
-  for (let i = 1; i < polygon.vertices.length + 1; i++) {
-    const prev = polygon.vertices[i - 1];
-    const point = polygon.vertices[i % polygon.vertices.length];
-
-    const x1 = prev[0],
-      y1 = prev[1];
-    const x2 = point[0],
-      y2 = point[1];
-
-    const xDiff = x2 - x1;
-    const yDiff = y2 - y1;
-
-    const diffType =
-      xDiff === 0
-        ? yDiff === 0
-          ? "zero"
-          : yDiff > 0
-          ? "positiveY"
-          : "negativeY"
-        : xDiff > 0
-        ? "positiveX"
-        : "negativeX";
-
-    ctx.moveTo(
-      x1 * pixelSize +
-        (diffType === "negativeX" || diffType === "positiveY" ? pixelSize : 0),
-      y1 * pixelSize +
-        (diffType === "negativeX" || diffType === "negativeY" ? pixelSize : 0),
-    );
-    ctx.lineTo(
-      x2 * pixelSize +
-        (diffType === "positiveX" || diffType === "positiveY" ? pixelSize : 0),
-      y2 * pixelSize +
+      (y2 - yCamera + yOffset) * pixelSize +
         (diffType === "negativeX" || diffType === "positiveY" ? pixelSize : 0),
     );
   }
@@ -423,12 +241,18 @@ function redrawTelegraph(context: InitializedStore) {
 
   const aggregatedPolygons = getCompositePolygons(polygons);
 
+  const { xOffset, yOffset } = getCameraOffset(context.camera);
   for (let i = 0; i < aggregatedPolygons.length; i++) {
-    redrawPolygonTelegraph(
+    redrawPolygon(
       ctx,
       aggregatedPolygons[i],
-      pixelSize,
-      context.camera,
+      {
+        pixelSize,
+        xOffset,
+        yOffset,
+        xCamera: context.camera.x,
+        yCamera: context.camera.y,
+      },
     );
   }
 }

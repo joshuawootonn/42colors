@@ -5,7 +5,8 @@ import { Pixel } from "../geometry/coord";
 import { Camera, getZoomMultiplier, ZoomMultiplier } from "../camera";
 import { InitializedStore } from "../store";
 import { Plot } from "../tools/claimer.rest";
-import { redrawPolygonTelegraph } from "../tools/claimer";
+import { redrawPolygon } from "../tools/claimer";
+import { getCameraOffset } from "../tools/brush";
 
 export function createRealtimeCanvas(camera: Camera) {
   const canvas = document.createElement("canvas");
@@ -71,6 +72,7 @@ export function redrawUserPlots(context: InitializedStore) {
 
   const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
 
+  const { xOffset, yOffset } = getCameraOffset(context.camera);
   for (let i = 0; i < userPlotData.length; i++) {
     if (userPlotData[i].id === context.toolSettings.claimer.selectedPlotId) {
       ctx.fillStyle = "rgba(0,0,0,0)";
@@ -80,14 +82,13 @@ export function redrawUserPlots(context: InitializedStore) {
       ctx.strokeStyle = "rgba(0,0,0,1)";
     }
 
-    redrawPolygonTelegraph(
-      ctx,
-      userPlotData[i].polygon,
+    redrawPolygon(ctx, userPlotData[i].polygon, {
+      containsMatchingEndpoints: true,
+      xOffset,
+      yOffset,
+      xCamera: context.camera.x,
+      yCamera: context.camera.y,
       pixelSize,
-      context.camera,
-      {
-        containsMatchingEndpoints: true,
-      },
-    );
+    });
   }
 }
