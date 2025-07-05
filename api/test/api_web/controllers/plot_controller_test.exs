@@ -132,7 +132,7 @@ defmodule ApiWeb.PlotControllerTest do
   describe "me_plots" do
     test "lists all plots for the current user", %{conn: conn, user: user} do
       plot = plot_fixture(%{user_id: user.id})
-      conn = get(conn, ~p"/api/me/plots")
+      conn = get(conn, ~p"/api/plots/me")
       [resp_plot] = json_response(conn, 200)["data"]
       assert resp_plot["id"] == plot.id
       assert resp_plot["name"] == plot.name
@@ -151,7 +151,7 @@ defmodule ApiWeb.PlotControllerTest do
     end
 
     test "returns empty list when user has no plots", %{conn: conn} do
-      conn = get(conn, ~p"/api/me/plots")
+      conn = get(conn, ~p"/api/plots/me")
       response = json_response(conn, 200)["data"]
       assert response == []
     end
@@ -165,7 +165,7 @@ defmodule ApiWeb.PlotControllerTest do
       other_user = user_fixture()
       _other_plot = plot_fixture(%{user_id: other_user.id})
 
-      conn = get(conn, ~p"/api/me/plots")
+      conn = get(conn, ~p"/api/plots/me")
       response = json_response(conn, 200)["data"]
 
       plot_ids = Enum.map(response, & &1["id"])
@@ -183,7 +183,7 @@ defmodule ApiWeb.PlotControllerTest do
         }
       })
 
-      conn = get(conn, ~p"/api/me/plots")
+      conn = get(conn, ~p"/api/plots/me")
       [resp_plot] = json_response(conn, 200)["data"]
 
       assert resp_plot["id"] == plot.id

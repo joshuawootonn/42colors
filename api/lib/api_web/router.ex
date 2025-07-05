@@ -31,7 +31,9 @@ defmodule ApiWeb.Router do
   # Other scopes may use custom stacks.
   scope "/api", ApiWeb do
     pipe_through :api
-    resources "/pixels7", PixelSubSectionInFileAsBinary, except: [:new, :edit]
+
+    get "/plots", PlotController, :index
+    get "/pixels7", PixelSubSectionInFileAsBinary, :index
 
     post "/users/confirm/:token", UserConfirmationController, :update
     delete "/users/log_out", UserSessionController, :delete
@@ -50,16 +52,12 @@ defmodule ApiWeb.Router do
     pipe_through [:api, :require_authenticated_user, :put_channel_token]
 
     get "/users/me", UserSessionController, :read
+    get "/plots/me", PlotController, :me_plots
   end
 
   scope "/api", ApiWeb do
     pipe_through [:api, :require_authenticated_user]
 
-    # User-specific plots route
-    get "/me/plots", PlotController, :me_plots
-
-    # Chunk-based plots route (takes x,y query parameters)
-    get "/plots", PlotController, :index
     post "/plots", PlotController, :create
     get "/plots/:id", PlotController, :show
     put "/plots/:id", PlotController, :update
