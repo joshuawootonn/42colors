@@ -34,11 +34,10 @@ defmodule Api.Canvas.Plot.Service do
   """
   def list_plots_by_chunk(x, y) when is_integer(x) and is_integer(y) do
     # Calculate chunk boundaries (400x400 centered on x,y)
-    half_chunk = div(@chunk_size, 2)
-    min_x = x - half_chunk
-    max_x = x + half_chunk
-    min_y = y - half_chunk
-    max_y = y + half_chunk
+    min_x = x
+    max_x = x + @chunk_size
+    min_y = y
+    max_y = y + @chunk_size
 
     # Create a polygon representing the chunk area
     chunk_polygon = %Geo.Polygon{
