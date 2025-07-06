@@ -61,11 +61,20 @@ defmodule ApiWeb.PlotController do
             srid: 4326
           })
 
-        case Plot.Repo.create_plot(plot_params) do
+        case Plot.Service.create_plot(plot_params) do
           {:ok, %Plot{} = plot} ->
             conn
             |> put_status(:created)
             |> render(:show, plot: plot)
+
+          {:error, :overlapping_plots, overlapping_plots} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> json(%{
+              status: "error",
+              message: "Plot overlaps with existing plots",
+              overlapping_plots: format_overlapping_plots(overlapping_plots)
+            })
 
           {:error, %Ecto.Changeset{} = changeset} ->
             conn
@@ -99,9 +108,37 @@ defmodule ApiWeb.PlotController do
         send_resp(conn, :not_found, "Not found")
 
       plot ->
-        case Plot.Repo.update_plot(plot, plot_params) do
+        # Handle polygon updates similar to create
+        plot_params = case Map.get(plot_params, "polygon") do
+          nil ->
+            plot_params
+
+          polygon ->
+            Map.put(plot_params, "polygon", %Geo.Polygon{
+              coordinates: [
+                polygon
+                |> Map.get("vertices", [])
+                |> Enum.map(fn vertex ->
+                  # Convert coordinates to numeric coordinate tuple
+                  {List.first(vertex), List.last(vertex)}
+                end)
+              ],
+              srid: 4326
+            })
+        end
+
+        case Plot.Service.update_plot(plot, plot_params) do
           {:ok, %Plot{} = plot} ->
             render(conn, :show, plot: plot)
+
+          {:error, :overlapping_plots, overlapping_plots} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> json(%{
+              status: "error",
+              message: "Plot overlaps with existing plots",
+              overlapping_plots: format_overlapping_plots(overlapping_plots)
+            })
 
           {:error, %Ecto.Changeset{} = changeset} ->
             conn
@@ -144,6 +181,16 @@ defmodule ApiWeb.PlotController do
       Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
         opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
       end)
+    end)
+  end
+
+  defp format_overlapping_plots(overlapping_plots) do
+    Enum.map(overlapping_plots, fn plot ->
+      %{
+        id: plot.id,
+        name: plot.name,
+        description: plot.description
+      }
     end)
   end
 

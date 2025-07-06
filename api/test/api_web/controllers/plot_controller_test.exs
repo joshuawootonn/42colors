@@ -295,7 +295,7 @@ defmodule ApiWeb.PlotControllerTest do
 
     test "renders error for duplicate plot name", %{conn: conn} do
       # Create first plot
-      polygon = %{
+      polygon1 = %{
         "vertices" => [
           [0, 0],
           [0, 1],
@@ -305,12 +305,22 @@ defmodule ApiWeb.PlotControllerTest do
         ]
       }
 
-      attrs = %{name: "Duplicate Name", description: "First plot", polygon: polygon}
+      attrs = %{name: "Duplicate Name", description: "First plot", polygon: polygon1}
       conn = post(conn, ~p"/api/plots", plot: attrs)
       assert json_response(conn, 201)
 
-      # Try to create second plot with same name
-      attrs2 = %{name: "Duplicate Name", description: "Second plot", polygon: polygon}
+      # Try to create second plot with same name but different polygon (to avoid overlap)
+      polygon2 = %{
+        "vertices" => [
+          [10, 10],
+          [10, 11],
+          [11, 11],
+          [11, 10],
+          [10, 10]
+        ]
+      }
+
+      attrs2 = %{name: "Duplicate Name", description: "Second plot", polygon: polygon2}
       conn = post(conn, ~p"/api/plots", plot: attrs2)
       response = json_response(conn, 422)
       assert response["status"] == "error"
@@ -363,6 +373,75 @@ defmodule ApiWeb.PlotControllerTest do
       expected_vertices = [[22, 14], [22, 27], [41, 27], [41, 14], [22, 14]]
       assert resp["polygon"]["vertices"] == expected_vertices
     end
+
+    test "returns overlap error when plot overlaps with existing plot", %{conn: conn} do
+      # Create first plot
+      existing_polygon = %{
+        "vertices" => [
+          [10, 10],
+          [10, 30],
+          [30, 30],
+          [30, 10],
+          [10, 10]
+        ]
+      }
+
+      existing_attrs = %{name: "Existing Plot", description: "First plot", polygon: existing_polygon}
+      conn = post(conn, ~p"/api/plots", plot: existing_attrs)
+      assert %{"id" => _existing_id} = json_response(conn, 201)["data"]
+
+      # Try to create overlapping plot
+      overlapping_polygon = %{
+        "vertices" => [
+          [20, 20],
+          [20, 40],
+          [40, 40],
+          [40, 20],
+          [20, 20]
+        ]
+      }
+
+      overlapping_attrs = %{name: "Overlapping Plot", description: "Overlapping plot", polygon: overlapping_polygon}
+      conn = post(conn, ~p"/api/plots", plot: overlapping_attrs)
+      response = json_response(conn, 422)
+
+      assert response["status"] == "error"
+      assert response["message"] == "Plot overlaps with existing plots"
+      assert length(response["overlapping_plots"]) == 1
+      assert List.first(response["overlapping_plots"])["name"] == "Existing Plot"
+    end
+
+    test "allows non-overlapping plots to be created", %{conn: conn} do
+      # Create first plot
+      first_polygon = %{
+        "vertices" => [
+          [10, 10],
+          [10, 30],
+          [30, 30],
+          [30, 10],
+          [10, 10]
+        ]
+      }
+
+      first_attrs = %{name: "First Plot", description: "First plot", polygon: first_polygon}
+      conn = post(conn, ~p"/api/plots", plot: first_attrs)
+      assert %{"id" => _first_id} = json_response(conn, 201)["data"]
+
+      # Create non-overlapping plot
+      non_overlapping_polygon = %{
+        "vertices" => [
+          [50, 50],
+          [50, 70],
+          [70, 70],
+          [70, 50],
+          [50, 50]
+        ]
+      }
+
+      non_overlapping_attrs = %{name: "Non-overlapping Plot", description: "Non-overlapping plot", polygon: non_overlapping_polygon}
+      conn = post(conn, ~p"/api/plots", plot: non_overlapping_attrs)
+      assert %{"id" => _second_id} = json_response(conn, 201)["data"]
+    end
   end
 
   describe "update plot" do
@@ -412,6 +491,102 @@ defmodule ApiWeb.PlotControllerTest do
       assert response["status"] == "error"
       assert response["message"] == "Plot update failed"
       assert response["errors"]["description"] == ["Description must be less than 1000 characters"]
+    end
+
+    test "updates plot with new polygon when no overlaps", %{conn: conn, plot: plot} do
+      new_polygon = %{
+        "vertices" => [
+          [50, 50],
+          [50, 70],
+          [70, 70],
+          [70, 50],
+          [50, 50]
+        ]
+      }
+
+      attrs = %{name: "Updated Plot", polygon: new_polygon}
+      conn = put(conn, ~p"/api/plots/#{plot}", plot: attrs)
+      assert %{"id" => id} = json_response(conn, 200)["data"]
+
+      conn = get(conn, ~p"/api/plots/#{id}")
+      resp = json_response(conn, 200)["data"]
+      assert resp["name"] == "Updated Plot"
+      assert resp["polygon"]["vertices"] == [[50, 50], [50, 70], [70, 70], [70, 50], [50, 50]]
+    end
+
+    test "returns overlap error when updated polygon overlaps with existing plot", %{conn: conn, plot: plot} do
+      # Create another plot that will be overlapped
+      existing_polygon = %{
+        "vertices" => [
+          [30, 30],
+          [30, 50],
+          [50, 50],
+          [50, 30],
+          [30, 30]
+        ]
+      }
+
+      existing_attrs = %{name: "Existing Plot", description: "Existing plot", polygon: existing_polygon}
+      conn = post(conn, ~p"/api/plots", plot: existing_attrs)
+      assert %{"id" => _existing_id} = json_response(conn, 201)["data"]
+
+      # Try to update original plot with overlapping polygon
+      overlapping_polygon = %{
+        "vertices" => [
+          [35, 35],
+          [35, 55],
+          [55, 55],
+          [55, 35],
+          [35, 35]
+        ]
+      }
+
+      attrs = %{name: "Updated Plot", polygon: overlapping_polygon}
+      conn = put(conn, ~p"/api/plots/#{plot}", plot: attrs)
+      response = json_response(conn, 422)
+
+      assert response["status"] == "error"
+      assert response["message"] == "Plot overlaps with existing plots"
+      assert length(response["overlapping_plots"]) == 1
+      assert List.first(response["overlapping_plots"])["name"] == "Existing Plot"
+    end
+
+    test "allows plot to be updated with same polygon (no self-overlap)", %{conn: conn, plot: plot} do
+      # First, update the plot to have a polygon
+      initial_polygon = %{
+        "vertices" => [
+          [10, 10],
+          [10, 20],
+          [20, 20],
+          [20, 10],
+          [10, 10]
+        ]
+      }
+
+      attrs = %{name: "Plot with Polygon", polygon: initial_polygon}
+      conn = put(conn, ~p"/api/plots/#{plot}", plot: attrs)
+      assert %{"id" => id} = json_response(conn, 200)["data"]
+
+      # Now update with the same polygon - should work (no self-overlap)
+      same_polygon_attrs = %{name: "Same Polygon Plot", polygon: initial_polygon}
+      conn = put(conn, ~p"/api/plots/#{plot}", plot: same_polygon_attrs)
+      assert %{"id" => ^id} = json_response(conn, 200)["data"]
+
+      conn = get(conn, ~p"/api/plots/#{id}")
+      resp = json_response(conn, 200)["data"]
+      assert resp["name"] == "Same Polygon Plot"
+      assert resp["polygon"]["vertices"] == [[10, 10], [10, 20], [20, 20], [20, 10], [10, 10]]
+    end
+
+    test "updates plot without polygon validation when no polygon provided", %{conn: conn, plot: plot} do
+      attrs = %{name: "Updated Name Only", description: "Updated Description Only"}
+      conn = put(conn, ~p"/api/plots/#{plot}", plot: attrs)
+      assert %{"id" => id} = json_response(conn, 200)["data"]
+
+      conn = get(conn, ~p"/api/plots/#{id}")
+      resp = json_response(conn, 200)["data"]
+      assert resp["name"] == "Updated Name Only"
+      assert resp["description"] == "Updated Description Only"
     end
   end
 

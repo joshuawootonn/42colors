@@ -55,7 +55,110 @@ defmodule Api.Canvas.Plot.Service do
   end
 
   @doc """
+  Creates a plot with overlap validation.
+
+  Validates that the new plot doesn't overlap with any existing plots
+  before creating it.
+
+  ## Parameters
+  - `attrs`: Map of plot attributes including polygon
+
+  ## Returns
+  - `{:ok, %Plot{}}` if creation is successful
+  - `{:error, :overlapping_plots, overlapping_plots}` if plot overlaps with existing plots
+  - `{:error, %Ecto.Changeset{}}` if there are validation errors
+
+  ## Examples
+
+      iex> Plot.Service.create_plot(%{name: "Test", user_id: 1, polygon: polygon})
+      {:ok, %Plot{}}
+
+      iex> Plot.Service.create_plot(%{name: "Overlapping", user_id: 1, polygon: overlapping_polygon})
+      {:error, :overlapping_plots, [%Plot{}]}
+
+  """
+  def create_plot(attrs) do
+    case Map.get(attrs, "polygon") || Map.get(attrs, :polygon) do
+      nil ->
+        # If no polygon provided, proceed with normal validation (will fail in changeset)
+        Plot.Repo.create_plot(attrs)
+
+      polygon ->
+        case check_for_overlaps(polygon, nil) do
+          [] ->
+            # No overlaps, proceed with creation
+            Plot.Repo.create_plot(attrs)
+
+          overlapping_plots ->
+            # Found overlaps, return error with details
+            {:error, :overlapping_plots, overlapping_plots}
+        end
+    end
+  end
+
+  @doc """
+  Updates a plot with overlap validation.
+
+  Validates that the updated plot doesn't overlap with any existing plots
+  (excluding itself) before updating it.
+
+  ## Parameters
+  - `plot`: The existing %Plot{} struct to update
+  - `attrs`: Map of plot attributes to update
+
+  ## Returns
+  - `{:ok, %Plot{}}` if update is successful
+  - `{:error, :overlapping_plots, overlapping_plots}` if plot overlaps with existing plots
+  - `{:error, %Ecto.Changeset{}}` if there are validation errors
+
+  ## Examples
+
+      iex> Plot.Service.update_plot(plot, %{name: "Updated"})
+      {:ok, %Plot{}}
+
+      iex> Plot.Service.update_plot(plot, %{polygon: overlapping_polygon})
+      {:error, :overlapping_plots, [%Plot{}]}
+
+  """
+  def update_plot(%Plot{} = plot, attrs) do
+    # Check if polygon is being updated
+    new_polygon = Map.get(attrs, "polygon") || Map.get(attrs, :polygon)
+
+    case new_polygon do
+      nil ->
+        # No polygon update, proceed with normal update
+        Plot.Repo.update_plot(plot, attrs)
+
+      polygon ->
+        case check_for_overlaps(polygon, plot.id) do
+          [] ->
+            # No overlaps, proceed with update
+            Plot.Repo.update_plot(plot, attrs)
+
+          overlapping_plots ->
+            # Found overlaps, return error with details
+            {:error, :overlapping_plots, overlapping_plots}
+        end
+    end
+  end
+
+  @doc """
   Returns the chunk size used for spatial queries.
   """
   def chunk_size, do: @chunk_size
+
+  # Private function to check for overlapping plots
+  defp check_for_overlaps(polygon, exclude_plot_id) do
+    overlapping_plots = Plot.Repo.list_plots_within_polygon(polygon)
+
+    case exclude_plot_id do
+      nil ->
+        # Creating new plot, check against all existing plots
+        overlapping_plots
+
+      plot_id ->
+        # Updating existing plot, exclude itself from overlap check
+        Enum.filter(overlapping_plots, fn plot -> plot.id != plot_id end)
+    end
+  end
 end

@@ -267,4 +267,263 @@ defmodule Api.Canvas.Plot.ServiceTest do
       assert large_coord_plot.id in result_ids
     end
   end
+
+  describe "create_plot/1" do
+    test "creates plot successfully when no overlaps exist" do
+      user = user_fixture()
+
+      plot_attrs = %{
+        name: "Test Plot",
+        description: "A test plot",
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+          srid: 4326
+        }
+      }
+
+      assert {:ok, %Plot{} = plot} = Plot.Service.create_plot(plot_attrs)
+      assert plot.name == "Test Plot"
+      assert plot.description == "A test plot"
+      assert plot.user_id == user.id
+    end
+
+    test "creates plot successfully when no polygon is provided" do
+      user = user_fixture()
+
+      plot_attrs = %{
+        name: "Test Plot",
+        description: "A test plot",
+        user_id: user.id
+      }
+
+      assert {:ok, %Plot{} = plot} = Plot.Service.create_plot(plot_attrs)
+      assert plot.name == "Test Plot"
+      assert plot.polygon == nil
+    end
+
+    test "returns overlapping plots error when plot overlaps with existing plot" do
+      user = user_fixture()
+
+      # Create first plot
+      {:ok, existing_plot} = Plot.Repo.create_plot(%{
+        name: "Existing Plot",
+        description: "An existing plot",
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{10, 10}, {10, 30}, {30, 30}, {30, 10}, {10, 10}]],
+          srid: 4326
+        }
+      })
+
+      # Try to create overlapping plot
+      overlapping_attrs = %{
+        name: "Overlapping Plot",
+        description: "A plot that overlaps",
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{20, 20}, {20, 40}, {40, 40}, {40, 20}, {20, 20}]],
+          srid: 4326
+        }
+      }
+
+      assert {:error, :overlapping_plots, overlapping_plots} = Plot.Service.create_plot(overlapping_attrs)
+      assert length(overlapping_plots) == 1
+      assert List.first(overlapping_plots).id == existing_plot.id
+    end
+
+    test "returns changeset error when plot attributes are invalid" do
+      plot_attrs = %{
+        name: "",  # Invalid: empty name
+        user_id: nil,  # Invalid: nil user_id
+        polygon: %Geo.Polygon{
+          coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+          srid: 4326
+        }
+      }
+
+      assert {:error, %Ecto.Changeset{}} = Plot.Service.create_plot(plot_attrs)
+    end
+
+    test "allows non-overlapping plots to be created" do
+      user = user_fixture()
+
+      # Create first plot
+      {:ok, _existing_plot} = Plot.Repo.create_plot(%{
+        name: "Existing Plot",
+        description: "An existing plot",
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{10, 10}, {10, 30}, {30, 30}, {30, 10}, {10, 10}]],
+          srid: 4326
+        }
+      })
+
+      # Create non-overlapping plot
+      non_overlapping_attrs = %{
+        name: "Non-overlapping Plot",
+        description: "A plot that doesn't overlap",
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{50, 50}, {50, 70}, {70, 70}, {70, 50}, {50, 50}]],
+          srid: 4326
+        }
+      }
+
+      assert {:ok, %Plot{} = plot} = Plot.Service.create_plot(non_overlapping_attrs)
+      assert plot.name == "Non-overlapping Plot"
+    end
+  end
+
+  describe "update_plot/2" do
+    test "updates plot successfully when no overlaps exist" do
+      user = user_fixture()
+
+      {:ok, plot} = Plot.Repo.create_plot(%{
+        name: "Original Plot",
+        description: "Original description",
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+          srid: 4326
+        }
+      })
+
+      update_attrs = %{
+        name: "Updated Plot",
+        description: "Updated description"
+      }
+
+      assert {:ok, %Plot{} = updated_plot} = Plot.Service.update_plot(plot, update_attrs)
+      assert updated_plot.name == "Updated Plot"
+      assert updated_plot.description == "Updated description"
+    end
+
+    test "updates plot successfully when updating polygon without overlaps" do
+      user = user_fixture()
+
+      {:ok, plot} = Plot.Repo.create_plot(%{
+        name: "Original Plot",
+        description: "Original description",
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+          srid: 4326
+        }
+      })
+
+      new_polygon = %Geo.Polygon{
+        coordinates: [[{50, 50}, {50, 60}, {60, 60}, {60, 50}, {50, 50}]],
+        srid: 4326
+      }
+
+      update_attrs = %{polygon: new_polygon}
+
+      assert {:ok, %Plot{} = updated_plot} = Plot.Service.update_plot(plot, update_attrs)
+      assert updated_plot.polygon == new_polygon
+    end
+
+    test "returns overlapping plots error when updated polygon overlaps with existing plot" do
+      user = user_fixture()
+
+      # Create first plot
+      {:ok, existing_plot} = Plot.Repo.create_plot(%{
+        name: "Existing Plot",
+        description: "An existing plot",
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{30, 30}, {30, 50}, {50, 50}, {50, 30}, {30, 30}]],
+          srid: 4326
+        }
+      })
+
+      # Create second plot to update
+      {:ok, plot_to_update} = Plot.Repo.create_plot(%{
+        name: "Plot to Update",
+        description: "A plot that will be updated",
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+          srid: 4326
+        }
+      })
+
+      # Try to update with overlapping polygon
+      overlapping_polygon = %Geo.Polygon{
+        coordinates: [[{35, 35}, {35, 55}, {55, 55}, {55, 35}, {35, 35}]],
+        srid: 4326
+      }
+
+      update_attrs = %{polygon: overlapping_polygon}
+
+      assert {:error, :overlapping_plots, overlapping_plots} = Plot.Service.update_plot(plot_to_update, update_attrs)
+      assert length(overlapping_plots) == 1
+      assert List.first(overlapping_plots).id == existing_plot.id
+    end
+
+    test "allows plot to be updated with same polygon (no self-overlap)" do
+      user = user_fixture()
+
+      polygon = %Geo.Polygon{
+        coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+        srid: 4326
+      }
+
+      {:ok, plot} = Plot.Repo.create_plot(%{
+        name: "Original Plot",
+        description: "Original description",
+        user_id: user.id,
+        polygon: polygon
+      })
+
+      # Update with same polygon should work (no self-overlap)
+      update_attrs = %{
+        name: "Updated Plot",
+        polygon: polygon
+      }
+
+      assert {:ok, %Plot{} = updated_plot} = Plot.Service.update_plot(plot, update_attrs)
+      assert updated_plot.name == "Updated Plot"
+      assert updated_plot.polygon == polygon
+    end
+
+    test "returns changeset error when update attributes are invalid" do
+      user = user_fixture()
+
+      {:ok, plot} = Plot.Repo.create_plot(%{
+        name: "Original Plot",
+        description: "Original description",
+        user_id: user.id
+      })
+
+      update_attrs = %{
+        name: ""  # Invalid: empty name
+      }
+
+      assert {:error, %Ecto.Changeset{}} = Plot.Service.update_plot(plot, update_attrs)
+    end
+
+    test "updates plot successfully when no polygon is provided in update" do
+      user = user_fixture()
+
+      {:ok, plot} = Plot.Repo.create_plot(%{
+        name: "Original Plot",
+        description: "Original description",
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+          srid: 4326
+        }
+      })
+
+      update_attrs = %{
+        name: "Updated Plot"
+      }
+
+      assert {:ok, %Plot{} = updated_plot} = Plot.Service.update_plot(plot, update_attrs)
+      assert updated_plot.name == "Updated Plot"
+      # Polygon should remain unchanged
+      assert updated_plot.polygon == plot.polygon
+    end
+  end
 end
