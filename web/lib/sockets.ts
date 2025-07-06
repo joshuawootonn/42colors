@@ -5,8 +5,10 @@ import { toast } from '@/components/ui/toast';
 
 import { ErrorCode } from './error-codes';
 import { Pixel, pixelSchema } from './geometry/coord';
+import { polygonSchema } from './geometry/polygon';
 import { colorRefSchema } from './palette';
 import { InitializedStore, store } from './store';
+import { Plot } from './tools/claimer/claimer.rest';
 import { isInitialStore } from './utils/is-initial-store';
 
 export function setupSocketConnection(
@@ -97,6 +99,76 @@ export function setupChannel(socket: Socket): Channel {
             pixels: newPixelResponseToPixelSchmea.parse(payload),
         });
     });
+
+    channel.on(
+        'create_plot',
+        (payload: { plot: Plot; chunk_keys: string[] }) => {
+            const { plot, chunk_keys } = payload;
+            if (!plot.polygon?.vertices || !chunk_keys) return;
+
+            chunk_keys.forEach((chunkKey) => {
+                const match = chunkKey.match(/x: (-?\d+) y: (-?\d+)/);
+                if (!match) return;
+
+                const chunkX = parseInt(match[1]);
+                const chunkY = parseInt(match[2]);
+
+                const localPlot: Plot = {
+                    ...plot,
+                    polygon: polygonSchema.parse({
+                        vertices: plot.polygon.vertices.map((vertex) => [
+                            vertex[0] - chunkX,
+                            vertex[1] - chunkY,
+                        ]),
+                    }),
+                };
+
+                store.trigger.addPlots({ chunkKey, plots: [localPlot] });
+            });
+        },
+    );
+
+    channel.on(
+        'update_plot',
+        (payload: { plot: Plot; chunk_keys: string[] }) => {
+            const { plot, chunk_keys } = payload;
+            if (!plot.polygon?.vertices || !chunk_keys) return;
+
+            chunk_keys.forEach((chunkKey) => {
+                const match = chunkKey.match(/x: (-?\d+) y: (-?\d+)/);
+                if (!match) return;
+
+                const chunkX = parseInt(match[1]);
+                const chunkY = parseInt(match[2]);
+
+                store.trigger.removePlots({ chunkKey, plotIds: [plot.id] });
+
+                const localPlot: Plot = {
+                    ...plot,
+                    polygon: polygonSchema.parse({
+                        vertices: plot.polygon.vertices.map((vertex) => [
+                            vertex[0] - chunkX,
+                            vertex[1] - chunkY,
+                        ]),
+                    }),
+                };
+
+                store.trigger.addPlots({ chunkKey, plots: [localPlot] });
+            });
+        },
+    );
+
+    channel.on(
+        'delete_plot',
+        (payload: { plot_id: number; chunk_keys: string[] }) => {
+            const { plot_id, chunk_keys } = payload;
+            if (!chunk_keys) return;
+
+            chunk_keys.forEach((chunkKey) => {
+                store.trigger.removePlots({ chunkKey, plotIds: [plot_id] });
+            });
+        },
+    );
 
     return channel;
 }

@@ -21,6 +21,7 @@ import {
 } from './canvas/background';
 import {
     ChunkCanvases,
+    clearChunk,
     clearChunkPixels,
     createChunkCanvas,
     createUIChunkCanvas,
@@ -560,7 +561,7 @@ export const store = createStore({
                                     ),
                             })
                             .then((pixels) =>
-                                store.trigger.updateChunk({ chunkKey, pixels }),
+                                store.trigger.addPixels({ chunkKey, pixels }),
                             );
 
                         context.queryClient
@@ -569,7 +570,7 @@ export const store = createStore({
                                 queryFn: () => getPlotsByChunk(chunkX, chunkY),
                             })
                             .then((plots) =>
-                                store.trigger.updateChunk({
+                                store.trigger.addPlots({
                                     chunkKey,
                                     plots: plots.map((plot) => ({
                                         ...plot,
@@ -624,6 +625,144 @@ export const store = createStore({
                 if (plots) {
                     store.trigger.drawPlotsToChunkCanvasUI({ chunkKey, plots });
                 }
+            });
+        },
+
+        addPixels: (
+            context,
+            { chunkKey, pixels }: { chunkKey: string; pixels: Pixel[] },
+            enqueue,
+        ) => {
+            if (isInitialStore(context)) return;
+
+            const prev = context.canvas.chunkCanvases[chunkKey];
+
+            if (prev == null) {
+                console.log(
+                    `skipping add pixels on uninitialized chunk, chunkKey: ${chunkKey}`,
+                );
+                return;
+            }
+
+            context.canvas.chunkCanvases[chunkKey] = {
+                ...prev,
+                pixels: [...prev.pixels, ...pixels],
+            };
+
+            enqueue.effect(() => {
+                store.trigger.redrawChunk({ chunkKey });
+            });
+        },
+
+        addPlots: (
+            context,
+            { chunkKey, plots }: { chunkKey: string; plots: Plot[] },
+            enqueue,
+        ) => {
+            if (isInitialStore(context)) return;
+
+            const prev = context.canvas.chunkCanvases[chunkKey];
+
+            if (prev == null) {
+                console.log(
+                    `skipping add plots on uninitialized chunk, chunkKey: ${chunkKey}`,
+                );
+                return;
+            }
+
+            context.canvas.chunkCanvases[chunkKey] = {
+                ...prev,
+                plots: [...prev.plots, ...plots],
+            };
+
+            enqueue.effect(() => {
+                store.trigger.redrawChunk({ chunkKey });
+            });
+        },
+
+        removePixels: (
+            context,
+            { chunkKey, pixelIds }: { chunkKey: string; pixelIds: string[] },
+            enqueue,
+        ) => {
+            if (isInitialStore(context)) return;
+
+            const prev = context.canvas.chunkCanvases[chunkKey];
+
+            if (prev == null) {
+                console.log(
+                    `skipping remove pixels on uninitialized chunk, chunkKey: ${chunkKey}`,
+                );
+                return;
+            }
+
+            const pixelIdSet = new Set(pixelIds);
+            const remainingPixels = prev.pixels.filter(
+                (pixel) => !pixelIdSet.has(`${pixel.x},${pixel.y}`),
+            );
+
+            context.canvas.chunkCanvases[chunkKey] = {
+                ...prev,
+                pixels: remainingPixels,
+            };
+
+            enqueue.effect(() => {
+                store.trigger.redrawChunk({ chunkKey });
+            });
+        },
+
+        removePlots: (
+            context,
+            { chunkKey, plotIds }: { chunkKey: string; plotIds: number[] },
+            enqueue,
+        ) => {
+            console.log('removePlots', chunkKey, plotIds);
+            if (isInitialStore(context)) return;
+
+            const prev = context.canvas.chunkCanvases[chunkKey];
+
+            if (prev == null) {
+                console.log(
+                    `skipping remove plots on uninitialized chunk, chunkKey: ${chunkKey}`,
+                );
+                return;
+            }
+
+            const plotIdSet = new Set(plotIds);
+            const remainingPlots = prev.plots.filter(
+                (plot) => !plotIdSet.has(plot.id),
+            );
+
+            console.log({
+                remainingPlots,
+                prevPlots: prev.plots,
+                chunkCanvases: context.canvas.chunkCanvases,
+                plotIdSet,
+                chunkKey,
+            });
+
+            context.canvas.chunkCanvases[chunkKey] = {
+                ...prev,
+                plots: remainingPlots,
+            };
+
+            enqueue.effect(() => {
+                store.trigger.redrawChunk({ chunkKey });
+            });
+        },
+
+        redrawChunk: (context, { chunkKey }: { chunkKey: string }, enqueue) => {
+            if (isInitialStore(context)) return;
+            enqueue.effect(() => {
+                store.trigger.clearChunk({ chunkKey });
+                store.trigger.drawPixelsToChunkCanvas({
+                    chunkKey,
+                    pixels: context.canvas.chunkCanvases[chunkKey].pixels,
+                });
+                store.trigger.drawPlotsToChunkCanvasUI({
+                    chunkKey,
+                    plots: context.canvas.chunkCanvases[chunkKey].plots,
+                });
             });
         },
 
@@ -683,6 +822,13 @@ export const store = createStore({
                 default:
                     console.log('default case of the redrawTelegraph');
             }
+        },
+
+        clearChunk: (context, { chunkKey }: { chunkKey: string }, enqueue) => {
+            if (isInitialStore(context)) return;
+            enqueue.effect(() => {
+                clearChunk(context.canvas.chunkCanvases, chunkKey);
+            });
         },
 
         drawPixelsToChunkCanvas: (

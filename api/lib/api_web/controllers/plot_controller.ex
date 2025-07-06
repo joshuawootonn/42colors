@@ -2,6 +2,7 @@ defmodule ApiWeb.PlotController do
   use ApiWeb, :controller
 
   alias Api.Canvas.Plot
+  alias Api.Canvas.ChunkUtils
 
   action_fallback ApiWeb.FallbackController
 
@@ -64,7 +65,13 @@ defmodule ApiWeb.PlotController do
         case Plot.Service.create_plot(plot_params) do
           {:ok, %Plot{} = plot} ->
             # Broadcast to region channel
-            ApiWeb.Endpoint.broadcast("region:general", "create_plot", %{"plot" => plot})
+            plot_data = ApiWeb.PlotJSON.show(%{plot: plot}).data
+            chunk_keys = ChunkUtils.get_affected_chunk_keys(plot.polygon)
+
+            ApiWeb.Endpoint.broadcast("region:general", "create_plot", %{
+              "plot" => plot_data,
+              "chunk_keys" => chunk_keys
+            })
 
             conn
             |> put_status(:created)
@@ -139,7 +146,13 @@ defmodule ApiWeb.PlotController do
         case Plot.Service.update_plot(plot, plot_params) do
           {:ok, %Plot{} = plot} ->
             # Broadcast to region channel
-            ApiWeb.Endpoint.broadcast("region:general", "update_plot", %{"plot" => plot})
+            plot_data = ApiWeb.PlotJSON.show(%{plot: plot}).data
+            chunk_keys = ChunkUtils.get_affected_chunk_keys(plot.polygon)
+
+            ApiWeb.Endpoint.broadcast("region:general", "update_plot", %{
+              "plot" => plot_data,
+              "chunk_keys" => chunk_keys
+            })
 
             render(conn, :show, plot: plot)
 
@@ -177,10 +190,16 @@ defmodule ApiWeb.PlotController do
         send_resp(conn, :not_found, "Not found")
 
       plot ->
+        # Calculate chunk keys before deleting
+        chunk_keys = ChunkUtils.get_affected_chunk_keys(plot.polygon)
+
         case Plot.Repo.delete_plot(plot) do
           {:ok, %Plot{}} ->
             # Broadcast to region channel
-            ApiWeb.Endpoint.broadcast("region:general", "delete_plot", %{"plot_id" => plot.id})
+            ApiWeb.Endpoint.broadcast("region:general", "delete_plot", %{
+              "plot_id" => plot.id,
+              "chunk_keys" => chunk_keys
+            })
 
             send_resp(conn, :no_content, "")
 

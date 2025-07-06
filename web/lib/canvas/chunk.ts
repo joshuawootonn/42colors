@@ -110,6 +110,17 @@ export function clearChunkPixels(
     }
 }
 
+export function clearChunk(chunkCanvases: ChunkCanvases, chunkKey: string) {
+    const chunk = chunkCanvases[chunkKey];
+    chunk.context.clearRect(0, 0, CHUNK_LENGTH, CHUNK_LENGTH);
+    chunk.contextUI.clearRect(
+        0,
+        0,
+        CHUNK_LENGTH * CANVAS_PIXEL_RATIO,
+        CHUNK_LENGTH * CANVAS_PIXEL_RATIO,
+    );
+}
+
 export const chunkPixelSchema = pixelSchema.brand<'ChunkPixel'>();
 export type ChunkPixel = z.infer<typeof chunkPixelSchema>;
 
