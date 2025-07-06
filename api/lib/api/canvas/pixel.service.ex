@@ -70,9 +70,10 @@ defmodule Api.Canvas.PixelService do
 
     valid_points = Plot.Repo.points_within_plots(points, user_id)
 
-    valid_point_set = MapSet.new(valid_points, fn %Geo.Point{coordinates: {x, y}} ->
-      {trunc(x), trunc(y)}
-    end)
+    valid_point_set =
+      MapSet.new(valid_points, fn %Geo.Point{coordinates: {x, y}} ->
+        {trunc(x), trunc(y)}
+      end)
 
     Enum.split_with(pixels, fn pixel ->
       MapSet.member?(valid_point_set, {pixel.x, pixel.y})

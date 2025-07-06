@@ -5,7 +5,6 @@ defmodule ApiWeb.UserSessionController do
   alias Api.Accounts.User
   alias ApiWeb.UserAuth
 
-
   def create(conn, %{"user" => user_params}) do
     changeset = User.login_changeset(%User{}, user_params)
 
@@ -63,6 +62,7 @@ defmodule ApiWeb.UserSessionController do
   def read(conn, _params) do
     user = conn.assigns.current_user
     channel_token = conn.assigns.channel_token
+
     json(conn, %{
       status: "success",
       user: %{

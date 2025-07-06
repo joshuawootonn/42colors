@@ -109,23 +109,24 @@ defmodule ApiWeb.PlotController do
 
       plot ->
         # Handle polygon updates similar to create
-        plot_params = case Map.get(plot_params, "polygon") do
-          nil ->
-            plot_params
+        plot_params =
+          case Map.get(plot_params, "polygon") do
+            nil ->
+              plot_params
 
-          polygon ->
-            Map.put(plot_params, "polygon", %Geo.Polygon{
-              coordinates: [
-                polygon
-                |> Map.get("vertices", [])
-                |> Enum.map(fn vertex ->
-                  # Convert coordinates to numeric coordinate tuple
-                  {List.first(vertex), List.last(vertex)}
-                end)
-              ],
-              srid: 4326
-            })
-        end
+            polygon ->
+              Map.put(plot_params, "polygon", %Geo.Polygon{
+                coordinates: [
+                  polygon
+                  |> Map.get("vertices", [])
+                  |> Enum.map(fn vertex ->
+                    # Convert coordinates to numeric coordinate tuple
+                    {List.first(vertex), List.last(vertex)}
+                  end)
+                ],
+                srid: 4326
+              })
+          end
 
         case Plot.Service.update_plot(plot, plot_params) do
           {:ok, %Plot{} = plot} ->

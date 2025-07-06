@@ -8,9 +8,10 @@ defmodule Api.Canvas.PixelServiceTest do
   describe "create_many/2" do
     setup do
       # Create a test user
-      {:ok, user} = %User{}
-      |> User.registration_changeset(%{email: "test@example.com", password: "password123456!"})
-      |> Repo.insert()
+      {:ok, user} =
+        %User{}
+        |> User.registration_changeset(%{email: "test@example.com", password: "password123456!"})
+        |> Repo.insert()
 
       # Create a test plot (square from 0,0 to 10,10)
       plot_attrs = %{
@@ -50,8 +51,10 @@ defmodule Api.Canvas.PixelServiceTest do
 
     test "rejects all pixels when they are outside user's plot", %{user: user} do
       invalid_pixels = [
-        %{x: 15, y: 15, color: 1},  # Outside plot
-        %{x: -5, y: 5, color: 2}    # Outside plot
+        # Outside plot
+        %{x: 15, y: 15, color: 1},
+        # Outside plot
+        %{x: -5, y: 5, color: 2}
       ]
 
       assert {:error, :all_invalid, rejected} = PixelService.create_many(invalid_pixels, user.id)
@@ -61,9 +64,12 @@ defmodule Api.Canvas.PixelServiceTest do
 
     test "accepts valid pixels and rejects invalid ones (partial acceptance)", %{user: user} do
       mixed_pixels = [
-        %{x: 5, y: 5, color: 1},    # Valid
-        %{x: 15, y: 15, color: 2},  # Invalid
-        %{x: 3, y: 3, color: 3}     # Valid
+        # Valid
+        %{x: 5, y: 5, color: 1},
+        # Invalid
+        %{x: 15, y: 15, color: 2},
+        # Valid
+        %{x: 3, y: 3, color: 3}
       ]
 
       assert {:ok, created, rejected} = PixelService.create_many(mixed_pixels, user.id)
@@ -78,9 +84,13 @@ defmodule Api.Canvas.PixelServiceTest do
     end
 
     test "returns error when user has no plots" do
-      {:ok, user_no_plots} = %User{}
-      |> User.registration_changeset(%{email: "noplot@example.com", password: "password123456!"})
-      |> Repo.insert()
+      {:ok, user_no_plots} =
+        %User{}
+        |> User.registration_changeset(%{
+          email: "noplot@example.com",
+          password: "password123456!"
+        })
+        |> Repo.insert()
 
       pixels = [%{x: 5, y: 5, color: 1}]
 
@@ -94,10 +104,14 @@ defmodule Api.Canvas.PixelServiceTest do
 
     test "handles edge case pixels on plot boundary", %{user: user} do
       boundary_pixels = [
-        %{x: 0, y: 0, color: 1},    # Corner
-        %{x: 10, y: 10, color: 2},  # Opposite corner
-        %{x: 5, y: 0, color: 3},    # Edge
-        %{x: 0, y: 5, color: 4}     # Edge
+        # Corner
+        %{x: 0, y: 0, color: 1},
+        # Opposite corner
+        %{x: 10, y: 10, color: 2},
+        # Edge
+        %{x: 5, y: 0, color: 3},
+        # Edge
+        %{x: 0, y: 5, color: 4}
       ]
 
       # Note: Depending on how PostGIS handles boundary conditions,
@@ -105,9 +119,11 @@ defmodule Api.Canvas.PixelServiceTest do
       case PixelService.create_many(boundary_pixels, user.id) do
         {:ok, pixels} ->
           assert length(pixels) == 4
+
         {:ok, pixels, rejected} ->
           # Some boundary pixels accepted, some rejected
           assert length(pixels) + length(rejected) == 4
+
         {:error, :all_invalid, rejected} ->
           # If all boundary pixels are rejected, that's also acceptable behavior
           assert length(rejected) == 4

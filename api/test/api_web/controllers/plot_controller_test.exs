@@ -19,13 +19,14 @@ defmodule ApiWeb.PlotControllerTest do
   describe "index (chunk-based)" do
     test "returns plots within chunk when x,y parameters provided", %{conn: conn, user: user} do
       # Create a plot that should be found in the chunk
-      plot = plot_fixture(%{
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{95, 95}, {95, 105}, {105, 105}, {105, 95}, {95, 95}]],
-          srid: 4326
-        }
-      })
+      plot =
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{95, 95}, {95, 105}, {105, 105}, {105, 95}, {95, 95}]],
+            srid: 4326
+          }
+        })
 
       conn = get(conn, ~p"/api/plots?x=100&y=100")
       response = json_response(conn, 200)["data"]
@@ -71,13 +72,14 @@ defmodule ApiWeb.PlotControllerTest do
     end
 
     test "handles string coordinates correctly", %{conn: conn, user: user} do
-      plot = plot_fixture(%{
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{95, 95}, {95, 105}, {105, 105}, {105, 95}, {95, 95}]],
-          srid: 4326
-        }
-      })
+      plot =
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{95, 95}, {95, 105}, {105, 105}, {105, 95}, {95, 95}]],
+            srid: 4326
+          }
+        })
 
       conn = get(conn, ~p"/api/plots?x=100&y=100")
       response = json_response(conn, 200)["data"]
@@ -87,13 +89,14 @@ defmodule ApiWeb.PlotControllerTest do
     end
 
     test "handles negative coordinates", %{conn: conn, user: user} do
-      plot = plot_fixture(%{
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{-105, -105}, {-105, -95}, {-95, -95}, {-95, -105}, {-105, -105}]],
-          srid: 4326
-        }
-      })
+      plot =
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{-105, -105}, {-105, -95}, {-95, -95}, {-95, -105}, {-105, -105}]],
+            srid: 4326
+          }
+        })
 
       conn = get(conn, ~p"/api/plots?x=-100&y=-100")
       response = json_response(conn, 200)["data"]
@@ -105,20 +108,24 @@ defmodule ApiWeb.PlotControllerTest do
     test "returns plots from multiple users in chunk", %{conn: conn, user: user} do
       # Create another user and plot
       other_user = user_fixture()
-      plot1 = plot_fixture(%{
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{95, 95}, {95, 105}, {105, 105}, {105, 95}, {95, 95}]],
-          srid: 4326
-        }
-      })
-      plot2 = plot_fixture(%{
-        user_id: other_user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{90, 90}, {90, 110}, {110, 110}, {110, 90}, {90, 90}]],
-          srid: 4326
-        }
-      })
+
+      plot1 =
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{95, 95}, {95, 105}, {105, 105}, {105, 95}, {95, 95}]],
+            srid: 4326
+          }
+        })
+
+      plot2 =
+        plot_fixture(%{
+          user_id: other_user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{90, 90}, {90, 110}, {110, 110}, {110, 90}, {90, 90}]],
+            srid: 4326
+          }
+        })
 
       conn = get(conn, ~p"/api/plots?x=100&y=100")
       response = json_response(conn, 200)["data"]
@@ -175,13 +182,14 @@ defmodule ApiWeb.PlotControllerTest do
     end
 
     test "returns plots with correct structure", %{conn: conn, user: user} do
-      plot = plot_fixture(%{
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}]],
-          srid: 4326
-        }
-      })
+      plot =
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}]],
+            srid: 4326
+          }
+        })
 
       conn = get(conn, ~p"/api/plots/me")
       [resp_plot] = json_response(conn, 200)["data"]
@@ -290,7 +298,10 @@ defmodule ApiWeb.PlotControllerTest do
       response = json_response(conn, 422)
       assert response["status"] == "error"
       assert response["message"] == "Plot creation failed"
-      assert response["errors"]["description"] == ["Description must be less than 1000 characters"]
+
+      assert response["errors"]["description"] == [
+               "Description must be less than 1000 characters"
+             ]
     end
 
     test "renders error for duplicate plot name", %{conn: conn} do
@@ -386,7 +397,12 @@ defmodule ApiWeb.PlotControllerTest do
         ]
       }
 
-      existing_attrs = %{name: "Existing Plot", description: "First plot", polygon: existing_polygon}
+      existing_attrs = %{
+        name: "Existing Plot",
+        description: "First plot",
+        polygon: existing_polygon
+      }
+
       conn = post(conn, ~p"/api/plots", plot: existing_attrs)
       assert %{"id" => _existing_id} = json_response(conn, 201)["data"]
 
@@ -401,7 +417,12 @@ defmodule ApiWeb.PlotControllerTest do
         ]
       }
 
-      overlapping_attrs = %{name: "Overlapping Plot", description: "Overlapping plot", polygon: overlapping_polygon}
+      overlapping_attrs = %{
+        name: "Overlapping Plot",
+        description: "Overlapping plot",
+        polygon: overlapping_polygon
+      }
+
       conn = post(conn, ~p"/api/plots", plot: overlapping_attrs)
       response = json_response(conn, 422)
 
@@ -438,7 +459,12 @@ defmodule ApiWeb.PlotControllerTest do
         ]
       }
 
-      non_overlapping_attrs = %{name: "Non-overlapping Plot", description: "Non-overlapping plot", polygon: non_overlapping_polygon}
+      non_overlapping_attrs = %{
+        name: "Non-overlapping Plot",
+        description: "Non-overlapping plot",
+        polygon: non_overlapping_polygon
+      }
+
       conn = post(conn, ~p"/api/plots", plot: non_overlapping_attrs)
       assert %{"id" => _second_id} = json_response(conn, 201)["data"]
     end
@@ -490,7 +516,10 @@ defmodule ApiWeb.PlotControllerTest do
       response = json_response(conn, 422)
       assert response["status"] == "error"
       assert response["message"] == "Plot update failed"
-      assert response["errors"]["description"] == ["Description must be less than 1000 characters"]
+
+      assert response["errors"]["description"] == [
+               "Description must be less than 1000 characters"
+             ]
     end
 
     test "updates plot with new polygon when no overlaps", %{conn: conn, plot: plot} do
@@ -514,7 +543,10 @@ defmodule ApiWeb.PlotControllerTest do
       assert resp["polygon"]["vertices"] == [[50, 50], [50, 70], [70, 70], [70, 50], [50, 50]]
     end
 
-    test "returns overlap error when updated polygon overlaps with existing plot", %{conn: conn, plot: plot} do
+    test "returns overlap error when updated polygon overlaps with existing plot", %{
+      conn: conn,
+      plot: plot
+    } do
       # Create another plot that will be overlapped
       existing_polygon = %{
         "vertices" => [
@@ -526,7 +558,12 @@ defmodule ApiWeb.PlotControllerTest do
         ]
       }
 
-      existing_attrs = %{name: "Existing Plot", description: "Existing plot", polygon: existing_polygon}
+      existing_attrs = %{
+        name: "Existing Plot",
+        description: "Existing plot",
+        polygon: existing_polygon
+      }
+
       conn = post(conn, ~p"/api/plots", plot: existing_attrs)
       assert %{"id" => _existing_id} = json_response(conn, 201)["data"]
 
@@ -551,7 +588,10 @@ defmodule ApiWeb.PlotControllerTest do
       assert List.first(response["overlapping_plots"])["name"] == "Existing Plot"
     end
 
-    test "allows plot to be updated with same polygon (no self-overlap)", %{conn: conn, plot: plot} do
+    test "allows plot to be updated with same polygon (no self-overlap)", %{
+      conn: conn,
+      plot: plot
+    } do
       # First, update the plot to have a polygon
       initial_polygon = %{
         "vertices" => [
@@ -578,7 +618,10 @@ defmodule ApiWeb.PlotControllerTest do
       assert resp["polygon"]["vertices"] == [[10, 10], [10, 20], [20, 20], [20, 10], [10, 10]]
     end
 
-    test "updates plot without polygon validation when no polygon provided", %{conn: conn, plot: plot} do
+    test "updates plot without polygon validation when no polygon provided", %{
+      conn: conn,
+      plot: plot
+    } do
       attrs = %{name: "Updated Name Only", description: "Updated Description Only"}
       conn = put(conn, ~p"/api/plots/#{plot}", plot: attrs)
       assert %{"id" => id} = json_response(conn, 200)["data"]

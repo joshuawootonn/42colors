@@ -15,19 +15,23 @@ defmodule ApiWeb.RegionChannel do
       {:reply, {:error, "unauthed_user"}, socket}
     else
       # Transform pixels to the format expected by PixelService
-      pixel_attrs = Enum.map(pixels, fn pixel ->
-        %{
-          x: Map.get(pixel, "x"),
-          y: Map.get(pixel, "y"),
-          color: Map.get(pixel, "color")
-        }
-      end)
+      pixel_attrs =
+        Enum.map(pixels, fn pixel ->
+          %{
+            x: Map.get(pixel, "x"),
+            y: Map.get(pixel, "y"),
+            color: Map.get(pixel, "color")
+          }
+        end)
 
       case PixelService.create_many(pixel_attrs, current_user_id) do
         {:ok, pixel_changesets} ->
           # All pixels were valid and created
           PixelCacheSupervisor.write_pixels_to_file(pixel_changesets)
-          valid_pixel_coords = Enum.map(pixel_changesets, fn p -> %{"x" => p.x, "y" => p.y, "color" => p.color} end)
+
+          valid_pixel_coords =
+            Enum.map(pixel_changesets, fn p -> %{"x" => p.x, "y" => p.y, "color" => p.color} end)
+
           broadcast!(socket, "new_pixels", %{pixels: valid_pixel_coords, store_id: store_id})
           {:noreply, socket}
 
@@ -36,16 +40,25 @@ defmodule ApiWeb.RegionChannel do
           PixelCacheSupervisor.write_pixels_to_file(pixel_changesets)
 
           # Only broadcast the valid pixels that were actually created
-          valid_pixel_coords = Enum.map(pixel_changesets, fn p -> %{"x" => p.x, "y" => p.y, "color" => p.color} end)
+          valid_pixel_coords =
+            Enum.map(pixel_changesets, fn p -> %{"x" => p.x, "y" => p.y, "color" => p.color} end)
+
           broadcast!(socket, "new_pixels", %{pixels: valid_pixel_coords, store_id: store_id})
 
-          {:reply, {:ok, %{created: length(pixel_changesets), rejected: length(invalid_pixels), invalid_pixels: invalid_pixels}}, socket}
+          {:reply,
+           {:ok,
+            %{
+              created: length(pixel_changesets),
+              rejected: length(invalid_pixels),
+              invalid_pixels: invalid_pixels
+            }}, socket}
 
         {:error, :no_plots} ->
           {:reply, {:error, "user_has_no_plots"}, socket}
 
         {:error, :all_invalid, invalid_pixels} ->
-          {:reply, {:error, "all_pixels_outside_plots", %{invalid_pixels: invalid_pixels}}, socket}
+          {:reply, {:error, "all_pixels_outside_plots", %{invalid_pixels: invalid_pixels}},
+           socket}
 
         {:error, :invalid_arguments} ->
           {:reply, {:error, "invalid_arguments"}, socket}

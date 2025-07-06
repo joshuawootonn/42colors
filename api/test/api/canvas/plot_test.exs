@@ -81,56 +81,61 @@ defmodule Api.PlotTest do
 
       # Create plots with different spatial relationships
       # Plot 1: Small square at (0,0) to (5,5) - completely within search area
-      {:ok, plot1} = Plot.Repo.create_plot(%{
-        name: "Small Plot",
-        description: "Small plot completely within search area",
-        user_id: user1.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{0, 0}, {0, 5}, {5, 5}, {5, 0}, {0, 0}]],
-          srid: 4326
-        }
-      })
+      {:ok, plot1} =
+        Plot.Repo.create_plot(%{
+          name: "Small Plot",
+          description: "Small plot completely within search area",
+          user_id: user1.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{0, 0}, {0, 5}, {5, 5}, {5, 0}, {0, 0}]],
+            srid: 4326
+          }
+        })
 
       # Plot 2: Large square at (-5,-5) to (15,15) - intersects with search area
-      {:ok, plot2} = Plot.Repo.create_plot(%{
-        name: "Large Plot",
-        description: "Large plot intersecting with search area",
-        user_id: user1.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{-5, -5}, {-5, 15}, {15, 15}, {15, -5}, {-5, -5}]],
-          srid: 4326
-        }
-      })
+      {:ok, plot2} =
+        Plot.Repo.create_plot(%{
+          name: "Large Plot",
+          description: "Large plot intersecting with search area",
+          user_id: user1.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{-5, -5}, {-5, 15}, {15, 15}, {15, -5}, {-5, -5}]],
+            srid: 4326
+          }
+        })
 
       # Plot 3: Remote square at (20,20) to (25,25) - completely outside search area
-      {:ok, plot3} = Plot.Repo.create_plot(%{
-        name: "Remote Plot",
-        description: "Remote plot outside search area",
-        user_id: user2.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{20, 20}, {20, 25}, {25, 25}, {25, 20}, {20, 20}]],
-          srid: 4326
-        }
-      })
+      {:ok, plot3} =
+        Plot.Repo.create_plot(%{
+          name: "Remote Plot",
+          description: "Remote plot outside search area",
+          user_id: user2.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{20, 20}, {20, 25}, {25, 25}, {25, 20}, {20, 20}]],
+            srid: 4326
+          }
+        })
 
       # Plot 4: Edge case - shares boundary with search area
-      {:ok, plot4} = Plot.Repo.create_plot(%{
-        name: "Edge Plot",
-        description: "Plot sharing boundary with search area",
-        user_id: user1.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{10, 5}, {10, 15}, {15, 15}, {15, 5}, {10, 5}]],
-          srid: 4326
-        }
-      })
+      {:ok, plot4} =
+        Plot.Repo.create_plot(%{
+          name: "Edge Plot",
+          description: "Plot sharing boundary with search area",
+          user_id: user1.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{10, 5}, {10, 15}, {15, 15}, {15, 5}, {10, 5}]],
+            srid: 4326
+          }
+        })
 
       # Plot 5: No polygon (should be excluded)
-      {:ok, plot5} = Plot.Repo.create_plot(%{
-        name: "No Polygon Plot",
-        description: "Plot without polygon",
-        user_id: user1.id,
-        polygon: nil
-      })
+      {:ok, plot5} =
+        Plot.Repo.create_plot(%{
+          name: "No Polygon Plot",
+          description: "Plot without polygon",
+          user_id: user1.id,
+          polygon: nil
+        })
 
       # Search polygon: (0,0) to (10,10)
       search_polygon = %Geo.Polygon{
@@ -221,15 +226,16 @@ defmodule Api.PlotTest do
       user = user_fixture()
 
       # Create a plot with a more complex polygon (L-shape)
-      {:ok, l_shaped_plot} = Plot.Repo.create_plot(%{
-        name: "L-Shaped Plot",
-        description: "Complex L-shaped plot",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{0, 0}, {0, 10}, {5, 10}, {5, 5}, {10, 5}, {10, 0}, {0, 0}]],
-          srid: 4326
-        }
-      })
+      {:ok, l_shaped_plot} =
+        Plot.Repo.create_plot(%{
+          name: "L-Shaped Plot",
+          description: "Complex L-shaped plot",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{0, 0}, {0, 10}, {5, 10}, {5, 5}, {10, 5}, {10, 0}, {0, 0}]],
+            srid: 4326
+          }
+        })
 
       # Search with a polygon that intersects part of the L-shape
       search_polygon = %Geo.Polygon{
@@ -253,15 +259,16 @@ defmodule Api.PlotTest do
       user = user_fixture()
 
       # Create a very small plot
-      {:ok, tiny_plot} = Plot.Repo.create_plot(%{
-        name: "Tiny Plot",
-        description: "Very small plot",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{1.0, 1.0}, {1.0, 1.1}, {1.1, 1.1}, {1.1, 1.0}, {1.0, 1.0}]],
-          srid: 4326
-        }
-      })
+      {:ok, tiny_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Tiny Plot",
+          description: "Very small plot",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{1.0, 1.0}, {1.0, 1.1}, {1.1, 1.1}, {1.1, 1.0}, {1.0, 1.0}]],
+            srid: 4326
+          }
+        })
 
       # Search with a polygon that covers the tiny plot
       search_polygon = %Geo.Polygon{
@@ -279,25 +286,27 @@ defmodule Api.PlotTest do
       user = user_fixture()
 
       # Create two overlapping plots
-      {:ok, plot_a} = Plot.Repo.create_plot(%{
-        name: "Plot A",
-        description: "First overlapping plot",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{0, 0}, {0, 5}, {5, 5}, {5, 0}, {0, 0}]],
-          srid: 4326
-        }
-      })
+      {:ok, plot_a} =
+        Plot.Repo.create_plot(%{
+          name: "Plot A",
+          description: "First overlapping plot",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{0, 0}, {0, 5}, {5, 5}, {5, 0}, {0, 0}]],
+            srid: 4326
+          }
+        })
 
-      {:ok, plot_b} = Plot.Repo.create_plot(%{
-        name: "Plot B",
-        description: "Second overlapping plot",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{3, 3}, {3, 8}, {8, 8}, {8, 3}, {3, 3}]],
-          srid: 4326
-        }
-      })
+      {:ok, plot_b} =
+        Plot.Repo.create_plot(%{
+          name: "Plot B",
+          description: "Second overlapping plot",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{3, 3}, {3, 8}, {8, 8}, {8, 3}, {3, 3}]],
+            srid: 4326
+          }
+        })
 
       # Search polygon that intersects both
       search_polygon = %Geo.Polygon{

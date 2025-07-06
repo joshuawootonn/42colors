@@ -13,58 +13,63 @@ defmodule Api.Canvas.Plot.ServiceTest do
       # Create plots with different spatial locations for testing
       # Plot 1: Small plot at (150, 150) - should be found when searching from (100, 100)
       # since chunk from (100,100) covers (100,100) to (500,500)
-      {:ok, plot1} = Plot.Repo.create_plot(%{
-        name: "Central Plot",
-        description: "Plot in the center area",
-        user_id: user1.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{145, 145}, {145, 155}, {155, 155}, {155, 145}, {145, 145}]],
-          srid: 4326
-        }
-      })
+      {:ok, plot1} =
+        Plot.Repo.create_plot(%{
+          name: "Central Plot",
+          description: "Plot in the center area",
+          user_id: user1.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{145, 145}, {145, 155}, {155, 155}, {155, 145}, {145, 145}]],
+            srid: 4326
+          }
+        })
 
       # Plot 2: Plot at (350, 350) - should be found when searching from (300, 300)
       # since chunk from (300,300) covers (300,300) to (700,700)
-      {:ok, plot2} = Plot.Repo.create_plot(%{
-        name: "Distant Plot",
-        description: "Plot far from center",
-        user_id: user1.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{340, 340}, {340, 360}, {360, 360}, {360, 340}, {340, 340}]],
-          srid: 4326
-        }
-      })
+      {:ok, plot2} =
+        Plot.Repo.create_plot(%{
+          name: "Distant Plot",
+          description: "Plot far from center",
+          user_id: user1.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{340, 340}, {340, 360}, {360, 360}, {360, 340}, {340, 340}]],
+            srid: 4326
+          }
+        })
 
       # Plot 3: Large plot that spans multiple chunks
-      {:ok, plot3} = Plot.Repo.create_plot(%{
-        name: "Large Plot",
-        description: "Plot spanning multiple chunks",
-        user_id: user2.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{0, 0}, {0, 800}, {800, 800}, {800, 0}, {0, 0}]],
-          srid: 4326
-        }
-      })
+      {:ok, plot3} =
+        Plot.Repo.create_plot(%{
+          name: "Large Plot",
+          description: "Plot spanning multiple chunks",
+          user_id: user2.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{0, 0}, {0, 800}, {800, 800}, {800, 0}, {0, 0}]],
+            srid: 4326
+          }
+        })
 
       # Plot 4: Plot at chunk boundary - at (399, 399) should be found from (0, 0)
       # since chunk from (0,0) covers (0,0) to (400,400)
-      {:ok, plot4} = Plot.Repo.create_plot(%{
-        name: "Boundary Plot",
-        description: "Plot at chunk boundary",
-        user_id: user1.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{398, 398}, {398, 400}, {400, 400}, {400, 398}, {398, 398}]],
-          srid: 4326
-        }
-      })
+      {:ok, plot4} =
+        Plot.Repo.create_plot(%{
+          name: "Boundary Plot",
+          description: "Plot at chunk boundary",
+          user_id: user1.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{398, 398}, {398, 400}, {400, 400}, {400, 398}, {398, 398}]],
+            srid: 4326
+          }
+        })
 
       # Plot 5: No polygon (should never be returned)
-      {:ok, plot5} = Plot.Repo.create_plot(%{
-        name: "No Polygon Plot",
-        description: "Plot without polygon",
-        user_id: user1.id,
-        polygon: nil
-      })
+      {:ok, plot5} =
+        Plot.Repo.create_plot(%{
+          name: "No Polygon Plot",
+          description: "Plot without polygon",
+          user_id: user1.id,
+          polygon: nil
+        })
 
       %{
         user1: user1,
@@ -109,9 +114,12 @@ defmodule Api.Canvas.Plot.ServiceTest do
       plot3: plot3
     } do
       # The large plot (0,0) to (800,800) should be found in multiple chunk searches
-      results1 = Plot.Service.list_plots_by_chunk(100, 100)  # covers (100,100) to (500,500)
-      results2 = Plot.Service.list_plots_by_chunk(250, 250)  # covers (250,250) to (650,650)
-      results3 = Plot.Service.list_plots_by_chunk(400, 400)  # covers (400,400) to (800,800)
+      # covers (100,100) to (500,500)
+      results1 = Plot.Service.list_plots_by_chunk(100, 100)
+      # covers (250,250) to (650,650)
+      results2 = Plot.Service.list_plots_by_chunk(250, 250)
+      # covers (400,400) to (800,800)
+      results3 = Plot.Service.list_plots_by_chunk(400, 400)
 
       result_ids1 = Enum.map(results1, & &1.id)
       result_ids2 = Enum.map(results2, & &1.id)
@@ -159,15 +167,16 @@ defmodule Api.Canvas.Plot.ServiceTest do
       user = user_fixture()
 
       # Create a plot in negative coordinate space
-      {:ok, negative_plot} = Plot.Repo.create_plot(%{
-        name: "Negative Plot",
-        description: "Plot in negative coordinates",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{-95, -95}, {-95, -85}, {-85, -85}, {-85, -95}, {-95, -95}]],
-          srid: 4326
-        }
-      })
+      {:ok, negative_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Negative Plot",
+          description: "Plot in negative coordinates",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{-95, -95}, {-95, -85}, {-85, -85}, {-85, -95}, {-95, -95}]],
+            srid: 4326
+          }
+        })
 
       # Search starting from (-100, -100) - chunk covers (-100, -100) to (300, 300)
       results = Plot.Service.list_plots_by_chunk(-100, -100)
@@ -180,15 +189,16 @@ defmodule Api.Canvas.Plot.ServiceTest do
       user = user_fixture()
 
       # Create a plot around origin
-      {:ok, origin_plot} = Plot.Repo.create_plot(%{
-        name: "Origin Plot",
-        description: "Plot around origin",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{5, 5}, {5, 15}, {15, 15}, {15, 5}, {5, 5}]],
-          srid: 4326
-        }
-      })
+      {:ok, origin_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Origin Plot",
+          description: "Plot around origin",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{5, 5}, {5, 15}, {15, 15}, {15, 5}, {5, 5}]],
+            srid: 4326
+          }
+        })
 
       # Search starting from (0, 0) - chunk covers (0, 0) to (400, 400)
       results = Plot.Service.list_plots_by_chunk(0, 0)
@@ -207,15 +217,16 @@ defmodule Api.Canvas.Plot.ServiceTest do
 
       # Create a plot at (399, 399) - should be included when searching from (0, 0)
       # since chunk from (0,0) covers (0,0) to (400,400)
-      {:ok, edge_plot} = Plot.Repo.create_plot(%{
-        name: "Edge Plot",
-        description: "Plot at chunk edge",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{399, 399}, {399, 400}, {400, 400}, {400, 399}, {399, 399}]],
-          srid: 4326
-        }
-      })
+      {:ok, edge_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Edge Plot",
+          description: "Plot at chunk edge",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{399, 399}, {399, 400}, {400, 400}, {400, 399}, {399, 399}]],
+            srid: 4326
+          }
+        })
 
       # Search starting from (0, 0) - chunk covers (0, 0) to (400, 400)
       results = Plot.Service.list_plots_by_chunk(0, 0)
@@ -229,15 +240,16 @@ defmodule Api.Canvas.Plot.ServiceTest do
 
       # Create a plot at (401, 401) - should NOT be included when searching from (0, 0)
       # since chunk from (0,0) covers (0,0) to (400,400)
-      {:ok, outside_plot} = Plot.Repo.create_plot(%{
-        name: "Outside Plot",
-        description: "Plot outside chunk boundary",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{401, 401}, {401, 410}, {410, 410}, {410, 401}, {401, 401}]],
-          srid: 4326
-        }
-      })
+      {:ok, outside_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Outside Plot",
+          description: "Plot outside chunk boundary",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{401, 401}, {401, 410}, {410, 410}, {410, 401}, {401, 401}]],
+            srid: 4326
+          }
+        })
 
       # Search starting from (0, 0) - chunk covers (0, 0) to (400, 400)
       results = Plot.Service.list_plots_by_chunk(0, 0)
@@ -250,15 +262,18 @@ defmodule Api.Canvas.Plot.ServiceTest do
       user = user_fixture()
 
       # Create a plot with large coordinates
-      {:ok, large_coord_plot} = Plot.Repo.create_plot(%{
-        name: "Large Coord Plot",
-        description: "Plot with large coordinates",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{10050, 10050}, {10050, 10060}, {10060, 10060}, {10060, 10050}, {10050, 10050}]],
-          srid: 4326
-        }
-      })
+      {:ok, large_coord_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Large Coord Plot",
+          description: "Plot with large coordinates",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [
+              [{10050, 10050}, {10050, 10060}, {10060, 10060}, {10060, 10050}, {10050, 10050}]
+            ],
+            srid: 4326
+          }
+        })
 
       # Search starting from (10000, 10000) - chunk covers (10000, 10000) to (10400, 10400)
       results = Plot.Service.list_plots_by_chunk(10000, 10000)
@@ -306,15 +321,16 @@ defmodule Api.Canvas.Plot.ServiceTest do
       user = user_fixture()
 
       # Create first plot
-      {:ok, existing_plot} = Plot.Repo.create_plot(%{
-        name: "Existing Plot",
-        description: "An existing plot",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{10, 10}, {10, 30}, {30, 30}, {30, 10}, {10, 10}]],
-          srid: 4326
-        }
-      })
+      {:ok, existing_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Existing Plot",
+          description: "An existing plot",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{10, 10}, {10, 30}, {30, 30}, {30, 10}, {10, 10}]],
+            srid: 4326
+          }
+        })
 
       # Try to create overlapping plot
       overlapping_attrs = %{
@@ -327,15 +343,19 @@ defmodule Api.Canvas.Plot.ServiceTest do
         }
       }
 
-      assert {:error, :overlapping_plots, overlapping_plots} = Plot.Service.create_plot(overlapping_attrs)
+      assert {:error, :overlapping_plots, overlapping_plots} =
+               Plot.Service.create_plot(overlapping_attrs)
+
       assert length(overlapping_plots) == 1
       assert List.first(overlapping_plots).id == existing_plot.id
     end
 
     test "returns changeset error when plot attributes are invalid" do
       plot_attrs = %{
-        name: "",  # Invalid: empty name
-        user_id: nil,  # Invalid: nil user_id
+        # Invalid: empty name
+        name: "",
+        # Invalid: nil user_id
+        user_id: nil,
         polygon: %Geo.Polygon{
           coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
           srid: 4326
@@ -349,15 +369,16 @@ defmodule Api.Canvas.Plot.ServiceTest do
       user = user_fixture()
 
       # Create first plot
-      {:ok, _existing_plot} = Plot.Repo.create_plot(%{
-        name: "Existing Plot",
-        description: "An existing plot",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{10, 10}, {10, 30}, {30, 30}, {30, 10}, {10, 10}]],
-          srid: 4326
-        }
-      })
+      {:ok, _existing_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Existing Plot",
+          description: "An existing plot",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{10, 10}, {10, 30}, {30, 30}, {30, 10}, {10, 10}]],
+            srid: 4326
+          }
+        })
 
       # Create non-overlapping plot
       non_overlapping_attrs = %{
@@ -379,15 +400,16 @@ defmodule Api.Canvas.Plot.ServiceTest do
     test "updates plot successfully when no overlaps exist" do
       user = user_fixture()
 
-      {:ok, plot} = Plot.Repo.create_plot(%{
-        name: "Original Plot",
-        description: "Original description",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
-          srid: 4326
-        }
-      })
+      {:ok, plot} =
+        Plot.Repo.create_plot(%{
+          name: "Original Plot",
+          description: "Original description",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+            srid: 4326
+          }
+        })
 
       update_attrs = %{
         name: "Updated Plot",
@@ -402,15 +424,16 @@ defmodule Api.Canvas.Plot.ServiceTest do
     test "updates plot successfully when updating polygon without overlaps" do
       user = user_fixture()
 
-      {:ok, plot} = Plot.Repo.create_plot(%{
-        name: "Original Plot",
-        description: "Original description",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
-          srid: 4326
-        }
-      })
+      {:ok, plot} =
+        Plot.Repo.create_plot(%{
+          name: "Original Plot",
+          description: "Original description",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+            srid: 4326
+          }
+        })
 
       new_polygon = %Geo.Polygon{
         coordinates: [[{50, 50}, {50, 60}, {60, 60}, {60, 50}, {50, 50}]],
@@ -427,26 +450,28 @@ defmodule Api.Canvas.Plot.ServiceTest do
       user = user_fixture()
 
       # Create first plot
-      {:ok, existing_plot} = Plot.Repo.create_plot(%{
-        name: "Existing Plot",
-        description: "An existing plot",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{30, 30}, {30, 50}, {50, 50}, {50, 30}, {30, 30}]],
-          srid: 4326
-        }
-      })
+      {:ok, existing_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Existing Plot",
+          description: "An existing plot",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{30, 30}, {30, 50}, {50, 50}, {50, 30}, {30, 30}]],
+            srid: 4326
+          }
+        })
 
       # Create second plot to update
-      {:ok, plot_to_update} = Plot.Repo.create_plot(%{
-        name: "Plot to Update",
-        description: "A plot that will be updated",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
-          srid: 4326
-        }
-      })
+      {:ok, plot_to_update} =
+        Plot.Repo.create_plot(%{
+          name: "Plot to Update",
+          description: "A plot that will be updated",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+            srid: 4326
+          }
+        })
 
       # Try to update with overlapping polygon
       overlapping_polygon = %Geo.Polygon{
@@ -456,7 +481,9 @@ defmodule Api.Canvas.Plot.ServiceTest do
 
       update_attrs = %{polygon: overlapping_polygon}
 
-      assert {:error, :overlapping_plots, overlapping_plots} = Plot.Service.update_plot(plot_to_update, update_attrs)
+      assert {:error, :overlapping_plots, overlapping_plots} =
+               Plot.Service.update_plot(plot_to_update, update_attrs)
+
       assert length(overlapping_plots) == 1
       assert List.first(overlapping_plots).id == existing_plot.id
     end
@@ -469,12 +496,13 @@ defmodule Api.Canvas.Plot.ServiceTest do
         srid: 4326
       }
 
-      {:ok, plot} = Plot.Repo.create_plot(%{
-        name: "Original Plot",
-        description: "Original description",
-        user_id: user.id,
-        polygon: polygon
-      })
+      {:ok, plot} =
+        Plot.Repo.create_plot(%{
+          name: "Original Plot",
+          description: "Original description",
+          user_id: user.id,
+          polygon: polygon
+        })
 
       # Update with same polygon should work (no self-overlap)
       update_attrs = %{
@@ -490,14 +518,16 @@ defmodule Api.Canvas.Plot.ServiceTest do
     test "returns changeset error when update attributes are invalid" do
       user = user_fixture()
 
-      {:ok, plot} = Plot.Repo.create_plot(%{
-        name: "Original Plot",
-        description: "Original description",
-        user_id: user.id
-      })
+      {:ok, plot} =
+        Plot.Repo.create_plot(%{
+          name: "Original Plot",
+          description: "Original description",
+          user_id: user.id
+        })
 
       update_attrs = %{
-        name: ""  # Invalid: empty name
+        # Invalid: empty name
+        name: ""
       }
 
       assert {:error, %Ecto.Changeset{}} = Plot.Service.update_plot(plot, update_attrs)
@@ -506,15 +536,16 @@ defmodule Api.Canvas.Plot.ServiceTest do
     test "updates plot successfully when no polygon is provided in update" do
       user = user_fixture()
 
-      {:ok, plot} = Plot.Repo.create_plot(%{
-        name: "Original Plot",
-        description: "Original description",
-        user_id: user.id,
-        polygon: %Geo.Polygon{
-          coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
-          srid: 4326
-        }
-      })
+      {:ok, plot} =
+        Plot.Repo.create_plot(%{
+          name: "Original Plot",
+          description: "Original description",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+            srid: 4326
+          }
+        })
 
       update_attrs = %{
         name: "Updated Plot"

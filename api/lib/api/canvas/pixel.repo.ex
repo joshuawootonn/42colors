@@ -68,27 +68,30 @@ defmodule Api.Canvas.Pixel.Repo do
 
   """
   def create_many_pixels(attrs_list) when is_list(attrs_list) do
-    changesets = Enum.map(attrs_list, fn attr ->
-      %Pixel{} |> Pixel.changeset(attr)
-    end)
+    changesets =
+      Enum.map(attrs_list, fn attr ->
+        %Pixel{} |> Pixel.changeset(attr)
+      end)
 
     case Enum.find(changesets, fn changeset -> not changeset.valid? end) do
-            nil ->
+      nil ->
         # insert_all doesn't auto-generate timestamps
         now = DateTime.utc_now() |> DateTime.truncate(:second)
 
-        insert_data = Enum.map(changesets, fn changeset ->
-          changes = changeset.changes
-          %{
-            x: changes.x,
-            y: changes.y,
-            color: changes.color,
-            user_id: changes.user_id,
-            plot_id: Map.get(changes, :plot_id),
-            inserted_at: now,
-            updated_at: now
-          }
-        end)
+        insert_data =
+          Enum.map(changesets, fn changeset ->
+            changes = changeset.changes
+
+            %{
+              x: changes.x,
+              y: changes.y,
+              color: changes.color,
+              user_id: changes.user_id,
+              plot_id: Map.get(changes, :plot_id),
+              inserted_at: now,
+              updated_at: now
+            }
+          end)
 
         # Use insert_all for bulk insert - this generates a single INSERT statement
         {count, pixels} = Repo.insert_all(Pixel, insert_data, returning: true)
@@ -98,7 +101,6 @@ defmodule Api.Canvas.Pixel.Repo do
         else
           {:error, "Partial insert failure"}
         end
-
 
       invalid_changeset ->
         {:error, invalid_changeset}

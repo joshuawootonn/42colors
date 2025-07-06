@@ -41,13 +41,15 @@ defmodule Api.Canvas.Plot.Service do
 
     # Create a polygon representing the chunk area
     chunk_polygon = %Geo.Polygon{
-      coordinates: [[
-        {min_x, min_y},
-        {min_x, max_y},
-        {max_x, max_y},
-        {max_x, min_y},
-        {min_x, min_y}
-      ]],
+      coordinates: [
+        [
+          {min_x, min_y},
+          {min_x, max_y},
+          {max_x, max_y},
+          {max_x, min_y},
+          {min_x, min_y}
+        ]
+      ],
       srid: 4326
     }
 

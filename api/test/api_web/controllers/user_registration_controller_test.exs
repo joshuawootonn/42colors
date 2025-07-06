@@ -139,7 +139,10 @@ defmodule ApiWeb.UserRegistrationControllerTest do
       response = json_response(conn, 422)
       assert response["status"] == "error"
       assert response["message"] == "Registration failed"
-      assert response["errors"]["password"] == ["Password must contain at least one special character"]
+
+      assert response["errors"]["password"] == [
+               "Password must contain at least one special character"
+             ]
     end
 
     test "renders error for password that is too long", %{conn: conn} do

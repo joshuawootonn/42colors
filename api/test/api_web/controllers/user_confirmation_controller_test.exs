@@ -9,7 +9,6 @@ defmodule ApiWeb.UserConfirmationControllerTest do
     %{user: user_fixture()}
   end
 
-
   describe "POST /api/users/confirm/:token" do
     test "confirms the given token once", %{conn: conn, user: user} do
       token =
