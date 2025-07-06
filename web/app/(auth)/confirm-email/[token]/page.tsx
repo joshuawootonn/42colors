@@ -1,14 +1,15 @@
-import authService from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { redirect } from 'next/navigation';
+
+import authService from '@/lib/auth';
 
 export default async function Page({
-  params,
+    params,
 }: {
-  params: Promise<{ token: string }>;
+    params: Promise<{ token: string }>;
 }) {
-  const token = (await params).token;
+    const token = (await params).token;
 
-  await authService.confirmEmail(token);
+    await authService.confirmEmail(token);
 
-  redirect("/");
+    redirect('/');
 }

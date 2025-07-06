@@ -1,5 +1,5 @@
 export const KeyboardCode = {
-  Space: "Space",
+    Space: 'Space',
 } as const;
 
 export type KeyboardCode = (typeof KeyboardCode)[keyof typeof KeyboardCode];

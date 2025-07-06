@@ -1,52 +1,52 @@
-import { store } from "./store";
+import { store } from './store';
 
 export function onGesture(e: Event) {
-  // console.log("gesture", e);
-  e.preventDefault();
+    // console.log("gesture", e);
+    e.preventDefault();
 }
 
 export function onTouch(e: TouchEvent) {
-  // console.log("touch", e.touches);
-  e.preventDefault();
+    // console.log("touch", e.touches);
+    e.preventDefault();
 }
 
 export function onResize() {
-  store.trigger.onResize();
+    store.trigger.onResize();
 }
 
 export function onWheel(e: WheelEvent) {
-  // `preventDefault` in the store is in the next tick and doesn't work.
-  // I have to actually call preventDefault here.
-  e.preventDefault();
-  store.trigger.onWheel({ e });
+    // `preventDefault` in the store is in the next tick and doesn't work.
+    // I have to actually call preventDefault here.
+    e.preventDefault();
+    store.trigger.onWheel({ e });
 }
 
 export function onKeyDown(e: KeyboardEvent) {
-  // console.log("onKeyDown");
-  store.trigger.onKeyDown({ e });
+    // console.log("onKeyDown");
+    store.trigger.onKeyDown({ e });
 }
 
 export function onKeyUp(e: KeyboardEvent) {
-  // console.log("onKeyUp");
-  store.trigger.onKeyUp({ e });
+    // console.log("onKeyUp");
+    store.trigger.onKeyUp({ e });
 }
 
 export function onPointerMove(e: PointerEvent) {
-  // console.log("onPointerMove");
-  store.trigger.onPointerMove({ e });
+    // console.log("onPointerMove");
+    store.trigger.onPointerMove({ e });
 }
 
 export function onPointerUp(e: PointerEvent) {
-  // console.log("onPointerUp");
-  store.trigger.onPointerUp({ e });
+    // console.log("onPointerUp");
+    store.trigger.onPointerUp({ e });
 }
 
 export function onPointerOut(e: PointerEvent) {
-  // console.log("onPointerOut");
-  store.trigger.onPointerOut({ e });
+    // console.log("onPointerOut");
+    store.trigger.onPointerOut({ e });
 }
 
 export function onPointerDown(e: PointerEvent) {
-  // console.log("onPointerDown");
-  store.trigger.onPointerDown({ e });
+    // console.log("onPointerDown");
+    store.trigger.onPointerDown({ e });
 }

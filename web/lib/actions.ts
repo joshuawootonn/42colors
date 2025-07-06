@@ -1,250 +1,259 @@
-import { AbsolutePoint, Pixel } from "./geometry/coord";
-import { BrushActive } from "./tools/brush";
-import { ErasureActive } from "./tools/erasure";
-import { pointsToPixels } from "./tools/brush";
-import { ColorRef, TRANSPARENT_REF } from "./palette";
-import { Camera } from "./camera";
-import { ClaimerActive, ClaimerComplete } from "./tools/claimer/claimer";
-import { Tool } from "./tool-settings";
+import { Camera } from './camera';
+import { AbsolutePoint, Pixel } from './geometry/coord';
+import { ColorRef, TRANSPARENT_REF } from './palette';
+import { BrushActive } from './tools/brush';
+import { pointsToPixels } from './tools/brush';
+import { ClaimerActive, ClaimerComplete } from './tools/claimer/claimer';
+import { ErasureActive } from './tools/erasure';
 
-type Undo = { type: "undo" };
-type Redo = { type: "redo" };
+type Undo = { type: 'undo' };
+type Redo = { type: 'redo' };
+
+type Tool = 'brush' | 'erasure' | 'claimer';
 
 export type Action =
-  | ErasureActive
-  | BrushActive
-  | ClaimerActive
-  | ClaimerComplete
-  | {
-      type: "realtime-active";
-      pixels: Pixel[];
-    }
-  | {
-      type: "camera-move";
-      points: Camera[];
-    }
-  | {
-      type: "tool-change";
-      before: Tool;
-      after: Tool;
-    }
-  | Undo
-  | Redo;
+    | ErasureActive
+    | BrushActive
+    | ClaimerActive
+    | ClaimerComplete
+    | {
+          type: 'realtime-active';
+          pixels: Pixel[];
+      }
+    | {
+          type: 'camera-move';
+          points: Camera[];
+      }
+    | {
+          type: 'tool-change';
+          before: Tool;
+          after: Tool;
+      }
+    | Undo
+    | Redo;
 
 function brush(points: AbsolutePoint[], colorRef: ColorRef): BrushActive {
-  return {
-    type: "brush-active",
-    colorRef,
-    points,
-    //todo(josh): these shouldn't be faked like this, update the function
-    anchorPoints: points,
-  };
+    return {
+        type: 'brush-active',
+        colorRef,
+        points,
+        //todo(josh): these shouldn't be faked like this, update the function
+        anchorPoints: points,
+    };
 }
 function erase(points: AbsolutePoint[]): ErasureActive {
-  return {
-    type: "erasure-active",
-    points,
-    //todo(josh): these shouldn't be faked like this, update the function
-    anchorPoints: points,
-  };
+    return {
+        type: 'erasure-active',
+        points,
+        //todo(josh): these shouldn't be faked like this, update the function
+        anchorPoints: points,
+    };
 }
 function undo(): Undo {
-  return { type: "undo" };
+    return { type: 'undo' };
 }
 function redo(): Redo {
-  return { type: "redo" };
+    return { type: 'redo' };
 }
 
 export const Actions = {
-  brush,
-  erase,
-  undo,
-  redo,
+    brush,
+    erase,
+    undo,
+    redo,
 };
 
 /**
  * Find the pixels changes for a set of actions.
  */
 export function derivePixelsFromActions(actions: Action[]): Pixel[] {
-  let undoStack: Action[] = [];
-  const completedActions: Action[] = [];
-  const pixels: Pixel[] = [];
+    let undoStack: Action[] = [];
+    const completedActions: Action[] = [];
+    const pixels: Pixel[] = [];
 
-  for (let i = 0; i < actions.length; i++) {
-    const action = actions[i];
+    for (let i = 0; i < actions.length; i++) {
+        const action = actions[i];
 
-    if (action.type === "redo") {
-      const undoAction = undoStack.pop();
+        if (action.type === 'redo') {
+            const undoAction = undoStack.pop();
 
-      if (undoAction != null) {
-        completedActions.push(undoAction);
-      }
-    } else if (action.type === "undo") {
-      const action = completedActions.pop();
+            if (undoAction != null) {
+                completedActions.push(undoAction);
+            }
+        } else if (action.type === 'undo') {
+            const action = completedActions.pop();
 
-      if (action != null) {
-        undoStack.push(action);
-      }
-    } else {
-      undoStack = [];
-      completedActions.push(action);
+            if (action != null) {
+                undoStack.push(action);
+            }
+        } else {
+            undoStack = [];
+            completedActions.push(action);
+        }
     }
-  }
 
-  for (let i = 0; i < completedActions.length; i++) {
-    const action = completedActions[i];
+    for (let i = 0; i < completedActions.length; i++) {
+        const action = completedActions[i];
 
-    if (action.type === "brush-active") {
-      pixels.push(...pointsToPixels(action.points, action.colorRef));
-    } else if (action.type === "erasure-active") {
-      pixels.push(...pointsToPixels(action.points, TRANSPARENT_REF));
-    } else if (action.type === "realtime-active") {
-      pixels.push(...action.pixels);
+        if (action.type === 'brush-active') {
+            pixels.push(...pointsToPixels(action.points, action.colorRef));
+        } else if (action.type === 'erasure-active') {
+            pixels.push(...pointsToPixels(action.points, TRANSPARENT_REF));
+        } else if (action.type === 'realtime-active') {
+            pixels.push(...action.pixels);
+        }
     }
-  }
 
-  return pixels;
+    return pixels;
 }
 
 /**
  * Find the pixels set and unset for a set of actions
  */
 export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
-  let undoStack: Action[] = [];
-  const completedActions: Action[] = [];
-  let unsetPixels: Pixel[] = [];
+    let undoStack: Action[] = [];
+    const completedActions: Action[] = [];
+    let unsetPixels: Pixel[] = [];
 
-  for (let i = 0; i < actions.length; i++) {
-    const action = actions[i];
+    for (let i = 0; i < actions.length; i++) {
+        const action = actions[i];
 
-    if (action.type === "redo") {
-      const undoAction = undoStack.pop();
+        if (action.type === 'redo') {
+            const undoAction = undoStack.pop();
 
-      if (undoAction != null) {
-        completedActions.push(undoAction);
+            if (undoAction != null) {
+                completedActions.push(undoAction);
 
-        if (undoAction.type === "brush-active") {
-          const undonePixels = pointsToPixels(
-            undoAction.points,
-            undoAction.colorRef,
-          );
-          unsetPixels = unsetPixels.filter(
-            (pixel) =>
-              !undonePixels.find(
-                (undonePixel) =>
-                  undonePixel.x === pixel.x && undonePixel.y === pixel.y,
-              ),
-          );
-        } else if (undoAction.type === "erasure-active") {
-          const undonePixels = pointsToPixels(
-            undoAction.points,
-            TRANSPARENT_REF,
-          );
-          unsetPixels = unsetPixels.filter(
-            (pixel) =>
-              !undonePixels.find(
-                (undonePixel) =>
-                  undonePixel.x === pixel.x && undonePixel.y === pixel.y,
-              ),
-          );
+                if (undoAction.type === 'brush-active') {
+                    const undonePixels = pointsToPixels(
+                        undoAction.points,
+                        undoAction.colorRef,
+                    );
+                    unsetPixels = unsetPixels.filter(
+                        (pixel) =>
+                            !undonePixels.find(
+                                (undonePixel) =>
+                                    undonePixel.x === pixel.x &&
+                                    undonePixel.y === pixel.y,
+                            ),
+                    );
+                } else if (undoAction.type === 'erasure-active') {
+                    const undonePixels = pointsToPixels(
+                        undoAction.points,
+                        TRANSPARENT_REF,
+                    );
+                    unsetPixels = unsetPixels.filter(
+                        (pixel) =>
+                            !undonePixels.find(
+                                (undonePixel) =>
+                                    undonePixel.x === pixel.x &&
+                                    undonePixel.y === pixel.y,
+                            ),
+                    );
+                }
+            }
+        } else if (action.type === 'undo') {
+            const action = completedActions.pop();
+
+            if (action != null) {
+                undoStack.push(action);
+                if (action.type === 'brush-active') {
+                    unsetPixels.push(
+                        ...pointsToPixels(action.points, action.colorRef),
+                    );
+                } else if (action.type === 'erasure-active') {
+                    unsetPixels.push(
+                        ...pointsToPixels(action.points, TRANSPARENT_REF),
+                    );
+                }
+            }
+        } else {
+            undoStack = [];
+            completedActions.push(action);
         }
-      }
-    } else if (action.type === "undo") {
-      const action = completedActions.pop();
-
-      if (action != null) {
-        undoStack.push(action);
-        if (action.type === "brush-active") {
-          unsetPixels.push(...pointsToPixels(action.points, action.colorRef));
-        } else if (action.type === "erasure-active") {
-          unsetPixels.push(...pointsToPixels(action.points, TRANSPARENT_REF));
-        }
-      }
-    } else {
-      undoStack = [];
-      completedActions.push(action);
     }
-  }
 
-  return unsetPixels;
+    return unsetPixels;
 }
 
 export function collapseUndoRedoCombos(actions: Action[]): Action[] {
-  let undoStack: Action[] = [];
-  const completedActions: Action[] = [];
+    let undoStack: Action[] = [];
+    const completedActions: Action[] = [];
 
-  for (let i = 0; i < actions.length; i++) {
-    const action = actions[i];
+    for (let i = 0; i < actions.length; i++) {
+        const action = actions[i];
 
-    if (action.type === "redo") {
-      undoStack.pop();
-    } else if (action.type === "undo") {
-      undoStack.push({ type: "undo" });
-    } else {
-      completedActions.push(...undoStack);
-      undoStack = [];
-      completedActions.push(action);
+        if (action.type === 'redo') {
+            undoStack.pop();
+        } else if (action.type === 'undo') {
+            undoStack.push({ type: 'undo' });
+        } else {
+            completedActions.push(...undoStack);
+            undoStack = [];
+            completedActions.push(action);
+        }
     }
-  }
-  completedActions.push(...undoStack);
+    completedActions.push(...undoStack);
 
-  return completedActions;
+    return completedActions;
 }
 
 export function resolveActions(actions: Action[]): Action[] {
-  let undoStack: Action[] = [];
-  const completedActions: Action[] = [];
+    let undoStack: Action[] = [];
+    const completedActions: Action[] = [];
 
-  for (let i = 0; i < actions.length; i++) {
-    const action = actions[i];
+    for (let i = 0; i < actions.length; i++) {
+        const action = actions[i];
 
-    if (action.type === "redo") {
-      const undoAction = undoStack.pop();
+        if (action.type === 'redo') {
+            const undoAction = undoStack.pop();
 
-      if (undoAction != null) {
-        completedActions.push(undoAction);
-      }
-    } else if (action.type === "undo") {
-      const action = completedActions.pop();
+            if (undoAction != null) {
+                completedActions.push(undoAction);
+            }
+        } else if (action.type === 'undo') {
+            const action = completedActions.pop();
 
-      if (action != null) {
-        undoStack.push(action);
-      }
-    } else {
-      undoStack = [];
-      completedActions.push(action);
+            if (action != null) {
+                undoStack.push(action);
+            }
+        } else {
+            undoStack = [];
+            completedActions.push(action);
+        }
     }
-  }
-  return completedActions;
+    return completedActions;
 }
 
 export function getActionToUndo(
-  prevActions: Action[],
+    prevActions: Action[],
 ): BrushActive | ErasureActive | null {
-  return (
-    [...resolveActions(prevActions)]
-      .reverse()
-      .find(
-        (action) =>
-          action.type === "brush-active" || action.type === "erasure-active",
-      ) ?? null
-  );
+    return (
+        [...resolveActions(prevActions)]
+            .reverse()
+            .find(
+                (action) =>
+                    action.type === 'brush-active' ||
+                    action.type === 'erasure-active',
+            ) ?? null
+    );
 }
 
 export function getActionToRedo(
-  prevActions: Action[],
+    prevActions: Action[],
 ): BrushActive | ErasureActive | null {
-  const reversedCollapsedPrevActions = [
-    ...collapseUndoRedoCombos(prevActions),
-  ].reverse();
+    const reversedCollapsedPrevActions = [
+        ...collapseUndoRedoCombos(prevActions),
+    ].reverse();
 
-  if (reversedCollapsedPrevActions.at(0)?.type != "undo") return null;
-  return (
-    [...resolveActions(prevActions.concat({ type: "redo" }))]
-      .reverse()
-      .find(
-        (action) =>
-          action.type === "brush-active" || action.type === "erasure-active",
-      ) ?? null
-  );
+    if (reversedCollapsedPrevActions.at(0)?.type != 'undo') return null;
+    return (
+        [...resolveActions(prevActions.concat({ type: 'redo' }))]
+            .reverse()
+            .find(
+                (action) =>
+                    action.type === 'brush-active' ||
+                    action.type === 'erasure-active',
+            ) ?? null
+    );
 }
