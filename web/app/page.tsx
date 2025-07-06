@@ -15,7 +15,7 @@ import { Palette } from "@/components/palette";
 import { BrushPanel } from "@/lib/tools/brush-panel";
 import { ErasurePanel } from "@/lib/tools/erasure-panel";
 import { DEFAULT_TOOL_SETTINGS, getToolSettings } from "@/lib/tool-settings";
-import { ClaimerPanel } from "@/lib/tools/claimer-panel";
+import { ClaimerPanel } from "@/lib/tools/claimer/claimer-panel";
 import { useQueryClient } from "@tanstack/react-query";
 import { keyEquals } from "@/lib/utils/query-key";
 

@@ -3,8 +3,8 @@ import { CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from "../constants";
 import { COLOR_TABLE } from "../palette";
 import { Coord, Pixel, pixelSchema } from "../geometry/coord";
 import { dedupe } from "../utils/dedupe";
-import { Plot } from "../tools/claimer.rest";
-import { redrawPolygon } from "../tools/claimer";
+import { Plot } from "../tools/claimer/claimer.rest";
+import { redrawPolygon } from "../tools/claimer/claimer";
 
 export type Chunk = {
   x: number;

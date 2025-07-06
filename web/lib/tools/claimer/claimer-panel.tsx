@@ -1,5 +1,5 @@
 import { useSelector } from "@xstate/store/react";
-import { store } from "../store";
+import { store } from "../../store";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {

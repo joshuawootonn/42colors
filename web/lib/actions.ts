@@ -4,7 +4,7 @@ import { ErasureActive } from "./tools/erasure";
 import { pointsToPixels } from "./tools/brush";
 import { ColorRef, TRANSPARENT_REF } from "./palette";
 import { Camera } from "./camera";
-import { ClaimerActive, ClaimerComplete } from "./tools/claimer";
+import { ClaimerActive, ClaimerComplete } from "./tools/claimer/claimer";
 import { Tool } from "./tool-settings";
 
 type Undo = { type: "undo" };

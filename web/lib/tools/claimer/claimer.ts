@@ -1,14 +1,14 @@
-import { InitializedStore } from "../store";
-import { getAbsolutePoint, getCameraOffset } from "./brush";
-import { EnqueueObject } from "../xstate-internal-types";
-import { Rect, rectSchema } from "../geometry/rect";
-import { getPixelSize } from "../canvas/realtime";
-import { Camera, getZoomMultiplier } from "../camera";
+import { InitializedStore } from "../../store";
+import { getAbsolutePoint, getCameraOffset } from "../brush";
+import { EnqueueObject } from "../../xstate-internal-types";
+import { Rect, rectSchema } from "../../geometry/rect";
+import { getPixelSize } from "../../canvas/realtime";
+import { Camera, getZoomMultiplier } from "../../camera";
 import {
   getCompositePolygons,
   Polygon,
   rectToPolygonSchema,
-} from "../geometry/polygon";
+} from "../../geometry/polygon";
 import { getUserPlots } from "./claimer.rest";
 import { z } from "zod";
 

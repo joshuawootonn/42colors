@@ -66,14 +66,14 @@ import {
 } from "./tool-settings";
 import { PaletteSettings } from "./tools/palette";
 import authService from "./auth";
-import { ClaimerTool, completeRectangleClaimerAction } from "./tools/claimer";
+import { ClaimerTool, completeRectangleClaimerAction } from "./tools/claimer/claimer";
 import {
   getCenterPoint,
   getCompositePolygons,
   polygonSchema,
   rectToPolygonSchema,
 } from "./geometry/polygon";
-import { getPlotsByChunk, getUserPlots, Plot } from "./tools/claimer.rest";
+import { getPlotsByChunk, getUserPlots, Plot } from "./tools/claimer/claimer.rest";
 import { centerCameraOnPoint } from "./camera-utils";
 
 export type PointerState = "default" | "pressed";

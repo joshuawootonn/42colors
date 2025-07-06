@@ -4,7 +4,7 @@ import { BrushSettings } from "./tools/brush";
 import { ErasureSettings } from "./tools/erasure";
 import { PaletteSettings } from "./tools/palette";
 import { colorRefSchema } from "./palette";
-import { ClaimerSettings, claimerSettingsSchema } from "./tools/claimer";
+import { ClaimerSettings, claimerSettingsSchema } from "./tools/claimer/claimer";
 
 function createToolKey(key: string) {
   return `${TOOL_SETTINGS}-${key}`;

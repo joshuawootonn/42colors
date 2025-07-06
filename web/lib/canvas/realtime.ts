@@ -4,8 +4,8 @@ import { COLOR_TABLE } from "../palette";
 import { Pixel } from "../geometry/coord";
 import { Camera, getZoomMultiplier, ZoomMultiplier } from "../camera";
 import { InitializedStore } from "../store";
-import { Plot } from "../tools/claimer.rest";
-import { redrawPolygon } from "../tools/claimer";
+import { Plot } from "../tools/claimer/claimer.rest";
+import { redrawPolygon } from "../tools/claimer/claimer";
 import { getCameraOffset } from "../tools/brush";
 
 export function createRealtimeCanvas(camera: Camera) {

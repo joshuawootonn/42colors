@@ -4,9 +4,9 @@ import {
   getCompositePolygons,
   polygonSchema,
   rectToPolygonSchema,
-} from "../geometry/polygon";
-import { store } from "../store";
-import { isInitialStore } from "../utils/is-initial-store";
+} from "../../geometry/polygon";
+import { store } from "../../store";
+import { isInitialStore } from "../../utils/is-initial-store";
 import { completeRectangleClaimerAction } from "./claimer";
 
 const plotSchema = z.object({
