@@ -57,15 +57,45 @@ defmodule ApiWeb.RegionChannel do
           {:reply, {:error, "user_has_no_plots"}, socket}
 
         {:error, :all_invalid, invalid_pixels} ->
-          {:reply, {:error, "all_pixels_outside_plots", %{invalid_pixels: invalid_pixels}},
+          {:reply,
+           {:error, %{message: "all_pixels_outside_plots", invalid_pixels: invalid_pixels}},
            socket}
 
         {:error, :invalid_arguments} ->
           {:reply, {:error, "invalid_arguments"}, socket}
 
         {:error, changeset} ->
-          {:reply, {:error, "validation_failed", %{errors: changeset.errors}}, socket}
+          {:reply, {:error, %{message: "validation_failed", errors: changeset.errors}}, socket}
       end
     end
+  end
+
+  def handle_info(
+        %Phoenix.Socket.Broadcast{event: "create_plot", payload: %{"plot" => plot}},
+        socket
+      ) do
+    push(socket, "create_plot", %{"plot" => plot})
+    {:noreply, socket}
+  end
+
+  def handle_info(
+        %Phoenix.Socket.Broadcast{event: "update_plot", payload: %{"plot" => plot}},
+        socket
+      ) do
+    push(socket, "update_plot", %{"plot" => plot})
+    {:noreply, socket}
+  end
+
+  def handle_info(
+        %Phoenix.Socket.Broadcast{event: "delete_plot", payload: %{"plot_id" => plot_id}},
+        socket
+      ) do
+    push(socket, "delete_plot", %{"plot_id" => plot_id})
+    {:noreply, socket}
+  end
+
+  def handle_out(event, payload, socket) do
+    push(socket, event, payload)
+    {:noreply, socket}
   end
 end

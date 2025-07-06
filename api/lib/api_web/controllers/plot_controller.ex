@@ -63,6 +63,9 @@ defmodule ApiWeb.PlotController do
 
         case Plot.Service.create_plot(plot_params) do
           {:ok, %Plot{} = plot} ->
+            # Broadcast to region channel
+            ApiWeb.Endpoint.broadcast("region:general", "create_plot", %{"plot" => plot})
+
             conn
             |> put_status(:created)
             |> render(:show, plot: plot)
@@ -135,6 +138,9 @@ defmodule ApiWeb.PlotController do
 
         case Plot.Service.update_plot(plot, plot_params) do
           {:ok, %Plot{} = plot} ->
+            # Broadcast to region channel
+            ApiWeb.Endpoint.broadcast("region:general", "update_plot", %{"plot" => plot})
+
             render(conn, :show, plot: plot)
 
           {:error, :overlapping_plots, overlapping_plots} ->
@@ -173,6 +179,9 @@ defmodule ApiWeb.PlotController do
       plot ->
         case Plot.Repo.delete_plot(plot) do
           {:ok, %Plot{}} ->
+            # Broadcast to region channel
+            ApiWeb.Endpoint.broadcast("region:general", "delete_plot", %{"plot_id" => plot.id})
+
             send_resp(conn, :no_content, "")
 
           {:error, %Ecto.Changeset{} = changeset} ->

@@ -232,6 +232,33 @@ defmodule ApiWeb.PlotControllerTest do
       assert user_id2 == user.id
     end
 
+    test "broadcasts create_plot event to region channel when plot is created", %{conn: conn} do
+      polygon = %{
+        "vertices" => [
+          [0, 0],
+          [0, 1],
+          [1, 1],
+          [1, 0],
+          [0, 0]
+        ]
+      }
+
+      attrs = Map.put(@create_attrs, :polygon, polygon)
+
+      # Subscribe to the region channel to capture broadcasts
+      ApiWeb.Endpoint.subscribe("region:general")
+
+      conn = post(conn, ~p"/api/plots", plot: attrs)
+      assert %{"id" => _id} = json_response(conn, 201)["data"]
+
+      # Assert broadcast was sent
+      assert_receive %Phoenix.Socket.Broadcast{
+        topic: "region:general",
+        event: "create_plot",
+        payload: %{"plot" => _plot}
+      }
+    end
+
     test "returns 400 when polygon is missing", %{conn: conn} do
       conn = post(conn, ~p"/api/plots", plot: @create_attrs)
       assert json_response(conn, 400)["error"] == "polygon is required"
@@ -496,6 +523,24 @@ defmodule ApiWeb.PlotControllerTest do
       assert id2 == id
     end
 
+    test "broadcasts update_plot event to region channel when plot is updated", %{
+      conn: conn,
+      plot: plot
+    } do
+      # Subscribe to the region channel to capture broadcasts
+      ApiWeb.Endpoint.subscribe("region:general")
+
+      conn = put(conn, ~p"/api/plots/#{plot}", plot: @update_attrs)
+      assert %{"id" => _id} = json_response(conn, 200)["data"]
+
+      # Assert broadcast was sent
+      assert_receive %Phoenix.Socket.Broadcast{
+        topic: "region:general",
+        event: "update_plot",
+        payload: %{"plot" => _plot}
+      }
+    end
+
     test "renders errors when data is invalid", %{conn: conn, plot: plot} do
       conn = put(conn, ~p"/api/plots/#{plot}", plot: @invalid_attrs)
       response = json_response(conn, 422)
@@ -655,6 +700,24 @@ defmodule ApiWeb.PlotControllerTest do
 
       conn = get(conn, ~p"/api/plots/#{plot}")
       assert response(conn, 404)
+    end
+
+    test "broadcasts delete_plot event to region channel when plot is deleted", %{
+      conn: conn,
+      plot: plot
+    } do
+      # Subscribe to the region channel to capture broadcasts
+      ApiWeb.Endpoint.subscribe("region:general")
+
+      conn = delete(conn, ~p"/api/plots/#{plot}")
+      assert response(conn, 204)
+
+      # Assert broadcast was sent
+      assert_receive %Phoenix.Socket.Broadcast{
+        topic: "region:general",
+        event: "delete_plot",
+        payload: %{"plot_id" => _plot_id}
+      }
     end
 
     test "returns 404 when trying to delete non-existent plot", %{conn: conn} do
