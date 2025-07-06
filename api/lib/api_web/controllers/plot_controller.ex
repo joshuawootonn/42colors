@@ -73,7 +73,12 @@ defmodule ApiWeb.PlotController do
             |> json(%{
               status: "error",
               message: "Plot overlaps with existing plots",
-              overlapping_plots: format_overlapping_plots(overlapping_plots)
+              overlapping_plots: format_overlapping_plots(overlapping_plots),
+              errors: %{
+                polygon: [
+                  "Polygon overlaps with existing plots: #{format_overlapping_plots_names(overlapping_plots)}"
+                ]
+              }
             })
 
           {:error, %Ecto.Changeset{} = changeset} ->
@@ -138,7 +143,12 @@ defmodule ApiWeb.PlotController do
             |> json(%{
               status: "error",
               message: "Plot overlaps with existing plots",
-              overlapping_plots: format_overlapping_plots(overlapping_plots)
+              overlapping_plots: format_overlapping_plots(overlapping_plots),
+              errors: %{
+                polygon: [
+                  "Polygon overlaps with existing plots: #{format_overlapping_plots_names(overlapping_plots)}"
+                ]
+              }
             })
 
           {:error, %Ecto.Changeset{} = changeset} ->
@@ -193,6 +203,12 @@ defmodule ApiWeb.PlotController do
         description: plot.description
       }
     end)
+  end
+
+  defp format_overlapping_plots_names(overlapping_plots) do
+    overlapping_plots
+    |> Enum.map(& &1.name)
+    |> Enum.join(", ")
   end
 
   defp parse_integer(value) when is_binary(value) do

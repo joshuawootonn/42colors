@@ -430,6 +430,11 @@ defmodule ApiWeb.PlotControllerTest do
       assert response["message"] == "Plot overlaps with existing plots"
       assert length(response["overlapping_plots"]) == 1
       assert List.first(response["overlapping_plots"])["name"] == "Existing Plot"
+      assert Map.has_key?(response, "errors")
+
+      assert response["errors"]["polygon"] == [
+               "Polygon overlaps with existing plots: Existing Plot"
+             ]
     end
 
     test "allows non-overlapping plots to be created", %{conn: conn} do
@@ -586,6 +591,11 @@ defmodule ApiWeb.PlotControllerTest do
       assert response["message"] == "Plot overlaps with existing plots"
       assert length(response["overlapping_plots"]) == 1
       assert List.first(response["overlapping_plots"])["name"] == "Existing Plot"
+      assert Map.has_key?(response, "errors")
+
+      assert response["errors"]["polygon"] == [
+               "Polygon overlaps with existing plots: Existing Plot"
+             ]
     end
 
     test "allows plot to be updated with same polygon (no self-overlap)", %{
