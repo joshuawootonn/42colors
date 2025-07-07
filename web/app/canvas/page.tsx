@@ -2,32 +2,60 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+// Define your 42-color palette
+const colorPalette = [
+    [1.0, 0.0, 0.0, 1.0], // 0: Red
+    [0.0, 1.0, 0.0, 1.0], // 1: Green
+    [0.0, 0.0, 1.0, 1.0], // 2: Blue
+    [1.0, 1.0, 0.0, 1.0], // 3: Yellow
+    [1.0, 0.0, 1.0, 1.0], // 4: Magenta
+    [0.0, 1.0, 1.0, 1.0], // 5: Cyan
+    [1.0, 0.5, 0.0, 1.0], // 6: Orange
+    [0.5, 0.0, 1.0, 1.0], // 7: Purple
+    [0.8, 0.2, 0.8, 1.0], // 8: Pink
+    [0.3, 0.7, 0.3, 1.0], // 9: Forest Green
+    // Add 32 more colors to reach 42...
+    [0.9, 0.9, 0.9, 1.0], // 10: Light Gray
+    [0.1, 0.1, 0.1, 1.0], // 11: Dark Gray
+    // ... continue with more colors
+] as const;
+
+// POLYGON ((36 20, 44 20, 44 27, 33 27, 33 21, 29 21, 29 14, 36 14, 36 20))
+// POLYGON ((43 38, 43 36, 51 36, 51 40, 44 40, 44 44, 35 44, 35 38, 43 38))
+// POLYGON ((15 23, 15 24, 9 24, 9 22, 12 22, 12 19, 8 19, 8 13, 14 13, 14 18, 17 18, 17 14, 22 14, 22 19, 18 19, 18 23, 15 23))
+// POLYGON ((149 189, 154 189, 154 195, 148 195, 148 190, 143 190, 143 186, 149 186, 149 189))
 const polygonData = [
     {
         name: 'Complex Polygon',
         vertices: [
-            0, 0.3, -0.2, 0.2, -0.3, 0.1, -0.25, -0.1, -0.35, -0.25, -0.1, -0.3,
-            0.1, -0.25, 0.25, -0.1, 0.3, 0.05, 0.2, 0.15,
+            36, 20, 44, 20, 44, 27, 33, 27, 33, 21, 29, 21, 29, 14, 36, 14, 36,
+            20,
         ],
-        color: [0.8, 0.2, 0.8, 1],
+        colorIndex: 8, // Pink
     },
     {
         name: 'Triangle',
-        vertices: [0, 0.5, -0.4, -0.3, 0.4, -0.3],
-        color: [1, 0.3, 0.3, 1],
+        vertices: [
+            43, 38, 43, 36, 51, 36, 51, 40, 44, 40, 44, 44, 35, 44, 35, 38, 43,
+            38,
+        ],
+        colorIndex: 0, // Red
     },
     {
         name: 'Pentagon',
-        vertices: [0, 0.4, -0.38, 0.12, -0.24, -0.32, 0.24, -0.32, 0.38, 0.12],
-        color: [0.3, 0.7, 0.3, 1],
+        vertices: [
+            15, 23, 15, 24, 9, 24, 9, 22, 12, 22, 12, 19, 8, 19, 8, 13, 14, 13,
+            14, 18, 17, 18, 17, 14, 22, 14, 22, 19, 18, 19, 18, 23, 15, 23,
+        ],
+        colorIndex: 9, // Forest Green
     },
     {
         name: 'Star',
         vertices: [
-            0, 0.5, -0.12, 0.15, -0.48, 0.15, -0.19, -0.08, -0.29, -0.4, 0,
-            -0.2, 0.29, -0.4, 0.19, -0.08, 0.48, 0.15, 0.12, 0.15,
+            149, 189, 154, 189, 154, 195, 148, 195, 148, 190, 143, 190, 143,
+            186, 149, 186, 149, 189,
         ],
-        color: [0.3, 0.3, 1, 1],
+        colorIndex: 2, // Blue
     },
 ];
 
@@ -67,21 +95,64 @@ export default function CanvasPage() {
                     format: canvasFormat,
                 });
 
+                // Calculate bounding box for all polygons to determine scale
+                let minX = Infinity,
+                    maxX = -Infinity;
+                let minY = Infinity,
+                    maxY = -Infinity;
+
+                polygonData.forEach((polygon) => {
+                    for (let i = 0; i < polygon.vertices.length; i += 2) {
+                        const x = polygon.vertices[i];
+                        const y = polygon.vertices[i + 1];
+                        minX = Math.min(minX, x);
+                        maxX = Math.max(maxX, x);
+                        minY = Math.min(minY, y);
+                        maxY = Math.max(maxY, y);
+                    }
+                });
+
+                // Calculate transformation to fit polygons in viewport
+                const width = maxX - minX;
+                const height = maxY - minY;
+                const centerX = (minX + maxX) / 2;
+                const centerY = (minY + maxY) / 2;
+
+                // Scale to fit in [-0.8, 0.8] range (leaving some margin)
+                const scale = Math.min(1.6 / width, 1.6 / height);
+
+                console.log(
+                    `Coordinate bounds: X[${minX}, ${maxX}], Y[${minY}, ${maxY}]`,
+                );
+                console.log(
+                    `Scale: ${scale}, Center: (${centerX}, ${centerY})`,
+                );
+
                 const vertexShader = device.createShaderModule({
                     code: `
+            @group(1) @binding(0) var<uniform> transform: mat3x3<f32>;
+            
             @vertex
             fn main(@location(0) pos: vec2<f32>) -> @builtin(position) vec4<f32> {
-              return vec4<f32>(pos, 0.0, 1.0);
+              // Apply transformation matrix to convert world coordinates to NDC
+              let worldPos = vec3<f32>(pos, 1.0);
+              let transformedPos = transform * worldPos;
+              return vec4<f32>(transformedPos.xy, 0.0, 1.0);
             }
           `,
                 });
 
                 const fragmentShader = device.createShaderModule({
                     code: `
-            @group(0) @binding(0) var<uniform> color: vec4<f32>;
+            @group(0) @binding(0) var<uniform> colorIndex: f32;
+            @group(0) @binding(1) var paletteTexture: texture_2d<f32>;
+            @group(0) @binding(2) var paletteSampler: sampler;
             
             @fragment
             fn main() -> @location(0) vec4<f32> {
+              // Sample the palette texture using the color index
+              let u = (colorIndex + 0.5) / 42.0; // Map index to UV coordinate
+              let color = textureSample(paletteTexture, paletteSampler, vec2<f32>(u, 0.5));
               return color;
             }
           `,
@@ -115,10 +186,78 @@ export default function CanvasPage() {
                     },
                 });
 
+                // Create transformation matrix
+                // This transforms from world coordinates to normalized device coordinates
+                const transformMatrix = new Float32Array([
+                    scale,
+                    0,
+                    -centerX * scale, // Scale X and translate to center
+                    0,
+                    -scale,
+                    centerY * scale, // Scale Y (flip) and translate to center
+                    0,
+                    0,
+                    1, // Homogeneous coordinate
+                ]);
+
+                const transformBuffer = device.createBuffer({
+                    size: transformMatrix.length * 4, // 9 floats * 4 bytes each
+                    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+                });
+
+                device.queue.writeBuffer(transformBuffer, 0, transformMatrix);
+
+                // Create bind group for transformation
+                const transformBindGroup = device.createBindGroup({
+                    layout: renderPipeline.getBindGroupLayout(1),
+                    entries: [
+                        {
+                            binding: 0,
+                            resource: { buffer: transformBuffer },
+                        },
+                    ],
+                });
+
+                // Create palette texture
+                const paletteTexture = device.createTexture({
+                    size: [42, 1, 1], // 42 pixels wide, 1 pixel tall
+                    format: 'rgba8unorm',
+                    usage:
+                        GPUTextureUsage.TEXTURE_BINDING |
+                        GPUTextureUsage.COPY_DST,
+                });
+
+                // Convert palette colors to Uint8Array for texture
+                const paletteData = new Uint8Array(42 * 4); // 42 colors * 4 components (RGBA)
+                colorPalette.forEach((color, index) => {
+                    const offset = index * 4;
+                    paletteData[offset] = Math.round(color[0] * 255); // R
+                    paletteData[offset + 1] = Math.round(color[1] * 255); // G
+                    paletteData[offset + 2] = Math.round(color[2] * 255); // B
+                    paletteData[offset + 3] = Math.round(color[3] * 255); // A
+                });
+
+                // Upload palette data to texture
+                device.queue.writeTexture(
+                    { texture: paletteTexture },
+                    paletteData,
+                    { bytesPerRow: 42 * 4 },
+                    { width: 42, height: 1 },
+                );
+
+                // Create sampler for palette texture
+                const paletteSampler = device.createSampler({
+                    minFilter: 'nearest',
+                    magFilter: 'nearest',
+                    addressModeU: 'clamp-to-edge',
+                    addressModeV: 'clamp-to-edge',
+                });
+
                 const polygonBuffers = polygonData.map((polygon) => {
                     const vertices: number[] = [];
                     const numVertices = polygon.vertices.length / 2;
 
+                    // Use original coordinates - transformation happens in vertex shader
                     for (let i = 1; i < numVertices - 1; i++) {
                         vertices.push(polygon.vertices[0], polygon.vertices[1]);
                         vertices.push(
@@ -142,27 +281,33 @@ export default function CanvasPage() {
                         new Float32Array(vertices),
                     );
 
-                    // Create uniform buffer for color
-                    const colorBuffer = device.createBuffer({
-                        size: 16, // 4 floats * 4 bytes each
+                    // Create uniform buffer for color index (just a single float)
+                    const colorIndexBuffer = device.createBuffer({
+                        size: 4, // 1 float * 4 bytes
                         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
                     });
 
                     device.queue.writeBuffer(
-                        colorBuffer,
+                        colorIndexBuffer,
                         0,
-                        new Float32Array(polygon.color),
+                        new Float32Array([polygon.colorIndex]),
                     );
 
-                    // Create bind group for this polygon's color
+                    // Create bind group for this polygon
                     const bindGroup = device.createBindGroup({
                         layout: renderPipeline.getBindGroupLayout(0),
                         entries: [
                             {
                                 binding: 0,
-                                resource: {
-                                    buffer: colorBuffer,
-                                },
+                                resource: { buffer: colorIndexBuffer },
+                            },
+                            {
+                                binding: 1,
+                                resource: paletteTexture.createView(),
+                            },
+                            {
+                                binding: 2,
+                                resource: paletteSampler,
                             },
                         ],
                     });
@@ -171,7 +316,7 @@ export default function CanvasPage() {
                         buffer: vertexBuffer,
                         vertexCount: vertices.length / 2,
                         name: polygon.name,
-                        colorBuffer,
+                        colorIndexBuffer,
                         bindGroup,
                     };
                 });
@@ -194,6 +339,7 @@ export default function CanvasPage() {
                     });
 
                     pass.setPipeline(renderPipeline);
+                    pass.setBindGroup(1, transformBindGroup); // Set the transformation bind group
 
                     polygonBuffers.forEach((polygonBuffer) => {
                         pass.setBindGroup(0, polygonBuffer.bindGroup);
@@ -212,8 +358,11 @@ export default function CanvasPage() {
                     cancelAnimationFrame(animationId);
                     polygonBuffers.forEach((pb) => {
                         pb.buffer.destroy();
-                        pb.colorBuffer.destroy();
+                        pb.colorIndexBuffer.destroy();
                     });
+                    paletteTexture.destroy();
+                    transformBuffer.destroy();
+                    // Note: Samplers don't have a destroy method
                 };
             } catch (error) {
                 console.error('WebGPU failed:', error);
