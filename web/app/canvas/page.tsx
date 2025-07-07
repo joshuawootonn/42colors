@@ -2,6 +2,27 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+// Essential WebGPU type definitions
+declare global {
+  interface Navigator {
+    gpu?: {
+      requestAdapter(): Promise<any>;
+      getPreferredCanvasFormat(): string;
+    };
+  }
+  
+  interface HTMLCanvasElement {
+    getContext(contextId: 'webgpu'): any;
+  }
+}
+
+// Use any types for WebGPU to avoid TypeScript errors
+type WebGPUDevice = any;
+type WebGPUContext = any;
+type WebGPURenderPipeline = any;
+type WebGPUBuffer = any;
+type WebGPUBindGroup = any;
+
 // Polygon data with varying complexity
 const polygonData = [
   // Triangle
@@ -27,7 +48,7 @@ const polygonData = [
 ]
 
 // Vertex shader with transform uniforms
-const vertexShaderSource = \`
+const vertexShaderSource = `
   struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) color: vec4<f32>,
@@ -62,14 +83,30 @@ const vertexShaderSource = \`
     output.color = color;
     return output;
   }
-\`
+`
 
-const fragmentShaderSource = \`
+const fragmentShaderSource = `
   @fragment
   fn main(@location(0) color: vec4<f32>) -> @location(0) vec4<f32> {
     return color;
   }
-\`
+`
+
+// Type definitions for WebGPU resources
+interface PolygonBuffer {
+  buffer: WebGPUBuffer;
+  vertexCount: number;
+  name: string;
+}
+
+interface WebGPUResources {
+  device: WebGPUDevice;
+  context: WebGPUContext;
+  renderPipeline: WebGPURenderPipeline;
+  uniformBuffer: WebGPUBuffer;
+  bindGroup: WebGPUBindGroup;
+  polygonBuffers: PolygonBuffer[];
+}
 
 export default function CanvasPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -98,22 +135,27 @@ export default function CanvasPage() {
   useEffect(() => {
     if (!canvasRef.current) return
 
-    const initWebGPU = async () => {
+    const initWebGPU = async (): Promise<() => void> => {
       try {
         if (!navigator.gpu) {
           setIsWebGPUSupported(false)
-          return
+          return () => {}
         }
 
         const adapter = await navigator.gpu.requestAdapter()
         if (!adapter) {
           setIsWebGPUSupported(false)
-          return
+          return () => {}
         }
 
         const device = await adapter.requestDevice()
         const canvas = canvasRef.current!
-        const context = canvas.getContext('webgpu')!
+        const context = canvas.getContext('webgpu')
+        
+        if (!context) {
+          setIsWebGPUSupported(false)
+          return () => {}
+        }
         
         const canvasFormat = navigator.gpu.getPreferredCanvasFormat()
         context.configure({
@@ -131,7 +173,7 @@ export default function CanvasPage() {
           entries: [
             {
               binding: 0,
-              visibility: GPUShaderStage.VERTEX,
+              visibility: (globalThis as any).GPUShaderStage?.VERTEX || 1,
               buffer: {
                 type: 'uniform',
               },
@@ -182,7 +224,7 @@ export default function CanvasPage() {
         // Create uniform buffer
         const uniformBuffer = device.createBuffer({
           size: 4 * 4, // 4 floats (scale, offsetX, offsetY, rotation)
-          usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+          usage: ((globalThis as any).GPUBufferUsage?.UNIFORM || 64) | ((globalThis as any).GPUBufferUsage?.COPY_DST || 8),
         })
 
         // Create bind group
@@ -199,8 +241,8 @@ export default function CanvasPage() {
         })
 
         // Create vertex buffers for all polygons
-        const polygonBuffers = polygonData.map((polygon) => {
-          const vertices = []
+        const polygonBuffers: PolygonBuffer[] = polygonData.map((polygon) => {
+          const vertices: number[] = []
           
           // Convert polygon to triangles using fan triangulation
           const numVertices = polygon.vertices.length / 2
@@ -213,7 +255,7 @@ export default function CanvasPage() {
 
           const vertexBuffer = device.createBuffer({
             size: vertices.length * 4,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            usage: ((globalThis as any).GPUBufferUsage?.VERTEX || 32) | ((globalThis as any).GPUBufferUsage?.COPY_DST || 8),
           })
 
           device.queue.writeBuffer(vertexBuffer, 0, new Float32Array(vertices))
@@ -224,6 +266,15 @@ export default function CanvasPage() {
             name: polygon.name,
           }
         })
+
+        const resources: WebGPUResources = {
+          device,
+          context,
+          renderPipeline,
+          uniformBuffer,
+          bindGroup,
+          polygonBuffers,
+        }
 
         setIsInitialized(true)
 
@@ -242,11 +293,11 @@ export default function CanvasPage() {
             polygonSwitchTime = currentTime
           }
 
-          const encoder = device.createCommandEncoder()
+          const encoder = resources.device.createCommandEncoder()
           const pass = encoder.beginRenderPass({
             colorAttachments: [
               {
-                view: context.getCurrentTexture().createView(),
+                view: resources.context.getCurrentTexture().createView(),
                 clearValue: { r: 0.1, g: 0.1, b: 0.1, a: 1.0 },
                 loadOp: 'clear',
                 storeOp: 'store',
@@ -254,14 +305,14 @@ export default function CanvasPage() {
             ],
           })
 
-          pass.setPipeline(renderPipeline)
-          pass.setBindGroup(0, bindGroup)
+          pass.setPipeline(resources.renderPipeline)
+          pass.setBindGroup(0, resources.bindGroup)
 
           // Render all polygons in a grid layout
           const gridSize = Math.ceil(Math.sqrt(polygonData.length))
           const cellSize = 1.8 / gridSize
           
-          polygonBuffers.forEach((polygonBuffer, index) => {
+          resources.polygonBuffers.forEach((polygonBuffer, index) => {
             const row = Math.floor(index / gridSize)
             const col = index % gridSize
             
@@ -276,14 +327,14 @@ export default function CanvasPage() {
             
             // Update uniform buffer for this polygon
             const uniformData = new Float32Array([scale, x, y, rotation])
-            device.queue.writeBuffer(uniformBuffer, 0, uniformData)
+            resources.device.queue.writeBuffer(resources.uniformBuffer, 0, uniformData)
             
             pass.setVertexBuffer(0, polygonBuffer.buffer)
             pass.draw(polygonBuffer.vertexCount)
           })
 
           pass.end()
-          device.queue.submit([encoder.finish()])
+          resources.device.queue.submit([encoder.finish()])
 
           animationId = requestAnimationFrame(render)
         }
@@ -292,17 +343,28 @@ export default function CanvasPage() {
 
         return () => {
           cancelAnimationFrame(animationId)
-          polygonBuffers.forEach(pb => pb.buffer.destroy())
-          uniformBuffer.destroy()
+          resources.polygonBuffers.forEach(pb => pb.buffer.destroy())
+          resources.uniformBuffer.destroy()
         }
       } catch (error) {
         console.error('WebGPU initialization failed:', error)
         setIsWebGPUSupported(false)
+        return () => {}
       }
     }
 
-    initWebGPU()
-  }, [animationSpeed, canvasSize])
+    let cleanup: (() => void) | undefined
+
+    initWebGPU().then((cleanupFn) => {
+      cleanup = cleanupFn
+    })
+
+    return () => {
+      if (cleanup) {
+        cleanup()
+      }
+    }
+  }, [animationSpeed, canvasSize, currentPolygon])
 
   if (!isWebGPUSupported) {
     return (
@@ -352,9 +414,9 @@ export default function CanvasPage() {
           {polygonData.map((polygon, index) => (
             <div
               key={index}
-              className={\`cursor-pointer hover:bg-gray-700 p-1 rounded \${
+              className={`cursor-pointer hover:bg-gray-700 p-1 rounded ${
                 index === currentPolygon ? 'bg-blue-600' : ''
-              }\`}
+              }`}
               onClick={() => setCurrentPolygon(index)}
             >
               {polygon.name} ({polygon.vertices.length / 2} vertices)
