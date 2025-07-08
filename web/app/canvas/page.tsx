@@ -71,7 +71,7 @@ export default function CanvasPage() {
 
         const initWebGPU = async () => {
             try {
-                if (!('gpu' in navigator)) {
+                if (!('gpu' in navigator) || !navigator.gpu) {
                     setIsWebGPUSupported(false);
                     return;
                 }
@@ -330,7 +330,7 @@ export default function CanvasPage() {
 
                 let animationId: number;
 
-                const render = (currentTime: number) => {
+                const render = (_currentTime: number) => {
                     const encoder = device.createCommandEncoder();
                     const pass = encoder.beginRenderPass({
                         colorAttachments: [
