@@ -130,16 +130,16 @@ export default function CanvasPage() {
 
                 const vertexShader = device.createShaderModule({
                     code: `
-            @group(1) @binding(0) var<uniform> transform: mat3x3<f32>;
-            
-            @vertex
-            fn main(@location(0) pos: vec2<f32>) -> @builtin(position) vec4<f32> {
-              // Apply transformation matrix to convert world coordinates to NDC
-              let worldPos = vec3<f32>(pos, 1.0);
-              let transformedPos = transform * worldPos;
-              return vec4<f32>(transformedPos.xy, 0.0, 1.0);
-            }
-          `,
+             @group(1) @binding(0) var<uniform> transform: mat3x4<f32>;
+             
+             @vertex
+             fn main(@location(0) pos: vec2<f32>) -> @builtin(position) vec4<f32> {
+               // Apply transformation matrix to convert world coordinates to NDC
+               let worldPos = vec3<f32>(pos, 1.0);
+               let transformedPos = transform * worldPos;
+               return vec4<f32>(transformedPos.xy, 0.0, 1.0);
+             }
+           `,
                 });
 
                 const fragmentShader = device.createShaderModule({
@@ -188,20 +188,25 @@ export default function CanvasPage() {
 
                 // Create transformation matrix
                 // This transforms from world coordinates to normalized device coordinates
+                // WebGPU requires uniform buffers to be at least 48 bytes, so we pad the matrix
+                // mat3x4<f32> = 3 columns, 4 rows (column-major order)
                 const transformMatrix = new Float32Array([
                     scale,
                     0,
-                    -centerX * scale, // Scale X and translate to center
+                    0,
+                    0, // Column 1: [scale, 0, 0, 0]
                     0,
                     -scale,
-                    centerY * scale, // Scale Y (flip) and translate to center
                     0,
-                    0,
-                    1, // Homogeneous coordinate
+                    0, // Column 2: [0, -scale, 0, 0]
+                    -centerX * scale,
+                    centerY * scale,
+                    1,
+                    0, // Column 3: [translate_x, translate_y, 1, 0]
                 ]);
 
                 const transformBuffer = device.createBuffer({
-                    size: transformMatrix.length * 4, // 9 floats * 4 bytes each
+                    size: 48, // Minimum required size for uniform buffers
                     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
                 });
 
