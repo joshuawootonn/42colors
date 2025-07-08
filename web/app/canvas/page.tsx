@@ -64,6 +64,62 @@ export default function CanvasPage() {
     const [isWebGPUSupported, setIsWebGPUSupported] = useState(true);
     const [isInitialized, setIsInitialized] = useState(false);
 
+    // Camera state for panning
+    const [camera, setCamera] = useState({ x: 0, y: 0, zoom: 1 });
+
+    // Pan state
+    const [isPanning, setIsPanning] = useState(false);
+    const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
+
+    // WebGPU refs for updating transform
+    const webgpuRefs = useRef<{
+        device?: GPUDevice;
+        transformBuffer?: GPUBuffer;
+        scale?: number;
+        centerX?: number;
+        centerY?: number;
+    }>({});
+
+    // Function to update transform matrix based on camera position
+    const updateTransform = () => {
+        const refs = webgpuRefs.current;
+        if (
+            !refs.device ||
+            !refs.transformBuffer ||
+            !refs.scale ||
+            refs.centerX === undefined ||
+            refs.centerY === undefined
+        ) {
+            return;
+        }
+
+        // Apply camera offset to the transformation
+        const offsetX = camera.x;
+        const offsetY = camera.y;
+
+        const transformMatrix = new Float32Array([
+            refs.scale * camera.zoom,
+            0,
+            0,
+            0, // Column 1: [scale, 0, 0, 0]
+            0,
+            -refs.scale * camera.zoom,
+            0,
+            0, // Column 2: [0, -scale, 0, 0]
+            (-refs.centerX + offsetX) * refs.scale * camera.zoom,
+            (refs.centerY + offsetY) * refs.scale * camera.zoom,
+            1,
+            0, // Column 3: [translate_x, translate_y, 1, 0]
+        ]);
+
+        refs.device.queue.writeBuffer(refs.transformBuffer, 0, transformMatrix);
+    };
+
+    // Update transform when camera changes
+    useEffect(() => {
+        updateTransform();
+    }, [camera]);
+
     useEffect(() => {
         if (!canvasRef.current) return;
 
@@ -209,6 +265,15 @@ export default function CanvasPage() {
                 });
 
                 device.queue.writeBuffer(transformBuffer, 0, transformMatrix);
+
+                // Store refs for panning updates
+                webgpuRefs.current = {
+                    device,
+                    transformBuffer,
+                    scale,
+                    centerX,
+                    centerY,
+                };
 
                 // Create bind group for transformation
                 const transformBindGroup = device.createBindGroup({
@@ -376,6 +441,43 @@ export default function CanvasPage() {
         initWebGPU();
     }, []);
 
+    // Mouse event handlers for panning
+    const handleMouseDown = (e: React.MouseEvent) => {
+        setIsPanning(true);
+        setLastPanPoint({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!isPanning) return;
+
+        const deltaX = e.clientX - lastPanPoint.x;
+        const deltaY = e.clientY - lastPanPoint.y;
+
+        // Convert screen space movement to world space
+        // For 1:1 pixel mapping on screen, we need a much smaller scale factor
+        const refs = webgpuRefs.current;
+        if (!refs.scale) return;
+
+        // Simple 1:1 pixel mapping - much smaller movement
+        const panSensitivity = 0.2; // Adjust this value to fine-tune sensitivity
+
+        setCamera((prev) => ({
+            ...prev,
+            x: prev.x + deltaX * panSensitivity,
+            y: prev.y - deltaY * panSensitivity, // Invert Y for natural panning
+        }));
+
+        setLastPanPoint({ x: e.clientX, y: e.clientY });
+    };
+
+    const handleMouseUp = () => {
+        setIsPanning(false);
+    };
+
+    const handleMouseLeave = () => {
+        setIsPanning(false);
+    };
+
     if (!isWebGPUSupported) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
@@ -402,12 +504,29 @@ export default function CanvasPage() {
                 <div className="text-white text-xs">
                     {isInitialized ? 'WebGPU Initialized' : 'Loading...'}
                 </div>
+
+                {isInitialized && (
+                    <div className="text-white text-xs mt-2">
+                        <div>
+                            Camera: ({camera.x.toFixed(1)},{' '}
+                            {camera.y.toFixed(1)})
+                        </div>
+                        <div>Zoom: {camera.zoom.toFixed(2)}x</div>
+                        <div className="text-gray-400 mt-1">
+                            {isPanning ? 'Panning...' : 'Click and drag to pan'}
+                        </div>
+                    </div>
+                )}
             </div>
 
             <canvas
                 ref={canvasRef}
-                className="w-full h-full"
+                className="w-full h-full cursor-grab active:cursor-grabbing"
                 style={{ display: 'block' }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
             />
         </div>
     );
