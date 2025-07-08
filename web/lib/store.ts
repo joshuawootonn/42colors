@@ -85,6 +85,10 @@ import { WheelTool } from './tools/wheel';
 import { dedupeCoords } from './utils/dedupe-coords';
 import { isInitialStore } from './utils/is-initial-store';
 import { uuid } from './utils/uuid';
+import {
+    WebGPUPolygonManager,
+    createWebGPUUICanvas,
+} from './webgpu/polygon-integration';
 
 export type PointerState = 'default' | 'pressed';
 
@@ -129,8 +133,8 @@ export type InitializedStore = {
         telegraphCanvas: HTMLCanvasElement;
         telegraphCanvasContext: CanvasRenderingContext2D;
         nonPixelCanvas: HTMLCanvasElement;
-        nonPixelCanvasContext: CanvasRenderingContext2D;
         chunkCanvases: ChunkCanvases;
+        webgpuPolygonManager?: WebGPUPolygonManager;
     };
     actions: Action[];
     activeAction: Action | null;
@@ -199,8 +203,6 @@ export const store = createStore({
             telegraphCanvasContext.imageSmoothingEnabled = false;
 
             const nonPixelCanvas = createFullsizeCanvas();
-            const nonPixelCanvasContext = nonPixelCanvas.getContext('2d')!;
-            nonPixelCanvasContext.imageSmoothingEnabled = false;
 
             enqueue.effect(() => {
                 store.trigger.fetchPixels();
@@ -209,6 +211,18 @@ export const store = createStore({
                     queryKey: ['user', 'plots'],
                     queryFn: getUserPlots,
                 });
+
+                createWebGPUUICanvas(nonPixelCanvas).then(
+                    (webgpuPolygonManager) => {
+                        if (webgpuPolygonManager == null) {
+                            console.error('Failed to initialize WebGPU');
+                            return;
+                        }
+                        store.trigger.initializeWebGPU({
+                            webgpuPolygonManager,
+                        });
+                    },
+                );
             });
 
             const initialized: InitializedStore = {
@@ -244,13 +258,28 @@ export const store = createStore({
                     telegraphCanvas,
                     telegraphCanvasContext,
                     nonPixelCanvas,
-                    nonPixelCanvasContext,
                     chunkCanvases: {},
+                    webgpuPolygonManager: undefined,
                 },
                 queryClient: event.queryClient,
             };
 
             return initialized;
+        },
+
+        initializeWebGPU: (
+            context,
+            event: { webgpuPolygonManager: WebGPUPolygonManager },
+        ) => {
+            if (isInitialStore(context)) return;
+
+            return {
+                ...context,
+                canvas: {
+                    ...context.canvas,
+                    webgpuPolygonManager: event.webgpuPolygonManager,
+                },
+            };
         },
 
         listen: (
@@ -794,13 +823,6 @@ export const store = createStore({
                 context.camera,
             );
 
-            context.canvas.nonPixelCanvasContext.imageSmoothingEnabled = false;
-            context.canvas.nonPixelCanvasContext.clearRect(
-                0,
-                0,
-                context.canvas.nonPixelCanvas.width,
-                context.canvas.nonPixelCanvas.height,
-            );
             redrawUserPlots(context);
             clearChunkPixels(context.canvas.chunkCanvases, dedupedPixels);
         },
@@ -848,11 +870,11 @@ export const store = createStore({
             event: { chunkKey: string; plots: Plot[] },
         ) => {
             if (isInitialStore(context)) return;
-            drawPlotsToUIChunkCanvas(
-                context.canvas.chunkCanvases[event.chunkKey].elementUI,
-                context.canvas.chunkCanvases[event.chunkKey].contextUI,
-                event.plots,
-            );
+            // drawPlotsToUIChunkCanvas(
+            //     context.canvas.chunkCanvases[event.chunkKey].elementUI,
+            //     context.canvas.chunkCanvases[event.chunkKey].contextUI,
+            //     event.plots,
+            // );
         },
 
         moveCamera: (
