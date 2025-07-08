@@ -9,7 +9,7 @@ function fetchPixels() {
     store.trigger.fetchPixels();
 }
 
-let timeout: Timer;
+let timeout: NodeJS.Timeout;
 
 function onWheel(
     context: Store,
