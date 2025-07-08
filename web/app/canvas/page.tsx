@@ -63,8 +63,6 @@ export default function CanvasPage() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isWebGPUSupported, setIsWebGPUSupported] = useState(true);
     const [isInitialized, setIsInitialized] = useState(false);
-    const [currentPolygon, setCurrentPolygon] = useState(0);
-    const [animationSpeed, setAnimationSpeed] = useState(1);
 
     useEffect(() => {
         if (!canvasRef.current) return;
@@ -376,7 +374,7 @@ export default function CanvasPage() {
         };
 
         initWebGPU();
-    }, [animationSpeed]);
+    }, []);
 
     if (!isWebGPUSupported) {
         return (
@@ -400,47 +398,9 @@ export default function CanvasPage() {
                 <h2 className="text-white text-lg font-bold mb-2">
                     WebGPU Polygon Showcase
                 </h2>
-                <div className="text-white text-sm mb-2">
-                    Current: {polygonData[currentPolygon]?.name}
-                </div>
-                <div className="mb-2">
-                    <label className="text-white text-sm block mb-1">
-                        Animation Speed:
-                    </label>
-                    <input
-                        type="range"
-                        min="0.1"
-                        max="5"
-                        step="0.1"
-                        value={animationSpeed}
-                        onChange={(e) =>
-                            setAnimationSpeed(parseFloat(e.target.value))
-                        }
-                        className="w-full"
-                    />
-                </div>
+
                 <div className="text-white text-xs">
                     {isInitialized ? 'WebGPU Initialized' : 'Loading...'}
-                </div>
-            </div>
-
-            <div className="absolute top-4 right-4 z-10 bg-black bg-opacity-50 p-4 rounded-lg max-w-xs">
-                <h3 className="text-white text-sm font-bold mb-2">
-                    Polygons ({polygonData.length})
-                </h3>
-                <div className="text-white text-xs space-y-1">
-                    {polygonData.map((polygon, index) => (
-                        <div
-                            key={index}
-                            className={`cursor-pointer hover:bg-gray-700 p-1 rounded ${
-                                index === currentPolygon ? 'bg-blue-600' : ''
-                            }`}
-                            onClick={() => setCurrentPolygon(index)}
-                        >
-                            {polygon.name} ({polygon.vertices.length / 2}{' '}
-                            vertices)
-                        </div>
-                    ))}
                 </div>
             </div>
 
