@@ -51,6 +51,7 @@
         "@types/phoenix": "^1.6.5",
         "@types/react": "19.1.8",
         "@types/react-dom": "19.1.6",
+        "@webgpu/types": "^0.1.64",
         "eslint": "^8",
         "eslint-config-next": "15.3.4",
         "postcss": "^8",
