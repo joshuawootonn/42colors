@@ -182,7 +182,7 @@ export default function CanvasPage() {
                         targets: [{ format: canvasFormat }],
                     },
                     primitive: {
-                        topology: 'triangle-list' as const,
+                        topology: 'line-list' as const,
                     },
                 });
 
@@ -262,17 +262,17 @@ export default function CanvasPage() {
                     const vertices: number[] = [];
                     const numVertices = polygon.vertices.length / 2;
 
-                    // Use original coordinates - transformation happens in vertex shader
-                    for (let i = 1; i < numVertices - 1; i++) {
-                        vertices.push(polygon.vertices[0], polygon.vertices[1]);
-                        vertices.push(
-                            polygon.vertices[i * 2],
-                            polygon.vertices[i * 2 + 1],
-                        );
-                        vertices.push(
-                            polygon.vertices[(i + 1) * 2],
-                            polygon.vertices[(i + 1) * 2 + 1],
-                        );
+                    // For line-list, create line segments connecting each vertex to the next
+                    // This creates the outline/stroke of the polygon
+                    for (let i = 0; i < numVertices; i++) {
+                        const currentX = polygon.vertices[i * 2];
+                        const currentY = polygon.vertices[i * 2 + 1];
+                        const nextIndex = (i + 1) % numVertices; // Wrap around to close the polygon
+                        const nextX = polygon.vertices[nextIndex * 2];
+                        const nextY = polygon.vertices[nextIndex * 2 + 1];
+
+                        // Add line segment: current vertex -> next vertex
+                        vertices.push(currentX, currentY, nextX, nextY);
                     }
 
                     const vertexBuffer = device.createBuffer({
