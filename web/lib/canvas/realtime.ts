@@ -6,7 +6,6 @@ import { Pixel } from '../geometry/coord';
 import { COLOR_TABLE } from '../palette';
 import { InitializedStore } from '../store';
 import { getCameraOffset } from '../tools/brush';
-import { redrawPolygon } from '../tools/claimer/claimer';
 import { Plot } from '../tools/claimer/claimer.rest';
 
 export function createRealtimeCanvas(camera: Camera) {
@@ -58,40 +57,44 @@ export function redrawRealtimePixels(
     }
 }
 
+type Color = [number, number, number, number];
+
+const BLUE: Color = [0, 0, 1, 1];
+const BLACK: Color = [0, 0, 0, 1];
+
 export function redrawUserPlots(context: InitializedStore) {
-    const ctx = context.canvas.nonPixelCanvasContext;
+    const webgpuManager = context.canvas.webgpuPolygonManager;
+    if (!webgpuManager) return;
+
     const userPlotData: Plot[] | undefined = context.queryClient.getQueryData([
         'user',
         'plots',
     ]);
 
     if (userPlotData == null) {
-        return context;
+        return;
     }
 
-    ctx.imageSmoothingEnabled = false;
-
     const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
-
     const { xOffset, yOffset } = getCameraOffset(context.camera);
-    for (let i = 0; i < userPlotData.length; i++) {
-        if (
-            userPlotData[i].id === context.toolSettings.claimer.selectedPlotId
-        ) {
-            ctx.fillStyle = 'rgba(0,0,0,0)';
-            ctx.strokeStyle = 'rgba(0,0,255,1)';
-        } else {
-            ctx.fillStyle = 'rgba(0,0,0,0)';
-            ctx.strokeStyle = 'rgba(0,0,0,1)';
-        }
 
-        redrawPolygon(ctx, userPlotData[i].polygon, {
+    // Prepare all polygons for batch rendering
+    const polygonRenderData = userPlotData.map((plot) => ({
+        polygon: plot.polygon,
+        options: {
             containsMatchingEndpoints: true,
             xOffset,
             yOffset,
             xCamera: context.camera.x,
             yCamera: context.camera.y,
             pixelSize,
-        });
-    }
+            lineWidth: 0.25, // 3px thick lines
+            color:
+                plot.id === context.toolSettings.claimer.selectedPlotId
+                    ? BLUE
+                    : BLACK,
+        },
+    }));
+
+    webgpuManager.redrawPolygons(polygonRenderData);
 }
