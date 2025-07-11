@@ -4,7 +4,7 @@ import * as React from 'react';
 import { createContext, useContext } from 'react';
 
 import { cn } from '@/lib/utils';
-import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { Dialog as DialogPrimitive } from '@base-ui-components/react/dialog';
 
 import { X } from '../icons/x';
 
@@ -17,16 +17,16 @@ const DialogPortal = DialogPrimitive.Portal;
 const DialogClose = DialogPrimitive.Close;
 
 const DialogOverlay = React.forwardRef<
-    React.ElementRef<typeof DialogPrimitive.Overlay>,
-    React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+    React.ElementRef<typeof DialogPrimitive.Backdrop>,
+    React.ComponentPropsWithoutRef<typeof DialogPrimitive.Backdrop>
 >(({ className, ...props }, ref) => (
-    <DialogPrimitive.Overlay
+    <DialogPrimitive.Backdrop
         ref={ref}
         className={cn('fixed inset-0 z-50 bg-black/5', className)}
         {...props}
     />
 ));
-DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
+DialogOverlay.displayName = DialogPrimitive.Backdrop.displayName;
 
 const DialogContext = createContext<boolean>(false);
 
@@ -35,18 +35,25 @@ function useIsWithinDialogContext() {
 }
 
 const DialogContent = React.forwardRef<
-    React.ElementRef<typeof DialogPrimitive.Content>,
-    React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+    React.ElementRef<typeof DialogPrimitive.Popup>,
+    React.ComponentPropsWithoutRef<typeof DialogPrimitive.Popup> & {
+        onInteractOutside?: (event: PointerEvent) => void;
+    }
+>(({ className, children, onInteractOutside, ...props }: {
+    className?: string;
+    children?: React.ReactNode;
+    onInteractOutside?: (event: PointerEvent) => void;
+} & React.ComponentPropsWithoutRef<typeof DialogPrimitive.Popup>, ref: React.ForwardedRef<React.ElementRef<typeof DialogPrimitive.Popup>>) => (
     <DialogPortal>
         <DialogOverlay />
 
-        <DialogPrimitive.Content
+        <DialogPrimitive.Popup
             ref={ref}
             className={cn(
                 'fixed left-[50%] top-[50%] z-50 flex w-full max-w-[calc(100vw-40px)] max-h-[min(calc(100vh-40px),600px)] translate-x-[-50%] translate-y-[-50%] gap-4 border-1.5 border-primary bg-background shadow-lg ',
                 className,
             )}
+            onInteractOutside={onInteractOutside}
             {...props}
         >
             <DialogContext.Provider value={true}>
@@ -58,10 +65,10 @@ const DialogContent = React.forwardRef<
                     <span className="sr-only">Close</span>
                 </DialogPrimitive.Close>
             </DialogContext.Provider>
-        </DialogPrimitive.Content>
+        </DialogPrimitive.Popup>
     </DialogPortal>
 ));
-DialogContent.displayName = DialogPrimitive.Content.displayName;
+DialogContent.displayName = DialogPrimitive.Popup.displayName;
 
 const DialogHeader = ({
     className,

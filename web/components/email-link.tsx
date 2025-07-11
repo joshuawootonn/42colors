@@ -36,22 +36,20 @@ export function EmailLink({
 
     return (
         <Popover open={isOpen}>
-            <PopoverTrigger asChild>
-                <button
-                    tabIndex={0}
-                    className={clsx('relative z-[5] font-medium', className)}
-                    onClick={() => {
-                        setIsOpen(true);
-                        const el = document.createElement('textarea');
-                        el.value = 'joshuawootonn@gmail.com';
-                        document.body.appendChild(el);
-                        el.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(el);
-                    }}
-                >
-                    {children ?? 'josh@typetheword.site'}
-                </button>
+            <PopoverTrigger
+                tabIndex={0}
+                className={clsx('relative z-[5] font-medium', className)}
+                onClick={() => {
+                    setIsOpen(true);
+                    const el = document.createElement('textarea');
+                    el.value = 'joshuawootonn@gmail.com';
+                    document.body.appendChild(el);
+                    el.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(el);
+                }}
+            >
+                {children ?? 'josh@typetheword.site'}
             </PopoverTrigger>
             <PopoverContent
                 side={'top'}
