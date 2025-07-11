@@ -1206,6 +1206,68 @@ export const store = createStore({
                     },
                 };
             }
+
+            // Tool shortcuts (Aseprite-style)
+            if (e.key === 'b' || e.key === 'B') {
+                e.preventDefault();
+                enqueue.effect(() => store.trigger.changeTool({ tool: 'brush' }));
+                return context;
+            }
+
+            if (e.key === 'e' || e.key === 'E') {
+                e.preventDefault();
+                enqueue.effect(() => store.trigger.changeTool({ tool: 'erasure' }));
+                return context;
+            }
+
+            if (e.key === 'i' || e.key === 'I') {
+                e.preventDefault();
+                enqueue.effect(() => store.trigger.changeTool({ tool: 'claimer' }));
+                return context;
+            }
+
+            // Brush size shortcuts
+            if (e.key === '+' || e.key === '=') {
+                e.preventDefault();
+                const currentSize = context.toolSettings.brush.size;
+                const newSize = Math.min(currentSize + 1, 50); // Cap at 50
+                enqueue.effect(() => store.trigger.updateBrushSettings({ 
+                    brush: { size: newSize } 
+                }));
+                return context;
+            }
+
+            if (e.key === '-' || e.key === '_') {
+                e.preventDefault();
+                const currentSize = context.toolSettings.brush.size;
+                const newSize = Math.max(currentSize - 1, 1); // Minimum size 1
+                enqueue.effect(() => store.trigger.updateBrushSettings({ 
+                    brush: { size: newSize } 
+                }));
+                return context;
+            }
+
+            // Eraser size shortcuts (Shift + plus/minus)
+            if (e.shiftKey && (e.key === '+' || e.key === '=')) {
+                e.preventDefault();
+                const currentSize = context.toolSettings.erasure.size;
+                const newSize = Math.min(currentSize + 1, 50); // Cap at 50
+                enqueue.effect(() => store.trigger.updateErasureSettings({ 
+                    erasure: { size: newSize } 
+                }));
+                return context;
+            }
+
+            if (e.shiftKey && (e.key === '-' || e.key === '_')) {
+                e.preventDefault();
+                const currentSize = context.toolSettings.erasure.size;
+                const newSize = Math.max(currentSize - 1, 1); // Minimum size 1
+                enqueue.effect(() => store.trigger.updateErasureSettings({ 
+                    erasure: { size: newSize } 
+                }));
+                return context;
+            }
+
             return context;
         },
 
