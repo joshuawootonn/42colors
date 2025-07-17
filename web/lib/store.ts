@@ -1228,28 +1228,36 @@ export const store = createStore({
             }
 
             // Tool shortcuts (Aseprite-style)
-            if (isHotkey('b', e)) {
-                e.preventDefault();
-                enqueue.effect(() =>
-                    store.trigger.changeTool({ tool: 'brush' }),
-                );
-                return context;
-            }
+            // Only trigger if target is not an input or contenteditable element
+            const target = e.target as HTMLElement;
+            const isInputElement =
+                target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+            const isContentEditable = target.contentEditable === 'true';
 
-            if (isHotkey('e', e)) {
-                e.preventDefault();
-                enqueue.effect(() =>
-                    store.trigger.changeTool({ tool: 'erasure' }),
-                );
-                return context;
-            }
+            if (!isInputElement && !isContentEditable) {
+                if (isHotkey('b', e)) {
+                    e.preventDefault();
+                    enqueue.effect(() =>
+                        store.trigger.changeTool({ tool: 'brush' }),
+                    );
+                    return context;
+                }
 
-            if (isHotkey('c', e)) {
-                e.preventDefault();
-                enqueue.effect(() =>
-                    store.trigger.changeTool({ tool: 'claimer' }),
-                );
-                return context;
+                if (isHotkey('e', e)) {
+                    e.preventDefault();
+                    enqueue.effect(() =>
+                        store.trigger.changeTool({ tool: 'erasure' }),
+                    );
+                    return context;
+                }
+
+                if (isHotkey('c', e)) {
+                    e.preventDefault();
+                    enqueue.effect(() =>
+                        store.trigger.changeTool({ tool: 'claimer' }),
+                    );
+                    return context;
+                }
             }
 
             // Eraser size shortcuts (Shift + plus/minus)
