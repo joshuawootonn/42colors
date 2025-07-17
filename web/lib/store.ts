@@ -27,7 +27,6 @@ import {
     createChunkCanvas,
     createUIChunkCanvas,
     drawPixelsToChunkCanvas,
-    drawPlotsToUIChunkCanvas,
     getChunkKey,
     unsetChunkPixels,
 } from './canvas/chunk';
@@ -88,10 +87,7 @@ import { WheelTool } from './tools/wheel';
 import { dedupeCoords } from './utils/dedupe-coords';
 import { isInitialStore } from './utils/is-initial-store';
 import { uuid } from './utils/uuid';
-import {
-    WebGPUPolygonManager,
-    createWebGPUUICanvas,
-} from './webgpu/polygon-integration';
+import { WebGPUManager, createWebGPUManager } from './webgpu/web-gpu-manager';
 
 export type PointerState = 'default' | 'pressed';
 
@@ -135,9 +131,9 @@ export type InitializedStore = {
         realtimeCanvasContext: CanvasRenderingContext2D;
         telegraphCanvas: HTMLCanvasElement;
         telegraphCanvasContext: CanvasRenderingContext2D;
-        nonPixelCanvas: HTMLCanvasElement;
+        uiCanvas: HTMLCanvasElement;
         chunkCanvases: ChunkCanvases;
-        webgpuPolygonManager?: WebGPUPolygonManager;
+        webGPUManager?: WebGPUManager;
     };
     actions: Action[];
     activeAction: Action | null;
@@ -215,17 +211,15 @@ export const store = createStore({
                     queryFn: getUserPlots,
                 });
 
-                createWebGPUUICanvas(nonPixelCanvas).then(
-                    (webgpuPolygonManager) => {
-                        if (webgpuPolygonManager == null) {
-                            console.error('Failed to initialize WebGPU');
-                            return;
-                        }
-                        store.trigger.initializeWebGPU({
-                            webgpuPolygonManager,
-                        });
-                    },
-                );
+                createWebGPUManager(nonPixelCanvas).then((webGPUManager) => {
+                    if (webGPUManager == null) {
+                        console.error('Failed to initialize WebGPU');
+                        return;
+                    }
+                    store.trigger.initializeWebGPUManager({
+                        webGPUManager,
+                    });
+                });
             });
 
             const initialized: InitializedStore = {
@@ -260,9 +254,9 @@ export const store = createStore({
                     realtimeCanvasContext,
                     telegraphCanvas,
                     telegraphCanvasContext,
-                    nonPixelCanvas,
+                    uiCanvas: nonPixelCanvas,
                     chunkCanvases: {},
-                    webgpuPolygonManager: undefined,
+                    webGPUManager: undefined,
                 },
                 queryClient: event.queryClient,
             };
@@ -270,9 +264,9 @@ export const store = createStore({
             return initialized;
         },
 
-        initializeWebGPU: (
+        initializeWebGPUManager: (
             context,
-            event: { webgpuPolygonManager: WebGPUPolygonManager },
+            event: Partial<InitializedStore['canvas']>,
         ) => {
             if (isInitialStore(context)) return;
 
@@ -280,7 +274,7 @@ export const store = createStore({
                 ...context,
                 canvas: {
                     ...context.canvas,
-                    webgpuPolygonManager: event.webgpuPolygonManager,
+                    ...event,
                 },
             };
         },
@@ -802,7 +796,7 @@ export const store = createStore({
             if (isInitialStore(context)) return;
             resizeRealtimeCanvas(context.canvas.realtimeCanvas, context.camera);
             resizeFullsizeCanvas(context.canvas.telegraphCanvas);
-            resizeFullsizeCanvas(context.canvas.nonPixelCanvas);
+            resizeFullsizeCanvas(context.canvas.uiCanvas);
         },
 
         redrawRealtimeCanvas: (context) => {

@@ -53,27 +53,6 @@ export function drawPixelsToChunkCanvas(
     return canvas;
 }
 
-export function drawPlotsToUIChunkCanvas(
-    canvas: HTMLCanvasElement,
-    context: CanvasRenderingContext2D,
-    plots: Plot[],
-): HTMLCanvasElement {
-    context.imageSmoothingEnabled = false;
-
-    for (let i = 0; i < plots.length; i++) {
-        const plot = plots[i];
-        const polygon = plot.polygon;
-        context.fillStyle = 'rgba(0,0,0,0)';
-        context.strokeStyle = 'rgba(0,0,0,1)';
-
-        redrawPolygon(context, polygon, {
-            containsMatchingEndpoints: true,
-        });
-    }
-
-    return canvas;
-}
-
 /**
  * Redraw pixels in their respective chunks
  */

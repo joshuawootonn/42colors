@@ -84,7 +84,7 @@ export function draw(context: InitializedStore) {
     );
 
     context.canvas.rootCanvasContext.drawImage(
-        context.canvas.nonPixelCanvas,
+        context.canvas.uiCanvas,
         x,
         y,
         window.innerWidth + FULLSIZE_CANVAS_BLEED,

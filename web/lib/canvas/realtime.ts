@@ -63,7 +63,7 @@ const BLUE: Color = [0, 0, 1, 1];
 const BLACK: Color = [0, 0, 0, 1];
 
 export function redrawUserPlots(context: InitializedStore) {
-    const webgpuManager = context.canvas.webgpuPolygonManager;
+    const webgpuManager = context.canvas.webGPUManager;
     if (!webgpuManager) return;
 
     const userPlotData: Plot[] | undefined = context.queryClient.getQueryData([

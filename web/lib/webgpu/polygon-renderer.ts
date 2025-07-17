@@ -189,45 +189,6 @@ export async function createWebGPUPolygonRenderer(
     };
 }
 
-export function generatePolygonLineSegments(
-    polygon: Polygon,
-    options: Partial<RenderOptions> = {},
-): Float32Array {
-    const {
-        xOffset = 0,
-        yOffset = 0,
-        xCamera = 0,
-        yCamera = 0,
-        containsMatchingEndpoints = false,
-        lineWidth = 0.25,
-    } = options;
-
-    const vertices: number[] = [];
-
-    // Get the actual vertices to use (excluding matching endpoints if needed)
-    const points = containsMatchingEndpoints
-        ? polygon.vertices.slice(0, -1)
-        : polygon.vertices;
-
-    // Generate thick line quads for each edge
-    for (let i = 0; i < points.length; i++) {
-        const currentPoint = points[i];
-        const nextPoint = points[(i + 1) % points.length];
-
-        // Apply camera transformation
-        const x1 = currentPoint[0] - xCamera + xOffset;
-        const y1 = currentPoint[1] - yCamera + yOffset;
-        const x2 = nextPoint[0] - xCamera + xOffset;
-        const y2 = nextPoint[1] - yCamera + yOffset;
-
-        // Generate thick line quad
-        const quadVertices = generateThickLineQuad(x1, y1, x2, y2, lineWidth);
-        vertices.push(...quadVertices);
-    }
-
-    return new Float32Array(vertices);
-}
-
 /**
  * Generate a thick line as a quad (two triangles)
  */
@@ -281,7 +242,46 @@ function generateThickLineQuad(
     ];
 }
 
-export function renderPolygonWebGPU(
+function generatePolygonLineSegments(
+    polygon: Polygon,
+    options: Partial<RenderOptions> = {},
+): Float32Array {
+    const {
+        xOffset = 0,
+        yOffset = 0,
+        xCamera = 0,
+        yCamera = 0,
+        containsMatchingEndpoints = false,
+        lineWidth = 0.25,
+    } = options;
+
+    const vertices: number[] = [];
+
+    // Get the actual vertices to use (excluding matching endpoints if needed)
+    const points = containsMatchingEndpoints
+        ? polygon.vertices.slice(0, -1)
+        : polygon.vertices;
+
+    // Generate thick line quads for each edge
+    for (let i = 0; i < points.length; i++) {
+        const currentPoint = points[i];
+        const nextPoint = points[(i + 1) % points.length];
+
+        // Apply camera transformation
+        const x1 = currentPoint[0] - xCamera + xOffset;
+        const y1 = currentPoint[1] - yCamera + yOffset;
+        const x2 = nextPoint[0] - xCamera + xOffset;
+        const y2 = nextPoint[1] - yCamera + yOffset;
+
+        // Generate thick line quad
+        const quadVertices = generateThickLineQuad(x1, y1, x2, y2, lineWidth);
+        vertices.push(...quadVertices);
+    }
+
+    return new Float32Array(vertices);
+}
+
+export function renderPolygon(
     renderer: WebGPUPolygonRenderer,
     polygon: Polygon,
     options: RenderOptions,
