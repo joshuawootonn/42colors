@@ -1,3 +1,4 @@
+import isHotkey from 'is-hotkey';
 import { Channel, Socket } from 'phoenix';
 
 import { QueryClient } from '@tanstack/react-query';
@@ -1211,12 +1212,77 @@ export const store = createStore({
             if (isInitialStore(context)) return;
             if (e.defaultPrevented) return;
 
-            if (e.metaKey && e.key === 'z') {
-                if (e.shiftKey) {
-                    enqueue.effect(() => store.trigger.redo());
-                } else {
-                    enqueue.effect(() => store.trigger.undo());
-                }
+            // Undo/Redo shortcuts
+            if (isHotkey('mod+shift+z', e)) {
+                e.preventDefault();
+                enqueue.effect(() => store.trigger.redo());
+                return context;
+            }
+
+            if (isHotkey('mod+z', e)) {
+                e.preventDefault();
+                enqueue.effect(() => store.trigger.undo());
+                return context;
+            }
+
+            // Tool shortcuts (Aseprite-style)
+            if (isHotkey('b', e)) {
+                e.preventDefault();
+                enqueue.effect(() =>
+                    store.trigger.changeTool({ tool: 'brush' }),
+                );
+                return context;
+            }
+
+            if (isHotkey('e', e)) {
+                e.preventDefault();
+                enqueue.effect(() =>
+                    store.trigger.changeTool({ tool: 'erasure' }),
+                );
+                return context;
+            }
+
+            if (isHotkey('c', e)) {
+                e.preventDefault();
+                enqueue.effect(() =>
+                    store.trigger.changeTool({ tool: 'claimer' }),
+                );
+                return context;
+            }
+
+            // Eraser size shortcuts (Shift + plus/minus)
+            if (
+                isHotkey('+', e) ||
+                isHotkey('=', e) ||
+                isHotkey('shift+=', e) ||
+                isHotkey('shift++', e)
+            ) {
+                e.preventDefault();
+                const currentSize = context.toolSettings.erasure.size;
+                const newSize = Math.min(currentSize + 1, 5);
+                enqueue.effect(() =>
+                    store.trigger.updateErasureSettings({
+                        erasure: { size: newSize },
+                    }),
+                );
+                return context;
+            }
+
+            if (
+                isHotkey('-', e) ||
+                isHotkey('_', e) ||
+                isHotkey('shift+-', e) ||
+                isHotkey('shift+_', e)
+            ) {
+                e.preventDefault();
+                const currentSize = context.toolSettings.erasure.size;
+                const newSize = Math.max(currentSize - 1, 1);
+                enqueue.effect(() =>
+                    store.trigger.updateErasureSettings({
+                        erasure: { size: newSize },
+                    }),
+                );
+                return context;
             }
 
             if (e.code === KeyboardCode.Space) {
