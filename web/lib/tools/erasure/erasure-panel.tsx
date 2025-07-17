@@ -1,7 +1,6 @@
 import { NumberInput } from '@/components/ui/number-input';
+import { store } from '@/lib/store';
 import { useSelector } from '@xstate/store/react';
-
-import { store } from '../store';
 
 export function ErasurePanel() {
     const brushSize = useSelector(

@@ -70,6 +70,7 @@ import {
     updateToolSettings,
 } from './tool-settings';
 import { BrushSettings, BrushTool, pointsToPixels } from './tools/brush/brush';
+import { clampBrushSize } from './tools/brush/brush-utils';
 import {
     ClaimerTool,
     completeRectangleClaimerAction,
@@ -80,6 +81,7 @@ import {
     getUserPlots,
 } from './tools/claimer/claimer.rest';
 import { ErasureSettings, ErasureTool } from './tools/erasure/erasure';
+import { clampErasureSize } from './tools/erasure/erasure-utils';
 import { PaletteSettings } from './tools/palette';
 import { PanTool } from './tools/pan';
 import { WheelTool } from './tools/wheel';
@@ -1251,37 +1253,53 @@ export const store = createStore({
             }
 
             // Eraser size shortcuts (Shift + plus/minus)
-            if (
-                isHotkey('+', e) ||
-                isHotkey('=', e) ||
-                isHotkey('shift+=', e) ||
-                isHotkey('shift++', e)
-            ) {
+            if (isHotkey('+', e) || isHotkey('=', e)) {
                 e.preventDefault();
-                const currentSize = context.toolSettings.erasure.size;
-                const newSize = Math.min(currentSize + 1, 5);
-                enqueue.effect(() =>
-                    store.trigger.updateErasureSettings({
-                        erasure: { size: newSize },
-                    }),
-                );
+
+                if (context.toolSettings.currentTool === 'brush') {
+                    const currentSize = context.toolSettings.brush.size;
+                    enqueue.effect(() =>
+                        store.trigger.updateBrushSettings({
+                            brush: { size: clampBrushSize(currentSize + 1) },
+                        }),
+                    );
+                }
+
+                if (context.toolSettings.currentTool === 'erasure') {
+                    const currentSize = context.toolSettings.erasure.size;
+                    enqueue.effect(() =>
+                        store.trigger.updateErasureSettings({
+                            erasure: {
+                                size: clampErasureSize(currentSize + 1),
+                            },
+                        }),
+                    );
+                }
+
                 return context;
             }
 
-            if (
-                isHotkey('-', e) ||
-                isHotkey('_', e) ||
-                isHotkey('shift+-', e) ||
-                isHotkey('shift+_', e)
-            ) {
+            if (isHotkey('-', e) || isHotkey('_', e)) {
                 e.preventDefault();
-                const currentSize = context.toolSettings.erasure.size;
-                const newSize = Math.max(currentSize - 1, 1);
-                enqueue.effect(() =>
-                    store.trigger.updateErasureSettings({
-                        erasure: { size: newSize },
-                    }),
-                );
+                if (context.toolSettings.currentTool === 'brush') {
+                    const currentSize = context.toolSettings.brush.size;
+                    enqueue.effect(() =>
+                        store.trigger.updateBrushSettings({
+                            brush: { size: clampBrushSize(currentSize - 1) },
+                        }),
+                    );
+                }
+
+                if (context.toolSettings.currentTool === 'erasure') {
+                    const currentSize = context.toolSettings.erasure.size;
+                    enqueue.effect(() =>
+                        store.trigger.updateErasureSettings({
+                            erasure: {
+                                size: clampErasureSize(currentSize - 1),
+                            },
+                        }),
+                    );
+                }
                 return context;
             }
 
