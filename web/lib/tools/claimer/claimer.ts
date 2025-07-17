@@ -8,7 +8,7 @@ import {
 import { Rect, rectSchema } from '../../geometry/rect';
 import { InitializedStore } from '../../store';
 import { EnqueueObject } from '../../xstate-internal-types';
-import { getAbsolutePoint, getCameraOffset } from '../brush';
+import { getAbsolutePoint, getCameraOffset } from '../brush/brush';
 import { getUserPlots } from './claimer.rest';
 
 export function redrawPolygon(

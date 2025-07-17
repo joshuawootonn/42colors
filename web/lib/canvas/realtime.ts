@@ -5,7 +5,7 @@ import { CANVAS_PIXEL_RATIO } from '../constants';
 import { Pixel } from '../geometry/coord';
 import { COLOR_TABLE } from '../palette';
 import { InitializedStore } from '../store';
-import { getCameraOffset } from '../tools/brush';
+import { getCameraOffset } from '../tools/brush/brush';
 import { Plot } from '../tools/claimer/claimer.rest';
 
 export function createRealtimeCanvas(camera: Camera) {

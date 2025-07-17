@@ -2,12 +2,12 @@ import { z } from 'zod';
 
 import { colorRefSchema } from './palette';
 import { TOOL_SETTINGS } from './storage-keys';
-import { BrushSettings } from './tools/brush';
+import { BrushSettings } from './tools/brush/brush';
 import {
     ClaimerSettings,
     claimerSettingsSchema,
 } from './tools/claimer/claimer-settings';
-import { ErasureSettings } from './tools/erasure';
+import { ErasureSettings } from './tools/erasure/erasure';
 import { PaletteSettings } from './tools/palette';
 
 function createToolKey(key: string) {

@@ -1,7 +1,7 @@
 import { NumberInput } from '@/components/ui/number-input';
 import { useSelector } from '@xstate/store/react';
 
-import { store } from '../store';
+import { store } from '../../store';
 
 export function BrushPanel() {
     const brushSize = useSelector(

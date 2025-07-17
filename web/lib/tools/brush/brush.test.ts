@@ -4,7 +4,7 @@ import {
     AbsolutePoint,
     absolutePointSchema,
     coordSort,
-} from '../geometry/coord';
+} from '../../geometry/coord';
 import { getBrushPoints } from './brush';
 
 const arr: AbsolutePoint[] = [

@@ -69,7 +69,7 @@ import {
     ToolSettings,
     updateToolSettings,
 } from './tool-settings';
-import { BrushSettings, BrushTool, pointsToPixels } from './tools/brush';
+import { BrushSettings, BrushTool, pointsToPixels } from './tools/brush/brush';
 import {
     ClaimerTool,
     completeRectangleClaimerAction,
@@ -79,7 +79,7 @@ import {
     getPlotsByChunk,
     getUserPlots,
 } from './tools/claimer/claimer.rest';
-import { ErasureSettings, ErasureTool } from './tools/erasure';
+import { ErasureSettings, ErasureTool } from './tools/erasure/erasure';
 import { PaletteSettings } from './tools/palette';
 import { PanTool } from './tools/pan';
 import { WheelTool } from './tools/wheel';

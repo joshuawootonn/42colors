@@ -1,10 +1,10 @@
 import { Camera } from './camera';
 import { AbsolutePoint, Pixel } from './geometry/coord';
 import { ColorRef, TRANSPARENT_REF } from './palette';
-import { BrushActive } from './tools/brush';
-import { pointsToPixels } from './tools/brush';
+import { BrushActive } from './tools/brush/brush';
+import { pointsToPixels } from './tools/brush/brush';
 import { ClaimerActive, ClaimerComplete } from './tools/claimer/claimer';
-import { ErasureActive } from './tools/erasure';
+import { ErasureActive } from './tools/erasure/erasure';
 
 type Undo = { type: 'undo' };
 type Redo = { type: 'redo' };

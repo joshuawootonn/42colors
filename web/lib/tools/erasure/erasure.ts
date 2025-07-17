@@ -1,11 +1,11 @@
-import { getZoomMultiplier } from '../camera';
-import { getPixelSize } from '../canvas/realtime';
-import { AbsolutePoint, cursorPositionSchema } from '../geometry/coord';
-import { BLACK_REF, COLOR_TABLE, TRANSPARENT_REF } from '../palette';
-import { InitializedStore, store } from '../store';
-import { canvasToClient } from '../utils/clientToCanvasConversion';
-import { newNewCoords } from '../utils/net-new-coords';
-import { EnqueueObject } from '../xstate-internal-types';
+import { getZoomMultiplier } from '../../camera';
+import { getPixelSize } from '../../canvas/realtime';
+import { AbsolutePoint, cursorPositionSchema } from '../../geometry/coord';
+import { BLACK_REF, COLOR_TABLE, TRANSPARENT_REF } from '../../palette';
+import { InitializedStore, store } from '../../store';
+import { canvasToClient } from '../../utils/clientToCanvasConversion';
+import { newNewCoords } from '../../utils/net-new-coords';
+import { EnqueueObject } from '../../xstate-internal-types';
 import {
     bresenhamLine,
     getAbsolutePoint,
@@ -13,8 +13,8 @@ import {
     getRelativePoint,
     isDuplicatePoint,
     pointsToPixels,
-} from './brush';
-import { drawBrushOutline } from './brush-rendering';
+} from '../brush/brush';
+import { drawBrushOutline } from '../brush/brush-rendering';
 
 export type ErasureSettings = {
     size: number;

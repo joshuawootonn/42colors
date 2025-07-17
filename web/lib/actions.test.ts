@@ -10,7 +10,7 @@ import {
     getActionToUndo,
     resolveActions,
 } from './actions';
-import { pointsToPixels } from './tools/brush';
+import { pointsToPixels } from './tools/brush/brush';
 import { bunchOfPointsSchema } from './utils/testing';
 
 const points1to3 = bunchOfPointsSchema.parse([

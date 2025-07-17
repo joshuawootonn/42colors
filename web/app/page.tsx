@@ -8,9 +8,9 @@ import { Palette } from '@/components/palette';
 import { Toolbar } from '@/components/toolbar';
 import { store } from '@/lib/store';
 import { DEFAULT_TOOL_SETTINGS, getToolSettings } from '@/lib/tool-settings';
-import { BrushPanel } from '@/lib/tools/brush-panel';
+import { BrushPanel } from '@/lib/tools/brush/brush-panel';
 import { ClaimerPanel } from '@/lib/tools/claimer/claimer-panel';
-import { ErasurePanel } from '@/lib/tools/erasure-panel';
+import { ErasurePanel } from '@/lib/tools/erasure/erasure-panel';
 import { cn } from '@/lib/utils';
 import { keyEquals } from '@/lib/utils/query-key';
 import {

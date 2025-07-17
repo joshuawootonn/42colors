@@ -1,5 +1,5 @@
-import { Camera, getZoomMultiplier } from '../camera';
-import { getPixelSize } from '../canvas/realtime';
+import { Camera, getZoomMultiplier } from '../../camera';
+import { getPixelSize } from '../../canvas/realtime';
 import {
     AbsolutePoint,
     Pixel,
@@ -7,16 +7,16 @@ import {
     absolutePointSchema,
     cursorPositionSchema,
     pointSchema,
-} from '../geometry/coord';
-import { COLOR_TABLE, ColorRef } from '../palette';
-import { InitializedStore, store } from '../store';
+} from '../../geometry/coord';
+import { COLOR_TABLE, ColorRef } from '../../palette';
+import { InitializedStore, store } from '../../store';
 import {
     canvasToClient,
     clientToCanvas,
-} from '../utils/clientToCanvasConversion';
-import { dedupeCoords } from '../utils/dedupe-coords';
-import { newNewCoords } from '../utils/net-new-coords';
-import { EnqueueObject } from '../xstate-internal-types';
+} from '../../utils/clientToCanvasConversion';
+import { dedupeCoords } from '../../utils/dedupe-coords';
+import { newNewCoords } from '../../utils/net-new-coords';
+import { EnqueueObject } from '../../xstate-internal-types';
 import { drawBrushOutline } from './brush-rendering';
 
 export type BrushSettings = {
