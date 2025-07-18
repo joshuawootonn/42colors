@@ -2,16 +2,11 @@ import { z } from 'zod';
 
 import { Camera, ZoomMultiplier, getZoomMultiplier } from '../camera';
 import { CANVAS_PIXEL_RATIO } from '../constants';
-import { Pixel } from '../geometry/coord';
-import { COLOR_TABLE } from '../palette';
-import { InitializedStore } from '../store';
-import { getCameraOffset } from '../tools/brush/brush';
-import { Plot } from '../tools/claimer/claimer.rest';
-import { BLACK, BLUE } from '../webgpu/colors';
 
 export function createRealtimeCanvas(camera: Camera) {
     const canvas = document.createElement('canvas');
-    return resizeRealtimeCanvas(canvas, camera);
+    resizeRealtimeCanvas(canvas, camera);
+    return canvas;
 }
 
 const pixelSizeSchema = z.number().brand<'PixelSize'>();
@@ -34,26 +29,4 @@ export function resizeRealtimeCanvas(
     canvas.width = getSizeInPixelsPlusBleed(window.innerWidth, pixelSize);
     canvas.height = getSizeInPixelsPlusBleed(window.innerHeight, pixelSize);
     return canvas;
-}
-
-export function redrawRealtimePixels(
-    canvas: HTMLCanvasElement,
-    context: CanvasRenderingContext2D,
-    pixels: Pixel[],
-    camera: Camera,
-) {
-    context.imageSmoothingEnabled = false;
-    context.clearRect(0, 0, canvas.width, canvas.height);
-
-    for (let i = 0; i < pixels.length; i++) {
-        const block: Pixel = pixels[i];
-
-        context.fillStyle = COLOR_TABLE[block.colorRef];
-        context.fillRect(
-            block.x - Math.floor(camera.x),
-            block.y - Math.floor(camera.y),
-            1,
-            1,
-        );
-    }
 }

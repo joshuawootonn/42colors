@@ -32,11 +32,7 @@ import {
 } from './canvas/chunk';
 import { draw } from './canvas/draw';
 import { createFullsizeCanvas, resizeFullsizeCanvas } from './canvas/fullsize';
-import {
-    createRealtimeCanvas,
-    redrawRealtimePixels,
-    resizeRealtimeCanvas,
-} from './canvas/realtime';
+import { createRealtimeCanvas, resizeRealtimeCanvas } from './canvas/realtime';
 import { redrawUserPlots } from './canvas/ui';
 import { CHUNK_LENGTH } from './constants';
 import {
@@ -79,7 +75,8 @@ import {
     getPlotsByChunk,
     getUserPlots,
 } from './tools/claimer/claimer.rest';
-import { ErasureSettings, ErasureTool } from './tools/erasure/erasure';
+import { ErasureTool } from './tools/erasure/erasure';
+import { ErasureSettings } from './tools/erasure/erasure';
 import { clampErasureSize } from './tools/erasure/erasure-utils';
 import { PaletteSettings } from './tools/palette';
 import { PanTool } from './tools/pan';
@@ -89,23 +86,21 @@ import { isInitialStore } from './utils/is-initial-store';
 import { uuid } from './utils/uuid';
 import { WebGPUManager, createWebGPUManager } from './webgpu/web-gpu-manager';
 
-export type PointerState = 'default' | 'pressed';
+export type PointerState =
+    | 'default'
+    | 'pan'
+    | 'drawing'
+    | 'erasing'
+    | 'claiming';
 
 export type InitialStore = {
     state: 'initial';
-    id: undefined;
     camera: Camera;
-    server?: undefined;
+    currentTool: Tool;
+    currentColorRef: number;
     currentPointerState: PointerState;
-    realtime?: undefined;
-    interaction?: undefined;
-    canvas?: undefined;
-    user?: undefined;
-    actions?: undefined;
-    activeAction?: undefined;
-    queryClient?: QueryClient;
-    eventLoopRafId?: number;
     toolSettings: ToolSettings;
+    id: undefined;
 };
 
 export type InitializedStore = {
@@ -128,12 +123,12 @@ export type InitializedStore = {
         backgroundCanvas: HTMLCanvasElement;
         backgroundCanvasContext: CanvasRenderingContext2D;
         realtimeCanvas: HTMLCanvasElement;
-        realtimeCanvasContext: CanvasRenderingContext2D;
         telegraphCanvas: HTMLCanvasElement;
         uiCanvas: HTMLCanvasElement;
         chunkCanvases: ChunkCanvases;
         uiWebGPUManager?: WebGPUManager;
         telegraphWebGPUManager?: WebGPUManager;
+        realtimeWebGPUManager?: WebGPUManager;
     };
     actions: Action[];
     activeAction: Action | null;
@@ -194,9 +189,6 @@ export const store = createStore({
             drawBackgroundCanvas(backgroundCanvas, backgroundCanvasContext);
 
             const realtimeCanvas = createRealtimeCanvas(event.cameraOptions);
-            const realtimeCanvasContext = realtimeCanvas.getContext('2d')!;
-            realtimeCanvasContext.imageSmoothingEnabled = false;
-
             const telegraphCanvas = createFullsizeCanvas();
             const uiCanvas = createFullsizeCanvas();
 
@@ -210,7 +202,7 @@ export const store = createStore({
 
                 createWebGPUManager(uiCanvas).then((uiWebGPUManager) => {
                     if (uiWebGPUManager == null) {
-                        console.error('Failed to initialize WebGPU');
+                        console.error('Failed to initialize WebGPU for UI');
                         return;
                     }
                     store.trigger.initializeWebGPUManager({
@@ -228,6 +220,20 @@ export const store = createStore({
                         }
                         store.trigger.initializeWebGPUManager({
                             telegraphWebGPUManager,
+                        });
+                    },
+                );
+
+                createWebGPUManager(realtimeCanvas).then(
+                    (realtimeWebGPUManager) => {
+                        if (realtimeWebGPUManager == null) {
+                            console.error(
+                                'Failed to initialize WebGPU for realtime rendering',
+                            );
+                            return;
+                        }
+                        store.trigger.initializeWebGPUManager({
+                            realtimeWebGPUManager,
                         });
                     },
                 );
@@ -262,12 +268,12 @@ export const store = createStore({
                     backgroundCanvas,
                     backgroundCanvasContext,
                     realtimeCanvas,
-                    realtimeCanvasContext,
                     telegraphCanvas,
                     uiCanvas,
                     chunkCanvases: {},
                     uiWebGPUManager: undefined,
                     telegraphWebGPUManager: undefined,
+                    realtimeWebGPUManager: undefined,
                 },
                 queryClient: event.queryClient,
             };
@@ -824,12 +830,17 @@ export const store = createStore({
             unsetChunkPixels(context.canvas.chunkCanvases, unsetPixels);
 
             const dedupedPixels = dedupeCoords(pixels);
-            redrawRealtimePixels(
-                context.canvas.realtimeCanvas,
-                context.canvas.realtimeCanvasContext,
-                dedupedPixels,
-                context.camera,
-            );
+
+            if (context.canvas.realtimeWebGPUManager) {
+                context.canvas.realtimeWebGPUManager.redrawPixels(
+                    dedupedPixels,
+                    context.camera,
+                );
+            } else {
+                console.warn(
+                    'Realtime WebGPU manager not available, skipping realtime rendering',
+                );
+            }
 
             redrawUserPlots(context);
             clearChunkPixels(context.canvas.chunkCanvases, dedupedPixels);
