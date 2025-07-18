@@ -36,28 +36,36 @@ export function EmailLink({
 
     return (
         <Popover open={isOpen}>
-            <PopoverTrigger asChild>
-                <button
-                    tabIndex={0}
-                    className={clsx('relative z-[5] font-medium', className)}
-                    onClick={() => {
-                        setIsOpen(true);
-                        const el = document.createElement('textarea');
-                        el.value = 'joshuawootonn@gmail.com';
-                        document.body.appendChild(el);
-                        el.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(el);
-                    }}
-                >
-                    {children ?? 'josh@typetheword.site'}
-                </button>
-            </PopoverTrigger>
+            <PopoverTrigger
+                render={(props) => (
+                    <button
+                        {...props}
+                        tabIndex={0}
+                        className={clsx(
+                            'relative z-[5] font-medium',
+                            className,
+                        )}
+                        onClick={(e) => {
+                            props.onClick?.(e);
+                            setIsOpen(true);
+                            const el = document.createElement('textarea');
+                            el.value = 'joshuawootonn@gmail.com';
+                            document.body.appendChild(el);
+                            el.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(el);
+                        }}
+                    >
+                        {children ?? 'josh@typetheword.site'}
+                    </button>
+                )}
+            />
             <PopoverContent
-                side={'top'}
                 className="block border-2 border-primary bg-secondary px-2 py-1 font-medium outline-none"
-                align={'center'}
-                sideOffset={5}
+                positionerProps={{
+                    side: 'top',
+                    sideOffset: 4,
+                }}
             >
                 <span className={clsx(popoverClassName)}>Copied</span>
 

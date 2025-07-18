@@ -12,9 +12,15 @@ export default function Page() {
     const router = useRouter();
 
     return (
-        <Dialog open={true}>
+        <Dialog
+            open={true}
+            onOpenChange={(open) => {
+                if (!open) {
+                    router.back();
+                }
+            }}
+        >
             <DialogContent
-                onInteractOutside={() => router.back()}
                 className={cn(...dialogProse, 'w-110')}
             >
                 <H1>Forgot Password</H1>

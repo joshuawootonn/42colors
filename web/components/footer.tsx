@@ -42,43 +42,47 @@ export function Footer() {
                 </Link>
                 <div>/</div>
                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <button
-                            className="svg-outline relative no-underline"
-                            aria-label="Customise options"
-                        >
-                            legal
-                        </button>
-                    </DropdownMenuTrigger>
+                    <DropdownMenuTrigger
+                        render={(props) => (
+                            <button
+                                {...props}
+                                className="svg-outline relative no-underline"
+                                aria-label="Customise options"
+                            >
+                                legal
+                            </button>
+                        )}
+                    />
 
-                    <DropdownMenuContent
-                        className="flex flex-col border-1.5 border-primary bg-secondary "
-                        sideOffset={4}
-                        align="center"
-                        side="top"
-                    >
-                        <DropdownMenuItem asChild={true}>
-                            <NextLink
-                                className="cursor-pointer px-2 py-1 no-underline outline-none focus:bg-primary focus:text-secondary"
-                                href={{
-                                    pathname: '/privacy-policy',
-                                    query: searchParams.toString(),
-                                }}
-                            >
-                                privacy
-                            </NextLink>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild={true}>
-                            <NextLink
-                                className="cursor-pointer px-2 py-1 no-underline outline-none focus:bg-primary focus:text-secondary"
-                                href={{
-                                    pathname: '/terms-of-service',
-                                    query: searchParams.toString(),
-                                }}
-                            >
-                                terms
-                            </NextLink>
-                        </DropdownMenuItem>
+                    <DropdownMenuContent className="flex flex-col border-1.5 border-primary bg-secondary ">
+                        <DropdownMenuItem
+                            render={(props) => (
+                                <NextLink
+                                    {...props}
+                                    className="cursor-pointer px-2 py-1 no-underline outline-none focus:bg-primary focus:text-secondary"
+                                    href={{
+                                        pathname: '/privacy-policy',
+                                        query: searchParams.toString(),
+                                    }}
+                                >
+                                    privacy
+                                </NextLink>
+                            )}
+                        />
+                        <DropdownMenuItem
+                            render={(props) => (
+                                <NextLink
+                                    {...props}
+                                    className="cursor-pointer px-2 py-1 no-underline outline-none focus:bg-primary focus:text-secondary"
+                                    href={{
+                                        pathname: '/terms-of-service',
+                                        query: searchParams.toString(),
+                                    }}
+                                >
+                                    terms
+                                </NextLink>
+                            )}
+                        />
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <div>/ </div>

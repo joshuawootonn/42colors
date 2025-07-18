@@ -12,11 +12,15 @@ export default function Page() {
     const router = useRouter();
 
     return (
-        <Dialog open={true}>
-            <DialogContent
-                onInteractOutside={() => router.back()}
-                className={cn(...dialogProse, 'w-100')}
-            >
+        <Dialog
+            open={true}
+            onOpenChange={(open) => {
+                if (!open) {
+                    router.back();
+                }
+            }}
+        >
+            <DialogContent className={cn(...dialogProse, 'w-100')}>
                 <H1>Log in</H1>
                 <Login />
             </DialogContent>
