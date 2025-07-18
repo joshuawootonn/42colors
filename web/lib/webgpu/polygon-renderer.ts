@@ -372,7 +372,7 @@ export function renderPolygon(
         : generatePolygonLineSegments(polygon, options);
 
     if (vertexData.length === 0) {
-        throw new Error('No vertices to render');
+        return;
     }
 
     // Get a buffer from the pool

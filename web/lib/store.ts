@@ -35,9 +35,9 @@ import { createFullsizeCanvas, resizeFullsizeCanvas } from './canvas/fullsize';
 import {
     createRealtimeCanvas,
     redrawRealtimePixels,
-    redrawUserPlots,
     resizeRealtimeCanvas,
 } from './canvas/realtime';
+import { redrawUserPlots } from './canvas/ui';
 import { CHUNK_LENGTH } from './constants';
 import {
     onGesture,
@@ -132,7 +132,7 @@ export type InitializedStore = {
         telegraphCanvas: HTMLCanvasElement;
         uiCanvas: HTMLCanvasElement;
         chunkCanvases: ChunkCanvases;
-        webGPUManager?: WebGPUManager;
+        uiWebGPUManager?: WebGPUManager;
         telegraphWebGPUManager?: WebGPUManager;
     };
     actions: Action[];
@@ -198,8 +198,7 @@ export const store = createStore({
             realtimeCanvasContext.imageSmoothingEnabled = false;
 
             const telegraphCanvas = createFullsizeCanvas();
-
-            const nonPixelCanvas = createFullsizeCanvas();
+            const uiCanvas = createFullsizeCanvas();
 
             enqueue.effect(() => {
                 store.trigger.fetchPixels();
@@ -209,13 +208,13 @@ export const store = createStore({
                     queryFn: getUserPlots,
                 });
 
-                createWebGPUManager(nonPixelCanvas).then((webGPUManager) => {
-                    if (webGPUManager == null) {
+                createWebGPUManager(uiCanvas).then((uiWebGPUManager) => {
+                    if (uiWebGPUManager == null) {
                         console.error('Failed to initialize WebGPU');
                         return;
                     }
                     store.trigger.initializeWebGPUManager({
-                        webGPUManager,
+                        uiWebGPUManager,
                     });
                 });
 
@@ -265,9 +264,9 @@ export const store = createStore({
                     realtimeCanvas,
                     realtimeCanvasContext,
                     telegraphCanvas,
-                    uiCanvas: nonPixelCanvas,
+                    uiCanvas,
                     chunkCanvases: {},
-                    webGPUManager: undefined,
+                    uiWebGPUManager: undefined,
                     telegraphWebGPUManager: undefined,
                 },
                 queryClient: event.queryClient,
