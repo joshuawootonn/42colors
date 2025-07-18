@@ -56,40 +56,42 @@ export function ClaimerPanel() {
     return (
         <div className="flex-grow flex flex-row items-start justify-start">
             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                        {activeAction?.type === 'claimer-active' ? (
-                            'New Claim'
-                        ) : selectedPlot ? (
-                            selectedPlot.name
-                        ) : (
-                            <>
-                                Select Plot{' '}
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="32"
-                                    height="32"
-                                    viewBox="-4 -4 32 32"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="1.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="-mr-2"
-                                >
-                                    <path d="M7 7h10v10" />
-                                    <path d="M7 17 17 7" />
-                                </svg>
-                            </>
-                        )}
-                    </Button>
-                </DropdownMenuTrigger>
+                <DropdownMenuTrigger
+                    render={(props) => (
+                        <Button variant="outline" {...props}>
+                            {activeAction?.type === 'claimer-active' ? (
+                                'New Claim'
+                            ) : selectedPlot ? (
+                                selectedPlot.name
+                            ) : (
+                                <>
+                                    Select Plot{' '}
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="32"
+                                        height="32"
+                                        viewBox="-4 -4 32 32"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="1.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="-mr-2"
+                                    >
+                                        <path d="M7 7h10v10" />
+                                        <path d="M7 17 17 7" />
+                                    </svg>
+                                </>
+                            )}
+                        </Button>
+                    )}
+                />
 
                 <DropdownMenuContent>
                     {plots?.map((plot) => {
                         return (
                             <DropdownMenuItem
-                                onSelect={() => {
+                                onClick={() => {
                                     store.trigger.selectPlot({
                                         plotId: plot.id,
                                     });
