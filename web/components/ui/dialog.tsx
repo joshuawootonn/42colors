@@ -55,11 +55,9 @@ const DialogContent = React.forwardRef<
                     render={(props) => (
                         <button
                             {...props}
-                            className="z-10 absolute right-1 top-1 translate-x-1/2 -translate-y-1/2 bg-white border-1.5 border-primary disabled:pointer-events-none svg-outline"
+                            className="absolute right-0 top-0 bg-white border-1.5 border-primary svg-outline translate-x-[1.5px] translate-y-[-1.5px]"
                         >
-                            <div className="relative">
-                                <X />
-                            </div>
+                            <X />
                             <span className="sr-only">Close</span>
                         </button>
                     )}

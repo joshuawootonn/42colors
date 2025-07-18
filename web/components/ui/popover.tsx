@@ -101,10 +101,11 @@ const PopoverContent = React.forwardRef<
                         <PopoverPrimitive.Close
                             render={(props) => (
                                 <button
-                                    className="absolute top-0 right-0 bg-white text-black border-1.5 border-black"
+                                    className="absolute top-0 right-0 bg-white text-primary  border-1.5 border-primary svg-outline"
                                     {...props}
                                 >
                                     <X />
+                                    <span className="sr-only">Close</span>
                                 </button>
                             )}
                         />
