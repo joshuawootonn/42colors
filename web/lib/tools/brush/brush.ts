@@ -8,6 +8,12 @@ import {
     cursorPositionSchema,
     pointSchema,
 } from '../../geometry/coord';
+import {
+    Polygon,
+    getCanvasPolygon,
+    polygonSchema,
+} from '../../geometry/polygon';
+import { AbsolutePointTuple, absolutePointTupleSchema } from '../../line';
 import { COLOR_TABLE, ColorRef } from '../../palette';
 import { InitializedStore, store } from '../../store';
 import {
@@ -16,8 +22,8 @@ import {
 } from '../../utils/clientToCanvasConversion';
 import { dedupeCoords } from '../../utils/dedupe-coords';
 import { newNewCoords } from '../../utils/net-new-coords';
+import { Color, hexToRgbaColor } from '../../webgpu/colors';
 import { EnqueueObject } from '../../xstate-internal-types';
-import { drawBrushOutline } from './brush-rendering';
 
 export type BrushSettings = {
     size: number;
@@ -135,6 +141,14 @@ export function getBrushPoints(
 }
 
 function redrawTelegraph(context: InitializedStore) {
+    const telegraphWebGPUManager = context.canvas.telegraphWebGPUManager;
+    if (!telegraphWebGPUManager) {
+        console.error(
+            'Telegraph WebGPU manager not available for brush telegraph rendering',
+        );
+        return;
+    }
+
     if (context.interaction.cursorPosition == null) {
         console.info(
             'Skipping brush telegraph draw since `cursorPosition` is null',
@@ -145,29 +159,35 @@ function redrawTelegraph(context: InitializedStore) {
     const clientX = context.interaction.cursorPosition.clientX;
     const clientY = context.interaction.cursorPosition.clientY;
 
-    const relativePoint = getRelativePoint(clientX, clientY, context);
-    const ctx = context.canvas.telegraphCanvasContext;
-    const canvas = context.canvas.telegraphCanvas;
-
+    const relativePoint = getAbsolutePoint(clientX, clientY, context);
     const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
+    const colorHex = COLOR_TABLE[context.toolSettings.palette.currentColorRef];
+    const color = hexToRgbaColor(colorHex);
 
-    ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = COLOR_TABLE[context.toolSettings.palette.currentColorRef];
-
-    const cursorPosition = cursorPositionSchema.parse({
-        x: canvasToClient(relativePoint.x, context.camera.zoom),
-        y: canvasToClient(relativePoint.y, context.camera.zoom),
-    });
-
-    drawBrushOutline(
-        ctx,
-        cursorPosition,
+    const brushPolygon = getCanvasPolygon(
+        relativePoint.x,
+        relativePoint.y,
         context.toolSettings.brush.size,
-        pixelSize,
     );
-    ctx.fill();
+
+    const { xOffset, yOffset } = getCameraOffset(context.camera);
+
+    const webGPUPolygons = [
+        {
+            polygon: brushPolygon,
+            options: {
+                xOffset,
+                yOffset,
+                xCamera: context.camera.x,
+                yCamera: context.camera.y,
+                pixelSize,
+                color,
+                filled: true,
+            },
+        },
+    ];
+
+    telegraphWebGPUManager.redrawPolygons(webGPUPolygons);
 }
 
 export function bresenhamLine(

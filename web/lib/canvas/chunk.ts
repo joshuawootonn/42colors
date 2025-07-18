@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from '../constants';
 import { Coord, Pixel, pixelSchema } from '../geometry/coord';
 import { COLOR_TABLE } from '../palette';
-import { redrawPolygon } from '../tools/claimer/claimer';
 import { Plot } from '../tools/claimer/claimer.rest';
 import { dedupe } from '../utils/dedupe';
 

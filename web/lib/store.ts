@@ -130,10 +130,10 @@ export type InitializedStore = {
         realtimeCanvas: HTMLCanvasElement;
         realtimeCanvasContext: CanvasRenderingContext2D;
         telegraphCanvas: HTMLCanvasElement;
-        telegraphCanvasContext: CanvasRenderingContext2D;
         uiCanvas: HTMLCanvasElement;
         chunkCanvases: ChunkCanvases;
         webGPUManager?: WebGPUManager;
+        telegraphWebGPUManager?: WebGPUManager;
     };
     actions: Action[];
     activeAction: Action | null;
@@ -198,8 +198,6 @@ export const store = createStore({
             realtimeCanvasContext.imageSmoothingEnabled = false;
 
             const telegraphCanvas = createFullsizeCanvas();
-            const telegraphCanvasContext = telegraphCanvas.getContext('2d')!;
-            telegraphCanvasContext.imageSmoothingEnabled = false;
 
             const nonPixelCanvas = createFullsizeCanvas();
 
@@ -220,6 +218,20 @@ export const store = createStore({
                         webGPUManager,
                     });
                 });
+
+                createWebGPUManager(telegraphCanvas).then(
+                    (telegraphWebGPUManager) => {
+                        if (telegraphWebGPUManager == null) {
+                            console.error(
+                                'Failed to initialize WebGPU for telegraph',
+                            );
+                            return;
+                        }
+                        store.trigger.initializeWebGPUManager({
+                            telegraphWebGPUManager,
+                        });
+                    },
+                );
             });
 
             const initialized: InitializedStore = {
@@ -253,10 +265,10 @@ export const store = createStore({
                     realtimeCanvas,
                     realtimeCanvasContext,
                     telegraphCanvas,
-                    telegraphCanvasContext,
                     uiCanvas: nonPixelCanvas,
                     chunkCanvases: {},
                     webGPUManager: undefined,
+                    telegraphWebGPUManager: undefined,
                 },
                 queryClient: event.queryClient,
             };

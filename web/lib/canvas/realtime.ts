@@ -7,6 +7,7 @@ import { COLOR_TABLE } from '../palette';
 import { InitializedStore } from '../store';
 import { getCameraOffset } from '../tools/brush/brush';
 import { Plot } from '../tools/claimer/claimer.rest';
+import { BLACK, BLUE } from '../webgpu/colors';
 
 export function createRealtimeCanvas(camera: Camera) {
     const canvas = document.createElement('canvas');
@@ -56,11 +57,6 @@ export function redrawRealtimePixels(
         );
     }
 }
-
-type Color = [number, number, number, number];
-
-const BLUE: Color = [0, 0, 1, 1];
-const BLACK: Color = [0, 0, 0, 1];
 
 export function redrawUserPlots(context: InitializedStore) {
     const webgpuManager = context.canvas.webGPUManager;

@@ -1,26 +1,34 @@
 import { getZoomMultiplier } from '../../camera';
 import { getPixelSize } from '../../canvas/realtime';
-import { AbsolutePoint, cursorPositionSchema } from '../../geometry/coord';
+import { AbsolutePoint } from '../../geometry/coord';
+import { getCanvasPolygon } from '../../geometry/polygon';
 import { BLACK_REF, COLOR_TABLE, TRANSPARENT_REF } from '../../palette';
 import { InitializedStore, store } from '../../store';
-import { canvasToClient } from '../../utils/clientToCanvasConversion';
 import { newNewCoords } from '../../utils/net-new-coords';
+import { hexToRgbaColor } from '../../webgpu/colors';
 import { EnqueueObject } from '../../xstate-internal-types';
 import {
     bresenhamLine,
     getAbsolutePoint,
     getBrushPoints,
-    getRelativePoint,
+    getCameraOffset,
     isDuplicatePoint,
     pointsToPixels,
 } from '../brush/brush';
-import { drawBrushOutline } from '../brush/brush-rendering';
 
 export type ErasureSettings = {
     size: number;
 };
 
 function redrawTelegraph(context: InitializedStore) {
+    const telegraphWebGPUManager = context.canvas.telegraphWebGPUManager;
+    if (!telegraphWebGPUManager) {
+        console.error(
+            'Telegraph WebGPU manager not available for eraser telegraph rendering',
+        );
+        return;
+    }
+
     if (context.interaction.cursorPosition == null) {
         console.info(
             'Skipping erasure telegraph draw since `cursorPosition` is null',
@@ -30,31 +38,37 @@ function redrawTelegraph(context: InitializedStore) {
 
     const clientX = context.interaction.cursorPosition.clientX;
     const clientY = context.interaction.cursorPosition.clientY;
-    const relativePoint = getRelativePoint(clientX, clientY, context);
-    const ctx = context.canvas.telegraphCanvasContext;
-    const canvas = context.canvas.telegraphCanvas;
+    const absolutePoint = getAbsolutePoint(clientX, clientY, context);
 
     const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
 
-    ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const colorHex = COLOR_TABLE[BLACK_REF];
+    const color = hexToRgbaColor(colorHex);
 
-    ctx.fillStyle = COLOR_TABLE[BLACK_REF];
-
-    const cursorPosition = cursorPositionSchema.parse({
-        x: canvasToClient(relativePoint.x, context.camera.zoom),
-        y: canvasToClient(relativePoint.y, context.camera.zoom),
-        camera: context.camera,
-    });
-
-    ctx.strokeStyle = 'black';
-    drawBrushOutline(
-        ctx,
-        cursorPosition,
+    const eraserPolygon = getCanvasPolygon(
+        absolutePoint.x,
+        absolutePoint.y,
         context.toolSettings.erasure.size,
-        pixelSize,
     );
-    ctx.stroke();
+
+    const { xOffset, yOffset } = getCameraOffset(context.camera);
+
+    const webGPUPolygons = [
+        {
+            polygon: eraserPolygon,
+            options: {
+                xOffset,
+                yOffset,
+                xCamera: context.camera.x,
+                yCamera: context.camera.y,
+                pixelSize,
+                color,
+                filled: false,
+            },
+        },
+    ];
+
+    telegraphWebGPUManager.redrawPolygons(webGPUPolygons);
 }
 
 export type ErasureActive = {

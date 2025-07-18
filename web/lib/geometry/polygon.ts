@@ -215,3 +215,109 @@ export function isIneligiblePolygon(p: Polygon): boolean {
         pointsToCheck.every((v) => v[1] === firstY)
     );
 }
+
+export function getCanvasPolygon(
+    centerX: number,
+    centerY: number,
+    size: number,
+): Polygon {
+    const vertices: AbsolutePointTuple[] = [];
+
+    switch (size) {
+        case 1:
+            vertices.push(
+                absolutePointTupleSchema.parse([centerX, centerY]),
+                absolutePointTupleSchema.parse([centerX + 1, centerY]),
+                absolutePointTupleSchema.parse([centerX + 1, centerY + 1]),
+                absolutePointTupleSchema.parse([centerX, centerY + 1]),
+            );
+            break;
+
+        case 2:
+            vertices.push(
+                absolutePointTupleSchema.parse([centerX - 1, centerY - 1]),
+                absolutePointTupleSchema.parse([centerX + 1, centerY - 1]),
+                absolutePointTupleSchema.parse([centerX + 1, centerY + 1]),
+                absolutePointTupleSchema.parse([centerX - 1, centerY + 1]),
+            );
+            break;
+
+        case 3:
+            vertices.push(
+                absolutePointTupleSchema.parse([centerX, centerY - 1]),
+                absolutePointTupleSchema.parse([centerX + 1, centerY - 1]),
+                absolutePointTupleSchema.parse([centerX + 1, centerY]),
+                absolutePointTupleSchema.parse([centerX + 1 * 2, centerY]),
+                absolutePointTupleSchema.parse([centerX + 1 * 2, centerY + 1]),
+                absolutePointTupleSchema.parse([centerX + 1, centerY + 1]),
+                absolutePointTupleSchema.parse([centerX + 1, centerY + 1 * 2]),
+                absolutePointTupleSchema.parse([centerX, centerY + 1 * 2]),
+                absolutePointTupleSchema.parse([centerX, centerY + 1]),
+                absolutePointTupleSchema.parse([centerX - 1, centerY + 1]),
+                absolutePointTupleSchema.parse([centerX - 1, centerY]),
+                absolutePointTupleSchema.parse([centerX, centerY]),
+            );
+            break;
+
+        case 4:
+            vertices.push(
+                absolutePointTupleSchema.parse([centerX - 1, centerY - 1 * 2]),
+                absolutePointTupleSchema.parse([centerX + 1, centerY - 1 * 2]),
+                absolutePointTupleSchema.parse([centerX + 1, centerY - 1]),
+                absolutePointTupleSchema.parse([centerX + 1 * 2, centerY - 1]),
+                absolutePointTupleSchema.parse([centerX + 1 * 2, centerY + 1]),
+                absolutePointTupleSchema.parse([centerX + 1, centerY + 1]),
+                absolutePointTupleSchema.parse([centerX + 1, centerY + 1 * 2]),
+                absolutePointTupleSchema.parse([centerX - 1, centerY + 1 * 2]),
+                absolutePointTupleSchema.parse([centerX - 1, centerY + 1]),
+                absolutePointTupleSchema.parse([centerX - 1 * 2, centerY + 1]),
+                absolutePointTupleSchema.parse([centerX - 1 * 2, centerY - 1]),
+                absolutePointTupleSchema.parse([centerX - 1, centerY - 1]),
+            );
+            break;
+
+        case 5:
+            vertices.push(
+                absolutePointTupleSchema.parse([centerX - 1, centerY - 1 * 2]),
+                absolutePointTupleSchema.parse([
+                    centerX + 1 * 2,
+                    centerY - 1 * 2,
+                ]),
+                absolutePointTupleSchema.parse([centerX + 1 * 2, centerY - 1]),
+                absolutePointTupleSchema.parse([centerX + 1 * 3, centerY - 1]),
+                absolutePointTupleSchema.parse([
+                    centerX + 1 * 3,
+                    centerY + 1 * 2,
+                ]),
+                absolutePointTupleSchema.parse([
+                    centerX + 1 * 2,
+                    centerY + 1 * 2,
+                ]),
+                absolutePointTupleSchema.parse([
+                    centerX + 1 * 2,
+                    centerY + 1 * 3,
+                ]),
+                absolutePointTupleSchema.parse([centerX - 1, centerY + 1 * 3]),
+                absolutePointTupleSchema.parse([centerX - 1, centerY + 1 * 2]),
+                absolutePointTupleSchema.parse([
+                    centerX - 1 * 2,
+                    centerY + 1 * 2,
+                ]),
+                absolutePointTupleSchema.parse([centerX - 1 * 2, centerY - 1]),
+                absolutePointTupleSchema.parse([centerX - 1, centerY - 1]),
+            );
+            break;
+
+        default:
+            // Fallback for size 1
+            vertices.push(
+                absolutePointTupleSchema.parse([centerX, centerY]),
+                absolutePointTupleSchema.parse([centerX + 1, centerY]),
+                absolutePointTupleSchema.parse([centerX + 1, centerY + 1]),
+                absolutePointTupleSchema.parse([centerX, centerY + 1]),
+            );
+            break;
+    }
+
+    return polygonSchema.parse({ vertices });
+}

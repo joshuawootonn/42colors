@@ -1,5 +1,8 @@
+import earcut from 'earcut';
+
 import { Polygon } from '../geometry/polygon';
 import { WebGPUBufferPool } from './buffer-pool';
+import { Color } from './colors';
 
 export interface WebGPUPolygonRenderer {
     device: GPUDevice;
@@ -20,10 +23,11 @@ export interface RenderOptions {
     yCamera?: number;
     pixelSize?: number;
     containsMatchingEndpoints?: boolean;
-    color?: [number, number, number, number]; // RGBA color
+    color?: Color;
     canvasWidth: number;
     canvasHeight: number;
-    lineWidth?: number; // Line width in pixels (default: 3)
+    lineWidth?: number;
+    filled?: boolean;
 }
 
 export async function createWebGPUPolygonRenderer(
@@ -281,6 +285,48 @@ function generatePolygonLineSegments(
     return new Float32Array(vertices);
 }
 
+function generateFilledPolygonTriangles(
+    polygon: Polygon,
+    options: Partial<RenderOptions> = {},
+): Float32Array {
+    const {
+        xOffset = 0,
+        yOffset = 0,
+        xCamera = 0,
+        yCamera = 0,
+        containsMatchingEndpoints = false,
+    } = options;
+
+    const points = containsMatchingEndpoints
+        ? polygon.vertices.slice(0, -1)
+        : polygon.vertices;
+
+    if (points.length < 3) {
+        return new Float32Array([]);
+    }
+
+    const flatVertices: number[] = [];
+    for (const point of points) {
+        flatVertices.push(
+            point[0] - xCamera + xOffset,
+            point[1] - yCamera + yOffset,
+        );
+    }
+
+    const triangleIndices = earcut(flatVertices);
+
+    const triangleVertices: number[] = [];
+    for (let i = 0; i < triangleIndices.length; i++) {
+        const vertexIndex = triangleIndices[i] * 2;
+        triangleVertices.push(
+            flatVertices[vertexIndex],
+            flatVertices[vertexIndex + 1],
+        );
+    }
+
+    return new Float32Array(triangleVertices);
+}
+
 export function renderPolygon(
     renderer: WebGPUPolygonRenderer,
     polygon: Polygon,
@@ -296,6 +342,7 @@ export function renderPolygon(
         color = [1, 1, 0, 1], // Default yellow
         canvasWidth,
         canvasHeight,
+        filled = false,
     } = options;
 
     // Update transform uniform buffer
@@ -319,8 +366,14 @@ export function renderPolygon(
     const colorData = new Float32Array(color);
     renderer.device.queue.writeBuffer(renderer.colorBuffer, 0, colorData);
 
-    // Generate vertex data
-    const vertexData = generatePolygonLineSegments(polygon, options);
+    // Generate vertex data based on filled or outline mode
+    const vertexData = filled
+        ? generateFilledPolygonTriangles(polygon, options)
+        : generatePolygonLineSegments(polygon, options);
+
+    if (vertexData.length === 0) {
+        throw new Error('No vertices to render');
+    }
 
     // Get a buffer from the pool
     const vertexBuffer = renderer.bufferPool.getBuffer(vertexData.length * 4);
