@@ -33,6 +33,8 @@ const PopoverContent = React.forwardRef<
             positionerProps: {
                 align = 'center' as const,
                 sideOffset = 4,
+                side = 'bottom' as const,
+                className: positionerClassName = '',
                 ...positionerProps
             } = {},
             isDraggable = true,
@@ -70,11 +72,15 @@ const PopoverContent = React.forwardRef<
                             : undefined
                     }
                     className={cn(
-                        positionerProps?.className,
+                        positionerClassName,
                         'z-50 ',
                         className,
                         hasDragged && 'fixed top-0 left-0',
                     )}
+                    sideOffset={sideOffset}
+                    align={align}
+                    side={side}
+                    {...positionerProps}
                 >
                     <PopoverPrimitive.Popup
                         ref={combinedRef}
