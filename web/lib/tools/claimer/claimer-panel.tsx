@@ -10,12 +10,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { IconButton } from '@/components/ui/icon-button';
 import * as Tooltip from '@/components/ui/tooltip';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useSelector } from '@xstate/store/react';
 
 import { store } from '../../store';
-import { deletePlot, getUserPlots } from './claimer.rest';
+import { getUserPlots } from './claimer.rest';
 import { CreatePlotForm } from './create-plot-form';
+import { DeletePlotButton } from './delete-plot-button';
 import { EditPlotForm } from './edit-plot-form';
 
 export function ClaimerPanel() {
@@ -34,17 +35,6 @@ export function ClaimerPanel() {
         queryFn: getUserPlots,
     });
 
-    const { mutate: deleteSelectedPlot } = useMutation({
-        mutationFn: deletePlot,
-        onSuccess: () => {
-            store.getSnapshot().context.queryClient?.invalidateQueries({
-                queryKey: ['user', 'plots'],
-            });
-            store.trigger.redrawRealtimeCanvas();
-            store.trigger.deselectPlot();
-        },
-    });
-
     const selectedPlot = useMemo(
         () => plots?.find((plot) => plot.id === selectedPlotId),
         [plots, selectedPlotId],
@@ -54,7 +44,7 @@ export function ClaimerPanel() {
     if (user == null) return null;
 
     return (
-        <div className="flex-grow flex flex-row items-start justify-start">
+        <div className="flex">
             <DropdownMenu>
                 <DropdownMenuTrigger
                     render={(props) => (
@@ -106,7 +96,7 @@ export function ClaimerPanel() {
             </DropdownMenu>
             {activeAction?.type === 'claimer-active' ? (
                 <>
-                    <ClaimButton />
+                    <CreatePlotForm />
                     <IconButton
                         className="text-black"
                         onClick={() => {
@@ -121,56 +111,10 @@ export function ClaimerPanel() {
                     <Tooltip.Provider>
                         <EditPlotForm plot={selectedPlot} />
 
-                        <Tooltip.Root>
-                            <Tooltip.Trigger>
-                                <IconButton
-                                    className="text-black -translate-x-[2px]"
-                                    onClick={() => {
-                                        if (selectedPlotId) {
-                                            deleteSelectedPlot(selectedPlotId);
-                                        }
-                                    }}
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="32"
-                                        height="32"
-                                        viewBox="-4 -4 32 32"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="1.5"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="M3 6h18" />
-                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                        <line x1="10" x2="10" y1="11" y2="17" />
-                                        <line x1="14" x2="14" y1="11" y2="17" />
-                                    </svg>
-                                </IconButton>
-                            </Tooltip.Trigger>
-
-                            <Tooltip.Portal>
-                                <Tooltip.Positioner>
-                                    <Tooltip.Popup>
-                                        <Tooltip.Arrow />
-                                        Delete
-                                    </Tooltip.Popup>
-                                </Tooltip.Positioner>
-                            </Tooltip.Portal>
-                        </Tooltip.Root>
+                        <DeletePlotButton plot={selectedPlot} />
                     </Tooltip.Provider>
                 </>
             ) : null}
-        </div>
-    );
-}
-
-function ClaimButton() {
-    return (
-        <div className="flex flex-col items-start justify-start">
-            <CreatePlotForm />
         </div>
     );
 }
