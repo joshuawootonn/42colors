@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 
 export default function Page() {
     return (
-        <main className={cn(...pageProse, 'mt-10')}>
+        <div className={cn(...pageProse)}>
             <Changelog />
-        </main>
+        </div>
     );
 }
