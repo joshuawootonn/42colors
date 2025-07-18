@@ -20,9 +20,7 @@ export default function Page() {
                 }
             }}
         >
-            <DialogContent
-                className={cn(...dialogProse, 'w-110')}
-            >
+            <DialogContent className={cn(...dialogProse, 'w-110')}>
                 <H1>Forgot Password</H1>
                 <ForgotPassword />
             </DialogContent>

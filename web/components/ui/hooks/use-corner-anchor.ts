@@ -170,10 +170,7 @@ export function useCornerAnchor({
             const constrainedPosition = {
                 x: Math.max(
                     10,
-                    Math.min(
-                        newWindowWidth - elementRect.width,
-                        newPosition.x,
-                    ),
+                    Math.min(newWindowWidth - elementRect.width, newPosition.x),
                 ),
                 y: Math.max(
                     0,
