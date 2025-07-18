@@ -117,7 +117,7 @@ export function EditPlotForm({ plot }: EditPlotFormProps) {
             <Tooltip.Root>
                 <Tooltip.Trigger
                     render={
-                        <PopoverTrigger asChild>
+                        <PopoverTrigger>
                             <IconButton className="text-black -translate-x-[1px]">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -152,7 +152,7 @@ export function EditPlotForm({ plot }: EditPlotFormProps) {
                 </Tooltip.Portal>
             </Tooltip.Root>
 
-            <PopoverContent className="w-80 px-3 py-2 bg-background border-1.5 border-primary">
+            <PopoverContent className="w-80">
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
                     <div>
                         <h3 className="font-semibold mb-2">Edit Plot</h3>

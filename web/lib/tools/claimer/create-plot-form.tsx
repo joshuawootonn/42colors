@@ -102,11 +102,11 @@ export function CreatePlotForm() {
 
     return (
         <Popover open={isOpen} onOpenChange={handleOpenChange}>
-            <PopoverTrigger asChild>
+            <PopoverTrigger>
                 <Button>Claim</Button>
             </PopoverTrigger>
 
-            <PopoverContent className="w-80 px-3 py-2 bg-background border-1.5 border-primary">
+            <PopoverContent className="w-80">
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
                     <div>
                         <h3 className="font-semibold mb-2">Create Plot</h3>
