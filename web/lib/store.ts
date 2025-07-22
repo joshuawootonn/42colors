@@ -359,7 +359,14 @@ export const store = createStore({
             };
 
             enqueue.effect(() => {
+                store.trigger.resizeRealtimeAndTelegraphCanvases();
+                // todo(josh): why is this needed to get user plots showing up before mouse move?
+                store.trigger.setCursorPosition({
+                    cursorPosition: { clientX: 0, clientY: 0 },
+                });
+                store.trigger.redrawRealtimeCanvas();
                 store.trigger.redrawUICanvas();
+                store.trigger.redrawTelegraph();
             });
 
             return webgpuInitialized;

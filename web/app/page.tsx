@@ -70,7 +70,8 @@ export default function Page() {
                 .subscribe((event) => {
                     const key = ['user', 'plots'];
                     if (keyEquals(event.query.queryKey, key)) {
-                        store.trigger.redrawRealtimeCanvas();
+                        store.trigger.resizeRealtimeAndTelegraphCanvases();
+                        store.trigger.redrawUICanvas();
                     }
                 });
 
