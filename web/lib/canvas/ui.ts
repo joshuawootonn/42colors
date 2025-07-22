@@ -1,11 +1,11 @@
 import { getZoomMultiplier } from '../camera';
-import { InitializedStore } from '../store';
+import { HydratedStore, InitializedStore } from '../store';
 import { getCameraOffset } from '../tools/brush/brush';
 import { Plot } from '../tools/claimer/claimer.rest';
 import { BLACK, BLUE } from '../webgpu/colors';
 import { getPixelSize } from './realtime';
 
-export function redrawUserPlots(context: InitializedStore) {
+export function redrawUserPlots(context: HydratedStore | InitializedStore) {
     const webgpuManager = context.canvas.uiWebGPUManager;
     if (!webgpuManager) return;
 

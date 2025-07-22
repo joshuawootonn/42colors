@@ -101,9 +101,10 @@ export type InitialStore = {
     currentPointerState: PointerState;
     toolSettings: ToolSettings;
     id: undefined;
+    interaction: undefined;
 };
 
-export type InitializedStore = {
+export type HydratedStore = {
     state: 'initialized';
     camera: Camera;
     server: {
@@ -146,7 +147,65 @@ export type InitializedStore = {
     eventLoopRafId?: number;
 };
 
-export type Store = InitialStore | InitializedStore;
+export type InitializedStore = {
+    state: 'initialized';
+    camera: Camera;
+    server: {
+        apiOrigin: string;
+        websocketOriginURL: string;
+        authURL?: string;
+        socket?: Socket;
+        channel?: Channel;
+    };
+    toolSettings: ToolSettings;
+    currentPointerState: PointerState;
+    id: string;
+    canvas: {
+        bodyElement: HTMLBodyElement;
+        rootCanvas: HTMLCanvasElement;
+        rootCanvasContext: CanvasRenderingContext2D;
+        backgroundCanvas: HTMLCanvasElement;
+        backgroundCanvasContext: CanvasRenderingContext2D;
+        realtimeCanvas: HTMLCanvasElement;
+        telegraphCanvas: HTMLCanvasElement;
+        uiCanvas: HTMLCanvasElement;
+        chunkCanvases: ChunkCanvases;
+        uiWebGPUManager: WebGPUManager;
+        telegraphWebGPUManager: WebGPUManager;
+        realtimeWebGPUManager: WebGPUManager;
+    };
+    actions: Action[];
+    activeAction: Action | null;
+    interaction: {
+        isPressed: boolean;
+        isSpacePressed: boolean;
+        cursorPosition: { clientX: number; clientY: number } | null;
+    };
+    user?: {
+        email: string;
+        id: number;
+        channel_token: string;
+    } | null;
+    queryClient: QueryClient;
+    eventLoopRafId?: number;
+};
+
+export type WebGPUFailedStore = {
+    state: 'webgpu-failed';
+    camera: Camera;
+    currentTool: Tool;
+    currentColorRef: number;
+    currentPointerState: PointerState;
+    toolSettings: ToolSettings;
+    id: undefined;
+    interaction: undefined;
+};
+
+export type Store =
+    | InitialStore
+    | HydratedStore
+    | InitializedStore
+    | WebGPUFailedStore;
 
 const initialCamera: Camera = {
     x: 0,
@@ -162,12 +221,13 @@ const initialialStoreContext: Store = {
     currentColorRef: 1,
     currentPointerState: 'default',
     toolSettings: DEFAULT_TOOL_SETTINGS,
+    interaction: undefined,
 } as Store;
 
 export const store = createStore({
     context: initialialStoreContext,
     on: {
-        initializeStore: (
+        hydrateStore: (
             context,
             event: {
                 body: HTMLBodyElement;
@@ -195,51 +255,45 @@ export const store = createStore({
             enqueue.effect(() => {
                 store.trigger.fetchPixels();
                 store.trigger.fetchUser();
+
                 event.queryClient.fetchQuery({
                     queryKey: ['user', 'plots'],
                     queryFn: getUserPlots,
                 });
 
-                createWebGPUManager(uiCanvas).then((uiWebGPUManager) => {
-                    if (uiWebGPUManager == null) {
-                        console.error('Failed to initialize WebGPU for UI');
-                        return;
-                    }
-                    store.trigger.initializeWebGPUManager({
-                        uiWebGPUManager,
-                    });
-                });
-
-                createWebGPUManager(telegraphCanvas).then(
-                    (telegraphWebGPUManager) => {
-                        if (telegraphWebGPUManager == null) {
-                            console.error(
-                                'Failed to initialize WebGPU for telegraph',
-                            );
-                            return;
-                        }
-                        store.trigger.initializeWebGPUManager({
+                Promise.all([
+                    createWebGPUManager(uiCanvas),
+                    createWebGPUManager(telegraphCanvas),
+                    createWebGPUManager(realtimeCanvas),
+                ])
+                    .then(
+                        ([
+                            uiWebGPUManager,
                             telegraphWebGPUManager,
-                        });
-                    },
-                );
-
-                createWebGPUManager(realtimeCanvas).then(
-                    (realtimeWebGPUManager) => {
-                        if (realtimeWebGPUManager == null) {
-                            console.error(
-                                'Failed to initialize WebGPU for realtime rendering',
-                            );
-                            return;
-                        }
-                        store.trigger.initializeWebGPUManager({
                             realtimeWebGPUManager,
-                        });
-                    },
-                );
+                        ]) => {
+                            if (
+                                uiWebGPUManager &&
+                                telegraphWebGPUManager &&
+                                realtimeWebGPUManager
+                            ) {
+                                store.trigger.initializeStore({
+                                    uiWebGPUManager,
+                                    telegraphWebGPUManager,
+                                    realtimeWebGPUManager,
+                                });
+                            } else {
+                                store.trigger.transitionToWebGPUFailed();
+                            }
+                        },
+                    )
+                    .catch((error) => {
+                        console.error(error);
+                        store.trigger.transitionToWebGPUFailed();
+                    });
             });
 
-            const initialized: InitializedStore = {
+            const initialized: HydratedStore = {
                 ...context,
                 state: 'initialized' as const,
                 id: uuid(),
@@ -281,19 +335,51 @@ export const store = createStore({
             return initialized;
         },
 
-        initializeWebGPUManager: (
+        initializeStore: (
             context,
-            event: Partial<InitializedStore['canvas']>,
+            event: {
+                uiWebGPUManager: WebGPUManager;
+                telegraphWebGPUManager: WebGPUManager;
+                realtimeWebGPUManager: WebGPUManager;
+            },
+            enqueue,
         ) => {
             if (isInitialStore(context)) return;
+            if (context.state !== 'initialized') return;
 
-            return {
+            const webgpuInitialized: InitializedStore = {
                 ...context,
+                state: 'initialized',
                 canvas: {
                     ...context.canvas,
-                    ...event,
+                    uiWebGPUManager: event.uiWebGPUManager,
+                    telegraphWebGPUManager: event.telegraphWebGPUManager,
+                    realtimeWebGPUManager: event.realtimeWebGPUManager,
                 },
             };
+
+            enqueue.effect(() => {
+                store.trigger.redrawUICanvas();
+            });
+
+            return webgpuInitialized;
+        },
+
+        transitionToWebGPUFailed: (context) => {
+            if (isInitialStore(context)) return;
+
+            const webgpuFailed: WebGPUFailedStore = {
+                state: 'webgpu-failed',
+                camera: context.camera,
+                currentTool: context.toolSettings.currentTool,
+                currentColorRef: 1,
+                currentPointerState: context.currentPointerState,
+                toolSettings: context.toolSettings,
+                id: undefined,
+                interaction: undefined,
+            };
+
+            return webgpuFailed;
         },
 
         listen: (
@@ -842,8 +928,13 @@ export const store = createStore({
                 );
             }
 
-            redrawUserPlots(context);
             clearChunkPixels(context.canvas.chunkCanvases, dedupedPixels);
+        },
+
+        redrawUICanvas: (context) => {
+            if (isInitialStore(context)) return;
+
+            redrawUserPlots(context);
         },
 
         redrawTelegraph: (context) => {
@@ -911,6 +1002,7 @@ export const store = createStore({
             enqueue.effect(() => {
                 store.trigger.resizeRealtimeAndTelegraphCanvases();
                 store.trigger.redrawRealtimeCanvas();
+                store.trigger.redrawUICanvas();
                 store.trigger.redrawTelegraph();
                 if (options.deselectPlot) {
                     store.trigger.deselectPlot();
@@ -1363,6 +1455,7 @@ export const store = createStore({
             enqueue.effect(() => {
                 store.trigger.resizeRealtimeAndTelegraphCanvases();
                 store.trigger.redrawRealtimeCanvas();
+                store.trigger.redrawUICanvas();
                 store.trigger.redrawTelegraph();
             });
             const tool = context.toolSettings.currentTool;
@@ -1393,6 +1486,7 @@ export const store = createStore({
                 );
                 store.trigger.resizeRealtimeAndTelegraphCanvases();
                 store.trigger.redrawRealtimeCanvas();
+                store.trigger.redrawUICanvas();
                 store.trigger.redrawTelegraph();
             });
 

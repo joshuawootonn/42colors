@@ -15,7 +15,7 @@ import {
 } from '../../geometry/polygon';
 import { AbsolutePointTuple, absolutePointTupleSchema } from '../../line';
 import { COLOR_TABLE, ColorRef } from '../../palette';
-import { InitializedStore, store } from '../../store';
+import { HydratedStore, store } from '../../store';
 import {
     canvasToClient,
     clientToCanvas,
@@ -46,7 +46,7 @@ export function getCameraOffset(camera: Camera): {
 export function getRelativePoint(
     clientX: number,
     clientY: number,
-    context: InitializedStore,
+    context: HydratedStore,
 ): Point {
     const { xOffset, yOffset } = getCameraOffset(context.camera);
 
@@ -58,7 +58,7 @@ export function getRelativePoint(
 export function getAbsolutePoint(
     clientX: number,
     clientY: number,
-    context: InitializedStore,
+    context: HydratedStore,
 ): AbsolutePoint {
     const { xOffset, yOffset, xFloor, yFloor } = getCameraOffset(
         context.camera,
@@ -140,7 +140,7 @@ export function getBrushPoints(
     return dedupeCoords(nextPoints);
 }
 
-function redrawTelegraph(context: InitializedStore) {
+function redrawTelegraph(context: HydratedStore) {
     const telegraphWebGPUManager = context.canvas.telegraphWebGPUManager;
     if (!telegraphWebGPUManager) {
         console.error(
@@ -251,7 +251,7 @@ export type BrushActive = {
 export function isDuplicatePoint(
     canvasX: number,
     canvasY: number,
-    context: InitializedStore,
+    context: HydratedStore,
 ) {
     if (context.activeAction?.type !== 'brush-active') return false;
     const lastPoint = context.activeAction?.points.at(-1);
@@ -285,9 +285,9 @@ export function nextBrushAction(
 
 function onPointerDown(
     e: PointerEvent,
-    context: InitializedStore,
+    context: HydratedStore,
     enqueue: EnqueueObject<{ type: string }>,
-): InitializedStore {
+): HydratedStore {
     const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     const brushPoints = getBrushPoints(
@@ -314,9 +314,9 @@ function onPointerDown(
 
 function onPointerMove(
     e: PointerEvent,
-    context: InitializedStore,
+    context: HydratedStore,
     enqueue: EnqueueObject<{ type: string }>,
-): InitializedStore {
+): HydratedStore {
     const { x, y } = getAbsolutePoint(e.clientX, e.clientY, context);
 
     if (
@@ -362,9 +362,9 @@ function onPointerMove(
 
 function onWheel(
     e: WheelEvent,
-    context: InitializedStore,
+    context: HydratedStore,
     enqueue: EnqueueObject<{ type: string }>,
-): InitializedStore {
+): HydratedStore {
     const { x, y } = getAbsolutePoint(e.clientX, e.clientY, context);
 
     if (
@@ -410,9 +410,9 @@ function onWheel(
 
 function onPointerOut(
     _: PointerEvent,
-    context: InitializedStore,
+    context: HydratedStore,
     enqueue: EnqueueObject<{ type: string }>,
-): InitializedStore {
+): HydratedStore {
     if (context.activeAction?.type !== 'brush-active') return context;
     const colorRef = context.activeAction.colorRef;
     const points = context.activeAction.points;
@@ -430,9 +430,9 @@ function onPointerOut(
 
 function onPointerUp(
     _: PointerEvent,
-    context: InitializedStore,
+    context: HydratedStore,
     enqueue: EnqueueObject<{ type: string }>,
-): InitializedStore {
+): HydratedStore {
     if (context.activeAction?.type !== 'brush-active') return context;
 
     const colorRef = context.activeAction.colorRef;

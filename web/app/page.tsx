@@ -6,6 +6,7 @@ import { Footer } from '@/components/footer';
 import { Navigation } from '@/components/navigation';
 import { Palette } from '@/components/palette';
 import { Toolbar } from '@/components/toolbar';
+import { WebGPUWarning } from '@/components/webgpu-warning';
 import { store } from '@/lib/store';
 import { DEFAULT_TOOL_SETTINGS, getToolSettings } from '@/lib/tool-settings';
 import { BrushPanel } from '@/lib/tools/brush/brush-panel';
@@ -26,6 +27,13 @@ export default function Page() {
     const state = useSelector(store, (state) => state.context.state);
 
     useEffect(() => {
+        if (state === 'webgpu-failed') {
+            console.error(
+                'Stopped trying to initialize since webGPU is not supported.',
+            );
+            return;
+        }
+
         const element = document.getElementById('my-house');
         if (element instanceof HTMLCanvasElement) {
             const context = element.getContext('2d');
@@ -42,7 +50,7 @@ export default function Page() {
 
             const toolSettings = getToolSettings();
 
-            store.trigger.initializeStore({
+            store.trigger.hydrateStore({
                 body,
                 canvas: element,
                 // todo(josh): make a config module that checks env vars
@@ -114,7 +122,7 @@ export default function Page() {
             ></canvas>
 
             <div className="flex flex-col items-start space-y-3 fixed top-16 bottom-12 left-3">
-                {state !== 'initialized' ? null : (
+                {state === 'initialized' && (
                     <>
                         {currentTool === 'brush' && <Palette />}
                         {currentTool === 'brush' && <BrushPanel />}
@@ -136,6 +144,8 @@ export default function Page() {
             <div className="flex fixed bottom-3 right-3">
                 <Navigation />
             </div>
+
+            <WebGPUWarning />
         </>
     );
 }
