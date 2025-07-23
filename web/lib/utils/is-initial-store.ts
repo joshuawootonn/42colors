@@ -1,4 +1,4 @@
-import { InitialStore, Store, WebGPUFailedStore } from '../store';
+import { InitializedStore, InitialStore, Store, WebGPUFailedStore } from '../store';
 
 export function isInitialStore(
     context: Store,
@@ -8,4 +8,10 @@ export function isInitialStore(
     if (is) console.warn('Attempted action on uninitialized state');
 
     return is;
+}
+
+export function isInitializedStore(
+    context: Store,
+): context is InitializedStore {
+    return context.state === 'initialized';
 }

@@ -366,7 +366,6 @@ export const store = createStore({
                 });
                 store.trigger.redrawRealtimeCanvas();
                 store.trigger.redrawUICanvas();
-                store.trigger.redrawTelegraph();
             });
 
             return webgpuInitialized;
@@ -944,24 +943,7 @@ export const store = createStore({
             redrawUserPlots(context);
         },
 
-        redrawTelegraph: (context) => {
-            if (isInitialStore(context)) return;
 
-            const tool = context.toolSettings.currentTool;
-            switch (tool) {
-                case 'brush':
-                    BrushTool.redrawTelegraph(context);
-                    break;
-                case 'erasure':
-                    ErasureTool.redrawTelegraph(context);
-                    break;
-                case 'claimer':
-                    ClaimerTool.redrawTelegraph(context);
-                    break;
-                default:
-                    console.log('default case of the redrawTelegraph');
-            }
-        },
 
         clearChunk: (context, { chunkKey }: { chunkKey: string }, enqueue) => {
             if (isInitialStore(context)) return;
@@ -984,7 +966,7 @@ export const store = createStore({
 
         drawPlotsToChunkCanvasUI: (
             context,
-            event: { chunkKey: string; plots: Plot[] },
+            _event: { chunkKey: string; plots: Plot[] },
         ) => {
             if (isInitialStore(context)) return;
             // drawPlotsToUIChunkCanvas(
@@ -1010,7 +992,6 @@ export const store = createStore({
                 store.trigger.resizeRealtimeAndTelegraphCanvases();
                 store.trigger.redrawRealtimeCanvas();
                 store.trigger.redrawUICanvas();
-                store.trigger.redrawTelegraph();
                 if (options.deselectPlot) {
                     store.trigger.deselectPlot();
                 }
@@ -1142,16 +1123,15 @@ export const store = createStore({
             };
         },
 
-        clearClaim: (context, _, enqueue) => {
+        clearClaim: (context) => {
             if (isInitialStore(context)) return;
-            enqueue.effect(() => store.trigger.redrawTelegraph());
             return {
                 ...context,
                 activeAction: null,
             };
         },
 
-        completeClaim: (context, _, enqueue) => {
+        completeClaim: (context) => {
             if (isInitialStore(context)) return;
 
             if (context.activeAction?.type !== 'claimer-active') {
@@ -1166,7 +1146,6 @@ export const store = createStore({
             }
 
             context.queryClient.refetchQueries({ queryKey: ['user', 'plots'] });
-            enqueue.effect(() => store.trigger.redrawTelegraph());
 
             return {
                 ...context,
@@ -1259,7 +1238,6 @@ export const store = createStore({
 
             enqueue.effect(() => {
                 store.trigger.setCursorPosition({ cursorPosition: e });
-                store.trigger.redrawTelegraph();
             });
             const tool = context.toolSettings.currentTool;
 
@@ -1463,7 +1441,6 @@ export const store = createStore({
                 store.trigger.resizeRealtimeAndTelegraphCanvases();
                 store.trigger.redrawRealtimeCanvas();
                 store.trigger.redrawUICanvas();
-                store.trigger.redrawTelegraph();
             });
             const tool = context.toolSettings.currentTool;
 
@@ -1494,7 +1471,6 @@ export const store = createStore({
                 store.trigger.resizeRealtimeAndTelegraphCanvases();
                 store.trigger.redrawRealtimeCanvas();
                 store.trigger.redrawUICanvas();
-                store.trigger.redrawTelegraph();
             });
 
             return context;
