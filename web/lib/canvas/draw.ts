@@ -8,6 +8,7 @@ import { HydratedStore } from '../store';
 import { canvasToClient } from '../utils/clientToCanvasConversion';
 import { FULLSIZE_CANVAS_BLEED } from './fullsize';
 import { getPixelSize, getSizeInPixelsPlusBleed } from './realtime';
+import { renderTelegraph } from './telegraph';
 
 export function draw(context: HydratedStore) {
     const zoomMultiplier = getZoomMultiplier(context.camera);
@@ -74,6 +75,8 @@ export function draw(context: HydratedStore) {
         canvasWidthPlusBleed,
         canvasHeightPlusBleed,
     );
+
+    renderTelegraph(context);
 
     context.canvas.rootCanvasContext.drawImage(
         context.canvas.telegraphCanvas,
