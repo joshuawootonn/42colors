@@ -27,7 +27,7 @@ export function ClaimerPanel() {
 
     const selectedPlotId = useSelector(
         store,
-        (state) => state.context.toolSettings.claimer.selectedPlotId,
+        (state) => state.context.toolSettings?.claimer.selectedPlotId,
     );
 
     const { data: plots } = useQuery({
@@ -39,7 +39,7 @@ export function ClaimerPanel() {
         () => plots?.find((plot) => plot.id === selectedPlotId),
         [plots, selectedPlotId],
     );
-    const user = useSelector(store, (state) => state.context.user);
+    const user = useSelector(store, (state) => state.context?.user);
 
     if (user == null) return null;
 

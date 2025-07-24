@@ -62,7 +62,8 @@ export function EditPlotForm({ plot }: EditPlotFormProps) {
             plot: Partial<Pick<Plot, 'name' | 'description'>>;
         }) => updatePlot(plotId, plot),
         onSuccess: () => {
-            store.getSnapshot().context.queryClient?.invalidateQueries({
+            const context = store.getSnapshot().context;
+            context.queryClient?.invalidateQueries({
                 queryKey: ['user', 'plots'],
             });
             store.trigger.redrawRealtimeCanvas();
