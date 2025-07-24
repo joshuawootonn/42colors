@@ -93,6 +93,9 @@ export type InitialStore = {
     toolSettings: ToolSettings;
     id: undefined;
     interaction: undefined;
+    queryClient: undefined;
+    user: undefined;
+    activeAction: undefined;
 };
 
 export type InitializedStore = {

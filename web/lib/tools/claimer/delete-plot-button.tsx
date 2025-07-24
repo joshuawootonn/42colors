@@ -24,7 +24,8 @@ export function DeletePlotButton({ plot }: DeletePlotButtonProps) {
     const { mutate: deleteSelectedPlot, isPending } = useMutation({
         mutationFn: deletePlot,
         onSuccess: () => {
-            store.getSnapshot().context.queryClient?.invalidateQueries({
+            const context = store.getSnapshot().context;
+            context.queryClient?.invalidateQueries({
                 queryKey: ['user', 'plots'],
             });
             store.trigger.redrawRealtimeCanvas();

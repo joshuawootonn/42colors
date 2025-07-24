@@ -50,7 +50,8 @@ export function CreatePlotForm() {
     const { mutate: createPlotMutation } = useMutation({
         mutationFn: createPlot,
         onSuccess: (plot) => {
-            store.getSnapshot().context.queryClient?.invalidateQueries({
+            const context = store.getSnapshot().context;
+            context.queryClient?.invalidateQueries({
                 queryKey: ['user', 'plots'],
             });
             store.trigger.completeClaim();
