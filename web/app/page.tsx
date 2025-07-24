@@ -131,8 +131,11 @@ export default function Page() {
                 .subscribe((event) => {
                     const key = ['user', 'plots'];
                     if (keyEquals(event.query.queryKey, key)) {
-                        store.trigger.resizeRealtimeAndTelegraphCanvases();
-                        store.trigger.redrawUICanvas();
+                        // Defer store updates to avoid render-time state updates
+                        setTimeout(() => {
+                            store.trigger.resizeRealtimeAndTelegraphCanvases();
+                            store.trigger.redrawUICanvas();
+                        });
                     }
                 });
 
