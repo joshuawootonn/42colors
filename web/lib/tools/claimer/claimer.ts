@@ -6,13 +6,13 @@ import {
     rectToPolygonSchema,
 } from '../../geometry/polygon';
 import { Rect, rectSchema } from '../../geometry/rect';
-import { HydratedStore } from '../../store';
+import { InitializedStore } from '../../store';
 import { CLAIMER_YELLOW } from '../../webgpu/colors';
 import { EnqueueObject } from '../../xstate-internal-types';
 import { getAbsolutePoint, getCameraOffset } from '../brush/brush';
 import { getUserPlots } from './claimer.rest';
 
-function redrawTelegraph(context: HydratedStore) {
+function redrawTelegraph(context: InitializedStore) {
     const telegraphWebGPUManager = context.canvas.telegraphWebGPUManager;
     if (!telegraphWebGPUManager) {
         console.error(
@@ -116,9 +116,9 @@ export function completeRectangleClaimerAction(
 
 function onPointerDown(
     e: PointerEvent,
-    context: HydratedStore,
+    context: InitializedStore,
     _: EnqueueObject<{ type: string }>,
-): HydratedStore {
+): InitializedStore {
     const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     const rect = rectSchema.parse({
@@ -139,9 +139,9 @@ function onPointerDown(
 
 function onPointerMove(
     e: PointerEvent,
-    context: HydratedStore,
+    context: InitializedStore,
     _: EnqueueObject<{ type: string }>,
-): HydratedStore {
+): InitializedStore {
     const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     if (
@@ -166,9 +166,9 @@ function onPointerMove(
 
 function onWheel(
     e: WheelEvent,
-    context: HydratedStore,
+    context: InitializedStore,
     _: EnqueueObject<{ type: string }>,
-): HydratedStore {
+): InitializedStore {
     const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     if (
@@ -193,9 +193,9 @@ function onWheel(
 
 function onPointerOut(
     _: PointerEvent,
-    context: HydratedStore,
+    context: InitializedStore,
     __: EnqueueObject<{ type: string }>,
-): HydratedStore {
+): InitializedStore {
     if (context.activeAction?.type !== 'claimer-active') {
         return context;
     }
@@ -208,9 +208,9 @@ function onPointerOut(
 
 function onPointerUp(
     _: PointerEvent,
-    context: HydratedStore,
+    context: InitializedStore,
     __: EnqueueObject<{ type: string }>,
-): HydratedStore {
+): InitializedStore {
     if (context.activeAction?.type !== 'claimer-active') {
         return context;
     }

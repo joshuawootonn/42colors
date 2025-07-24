@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Footer } from '@/components/footer';
 import { Navigation } from '@/components/navigation';
@@ -31,16 +31,15 @@ import { useSelector } from '@xstate/store/react';
 export default function Page() {
     const queryClient = useQueryClient();
 
-    const state = useSelector(store, (state) => state.context.state);
+    const [isWebGPUAvailable, setIsWebGPUAvailable] = useState(true);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
-        if (state === 'webgpu-failed') {
-            console.error(
-                'Stopped trying to initialize since webGPU is not supported.',
+        if (!isWebGPUAvailable) {
+            console.warn(
+                'Stopped trying to initialize because WebGPU is not available',
             );
-            return;
         }
 
         const element = canvasRef.current;
@@ -88,9 +87,9 @@ export default function Page() {
                             telegraphWebGPUManager &&
                             realtimeWebGPUManager
                         ) {
-                            console.log('hydrating store');
+                            console.log('initializing store');
 
-                            store.trigger.hydrateStore({
+                            store.trigger.initializeStore({
                                 body,
                                 canvas: element,
                                 // todo(josh): make a config module that checks env vars
@@ -116,13 +115,15 @@ export default function Page() {
                                 realtimeWebGPUManager,
                             });
                         } else {
-                            store.trigger.transitionToWebGPUFailed();
+                            console.error(
+                                'Failed to initialize WebGPU managers',
+                            );
                         }
                     },
                 )
                 .catch((error) => {
-                    console.error(error);
-                    store.trigger.transitionToWebGPUFailed();
+                    console.error('WebGPU initialization failed:', error);
+                    setIsWebGPUAvailable(false);
                 });
 
             const unsubscribe = queryClient
@@ -149,7 +150,7 @@ export default function Page() {
                 requestAnimationFrame(draw);
             }
         }
-    }, [queryClient, state]);
+    }, [queryClient, isWebGPUAvailable]);
 
     const isPressed = useSelector(
         store,
@@ -183,7 +184,7 @@ export default function Page() {
             ></canvas>
 
             <div className="flex flex-col items-start space-y-3 fixed top-16 bottom-12 left-3">
-                {state === 'initialized' && (
+                {isWebGPUAvailable && (
                     <>
                         {currentTool === 'brush' && <Palette />}
                         {currentTool === 'brush' && <BrushPanel />}
@@ -206,7 +207,7 @@ export default function Page() {
                 <Navigation />
             </div>
 
-            <WebGPUWarning />
+            {!isWebGPUAvailable && <WebGPUWarning />}
         </>
     );
 }

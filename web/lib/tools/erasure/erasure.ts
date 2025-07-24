@@ -3,7 +3,7 @@ import { getPixelSize } from '../../canvas/realtime';
 import { AbsolutePoint } from '../../geometry/coord';
 import { getCanvasPolygon } from '../../geometry/polygon';
 import { BLACK_REF, COLOR_TABLE, TRANSPARENT_REF } from '../../palette';
-import { HydratedStore, store } from '../../store';
+import { InitializedStore, store } from '../../store';
 import { newNewCoords } from '../../utils/net-new-coords';
 import { hexToRgbaColor } from '../../webgpu/colors';
 import { EnqueueObject } from '../../xstate-internal-types';
@@ -20,7 +20,7 @@ export type ErasureSettings = {
     size: number;
 };
 
-function redrawTelegraph(context: HydratedStore) {
+function redrawTelegraph(context: InitializedStore) {
     const telegraphWebGPUManager = context.canvas.telegraphWebGPUManager;
     if (!telegraphWebGPUManager) {
         console.error(
@@ -102,9 +102,9 @@ export function nextErasureAction(
 
 function onPointerDown(
     e: PointerEvent,
-    context: HydratedStore,
+    context: InitializedStore,
     enqueue: EnqueueObject<{ type: string }>,
-): HydratedStore {
+): InitializedStore {
     const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     const brushPoints = getBrushPoints(
@@ -126,9 +126,9 @@ function onPointerDown(
 
 function onPointerMove(
     e: PointerEvent,
-    context: HydratedStore,
+    context: InitializedStore,
     enqueue: EnqueueObject<{ type: string }>,
-): HydratedStore {
+): InitializedStore {
     const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     if (
@@ -174,9 +174,9 @@ function onPointerMove(
 
 function onWheel(
     e: WheelEvent,
-    context: HydratedStore,
+    context: InitializedStore,
     enqueue: EnqueueObject<{ type: string }>,
-): HydratedStore {
+): InitializedStore {
     const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     if (
@@ -222,9 +222,9 @@ function onWheel(
 
 function onPointerOut(
     _: PointerEvent,
-    context: HydratedStore,
+    context: InitializedStore,
     enqueue: EnqueueObject<{ type: string }>,
-): HydratedStore {
+): InitializedStore {
     if (context.activeAction?.type !== 'erasure-active') return context;
 
     const points = context.activeAction.points;
@@ -244,9 +244,9 @@ function onPointerOut(
 
 function onPointerUp(
     _: PointerEvent,
-    context: HydratedStore,
+    context: InitializedStore,
     enqueue: EnqueueObject<{ type: string }>,
-): HydratedStore {
+): InitializedStore {
     if (context.activeAction?.type !== 'erasure-active') return context;
 
     const points = context.activeAction.points;

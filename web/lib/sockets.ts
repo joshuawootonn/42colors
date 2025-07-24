@@ -7,7 +7,7 @@ import { ErrorCode } from './error-codes';
 import { Pixel, pixelSchema } from './geometry/coord';
 import { polygonSchema } from './geometry/polygon';
 import { colorRefSchema } from './palette';
-import { HydratedStore, store } from './store';
+import { InitializedStore, store } from './store';
 import { Plot } from './tools/claimer/claimer.rest';
 import { isInitialStore } from './utils/is-initial-store';
 
@@ -46,7 +46,7 @@ const newPixelResponseToPixelSchmea = newPixelResponseSchema.transform(
 
 export type PixelResponse = z.infer<typeof newPixelResponseSchema>;
 
-export function newPixels(context: HydratedStore, pixels: Pixel[]) {
+export function newPixels(context: InitializedStore, pixels: Pixel[]) {
     if (isInitialStore(context)) return;
     const authURL = context.server.authURL;
 

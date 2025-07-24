@@ -1,11 +1,11 @@
-import { HydratedStore } from '../store';
+import { InitializedStore } from '../store';
 import { BrushTool } from '../tools/brush/brush';
 import { ClaimerTool } from '../tools/claimer/claimer';
 import { ErasureTool } from '../tools/erasure/erasure';
-import { isInitializedStore } from '../utils/is-initial-store';
+import { isInitialStore } from '../utils/is-initial-store';
 
-export function renderTelegraph(context: HydratedStore) {
-    if (!isInitializedStore(context)) return;
+export function renderTelegraph(context: InitializedStore) {
+    if (isInitialStore(context)) return;
 
     const tool = context.toolSettings.currentTool;
 

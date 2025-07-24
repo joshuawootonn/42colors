@@ -4,13 +4,13 @@ import {
     CANVAS_PIXEL_RATIO,
     CHUNK_LENGTH,
 } from '../constants';
-import { HydratedStore } from '../store';
+import { InitializedStore } from '../store';
 import { canvasToClient } from '../utils/clientToCanvasConversion';
 import { FULLSIZE_CANVAS_BLEED } from './fullsize';
 import { getPixelSize, getSizeInPixelsPlusBleed } from './realtime';
 import { renderTelegraph } from './telegraph';
 
-export function draw(context: HydratedStore) {
+export function draw(context: InitializedStore) {
     const zoomMultiplier = getZoomMultiplier(context.camera);
     const cameraXStart = Math.floor(context.camera.x);
     const cameraYStart = Math.floor(context.camera.y);
