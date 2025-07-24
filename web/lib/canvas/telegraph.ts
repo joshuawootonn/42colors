@@ -5,10 +5,10 @@ import { ErasureTool } from '../tools/erasure/erasure';
 import { isInitializedStore } from '../utils/is-initial-store';
 
 export function renderTelegraph(context: HydratedStore) {
-    if(!isInitializedStore(context)) return;
+    if (!isInitializedStore(context)) return;
 
     const tool = context.toolSettings.currentTool;
-    
+
     switch (tool) {
         case 'brush':
             BrushTool.redrawTelegraph(context);
@@ -22,4 +22,4 @@ export function renderTelegraph(context: HydratedStore) {
         default:
             console.log('No telegraph rendering for tool:', tool);
     }
-} 
+}

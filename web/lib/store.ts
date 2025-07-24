@@ -237,64 +237,36 @@ export const store = createStore({
                 queryClient: QueryClient;
                 cameraOptions: Camera;
                 toolSettings: ToolSettings;
+                rootCanvasContext: CanvasRenderingContext2D;
+                backgroundCanvas: HTMLCanvasElement;
+                backgroundCanvasContext: CanvasRenderingContext2D;
+                realtimeCanvas: HTMLCanvasElement;
+                telegraphCanvas: HTMLCanvasElement;
+                uiCanvas: HTMLCanvasElement;
+                uiWebGPUManager: WebGPUManager;
+                telegraphWebGPUManager: WebGPUManager;
+                realtimeWebGPUManager: WebGPUManager;
             },
             enqueue,
         ) => {
-            const rootCanvasContext = event.canvas.getContext('2d')!;
-            rootCanvasContext.imageSmoothingEnabled = false;
-
-            const backgroundCanvas = createBackgroundCanvas();
-            const backgroundCanvasContext = backgroundCanvas.getContext('2d')!;
-            backgroundCanvasContext.imageSmoothingEnabled = false;
-            drawBackgroundCanvas(backgroundCanvas, backgroundCanvasContext);
-
-            const realtimeCanvas = createRealtimeCanvas(event.cameraOptions);
-            const telegraphCanvas = createFullsizeCanvas();
-            const uiCanvas = createFullsizeCanvas();
-
             enqueue.effect(() => {
+                store.trigger.resizeRealtimeAndTelegraphCanvases();
+                store.trigger.redrawRealtimeCanvas();
+                store.trigger.redrawUICanvas();
+
                 store.trigger.fetchPixels();
                 store.trigger.fetchUser();
 
+                // todo(josh): why is this different?
                 event.queryClient.fetchQuery({
                     queryKey: ['user', 'plots'],
                     queryFn: getUserPlots,
                 });
-
-                Promise.all([
-                    createWebGPUManager(uiCanvas),
-                    createWebGPUManager(telegraphCanvas),
-                    createWebGPUManager(realtimeCanvas),
-                ])
-                    .then(
-                        ([
-                            uiWebGPUManager,
-                            telegraphWebGPUManager,
-                            realtimeWebGPUManager,
-                        ]) => {
-                            if (
-                                uiWebGPUManager &&
-                                telegraphWebGPUManager &&
-                                realtimeWebGPUManager
-                            ) {
-                                store.trigger.initializeStore({
-                                    uiWebGPUManager,
-                                    telegraphWebGPUManager,
-                                    realtimeWebGPUManager,
-                                });
-                            } else {
-                                store.trigger.transitionToWebGPUFailed();
-                            }
-                        },
-                    )
-                    .catch((error) => {
-                        console.error(error);
-                        store.trigger.transitionToWebGPUFailed();
-                    });
             });
 
-            const initialized: HydratedStore = {
+            const initialized: InitializedStore = {
                 ...context,
+
                 state: 'initialized' as const,
                 id: uuid(),
                 camera: {
@@ -318,16 +290,16 @@ export const store = createStore({
                 canvas: {
                     bodyElement: event.body,
                     rootCanvas: event.canvas,
-                    rootCanvasContext,
-                    backgroundCanvas,
-                    backgroundCanvasContext,
-                    realtimeCanvas,
-                    telegraphCanvas,
-                    uiCanvas,
+                    rootCanvasContext: event.rootCanvasContext,
+                    backgroundCanvas: event.backgroundCanvas,
+                    backgroundCanvasContext: event.backgroundCanvasContext,
+                    realtimeCanvas: event.realtimeCanvas,
+                    telegraphCanvas: event.telegraphCanvas,
+                    uiCanvas: event.uiCanvas,
                     chunkCanvases: {},
-                    uiWebGPUManager: undefined,
-                    telegraphWebGPUManager: undefined,
-                    realtimeWebGPUManager: undefined,
+                    uiWebGPUManager: event.uiWebGPUManager,
+                    telegraphWebGPUManager: event.telegraphWebGPUManager,
+                    realtimeWebGPUManager: event.realtimeWebGPUManager,
                 },
                 queryClient: event.queryClient,
             };
@@ -672,6 +644,8 @@ export const store = createStore({
                     const contextUI = elementUI.getContext('2d');
                     contextUI!.imageSmoothingEnabled = false;
 
+                    console.log('setting chunk canvases', context.state);
+
                     context.canvas.chunkCanvases[chunkKey] = {
                         element: canvas,
                         context: canvasContext!,
@@ -725,6 +699,7 @@ export const store = createStore({
                     });
                 }
             }
+            return context;
         },
 
         updateChunk: (
@@ -928,11 +903,9 @@ export const store = createStore({
                     dedupedPixels,
                     context.camera,
                 );
-            } else {
-                console.warn(
-                    'Realtime WebGPU manager not available, skipping realtime rendering',
-                );
             }
+
+            console.log('clearing chunk pixels', context.canvas.chunkCanvases);
 
             clearChunkPixels(context.canvas.chunkCanvases, dedupedPixels);
         },
@@ -942,8 +915,6 @@ export const store = createStore({
 
             redrawUserPlots(context);
         },
-
-
 
         clearChunk: (context, { chunkKey }: { chunkKey: string }, enqueue) => {
             if (isInitialStore(context)) return;

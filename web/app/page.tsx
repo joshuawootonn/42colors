@@ -1,12 +1,18 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { Footer } from '@/components/footer';
 import { Navigation } from '@/components/navigation';
 import { Palette } from '@/components/palette';
 import { Toolbar } from '@/components/toolbar';
 import { WebGPUWarning } from '@/components/webgpu-warning';
+import {
+    createBackgroundCanvas,
+    drawBackgroundCanvas,
+} from '@/lib/canvas/background';
+import { createFullsizeCanvas } from '@/lib/canvas/fullsize';
+import { createRealtimeCanvas } from '@/lib/canvas/realtime';
 import { store } from '@/lib/store';
 import { DEFAULT_TOOL_SETTINGS, getToolSettings } from '@/lib/tool-settings';
 import { BrushPanel } from '@/lib/tools/brush/brush-panel';
@@ -18,6 +24,7 @@ import {
     stringToNumberOr0,
     stringToNumberOr100,
 } from '@/lib/utils/stringToNumberOrDefault';
+import { createWebGPUManager } from '@/lib/webgpu/web-gpu-manager';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSelector } from '@xstate/store/react';
 
@@ -25,6 +32,8 @@ export default function Page() {
     const queryClient = useQueryClient();
 
     const state = useSelector(store, (state) => state.context.state);
+
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
         if (state === 'webgpu-failed') {
@@ -34,7 +43,8 @@ export default function Page() {
             return;
         }
 
-        const element = document.getElementById('my-house');
+        const element = canvasRef.current;
+        console.log('element', element);
         if (element instanceof HTMLCanvasElement) {
             const context = element.getContext('2d');
             if (context == null) {
@@ -50,20 +60,70 @@ export default function Page() {
 
             const toolSettings = getToolSettings();
 
-            store.trigger.hydrateStore({
-                body,
-                canvas: element,
-                // todo(josh): make a config module that checks env vars
-                apiOrigin:
-                    process.env.NEXT_PUBLIC_API_ORIGIN ??
-                    'https://api.42colors.com',
-                apiWebsocketOrigin:
-                    process.env.NEXT_PUBLIC_API_WEBSOCKET_ORIGIN ??
-                    'https://api.42colors.com',
-                cameraOptions: { x, y, zoom },
-                queryClient,
-                toolSettings: toolSettings ?? DEFAULT_TOOL_SETTINGS,
-            });
+            const rootCanvasContext = element.getContext('2d')!;
+            rootCanvasContext.imageSmoothingEnabled = false;
+
+            const backgroundCanvas = createBackgroundCanvas();
+            const backgroundCanvasContext = backgroundCanvas.getContext('2d')!;
+            backgroundCanvasContext.imageSmoothingEnabled = false;
+            drawBackgroundCanvas(backgroundCanvas, backgroundCanvasContext);
+
+            const realtimeCanvas = createRealtimeCanvas({ x, y, zoom });
+            const telegraphCanvas = createFullsizeCanvas();
+            const uiCanvas = createFullsizeCanvas();
+
+            Promise.all([
+                createWebGPUManager(uiCanvas),
+                createWebGPUManager(telegraphCanvas),
+                createWebGPUManager(realtimeCanvas),
+            ])
+                .then(
+                    ([
+                        uiWebGPUManager,
+                        telegraphWebGPUManager,
+                        realtimeWebGPUManager,
+                    ]) => {
+                        if (
+                            uiWebGPUManager &&
+                            telegraphWebGPUManager &&
+                            realtimeWebGPUManager
+                        ) {
+                            console.log('hydrating store');
+
+                            store.trigger.hydrateStore({
+                                body,
+                                canvas: element,
+                                // todo(josh): make a config module that checks env vars
+                                apiOrigin:
+                                    process.env.NEXT_PUBLIC_API_ORIGIN ??
+                                    'https://api.42colors.com',
+                                apiWebsocketOrigin:
+                                    process.env
+                                        .NEXT_PUBLIC_API_WEBSOCKET_ORIGIN ??
+                                    'https://api.42colors.com',
+                                cameraOptions: { x, y, zoom },
+                                queryClient,
+                                toolSettings:
+                                    toolSettings ?? DEFAULT_TOOL_SETTINGS,
+                                rootCanvasContext,
+                                backgroundCanvas,
+                                backgroundCanvasContext,
+                                realtimeCanvas,
+                                telegraphCanvas,
+                                uiCanvas,
+                                uiWebGPUManager,
+                                telegraphWebGPUManager,
+                                realtimeWebGPUManager,
+                            });
+                        } else {
+                            store.trigger.transitionToWebGPUFailed();
+                        }
+                    },
+                )
+                .catch((error) => {
+                    console.error(error);
+                    store.trigger.transitionToWebGPUFailed();
+                });
 
             const unsubscribe = queryClient
                 .getQueryCache()
@@ -109,7 +169,7 @@ export default function Page() {
     return (
         <>
             <canvas
-                id="my-house"
+                ref={canvasRef}
                 className={cn(
                     'touch-none',
                     isSpacePressed
