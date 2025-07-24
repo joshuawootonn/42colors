@@ -1,6 +1,7 @@
 import { ComponentPropsWithoutRef } from 'react';
 
 import { store } from '@/lib/store';
+import { Tool } from '@/lib/tool-settings';
 import { cn } from '@/lib/utils';
 import { useSelector } from '@xstate/store/react';
 
@@ -37,8 +38,10 @@ export function Toolbar() {
         <div className="flex flex-row justify-end items-start">
             <div className={cn('grid grid-cols-2')}>
                 <ToolIconButton
-                    active={tool === 'brush'}
-                    onClick={() => store.trigger.changeTool({ tool: 'brush' })}
+                    active={tool === Tool.Brush}
+                    onClick={() =>
+                        store.trigger.changeTool({ tool: Tool.Brush })
+                    }
                 >
                     <svg
                         width="32"
@@ -65,9 +68,9 @@ export function Toolbar() {
                     </svg>
                 </ToolIconButton>
                 <ToolIconButton
-                    active={tool === 'erasure'}
+                    active={tool === Tool.Erasure}
                     onClick={() =>
-                        store.trigger.changeTool({ tool: 'erasure' })
+                        store.trigger.changeTool({ tool: Tool.Erasure })
                     }
                     className="-translate-x-[1px]"
                 >
@@ -88,9 +91,9 @@ export function Toolbar() {
                     </svg>
                 </ToolIconButton>
                 <ToolIconButton
-                    active={tool === 'claimer'}
+                    active={tool === Tool.Claimer}
                     onClick={() =>
-                        store.trigger.changeTool({ tool: 'claimer' })
+                        store.trigger.changeTool({ tool: Tool.Claimer })
                     }
                     className="-translate-y-[1px]"
                 >

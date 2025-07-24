@@ -1,6 +1,7 @@
 import { Camera } from './camera';
 import { AbsolutePoint, Pixel } from './geometry/coord';
 import { ColorRef, TRANSPARENT_REF } from './palette';
+import { Tool } from './tool-settings';
 import { BrushActive } from './tools/brush/brush';
 import { pointsToPixels } from './tools/brush/brush';
 import { ClaimerActive, ClaimerComplete } from './tools/claimer/claimer';
@@ -8,8 +9,6 @@ import { ErasureActive } from './tools/erasure/erasure';
 
 type Undo = { type: 'undo' };
 type Redo = { type: 'redo' };
-
-type Tool = 'brush' | 'erasure' | 'claimer';
 
 export type Action =
     | ErasureActive
