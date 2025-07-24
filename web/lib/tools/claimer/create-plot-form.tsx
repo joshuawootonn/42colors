@@ -102,9 +102,9 @@ export function CreatePlotForm() {
 
     return (
         <Popover open={isOpen} onOpenChange={handleOpenChange}>
-            <PopoverTrigger>
-                <Button>Claim</Button>
-            </PopoverTrigger>
+            <PopoverTrigger
+                render={(props) => <Button {...props}>Claim</Button>}
+            />
 
             <PopoverContent className="w-80">
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
