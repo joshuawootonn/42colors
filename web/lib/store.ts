@@ -16,7 +16,6 @@ import authService from './auth';
 import { Camera } from './camera';
 import { centerCameraOnPoint } from './camera-utils';
 import {
-    createBackgroundCanvas,
     drawBackgroundCanvas,
     resizeBackgroundCanvas,
 } from './canvas/background';
@@ -31,8 +30,8 @@ import {
     unsetChunkPixels,
 } from './canvas/chunk';
 import { draw } from './canvas/draw';
-import { createFullsizeCanvas, resizeFullsizeCanvas } from './canvas/fullsize';
-import { createRealtimeCanvas, resizeRealtimeCanvas } from './canvas/realtime';
+import { resizeFullsizeCanvas } from './canvas/fullsize';
+import { resizeRealtimeCanvas } from './canvas/realtime';
 import { redrawUserPlots } from './canvas/ui';
 import { CHUNK_LENGTH } from './constants';
 import {
@@ -84,21 +83,13 @@ import { WheelTool } from './tools/wheel';
 import { dedupeCoords } from './utils/dedupe-coords';
 import { isInitialStore } from './utils/is-initial-store';
 import { uuid } from './utils/uuid';
-import { WebGPUManager, createWebGPUManager } from './webgpu/web-gpu-manager';
-
-export type PointerState =
-    | 'default'
-    | 'pan'
-    | 'drawing'
-    | 'erasing'
-    | 'claiming';
+import { WebGPUManager } from './webgpu/web-gpu-manager';
 
 export type InitialStore = {
     state: 'initial';
     camera: Camera;
     currentTool: Tool;
     currentColorRef: number;
-    currentPointerState: PointerState;
     toolSettings: ToolSettings;
     id: undefined;
     interaction: undefined;
@@ -115,7 +106,6 @@ export type InitializedStore = {
         channel?: Channel;
     };
     toolSettings: ToolSettings;
-    currentPointerState: PointerState;
     id: string;
     canvas: {
         bodyElement: HTMLBodyElement;
@@ -161,7 +151,6 @@ const initialialStoreContext: Store = {
     camera: initialCamera,
     currentTool: 'brush',
     currentColorRef: 1,
-    currentPointerState: 'default',
     toolSettings: DEFAULT_TOOL_SETTINGS,
     interaction: undefined,
 } as Store;
@@ -1084,15 +1073,15 @@ export const store = createStore({
             }
             const tool = context.toolSettings.currentTool;
 
-            if (tool === 'brush') {
+            if (tool === Tool.Brush) {
                 return BrushTool.onPointerDown(e, context, enqueue);
             }
 
-            if (tool === 'erasure') {
+            if (tool === Tool.Erasure) {
                 return ErasureTool.onPointerDown(e, context, enqueue);
             }
 
-            if (tool === 'claimer') {
+            if (tool === Tool.Claimer) {
                 return ClaimerTool.onPointerDown(e, context, enqueue);
             }
 
@@ -1107,15 +1096,15 @@ export const store = createStore({
             });
             const tool = context.toolSettings.currentTool;
 
-            if (tool === 'brush') {
+            if (tool === Tool.Brush) {
                 return BrushTool.onPointerMove(e, context, enqueue);
             }
 
-            if (tool === 'erasure') {
+            if (tool === Tool.Erasure) {
                 return ErasureTool.onPointerMove(e, context, enqueue);
             }
 
-            if (tool === 'claimer') {
+            if (tool === Tool.Claimer) {
                 return ClaimerTool.onPointerMove(e, context, enqueue);
             }
 
@@ -1130,15 +1119,15 @@ export const store = createStore({
             });
             const tool = context.toolSettings.currentTool;
 
-            if (tool === 'brush') {
+            if (tool === Tool.Brush) {
                 return BrushTool.onPointerUp(e, context, enqueue);
             }
 
-            if (tool === 'erasure') {
+            if (tool === Tool.Erasure) {
                 return ErasureTool.onPointerUp(e, context, enqueue);
             }
 
-            if (tool === 'claimer') {
+            if (tool === Tool.Claimer) {
                 return ClaimerTool.onPointerUp(e, context, enqueue);
             }
 
@@ -1154,15 +1143,15 @@ export const store = createStore({
             enqueue.effect(() => store.trigger.clearCursor());
             const tool = context.toolSettings.currentTool;
 
-            if (tool === 'brush') {
+            if (tool === Tool.Brush) {
                 return BrushTool.onPointerOut(e, context, enqueue);
             }
 
-            if (tool === 'erasure') {
+            if (tool === Tool.Erasure) {
                 return ErasureTool.onPointerOut(e, context, enqueue);
             }
 
-            if (tool === 'claimer') {
+            if (tool === Tool.Claimer) {
                 return ClaimerTool.onPointerOut(e, context, enqueue);
             }
 
@@ -1197,7 +1186,7 @@ export const store = createStore({
                 if (isHotkey('b', e)) {
                     e.preventDefault();
                     enqueue.effect(() =>
-                        store.trigger.changeTool({ tool: 'brush' }),
+                        store.trigger.changeTool({ tool: Tool.Brush }),
                     );
                     return context;
                 }
@@ -1205,7 +1194,7 @@ export const store = createStore({
                 if (isHotkey('e', e)) {
                     e.preventDefault();
                     enqueue.effect(() =>
-                        store.trigger.changeTool({ tool: 'erasure' }),
+                        store.trigger.changeTool({ tool: Tool.Erasure }),
                     );
                     return context;
                 }
@@ -1213,7 +1202,7 @@ export const store = createStore({
                 if (isHotkey('c', e)) {
                     e.preventDefault();
                     enqueue.effect(() =>
-                        store.trigger.changeTool({ tool: 'claimer' }),
+                        store.trigger.changeTool({ tool: Tool.Claimer }),
                     );
                     return context;
                 }
@@ -1223,7 +1212,7 @@ export const store = createStore({
             if (isHotkey('+', e) || isHotkey('=', e)) {
                 e.preventDefault();
 
-                if (context.toolSettings.currentTool === 'brush') {
+                if (context.toolSettings.currentTool === Tool.Brush) {
                     const currentSize = context.toolSettings.brush.size;
                     enqueue.effect(() =>
                         store.trigger.updateBrushSettings({
@@ -1232,7 +1221,7 @@ export const store = createStore({
                     );
                 }
 
-                if (context.toolSettings.currentTool === 'erasure') {
+                if (context.toolSettings.currentTool === Tool.Erasure) {
                     const currentSize = context.toolSettings.erasure.size;
                     enqueue.effect(() =>
                         store.trigger.updateErasureSettings({
@@ -1248,7 +1237,7 @@ export const store = createStore({
 
             if (isHotkey('-', e) || isHotkey('_', e)) {
                 e.preventDefault();
-                if (context.toolSettings.currentTool === 'brush') {
+                if (context.toolSettings.currentTool === Tool.Brush) {
                     const currentSize = context.toolSettings.brush.size;
                     enqueue.effect(() =>
                         store.trigger.updateBrushSettings({
@@ -1257,7 +1246,7 @@ export const store = createStore({
                     );
                 }
 
-                if (context.toolSettings.currentTool === 'erasure') {
+                if (context.toolSettings.currentTool === Tool.Erasure) {
                     const currentSize = context.toolSettings.erasure.size;
                     enqueue.effect(() =>
                         store.trigger.updateErasureSettings({
@@ -1310,15 +1299,15 @@ export const store = createStore({
             });
             const tool = context.toolSettings.currentTool;
 
-            if (tool === 'brush') {
+            if (tool === Tool.Brush) {
                 return BrushTool.onWheel(e, context, enqueue);
             }
 
-            if (tool === 'erasure') {
+            if (tool === Tool.Erasure) {
                 return ErasureTool.onWheel(e, context, enqueue);
             }
 
-            if (tool === 'claimer') {
+            if (tool === Tool.Claimer) {
                 return ClaimerTool.onWheel(e, context, enqueue);
             }
 

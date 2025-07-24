@@ -14,7 +14,11 @@ import {
 import { createFullsizeCanvas } from '@/lib/canvas/fullsize';
 import { createRealtimeCanvas } from '@/lib/canvas/realtime';
 import { store } from '@/lib/store';
-import { DEFAULT_TOOL_SETTINGS, getToolSettings } from '@/lib/tool-settings';
+import {
+    DEFAULT_TOOL_SETTINGS,
+    Tool,
+    getToolSettings,
+} from '@/lib/tool-settings';
 import { BrushPanel } from '@/lib/tools/brush/brush-panel';
 import { ClaimerPanel } from '@/lib/tools/claimer/claimer-panel';
 import { ErasurePanel } from '@/lib/tools/erasure/erasure-panel';
@@ -189,15 +193,15 @@ export default function Page() {
             <div className="flex flex-col items-start space-y-3 fixed top-16 bottom-12 left-3">
                 {isWebGPUAvailable && (
                     <>
-                        {currentTool === 'brush' && <Palette />}
-                        {currentTool === 'brush' && <BrushPanel />}
-                        {currentTool === 'erasure' && <ErasurePanel />}
+                        {currentTool === Tool.Brush && <Palette />}
+                        {currentTool === Tool.Brush && <BrushPanel />}
+                        {currentTool === Tool.Erasure && <ErasurePanel />}
                     </>
                 )}
             </div>
 
             <div className="flex flex-row space-x-3 fixed top-3 left-60">
-                {currentTool === 'claimer' && <ClaimerPanel />}
+                {currentTool === Tool.Claimer && <ClaimerPanel />}
             </div>
 
             <div className="flex fixed top-3 right-3">

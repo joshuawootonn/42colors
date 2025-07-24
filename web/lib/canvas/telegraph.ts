@@ -1,4 +1,5 @@
 import { InitializedStore } from '../store';
+import { Tool } from '../tool-settings';
 import { BrushTool } from '../tools/brush/brush';
 import { ClaimerTool } from '../tools/claimer/claimer';
 import { ErasureTool } from '../tools/erasure/erasure';
@@ -10,13 +11,13 @@ export function renderTelegraph(context: InitializedStore) {
     const tool = context.toolSettings.currentTool;
 
     switch (tool) {
-        case 'brush':
+        case Tool.Brush:
             BrushTool.redrawTelegraph(context);
             break;
-        case 'erasure':
+        case Tool.Erasure:
             ErasureTool.redrawTelegraph(context);
             break;
-        case 'claimer':
+        case Tool.Claimer:
             ClaimerTool.redrawTelegraph(context);
             break;
         default:

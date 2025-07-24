@@ -64,13 +64,13 @@ const stringToColorRefSchema = stringToNumberSchema.transform(
     (val) => colorRefSchema.safeParse(val).data,
 );
 
-const toolSchema = z.union([
-    z.literal('brush'),
-    z.literal('erasure'),
-    z.literal('claimer'),
-]);
+export enum Tool {
+    Brush = 'brush',
+    Erasure = 'erasure',
+    Claimer = 'claimer',
+}
 
-export type Tool = z.infer<typeof toolSchema>;
+const toolSchema = z.nativeEnum(Tool);
 
 const stringToToolSchema = z
     .string()
@@ -106,7 +106,7 @@ export const DEFAULT_TOOL_SETTINGS = toolSettingsSchema.parse({
     claimer: {
         selectedPlotId: undefined,
     },
-    currentTool: 'brush',
+    currentTool: Tool.Brush,
 });
 
 export function getToolSettings(): ToolSettings | undefined {
