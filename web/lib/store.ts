@@ -104,49 +104,6 @@ export type InitialStore = {
     interaction: undefined;
 };
 
-export type HydratedStore = {
-    state: 'initialized';
-    camera: Camera;
-    server: {
-        apiOrigin: string;
-        websocketOriginURL: string;
-        authURL?: string;
-        socket?: Socket;
-        channel?: Channel;
-    };
-    toolSettings: ToolSettings;
-    currentPointerState: PointerState;
-    id: string;
-    canvas: {
-        bodyElement: HTMLBodyElement;
-        rootCanvas: HTMLCanvasElement;
-        rootCanvasContext: CanvasRenderingContext2D;
-        backgroundCanvas: HTMLCanvasElement;
-        backgroundCanvasContext: CanvasRenderingContext2D;
-        realtimeCanvas: HTMLCanvasElement;
-        telegraphCanvas: HTMLCanvasElement;
-        uiCanvas: HTMLCanvasElement;
-        chunkCanvases: ChunkCanvases;
-        uiWebGPUManager?: WebGPUManager;
-        telegraphWebGPUManager?: WebGPUManager;
-        realtimeWebGPUManager?: WebGPUManager;
-    };
-    actions: Action[];
-    activeAction: Action | null;
-    interaction: {
-        isPressed: boolean;
-        isSpacePressed: boolean;
-        cursorPosition: { clientX: number; clientY: number } | null;
-    };
-    user?: {
-        email: string;
-        id: number;
-        channel_token: string;
-    } | null;
-    queryClient: QueryClient;
-    eventLoopRafId?: number;
-};
-
 export type InitializedStore = {
     state: 'initialized';
     camera: Camera;
@@ -190,22 +147,7 @@ export type InitializedStore = {
     eventLoopRafId?: number;
 };
 
-export type WebGPUFailedStore = {
-    state: 'webgpu-failed';
-    camera: Camera;
-    currentTool: Tool;
-    currentColorRef: number;
-    currentPointerState: PointerState;
-    toolSettings: ToolSettings;
-    id: undefined;
-    interaction: undefined;
-};
-
-export type Store =
-    | InitialStore
-    | HydratedStore
-    | InitializedStore
-    | WebGPUFailedStore;
+export type Store = InitialStore | InitializedStore;
 
 const initialCamera: Camera = {
     x: 0,
@@ -227,7 +169,7 @@ const initialialStoreContext: Store = {
 export const store = createStore({
     context: initialialStoreContext,
     on: {
-        hydrateStore: (
+        initializeStore: (
             context,
             event: {
                 body: HTMLBodyElement;
@@ -249,6 +191,8 @@ export const store = createStore({
             },
             enqueue,
         ) => {
+            if (!isInitialStore(context)) return;
+
             enqueue.effect(() => {
                 store.trigger.resizeRealtimeAndTelegraphCanvases();
                 store.trigger.redrawRealtimeCanvas();
@@ -262,11 +206,15 @@ export const store = createStore({
                     queryKey: ['user', 'plots'],
                     queryFn: getUserPlots,
                 });
+
+                // todo(josh): why is this needed to get user plots showing up before mouse move?
+                store.trigger.setCursorPosition({
+                    cursorPosition: { clientX: 0, clientY: 0 },
+                });
             });
 
             const initialized: InitializedStore = {
                 ...context,
-
                 state: 'initialized' as const,
                 id: uuid(),
                 camera: {
@@ -305,59 +253,6 @@ export const store = createStore({
             };
 
             return initialized;
-        },
-
-        initializeStore: (
-            context,
-            event: {
-                uiWebGPUManager: WebGPUManager;
-                telegraphWebGPUManager: WebGPUManager;
-                realtimeWebGPUManager: WebGPUManager;
-            },
-            enqueue,
-        ) => {
-            if (isInitialStore(context)) return;
-            if (context.state !== 'initialized') return;
-
-            const webgpuInitialized: InitializedStore = {
-                ...context,
-                state: 'initialized',
-                canvas: {
-                    ...context.canvas,
-                    uiWebGPUManager: event.uiWebGPUManager,
-                    telegraphWebGPUManager: event.telegraphWebGPUManager,
-                    realtimeWebGPUManager: event.realtimeWebGPUManager,
-                },
-            };
-
-            enqueue.effect(() => {
-                store.trigger.resizeRealtimeAndTelegraphCanvases();
-                // todo(josh): why is this needed to get user plots showing up before mouse move?
-                store.trigger.setCursorPosition({
-                    cursorPosition: { clientX: 0, clientY: 0 },
-                });
-                store.trigger.redrawRealtimeCanvas();
-                store.trigger.redrawUICanvas();
-            });
-
-            return webgpuInitialized;
-        },
-
-        transitionToWebGPUFailed: (context) => {
-            if (isInitialStore(context)) return;
-
-            const webgpuFailed: WebGPUFailedStore = {
-                state: 'webgpu-failed',
-                camera: context.camera,
-                currentTool: context.toolSettings.currentTool,
-                currentColorRef: 1,
-                currentPointerState: context.currentPointerState,
-                toolSettings: context.toolSettings,
-                id: undefined,
-                interaction: undefined,
-            };
-
-            return webgpuFailed;
         },
 
         listen: (

@@ -1,8 +1,6 @@
 'use client';
 
-import { store } from '@/lib/store';
 import { cn } from '@/lib/utils';
-import { useSelector } from '@xstate/store/react';
 
 import { H1 } from './dialog-headings';
 import { dialogProse } from './dialog-prose';
@@ -10,12 +8,6 @@ import { Link } from './link';
 import { Dialog, DialogContent } from './ui/dialog';
 
 export function WebGPUWarning() {
-    const state = useSelector(store, (state) => state.context.state);
-
-    if (state !== 'webgpu-failed') {
-        return null;
-    }
-
     return (
         <Dialog
             defaultOpen={true}
