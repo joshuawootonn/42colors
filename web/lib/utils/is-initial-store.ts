@@ -1,4 +1,9 @@
-import { InitializedStore, InitialStore, Store, WebGPUFailedStore } from '../store';
+import {
+    InitialStore,
+    InitializedStore,
+    Store,
+    WebGPUFailedStore,
+} from '../store';
 
 export function isInitialStore(
     context: Store,
