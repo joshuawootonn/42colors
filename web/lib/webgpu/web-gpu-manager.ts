@@ -1,11 +1,10 @@
 import { Pixel } from '../geometry/coord';
 import { Polygon } from '../geometry/polygon';
-import { COLOR_TABLE } from '../palette';
-import { hexToRgbaColor } from './colors';
 import {
     WebGPUPixelRenderer,
     createWebGPUPixelRenderer,
     destroyWebGPUPixelRenderer,
+    renderPixels,
 } from './pixel-renderer';
 import {
     RenderOptions,
@@ -100,9 +99,6 @@ export class WebGPUManager {
 
         renderPass.end();
         this.device.queue.submit([commandEncoder.finish()]);
-
-        // Process any pending buffer returns after submission
-        this.polygonRenderer.bufferPool.processFrameCompletion();
     }
 
     /**
@@ -130,110 +126,25 @@ export class WebGPUManager {
             ],
         });
 
-        // Update transform uniform buffer
-        const transformData = new Float32Array([
-            Math.floor(camera.x),
-            Math.floor(camera.y),
-            1, // pixelSize
-            canvas.width,
-            canvas.height,
-            0, // padding
-            0, // padding
-            0, // padding
-        ]);
-        this.pixelRenderer.device.queue.writeBuffer(
-            this.pixelRenderer.transformBuffer,
-            0,
-            transformData,
+        // Use the renderPixels function
+        renderPixels(
+            this.pixelRenderer,
+            pixels,
+            {
+                xCamera: Math.floor(camera.x),
+                yCamera: Math.floor(camera.y),
+                pixelSize: 1,
+                canvasWidth: canvas.width,
+                canvasHeight: canvas.height,
+            },
+            renderPass,
         );
-
-        // Generate vertex data for all pixels
-        const vertexData = this.generatePixelQuads(pixels);
-
-        if (vertexData.length > 0) {
-            // Get a buffer from the pool
-            const vertexBuffer = this.pixelRenderer.bufferPool.getBuffer(
-                vertexData.byteLength,
-            );
-            this.pixelRenderer.device.queue.writeBuffer(
-                vertexBuffer,
-                0,
-                vertexData,
-            );
-
-            // Render pixels
-            renderPass.setPipeline(this.pixelRenderer.renderPipeline);
-            renderPass.setBindGroup(0, this.pixelRenderer.transformBindGroup);
-            renderPass.setVertexBuffer(0, vertexBuffer);
-            renderPass.draw(vertexData.length / 6); // 6 floats per vertex
-
-            // Schedule buffer to be returned after GPU work completes
-            this.pixelRenderer.bufferPool.returnBufferAfterFrame(vertexBuffer);
-        }
 
         renderPass.end();
         this.device.queue.submit([commandEncoder.finish()]);
-
-        // Process any pending buffer returns after submission
-        this.pixelRenderer.bufferPool.processFrameCompletion();
     }
 
-    /**
-     * Generate vertex data for pixels as quads (2 triangles per pixel)
-     */
-    private generatePixelQuads(pixels: Pixel[]): Float32Array {
-        const vertices: number[] = [];
 
-        for (const pixel of pixels) {
-            // Get color from palette
-            const colorRef = pixel.colorRef;
-            const color = this.getColorFromRef(colorRef);
-
-            // Create a 1x1 pixel quad
-            const x = pixel.x;
-            const y = pixel.y;
-            const x1 = x + 1;
-            const y1 = y + 1;
-
-            // Triangle 1: top-left, bottom-left, top-right
-            vertices.push(
-                x,
-                y,
-                ...color, // top-left
-                x,
-                y1,
-                ...color, // bottom-left
-                x1,
-                y,
-                ...color, // top-right
-            );
-
-            // Triangle 2: bottom-left, bottom-right, top-right
-            vertices.push(
-                x,
-                y1,
-                ...color, // bottom-left
-                x1,
-                y1,
-                ...color, // bottom-right
-                x1,
-                y,
-                ...color, // top-right
-            );
-        }
-
-        return new Float32Array(vertices);
-    }
-
-    /**
-     * Convert color reference to RGBA color
-     */
-    private getColorFromRef(
-        colorRef: number,
-    ): [number, number, number, number] {
-        const colorHex = COLOR_TABLE[colorRef as keyof typeof COLOR_TABLE];
-        return hexToRgbaColor(colorHex);
-    }
 
     /**
      * Extract camera offset values (equivalent to getCameraOffset from the original)

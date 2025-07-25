@@ -1,11 +1,12 @@
-import { WebGPUBufferPool } from './buffer-pool';
+import type { Pixel } from '../geometry/coord';
+import { COLOR_TABLE } from '../palette';
+import { hexToRgbaColor } from './colors';
 
 export interface WebGPUPixelRenderer {
     device: GPUDevice;
     renderPipeline: GPURenderPipeline;
     transformBuffer: GPUBuffer;
     transformBindGroup: GPUBindGroup;
-    bufferPool: WebGPUBufferPool;
 }
 
 export interface PixelRenderOptions {
@@ -148,25 +149,105 @@ export async function createWebGPUPixelRenderer(
         ],
     });
 
-    // Create buffer pool for efficient vertex buffer management
-    const bufferPool = new WebGPUBufferPool(device);
-
     return {
         device,
         renderPipeline,
         transformBuffer,
         transformBindGroup,
-        bufferPool,
     };
+  }
+  
+  /**
+ * Generate vertex quads for pixels
+ */
+function generatePixelQuads(pixels: Pixel[]): Float32Array {
+    const vertices: number[] = [];
+
+    for (const pixel of pixels) {
+        const { x, y, colorRef } = pixel;
+        
+        // Convert color reference to RGBA
+        const colorHex = COLOR_TABLE[colorRef as keyof typeof COLOR_TABLE];
+        const color = hexToRgbaColor(colorHex);
+
+        // Create two triangles for each pixel quad
+        // Triangle 1: top-left, bottom-left, top-right
+        vertices.push(
+            x, y, ...color,           // top-left
+            x, y + 1, ...color,      // bottom-left  
+            x + 1, y, ...color,      // top-right
+        );
+
+        // Triangle 2: bottom-left, bottom-right, top-right
+        vertices.push(
+            x, y + 1, ...color,      // bottom-left
+            x + 1, y + 1, ...color,  // bottom-right
+            x + 1, y, ...color,      // top-right
+        );
+    }
+
+    return new Float32Array(vertices);
 }
 
-// generatePixelQuads function moved to RealtimeWebGPUManager
+/**
+ * Render pixels using the WebGPU pixel renderer
+ */
+export function renderPixels(
+    renderer: WebGPUPixelRenderer,
+    pixels: Pixel[],
+    options: PixelRenderOptions,
+    renderPass: GPURenderPassEncoder,
+): void {
+    const {
+        xCamera = 0,
+        yCamera = 0,
+        pixelSize = 1,
+        canvasWidth,
+        canvasHeight,
+    } = options;
 
-// This function is not used - rendering is handled by RealtimeWebGPUManager
+    // Update transform uniform buffer
+    const transformData = new Float32Array([
+        Math.floor(xCamera),
+        Math.floor(yCamera),
+        pixelSize,
+        canvasWidth,
+        canvasHeight,
+        0, // padding
+        0, // padding
+        0, // padding
+    ]);
+    renderer.device.queue.writeBuffer(
+        renderer.transformBuffer,
+        0,
+        transformData,
+    );
+
+    // Generate vertex data for all pixels
+    const vertexData = generatePixelQuads(pixels);
+
+    if (vertexData.length === 0) {
+        return;
+    }
+
+    // Create a new buffer for this render call
+    const vertexBuffer = renderer.device.createBuffer({
+        size: vertexData.byteLength,
+        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    });
+    renderer.device.queue.writeBuffer(vertexBuffer, 0, vertexData);
+
+    // Render pixels
+    renderPass.setPipeline(renderer.renderPipeline);
+    renderPass.setBindGroup(0, renderer.transformBindGroup);
+    renderPass.setVertexBuffer(0, vertexBuffer);
+    renderPass.draw(vertexData.length / 6); // 6 floats per vertex
+
+    // Buffer will be automatically cleaned up by WebGPU when no longer referenced
+}
 
 export function destroyWebGPUPixelRenderer(
     renderer: WebGPUPixelRenderer,
 ): void {
     renderer.transformBuffer.destroy();
-    renderer.bufferPool.destroy();
 }

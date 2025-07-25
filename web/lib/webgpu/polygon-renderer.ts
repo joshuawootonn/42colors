@@ -1,7 +1,6 @@
 import earcut from 'earcut';
 
 import { Polygon } from '../geometry/polygon';
-import { WebGPUBufferPool } from './buffer-pool';
 import { Color } from './colors';
 
 export interface WebGPUPolygonRenderer {
@@ -13,7 +12,6 @@ export interface WebGPUPolygonRenderer {
     colorBindGroup: GPUBindGroup;
     paletteTexture: GPUTexture;
     paletteSampler: GPUSampler;
-    bufferPool: WebGPUBufferPool;
 }
 
 export interface RenderOptions {
@@ -177,9 +175,6 @@ export async function createWebGPUPolygonRenderer(
         magFilter: 'nearest',
     });
 
-    // Create buffer pool for efficient vertex buffer management
-    const bufferPool = new WebGPUBufferPool(device);
-
     return {
         device,
         renderPipeline,
@@ -189,7 +184,6 @@ export async function createWebGPUPolygonRenderer(
         colorBindGroup,
         paletteTexture,
         paletteSampler,
-        bufferPool,
     };
 }
 
@@ -375,8 +369,11 @@ export function renderPolygon(
         return;
     }
 
-    // Get a buffer from the pool
-    const vertexBuffer = renderer.bufferPool.getBuffer(vertexData.length * 4);
+    // Create a new buffer for this render call
+    const vertexBuffer = renderer.device.createBuffer({
+        size: vertexData.length * 4,
+        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    });
     renderer.device.queue.writeBuffer(vertexBuffer, 0, vertexData);
 
     // Set up render pass
@@ -386,8 +383,7 @@ export function renderPolygon(
     renderPass.setVertexBuffer(0, vertexBuffer);
     renderPass.draw(vertexData.length / 2); // 2 vertices per triangle vertex
 
-    // Schedule buffer to be returned after GPU work completes
-    renderer.bufferPool.returnBufferAfterFrame(vertexBuffer);
+    // Buffer will be automatically cleaned up by WebGPU when no longer referenced
 }
 
 export function destroyWebGPUPolygonRenderer(
@@ -396,5 +392,4 @@ export function destroyWebGPUPolygonRenderer(
     renderer.transformBuffer.destroy();
     renderer.colorBuffer.destroy();
     renderer.paletteTexture.destroy();
-    renderer.bufferPool.destroy();
 }
