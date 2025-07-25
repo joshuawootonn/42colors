@@ -7,7 +7,7 @@ import {
 import { InitializedStore } from '../store';
 import { canvasToClient } from '../utils/clientToCanvasConversion';
 import { FULLSIZE_CANVAS_BLEED } from './fullsize';
-import { getPixelSize, getSizeInPixelsPlusBleed } from './realtime';
+import { getPixelSize, getSizeInPixelsPlusBleed, renderRealtime } from './realtime';
 import { renderTelegraph } from './telegraph';
 
 export function draw(context: InitializedStore) {
@@ -67,6 +67,8 @@ export function draw(context: InitializedStore) {
         pixelSize * getSizeInPixelsPlusBleed(window.innerWidth, pixelSize);
     const canvasHeightPlusBleed =
         pixelSize * getSizeInPixelsPlusBleed(window.innerHeight, pixelSize);
+
+    renderRealtime(context);
 
     context.canvas.rootCanvasContext.drawImage(
         context.canvas.realtimeCanvas,
