@@ -9,6 +9,7 @@ import { canvasToClient } from '../utils/clientToCanvasConversion';
 import { FULLSIZE_CANVAS_BLEED } from './fullsize';
 import { getPixelSize, getSizeInPixelsPlusBleed, renderRealtime } from './realtime';
 import { renderTelegraph } from './telegraph';
+import { renderUI } from './ui';
 
 export function draw(context: InitializedStore) {
     const zoomMultiplier = getZoomMultiplier(context.camera);
@@ -87,6 +88,8 @@ export function draw(context: InitializedStore) {
         window.innerWidth + FULLSIZE_CANVAS_BLEED,
         window.innerHeight + FULLSIZE_CANVAS_BLEED,
     );
+
+    renderUI(context);
 
     context.canvas.rootCanvasContext.drawImage(
         context.canvas.uiCanvas,

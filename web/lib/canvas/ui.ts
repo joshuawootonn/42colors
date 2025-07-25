@@ -4,6 +4,7 @@ import { getCameraOffset } from '../tools/brush/brush';
 import { Plot } from '../tools/claimer/claimer.rest';
 import { BLACK, BLUE } from '../webgpu/colors';
 import { getPixelSize } from './realtime';
+import { isInitialStore } from '../utils/is-initial-store';
 
 export function redrawUserPlots(context: InitializedStore) {
     const webgpuManager = context.canvas.uiWebGPUManager;
@@ -40,4 +41,10 @@ export function redrawUserPlots(context: InitializedStore) {
     }));
 
     webgpuManager.redrawPolygons(polygonRenderData);
+}
+
+export function renderUI(context: InitializedStore) {
+    if (isInitialStore(context)) return;
+
+    redrawUserPlots(context);
 }
