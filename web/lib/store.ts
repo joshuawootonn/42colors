@@ -186,10 +186,6 @@ export const store = createStore({
             if (!isInitialStore(context)) return;
 
             enqueue.effect(() => {
-                store.trigger.resizeRealtimeAndTelegraphCanvases();
-                store.trigger.redrawRealtimeCanvas();
-                store.trigger.redrawUICanvas();
-
                 store.trigger.fetchPixels();
                 store.trigger.fetchUser();
 
@@ -203,6 +199,11 @@ export const store = createStore({
                 store.trigger.setCursorPosition({
                     cursorPosition: { clientX: 0, clientY: 0 },
                 });
+                setTimeout(() => {
+                    store.trigger.resizeRealtimeAndTelegraphCanvases();
+                    store.trigger.redrawRealtimeCanvas();
+                    store.trigger.redrawUICanvas();
+                }, 200);
             });
 
             const initialized: InitializedStore = {
@@ -785,12 +786,10 @@ export const store = createStore({
 
             const dedupedPixels = dedupeCoords(pixels);
 
-            if (context.canvas.realtimeWebGPUManager) {
-                context.canvas.realtimeWebGPUManager.redrawPixels(
-                    dedupedPixels,
-                    context.camera,
-                );
-            }
+            context.canvas.realtimeWebGPUManager.redrawPixels(
+                dedupedPixels,
+                context.camera,
+            );
 
             console.log('clearing chunk pixels', context.canvas.chunkCanvases);
 
