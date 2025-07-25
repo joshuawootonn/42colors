@@ -153,7 +153,7 @@ export class WebGPUManager {
         if (vertexData.length > 0) {
             // Get a buffer from the pool
             const vertexBuffer = this.pixelRenderer.bufferPool.getBuffer(
-                vertexData.length * 4,
+                vertexData.byteLength,
             );
             this.pixelRenderer.device.queue.writeBuffer(
                 vertexBuffer,
