@@ -194,12 +194,6 @@ export const store = createStore({
                     queryKey: ['user', 'plots'],
                     queryFn: getUserPlots,
                 });
-
-                // todo(josh): why is this needed to get user plots showing up before mouse move?
-                store.trigger.setCursorPosition({
-                    cursorPosition: { clientX: 0, clientY: 0 },
-                });
-                store.trigger.resizeRealtimeAndTelegraphCanvases();
             });
 
             const initialized: InitializedStore = {
