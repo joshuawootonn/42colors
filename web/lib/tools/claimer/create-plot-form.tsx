@@ -56,7 +56,6 @@ export function CreatePlotForm() {
             });
             store.trigger.completeClaim();
             store.trigger.selectPlot({ plotId: plot.id });
-            store.trigger.redrawRealtimeCanvas();
             setIsOpen(false);
             reset();
         },

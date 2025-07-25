@@ -2,6 +2,7 @@ import { getZoomMultiplier } from '../camera';
 import { InitializedStore } from '../store';
 import { getCameraOffset } from '../tools/brush/brush';
 import { Plot } from '../tools/claimer/claimer.rest';
+import { isInitialStore } from '../utils/is-initial-store';
 import { BLACK, BLUE } from '../webgpu/colors';
 import { getPixelSize } from './realtime';
 
@@ -40,4 +41,10 @@ export function redrawUserPlots(context: InitializedStore) {
     }));
 
     webgpuManager.redrawPolygons(polygonRenderData);
+}
+
+export function renderUI(context: InitializedStore) {
+    if (isInitialStore(context)) return;
+
+    redrawUserPlots(context);
 }

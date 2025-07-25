@@ -66,7 +66,6 @@ export function EditPlotForm({ plot }: EditPlotFormProps) {
             context.queryClient?.invalidateQueries({
                 queryKey: ['user', 'plots'],
             });
-            store.trigger.redrawRealtimeCanvas();
             setIsOpen(false);
         },
         onError: (error) => {
