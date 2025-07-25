@@ -138,7 +138,6 @@ export default function Page() {
                         // Defer store updates to avoid render-time state updates
                         setTimeout(() => {
                             store.trigger.resizeRealtimeAndTelegraphCanvases();
-                            store.trigger.redrawUICanvas();
                         });
                     }
                 });

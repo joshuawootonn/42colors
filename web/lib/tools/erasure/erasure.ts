@@ -115,9 +115,6 @@ function onPointerDown(
 
     const nextActiveAction = startErasureAction(anchorPoint, brushPoints);
 
-    enqueue.effect(() => {
-        store.trigger.redrawRealtimeCanvas();
-    });
     return {
         ...context,
         activeAction: nextActiveAction,
@@ -161,10 +158,6 @@ function onPointerMove(
         newAnchorPoints,
         newBrushPoints,
     );
-
-    enqueue.effect(() => {
-        store.trigger.redrawRealtimeCanvas();
-    });
 
     return {
         ...context,
@@ -210,10 +203,6 @@ function onWheel(
         newBrushPoints,
     );
 
-    enqueue.effect(() => {
-        store.trigger.redrawRealtimeCanvas();
-    });
-
     return {
         ...context,
         activeAction: nextActiveAction,
@@ -232,7 +221,6 @@ function onPointerOut(
         store.trigger.newPixels({
             pixels: pointsToPixels(points, TRANSPARENT_REF),
         });
-        store.trigger.redrawRealtimeCanvas();
     });
 
     return {
@@ -254,7 +242,6 @@ function onPointerUp(
         store.trigger.newPixels({
             pixels: pointsToPixels(points, TRANSPARENT_REF),
         });
-        store.trigger.redrawRealtimeCanvas();
     });
 
     return {

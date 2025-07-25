@@ -28,7 +28,6 @@ export function DeletePlotButton({ plot }: DeletePlotButtonProps) {
             context.queryClient?.invalidateQueries({
                 queryKey: ['user', 'plots'],
             });
-            store.trigger.redrawRealtimeCanvas();
             store.trigger.deselectPlot();
             setIsConfirmOpen(false);
         },

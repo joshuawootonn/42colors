@@ -302,10 +302,6 @@ function onPointerDown(
         context.toolSettings.palette.currentColorRef,
     );
 
-    enqueue.effect(() => {
-        store.trigger.redrawRealtimeCanvas();
-    });
-
     return {
         ...context,
         activeAction: nextActiveAction,
@@ -350,10 +346,6 @@ function onPointerMove(
         newBrushPoints,
     );
 
-    enqueue.effect(() => {
-        store.trigger.redrawRealtimeCanvas();
-    });
-
     return {
         ...context,
         activeAction: nextActiveAction,
@@ -397,10 +389,6 @@ function onWheel(
         newAnchorPoints,
         newBrushPoints,
     );
-
-    enqueue.effect(() => {
-        store.trigger.redrawRealtimeCanvas();
-    });
 
     return {
         ...context,

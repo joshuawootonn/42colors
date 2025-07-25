@@ -199,11 +199,7 @@ export const store = createStore({
                 store.trigger.setCursorPosition({
                     cursorPosition: { clientX: 0, clientY: 0 },
                 });
-                setTimeout(() => {
-                    store.trigger.resizeRealtimeAndTelegraphCanvases();
-                    store.trigger.redrawRealtimeCanvas();
-                    store.trigger.redrawUICanvas();
-                }, 200);
+                store.trigger.resizeRealtimeAndTelegraphCanvases();
             });
 
             const initialized: InitializedStore = {
@@ -301,8 +297,6 @@ export const store = createStore({
 
             clearChunkPixels(context.canvas.chunkCanvases, event.pixels);
 
-            enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
-
             return {
                 ...context,
                 actions: context.actions.concat({
@@ -322,8 +316,6 @@ export const store = createStore({
 
         undo: (context, _, enqueue) => {
             if (isInitialStore(context)) return;
-
-            enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
 
             const actionToUndo = getActionToUndo(context.actions);
 
@@ -374,8 +366,6 @@ export const store = createStore({
 
         redo: (context, _, enqueue) => {
             if (isInitialStore(context)) return;
-
-            enqueue.effect(() => store.trigger.redrawRealtimeCanvas());
 
             const nextActions = context.actions.concat({ type: 'redo' });
 
@@ -771,37 +761,6 @@ export const store = createStore({
             resizeFullsizeCanvas(context.canvas.uiCanvas);
         },
 
-        redrawRealtimeCanvas: (context) => {
-            if (isInitialStore(context)) return;
-
-            const actions = context.activeAction
-                ? context.actions.concat(context.activeAction)
-                : context.actions;
-
-            const pixels = derivePixelsFromActions(actions);
-
-            const unsetPixels = deriveUnsetPixelsFromActions(actions);
-
-            unsetChunkPixels(context.canvas.chunkCanvases, unsetPixels);
-
-            const dedupedPixels = dedupeCoords(pixels);
-
-            context.canvas.realtimeWebGPUManager.redrawPixels(
-                dedupedPixels,
-                context.camera,
-            );
-
-            console.log('clearing chunk pixels', context.canvas.chunkCanvases);
-
-            clearChunkPixels(context.canvas.chunkCanvases, dedupedPixels);
-        },
-
-        redrawUICanvas: (context) => {
-            if (isInitialStore(context)) return;
-
-            redrawUserPlots(context);
-        },
-
         clearChunk: (context, { chunkKey }: { chunkKey: string }, enqueue) => {
             if (isInitialStore(context)) return;
             enqueue.effect(() => {
@@ -847,8 +806,6 @@ export const store = createStore({
 
             enqueue.effect(() => {
                 store.trigger.resizeRealtimeAndTelegraphCanvases();
-                store.trigger.redrawRealtimeCanvas();
-                store.trigger.redrawUICanvas();
                 if (options.deselectPlot) {
                     store.trigger.deselectPlot();
                 }
@@ -1296,8 +1253,6 @@ export const store = createStore({
 
             enqueue.effect(() => {
                 store.trigger.resizeRealtimeAndTelegraphCanvases();
-                store.trigger.redrawRealtimeCanvas();
-                store.trigger.redrawUICanvas();
             });
             const tool = context.toolSettings.currentTool;
 
@@ -1326,8 +1281,6 @@ export const store = createStore({
                     context.canvas.backgroundCanvasContext,
                 );
                 store.trigger.resizeRealtimeAndTelegraphCanvases();
-                store.trigger.redrawRealtimeCanvas();
-                store.trigger.redrawUICanvas();
             });
 
             return context;
