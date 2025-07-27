@@ -46,8 +46,8 @@ function redrawTelegraph(context: InitializedStore) {
             xCamera: context.camera.x,
             yCamera: context.camera.y,
             pixelSize,
+            lineWidth: 0.4,
             color: CLAIMER_YELLOW,
-            lineWidth: pixelSize / (5 * 40),
         },
     }));
 
