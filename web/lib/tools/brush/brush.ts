@@ -129,7 +129,92 @@ export function getBrushPoints(
                         );
                     }
                 }
+                break;
 
+            case 6:
+                for (let i = -3; i <= 2; i++) {
+                    for (let j = -3; j <= 2; j++) {
+                        if (i === -3 && j === -3) continue;
+                        if (i === -3 && j === 2) continue;
+                        if (i === 2 && j === -3) continue;
+                        if (i === 2 && j === 2) continue;
+                        nextPoints.push(
+                            absolutePointSchema.parse({
+                                x: point.x + i * pixelSize,
+                                y: point.y + j * pixelSize,
+                            }),
+                        );
+                    }
+                }
+                break;
+
+            case 7:
+                for (let i = -3; i <= 3; i++) {
+                    for (let j = -3; j <= 3; j++) {
+                        if (i === -3 && j === -3) continue;
+                        if (i === -3 && j === 3) continue;
+                        if (i === 3 && j === -3) continue;
+                        if (i === 3 && j === 3) continue;
+                        nextPoints.push(
+                            absolutePointSchema.parse({
+                                x: point.x + i * pixelSize,
+                                y: point.y + j * pixelSize,
+                            }),
+                        );
+                    }
+                }
+                break;
+
+            case 8:
+                for (let i = -4; i <= 3; i++) {
+                    for (let j = -4; j <= 3; j++) {
+                        if (i === -4 && j === -4) continue;
+                        if (i === -4 && j === 3) continue;
+                        if (i === 3 && j === -4) continue;
+                        if (i === 3 && j === 3) continue;
+                        nextPoints.push(
+                            absolutePointSchema.parse({
+                                x: point.x + i * pixelSize,
+                                y: point.y + j * pixelSize,
+                            }),
+                        );
+                    }
+                }
+                break;
+
+            case 9:
+                for (let i = -4; i <= 4; i++) {
+                    for (let j = -4; j <= 4; j++) {
+                        if (i === -4 && j === -4) continue;
+                        if (i === -4 && j === 4) continue;
+                        if (i === 4 && j === -4) continue;
+                        if (i === 4 && j === 4) continue;
+                        nextPoints.push(
+                            absolutePointSchema.parse({
+                                x: point.x + i * pixelSize,
+                                y: point.y + j * pixelSize,
+                            }),
+                        );
+                    }
+                }
+                break;
+
+            case 10:
+                console.log('10');
+                for (let i = -5; i <= 4; i++) {
+                    for (let j = -5; j <= 4; j++) {
+                        if (i === -5 && j === -5) continue;
+                        if (i === -5 && j === 4) continue;
+                        if (i === 4 && j === -5) continue;
+                        if (i === 4 && j === 4) continue;
+                        nextPoints.push(
+                            absolutePointSchema.parse({
+                                x: point.x + i * pixelSize,
+                                y: point.y + j * pixelSize,
+                            }),
+                        );
+                    }
+                }
                 break;
 
             default:

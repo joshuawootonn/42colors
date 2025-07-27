@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { absolutePointTupleSchema } from '../line';
 import { bunchOfTuplePointsSchema } from '../utils/testing';
 import {
+    getCanvasPolygon,
     getCenterPoint,
     inside,
     isEligiblePolygon,
@@ -301,5 +302,231 @@ describe('getCenterPoint', () => {
 
         const center = getCenterPoint(largeCoords);
         expect(center).toEqual([2000, 3000]);
+    });
+});
+
+describe('getCanvasPolygon', () => {
+    test('size 1 - single pixel square', () => {
+        const polygon = getCanvasPolygon(5, 5, 1);
+        expect(polygon.vertices).toEqual([
+            [5, 5],
+            [6, 5],
+            [6, 6],
+            [5, 6],
+        ]);
+    });
+
+    test('size 2 - 2x2 square', () => {
+        const polygon = getCanvasPolygon(5, 5, 2);
+        expect(polygon.vertices).toEqual([
+            [4, 4],
+            [6, 4],
+            [6, 6],
+            [4, 6],
+        ]);
+    });
+
+    test('size 3 - cross-like shape', () => {
+        const polygon = getCanvasPolygon(5, 5, 3);
+        expect(polygon.vertices).toEqual([
+            [5, 4],
+            [6, 4],
+            [6, 5],
+            [7, 5],
+            [7, 6],
+            [6, 6],
+            [6, 7],
+            [5, 7],
+            [5, 6],
+            [4, 6],
+            [4, 5],
+            [5, 5],
+        ]);
+    });
+
+    test('size 4 - rounded rectangle', () => {
+        const polygon = getCanvasPolygon(5, 5, 4);
+        expect(polygon.vertices).toEqual([
+            [4, 3],
+            [6, 3],
+            [6, 4],
+            [7, 4],
+            [7, 6],
+            [6, 6],
+            [6, 7],
+            [4, 7],
+            [4, 6],
+            [3, 6],
+            [3, 4],
+            [4, 4],
+        ]);
+    });
+
+    test('size 5 - larger rounded shape', () => {
+        const polygon = getCanvasPolygon(5, 5, 5);
+        expect(polygon.vertices).toEqual([
+            [4, 3],
+            [7, 3],
+            [7, 4],
+            [8, 4],
+            [8, 7],
+            [7, 7],
+            [7, 8],
+            [4, 8],
+            [4, 7],
+            [3, 7],
+            [3, 4],
+            [4, 4],
+        ]);
+    });
+
+    test('size 6 - rounded 6x6 shape', () => {
+        const polygon = getCanvasPolygon(5, 5, 6);
+        expect(polygon.vertices).toEqual([
+            [3, 2],
+            [7, 2],
+            [7, 3],
+            [8, 3],
+            [8, 7],
+            [7, 7],
+            [7, 8],
+            [3, 8],
+            [3, 7],
+            [2, 7],
+            [2, 3],
+            [3, 3],
+        ]);
+    });
+
+    test('size 7 - rounded 7x7 shape', () => {
+        const polygon = getCanvasPolygon(5, 5, 7);
+        expect(polygon.vertices).toEqual([
+            [3, 2],
+            [8, 2],
+            [8, 3],
+            [9, 3],
+            [9, 8],
+            [8, 8],
+            [8, 9],
+            [3, 9],
+            [3, 8],
+            [2, 8],
+            [2, 3],
+            [3, 3],
+        ]);
+    });
+
+    test('size 8 - rounded 8x8 shape', () => {
+        const polygon = getCanvasPolygon(5, 5, 8);
+        expect(polygon.vertices).toEqual([
+            [2, 1],
+            [8, 1],
+            [8, 2],
+            [9, 2],
+            [9, 8],
+            [8, 8],
+            [8, 9],
+            [2, 9],
+            [2, 8],
+            [1, 8],
+            [1, 2],
+            [2, 2],
+        ]);
+    });
+
+    test('size 9 - rounded 9x9 shape', () => {
+        const polygon = getCanvasPolygon(5, 5, 9);
+        expect(polygon.vertices).toEqual([
+            [2, 1],
+            [9, 1],
+            [9, 2],
+            [10, 2],
+            [10, 9],
+            [9, 9],
+            [9, 10],
+            [2, 10],
+            [2, 9],
+            [1, 9],
+            [1, 2],
+            [2, 2],
+        ]);
+    });
+
+    test('size 10 - rounded 10x10 shape', () => {
+        const polygon = getCanvasPolygon(5, 5, 10);
+        expect(polygon.vertices).toEqual([
+            [1, 0],
+            [9, 0],
+            [9, 1],
+            [10, 1],
+            [10, 9],
+            [9, 9],
+            [9, 10],
+            [1, 10],
+            [1, 9],
+            [0, 9],
+            [0, 1],
+            [1, 1],
+        ]);
+    });
+
+    test('different center coordinates', () => {
+        const polygon = getCanvasPolygon(10, 15, 2);
+        expect(polygon.vertices).toEqual([
+            [9, 14],
+            [11, 14],
+            [11, 16],
+            [9, 16],
+        ]);
+    });
+
+    test('negative center coordinates', () => {
+        const polygon = getCanvasPolygon(-5, -3, 1);
+        expect(polygon.vertices).toEqual([
+            [-5, -3],
+            [-4, -3],
+            [-4, -2],
+            [-5, -2],
+        ]);
+    });
+
+    test('size 0 falls back to size 1', () => {
+        const polygon = getCanvasPolygon(5, 5, 0);
+        expect(polygon.vertices).toEqual([
+            [5, 5],
+            [6, 5],
+            [6, 6],
+            [5, 6],
+        ]);
+    });
+
+    test('negative size falls back to size 1', () => {
+        const polygon = getCanvasPolygon(5, 5, -1);
+        expect(polygon.vertices).toEqual([
+            [5, 5],
+            [6, 5],
+            [6, 6],
+            [5, 6],
+        ]);
+    });
+
+    test('size beyond 10 falls back to size 1', () => {
+        const polygon = getCanvasPolygon(5, 5, 15);
+        expect(polygon.vertices).toEqual([
+            [5, 5],
+            [6, 5],
+            [6, 6],
+            [5, 6],
+        ]);
+    });
+
+    test('decimal coordinates should work', () => {
+        const polygon = getCanvasPolygon(5.5, 3.7, 1);
+        expect(polygon.vertices).toEqual([
+            [5.5, 3.7],
+            [6.5, 3.7],
+            [6.5, 4.7],
+            [5.5, 4.7],
+        ]);
     });
 });
