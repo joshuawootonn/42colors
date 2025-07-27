@@ -8,13 +8,13 @@ function ColorBlock({ variable }: { variable: string }) {
     return (
         <div
             className={cn(
-                `relative w-30 aspect-square border-primary border-1.5`,
+                `relative aspect-square w-30 border-1.5 border-primary`,
             )}
             style={{
                 backgroundColor: `hsl(var(${variable}))`,
             }}
         >
-            <code className="bg-primary text-xs text-secondary absolute top-0 left-0">
+            <code className="absolute left-0 top-0 bg-primary text-xs text-secondary">
                 {variable}
             </code>
         </div>
@@ -23,11 +23,11 @@ function ColorBlock({ variable }: { variable: string }) {
 
 export function DesignPage() {
     return (
-        <div className="my-20 mx-10 prose max-w-full">
+        <div className="prose mx-10 my-20 max-w-full">
             <h1>Design</h1>
             The <i>storybook</i> of 42colors.
             <h2>Colors</h2>
-            <div className="flex flex-wrap w-full gap-2">
+            <div className="flex w-full flex-wrap gap-2">
                 <ColorBlock variable="--background" />
                 <ColorBlock variable="--foreground" />
                 <ColorBlock variable="--card" />
@@ -54,7 +54,7 @@ export function DesignPage() {
             </div>
             <h2>Button</h2>
             <div className="not-prose space-y-4">
-                <div className="flex flex-wrap w-full gap-4 items-center">
+                <div className="flex w-full flex-wrap items-center gap-4">
                     <div className="text-sm">Small</div>
                     <Button size="sm">default</Button>
                     <Button size="sm" variant="destructive">
@@ -67,7 +67,7 @@ export function DesignPage() {
                         link
                     </Button>
                 </div>
-                <div className="flex flex-wrap w-full gap-4 items-center">
+                <div className="flex w-full flex-wrap items-center gap-4">
                     <div className="text-md">Default</div>
                     <Button>default</Button>
                     <Button variant="destructive">destructive</Button>
@@ -76,7 +76,7 @@ export function DesignPage() {
                 </div>
             </div>
             <h2>Toast</h2>
-            <div className="not-prose flex wrap w-full gap-4 items-center">
+            <div className="not-prose wrap flex w-full items-center gap-4">
                 <Button
                     onClick={() =>
                         toast({

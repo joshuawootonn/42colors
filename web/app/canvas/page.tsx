@@ -80,43 +80,46 @@ export default function CanvasPage() {
         centerY?: number;
     }>({});
 
-    // Function to update transform matrix based on camera position
-    const updateTransform = () => {
-        const refs = webgpuRefs.current;
-        if (
-            !refs.device ||
-            !refs.transformBuffer ||
-            !refs.scale ||
-            refs.centerX === undefined ||
-            refs.centerY === undefined
-        ) {
-            return;
-        }
-
-        // Apply camera offset to the transformation
-        const offsetX = camera.x;
-        const offsetY = camera.y;
-
-        const transformMatrix = new Float32Array([
-            refs.scale * camera.zoom,
-            0,
-            0,
-            0, // Column 1: [scale, 0, 0, 0]
-            0,
-            -refs.scale * camera.zoom,
-            0,
-            0, // Column 2: [0, -scale, 0, 0]
-            (-refs.centerX + offsetX) * refs.scale * camera.zoom,
-            (refs.centerY + offsetY) * refs.scale * camera.zoom,
-            1,
-            0, // Column 3: [translate_x, translate_y, 1, 0]
-        ]);
-
-        refs.device.queue.writeBuffer(refs.transformBuffer, 0, transformMatrix);
-    };
-
     // Update transform when camera changes
     useEffect(() => {
+        const updateTransform = () => {
+            const refs = webgpuRefs.current;
+            if (
+                !refs.device ||
+                !refs.transformBuffer ||
+                !refs.scale ||
+                refs.centerX === undefined ||
+                refs.centerY === undefined
+            ) {
+                return;
+            }
+
+            // Apply camera offset to the transformation
+            const offsetX = camera.x;
+            const offsetY = camera.y;
+
+            const transformMatrix = new Float32Array([
+                refs.scale * camera.zoom,
+                0,
+                0,
+                0, // Column 1: [scale, 0, 0, 0]
+                0,
+                -refs.scale * camera.zoom,
+                0,
+                0, // Column 2: [0, -scale, 0, 0]
+                (-refs.centerX + offsetX) * refs.scale * camera.zoom,
+                (refs.centerY + offsetY) * refs.scale * camera.zoom,
+                1,
+                0, // Column 3: [translate_x, translate_y, 1, 0]
+            ]);
+
+            refs.device.queue.writeBuffer(
+                refs.transformBuffer,
+                0,
+                transformMatrix,
+            );
+        };
+
         updateTransform();
     }, [camera]);
 
@@ -480,12 +483,12 @@ export default function CanvasPage() {
 
     if (!isWebGPUSupported) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+            <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
                 <div className="text-center">
-                    <h1 className="text-4xl font-bold mb-4">
+                    <h1 className="mb-4 text-4xl font-bold">
                         WebGPU Not Supported
                     </h1>
-                    <p className="text-lg mb-4">
+                    <p className="mb-4 text-lg">
                         Your browser does not support WebGPU. Please use Chrome
                         with WebGPU enabled.
                     </p>
@@ -495,24 +498,24 @@ export default function CanvasPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-900 relative">
-            <div className="absolute top-4 left-4 z-10 bg-black bg-opacity-50 p-4 rounded-lg">
-                <h2 className="text-white text-lg font-bold mb-2">
+        <div className="relative min-h-screen bg-gray-900">
+            <div className="absolute left-4 top-4 z-10 rounded-lg bg-black bg-opacity-50 p-4">
+                <h2 className="mb-2 text-lg font-bold text-white">
                     WebGPU Polygon Showcase
                 </h2>
 
-                <div className="text-white text-xs">
+                <div className="text-xs text-white">
                     {isInitialized ? 'WebGPU Initialized' : 'Loading...'}
                 </div>
 
                 {isInitialized && (
-                    <div className="text-white text-xs mt-2">
+                    <div className="mt-2 text-xs text-white">
                         <div>
                             Camera: ({camera.x.toFixed(1)},{' '}
                             {camera.y.toFixed(1)})
                         </div>
                         <div>Zoom: {camera.zoom.toFixed(2)}x</div>
-                        <div className="text-gray-400 mt-1">
+                        <div className="mt-1 text-gray-400">
                             {isPanning ? 'Panning...' : 'Click and drag to pan'}
                         </div>
                     </div>
@@ -521,7 +524,7 @@ export default function CanvasPage() {
 
             <canvas
                 ref={canvasRef}
-                className="w-full h-full cursor-grab active:cursor-grabbing"
+                className="h-full w-full cursor-grab active:cursor-grabbing"
                 style={{ display: 'block' }}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}

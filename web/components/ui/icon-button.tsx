@@ -11,8 +11,8 @@ export function IconButton({
         <button
             {...props}
             className={cn(
-                'relative group flex justify-center items-center bg-white text-white size-8 border-1.5 border-black ',
-                'focus-visible:border-black outline-none rounded-none',
+                'group relative flex size-8 items-center justify-center border-1.5 border-black bg-white text-white',
+                'rounded-none outline-none focus-visible:border-black',
                 className,
             )}
         >

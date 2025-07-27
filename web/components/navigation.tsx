@@ -70,7 +70,7 @@ export function Navigation() {
     return (
         <div
             className={cn(
-                'flex space-x-1.5 justify-center items-center select-none text-xl',
+                'flex select-none items-center justify-center space-x-1.5 text-xl',
             )}
         >
             <button
@@ -81,7 +81,7 @@ export function Navigation() {
                     store.trigger.fetchPixels();
                 }}
                 className={
-                    'relative z-0 svg-outline-within-sm outline-none flex justify-center items-center h-8 bg-transparent text-base'
+                    'svg-outline-within-sm relative z-0 flex h-8 items-center justify-center bg-transparent text-base outline-none'
                 }
             >
                 <svg

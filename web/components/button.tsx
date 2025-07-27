@@ -9,7 +9,7 @@ export function Button({
     return (
         <button
             className={cn(
-                'outline-none svg-outline-sm relative no-underline',
+                'svg-outline-sm relative no-underline outline-none',
                 className,
             )}
             {...props}

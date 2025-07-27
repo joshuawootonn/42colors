@@ -291,7 +291,7 @@ const authService = {
             });
 
             return result;
-        } catch (_) {
+        } catch {
             return null;
         }
     },

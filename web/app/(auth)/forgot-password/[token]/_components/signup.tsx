@@ -72,7 +72,7 @@ export function UpdatePassword({ token }: { token: string }) {
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
             {errors.root && (
-                <div className="text-red-600 text-sm mb-4">
+                <div className="mb-4 text-sm text-red-600">
                     {errors.root.message}
                 </div>
             )}
@@ -86,7 +86,7 @@ export function UpdatePassword({ token }: { token: string }) {
                     className={errors.password ? 'border-red-500' : ''}
                 />
                 {errors.password && (
-                    <span className="text-red-600 text-sm">
+                    <span className="text-sm text-red-600">
                         {errors.password.message}
                     </span>
                 )}
@@ -103,7 +103,7 @@ export function UpdatePassword({ token }: { token: string }) {
                     }
                 />
                 {errors.password_confirmation && (
-                    <span className="text-red-600 text-sm">
+                    <span className="text-sm text-red-600">
                         {errors.password_confirmation.message}
                     </span>
                 )}

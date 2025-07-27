@@ -103,7 +103,7 @@ export function nextErasureAction(
 function onPointerDown(
     e: PointerEvent,
     context: InitializedStore,
-    enqueue: EnqueueObject<{ type: string }>,
+    _enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
@@ -124,7 +124,7 @@ function onPointerDown(
 function onPointerMove(
     e: PointerEvent,
     context: InitializedStore,
-    enqueue: EnqueueObject<{ type: string }>,
+    _enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
@@ -168,7 +168,7 @@ function onPointerMove(
 function onWheel(
     e: WheelEvent,
     context: InitializedStore,
-    enqueue: EnqueueObject<{ type: string }>,
+    _enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 

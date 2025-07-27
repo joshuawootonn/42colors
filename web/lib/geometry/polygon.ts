@@ -155,7 +155,7 @@ export function getCompositePolygon(
                 vertices: compo,
             }),
         );
-    } catch (_) {
+    } catch {
         console.log(`Failed to find polygon union of:
 
     ${JSON.stringify(polygon1)}

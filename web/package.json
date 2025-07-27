@@ -7,9 +7,13 @@
         "build": "next build",
         "start": "next start -p 4242",
         "lint": "next lint",
-        "test": "vitest",
-        "format": "prettier --write .",
-        "check": "prettier --check ."
+        "lint:fix": "next lint --fix",
+        "format:fix": "prettier --write .",
+        "format": "prettier --check .",
+        "type-check": "tsc --noEmit",
+        "lint-all": "bun run type-check && bun run lint && bun run format",
+        "fix-all": "bun run format:fix && bun run lint:fix",
+        "test": "vitest"
     },
     "dependencies": {
         "@base-ui-components/react": "^1.0.0-beta.0",
@@ -52,11 +56,14 @@
         "@types/phoenix": "^1.6.5",
         "@types/react": "19.1.8",
         "@types/react-dom": "19.1.6",
+        "@typescript-eslint/eslint-plugin": "^8.38.0",
         "@webgpu/types": "^0.1.64",
         "eslint": "^8",
         "eslint-config-next": "15.3.4",
+        "eslint-plugin-unused-imports": "^4.1.4",
         "postcss": "^8",
         "prettier": "^3.6.2",
+        "prettier-plugin-tailwindcss": "^0.6.14",
         "tailwindcss": "^3.4.1",
         "typescript": "^5"
     },

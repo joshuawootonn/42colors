@@ -5,24 +5,15 @@ import {
     Pixel,
     Point,
     absolutePointSchema,
-    cursorPositionSchema,
     pointSchema,
 } from '../../geometry/coord';
-import {
-    Polygon,
-    getCanvasPolygon,
-    polygonSchema,
-} from '../../geometry/polygon';
-import { AbsolutePointTuple, absolutePointTupleSchema } from '../../line';
+import { getCanvasPolygon } from '../../geometry/polygon';
 import { COLOR_TABLE, ColorRef } from '../../palette';
 import { InitializedStore, store } from '../../store';
-import {
-    canvasToClient,
-    clientToCanvas,
-} from '../../utils/clientToCanvasConversion';
+import { clientToCanvas } from '../../utils/clientToCanvasConversion';
 import { dedupeCoords } from '../../utils/dedupe-coords';
 import { newNewCoords } from '../../utils/net-new-coords';
-import { Color, hexToRgbaColor } from '../../webgpu/colors';
+import { hexToRgbaColor } from '../../webgpu/colors';
 import { EnqueueObject } from '../../xstate-internal-types';
 
 export type BrushSettings = {
@@ -371,7 +362,7 @@ export function nextBrushAction(
 function onPointerDown(
     e: PointerEvent,
     context: InitializedStore,
-    enqueue: EnqueueObject<{ type: string }>,
+    _enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
@@ -396,7 +387,7 @@ function onPointerDown(
 function onPointerMove(
     e: PointerEvent,
     context: InitializedStore,
-    enqueue: EnqueueObject<{ type: string }>,
+    _enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     const { x, y } = getAbsolutePoint(e.clientX, e.clientY, context);
 
@@ -440,7 +431,7 @@ function onPointerMove(
 function onWheel(
     e: WheelEvent,
     context: InitializedStore,
-    enqueue: EnqueueObject<{ type: string }>,
+    _enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     const { x, y } = getAbsolutePoint(e.clientX, e.clientY, context);
 

@@ -290,7 +290,7 @@ export const store = createStore({
             }
         },
 
-        newRealtimePixels: (context, event: { pixels: Pixel[] }, enqueue) => {
+        newRealtimePixels: (context, event: { pixels: Pixel[] }, _enqueue) => {
             if (isInitialStore(context)) return;
 
             clearChunkPixels(context.canvas.chunkCanvases, event.pixels);
@@ -312,7 +312,7 @@ export const store = createStore({
             return context;
         },
 
-        undo: (context, _, enqueue) => {
+        undo: (context, _, _enqueue) => {
             if (isInitialStore(context)) return;
 
             const actionToUndo = getActionToUndo(context.actions);
@@ -362,7 +362,7 @@ export const store = createStore({
             };
         },
 
-        redo: (context, _, enqueue) => {
+        redo: (context, _, _enqueue) => {
             if (isInitialStore(context)) return;
 
             const nextActions = context.actions.concat({ type: 'redo' });

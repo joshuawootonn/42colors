@@ -189,7 +189,7 @@ export default function Page() {
                 width="100vw"
             ></canvas>
 
-            <div className="flex flex-col items-start space-y-3 fixed top-16 bottom-12 left-3">
+            <div className="fixed bottom-12 left-3 top-16 flex flex-col items-start space-y-3">
                 {isWebGPUAvailable && (
                     <>
                         {currentTool === Tool.Brush && <Palette />}
@@ -199,17 +199,17 @@ export default function Page() {
                 )}
             </div>
 
-            <div className="flex flex-row space-x-3 fixed top-3 left-60">
+            <div className="fixed left-60 top-3 flex flex-row space-x-3">
                 {currentTool === Tool.Claimer && <ClaimerPanel />}
             </div>
 
-            <div className="flex fixed top-3 right-3">
+            <div className="fixed right-3 top-3 flex">
                 <Toolbar />
             </div>
 
             <Footer />
 
-            <div className="flex fixed bottom-3 right-3">
+            <div className="fixed bottom-3 right-3 flex">
                 <Navigation />
             </div>
 

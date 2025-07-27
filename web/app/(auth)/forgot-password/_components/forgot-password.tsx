@@ -59,7 +59,7 @@ export function ForgotPassword() {
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
             {errors.root && (
-                <div className="text-red-600 text-sm mb-4">
+                <div className="mb-4 text-sm text-red-600">
                     {errors.root.message}
                 </div>
             )}
@@ -73,7 +73,7 @@ export function ForgotPassword() {
                     className={errors.email ? 'border-red-500' : ''}
                 />
                 {errors.email && (
-                    <span className="text-red-600 text-sm">
+                    <span className="text-sm text-red-600">
                         {errors.email.message}
                     </span>
                 )}

@@ -38,7 +38,7 @@ function NumberInputButton({
         <button
             tabIndex={-10}
             className={cn(
-                'flex justify-center items-center h-1/2 aspect-square',
+                'flex aspect-square h-1/2 items-center justify-center',
                 className,
             )}
             onPointerDown={pressingDown}
@@ -110,7 +110,7 @@ const NumberInput = React.forwardRef<
     return (
         <div
             className={cn(
-                'relative z-0 svg-outline-within-sm  bg-white',
+                'svg-outline-within-sm relative z-0 bg-white',
                 className,
             )}
         >
@@ -128,7 +128,7 @@ const NumberInput = React.forwardRef<
                     '[input\[type=number\]::-webkit-outer-spin-button]:appearance-[textfield]',
                     'pl-1',
                     'file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground',
-                    'placeholder:text-muted-foreground outline-none',
+                    'outline-none placeholder:text-muted-foreground',
                     'disabled:cursor-not-allowed disabled:opacity-50',
                 )}
                 onInput={(e) => props.onInput?.(e)}
@@ -140,7 +140,7 @@ const NumberInput = React.forwardRef<
                 }
                 {...props}
             />
-            <div className="absolute right-[1.5px] divide-y-1.5 divide-primary top-0 h-full z-10 flex flex-col border-l-primary border-l-1.5">
+            <div className="absolute right-[1.5px] top-0 z-10 flex h-full flex-col divide-y-1.5 divide-primary border-l-1.5 border-l-primary">
                 <NumberInputButton
                     className="group hover:bg-black"
                     value={value}
@@ -153,7 +153,7 @@ const NumberInput = React.forwardRef<
                         viewBox="0 0 6 6"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
-                        className="text-black group-hover:text-white translate-y-[1px]"
+                        className="translate-y-[1px] text-black group-hover:text-white"
                     >
                         <path
                             d="M0.994293 3.75L3.04978 2.25L5.0057 3.75"
@@ -174,7 +174,7 @@ const NumberInput = React.forwardRef<
                         viewBox="0 0 6 6"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
-                        className="text-black group-hover:text-white translate-y-[-1px]"
+                        className="translate-y-[-1px] text-black group-hover:text-white"
                     >
                         <path
                             d="M0.994293 2.16843L3.04978 3.83156L5.0057 2.16843"

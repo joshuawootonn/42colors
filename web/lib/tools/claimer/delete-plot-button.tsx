@@ -42,7 +42,7 @@ export function DeletePlotButton({ plot }: DeletePlotButtonProps) {
             <Tooltip.Root>
                 <Tooltip.Trigger>
                     <IconButton
-                        className="text-black -translate-x-[2px]"
+                        className="-translate-x-[2px] text-black"
                         onClick={() => setIsConfirmOpen(true)}
                     >
                         <svg
@@ -83,7 +83,7 @@ export function DeletePlotButton({ plot }: DeletePlotButtonProps) {
                     <div className="space-y-4">
                         <p className="text-sm text-muted-foreground">
                             Are you sure you want to delete{' '}
-                            <code className="bg-muted text-black px-1 py-0.5 text-sm font-mono">
+                            <code className="bg-muted px-1 py-0.5 font-mono text-sm text-black">
                                 {plot.name}
                             </code>
                             ?

@@ -73,9 +73,9 @@ const PopoverContent = React.forwardRef<
                     }
                     className={cn(
                         positionerClassName,
-                        'z-50 ',
+                        'z-50',
                         className,
-                        hasDragged && 'fixed top-0 left-0',
+                        hasDragged && 'fixed left-0 top-0',
                     )}
                     sideOffset={sideOffset}
                     align={align}
@@ -85,7 +85,7 @@ const PopoverContent = React.forwardRef<
                     <PopoverPrimitive.Popup
                         ref={combinedRef}
                         className={cn(
-                            ' border-black border-1.5 bg-popover p-2 text-popover-foreground shadow-md outline-none select-none',
+                            'select-none border-1.5 border-black bg-popover p-2 text-popover-foreground shadow-md outline-none',
                             isDragging && 'cursor-grabbing',
                             className,
                         )}
@@ -93,13 +93,13 @@ const PopoverContent = React.forwardRef<
                     >
                         <div
                             className={cn(
-                                'absolute inset-x-0 top-0  h-6 cursor-grab transition-colors',
+                                'absolute inset-x-0 top-0 h-6 cursor-grab transition-colors',
                                 'flex items-center justify-center',
                                 isDragging && 'cursor-grabbing',
                             )}
                             onPointerDown={onPointerDown}
                         >
-                            <div className="w-8 h-1 bg-black" />
+                            <div className="h-1 w-8 bg-black" />
                         </div>
 
                         {children}
@@ -107,7 +107,7 @@ const PopoverContent = React.forwardRef<
                         <PopoverPrimitive.Close
                             render={(props) => (
                                 <button
-                                    className="absolute top-0 right-0 bg-white text-primary  border-1.5 border-primary svg-outline"
+                                    className="svg-outline absolute right-0 top-0 border-1.5 border-primary bg-white text-primary"
                                     {...props}
                                 >
                                     <X />

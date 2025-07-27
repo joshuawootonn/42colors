@@ -44,7 +44,7 @@ const DialogContent = React.forwardRef<
         <DialogPrimitive.Popup
             ref={ref}
             className={cn(
-                'fixed left-[50%] top-[50%] z-50 flex w-full max-w-[calc(100vw-40px)] max-h-[min(calc(100vh-40px),600px)] translate-x-[-50%] translate-y-[-50%] gap-4 border-1.5 border-primary bg-background shadow-lg ',
+                'fixed left-[50%] top-[50%] z-50 flex max-h-[min(calc(100vh-40px),600px)] w-full max-w-[calc(100vw-40px)] translate-x-[-50%] translate-y-[-50%] gap-4 border-1.5 border-primary bg-background shadow-lg',
                 className,
             )}
             {...props}
@@ -55,7 +55,7 @@ const DialogContent = React.forwardRef<
                     render={(props) => (
                         <button
                             {...props}
-                            className="absolute right-0 top-0 bg-white border-1.5 border-primary svg-outline translate-x-[1.5px] translate-y-[-1.5px]"
+                            className="svg-outline absolute right-0 top-0 translate-x-[1.5px] translate-y-[-1.5px] border-1.5 border-primary bg-white"
                         >
                             <X />
                             <span className="sr-only">Close</span>

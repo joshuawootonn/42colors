@@ -15,9 +15,9 @@ export function ToolIconButton({
         <button
             {...props}
             className={cn(
-                'group flex justify-center items-center bg-white text-white size-8 border-1.5 border-black ',
+                'group flex size-8 items-center justify-center border-1.5 border-black bg-white text-white',
                 'relative',
-                'focus-visible:border-black outline-none rounded-none',
+                'rounded-none outline-none focus-visible:border-black',
                 active && 'border-white ring-white invert',
                 className,
             )}
@@ -35,7 +35,7 @@ export function Toolbar() {
     const state = useSelector(store, (state) => state.context.state);
     if (state !== 'initialized') return null;
     return (
-        <div className="flex flex-row justify-end items-start">
+        <div className="flex flex-row items-start justify-end">
             <div className={cn('grid grid-cols-2')}>
                 <ToolIconButton
                     active={tool === Tool.Brush}

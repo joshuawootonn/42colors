@@ -56,7 +56,7 @@ export function Toast(props: ToastProps) {
     const { title, description, button, id } = props;
 
     return (
-        <div className="font-sans flex bg-secondary shadow-lg border-1.5 border-primary w-full md:max-w-96 items-center p-4">
+        <div className="flex w-full items-center border-1.5 border-primary bg-secondary p-4 font-sans shadow-lg md:max-w-96">
             <div className="flex flex-1 items-center">
                 <div className="w-full">
                     <p className="text-sm text-primary">{title}</p>

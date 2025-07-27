@@ -42,8 +42,8 @@ function IconButton({
         <motion.button
             {...props}
             className={cn(
-                'relative group flex justify-center items-center bg-white text-white size-8 border-1 border-black ring-2 ring-black',
-                'focus-visible:border-black outline-none rounded-none',
+                'border-1 group relative flex size-8 items-center justify-center border-black bg-white text-white ring-2 ring-black',
+                'rounded-none outline-none focus-visible:border-black',
                 className,
             )}
             initial={{ backgroundColor: colorString }}
@@ -52,7 +52,7 @@ function IconButton({
         >
             {currentColor === colorRef && showCurrentColorIndicator && (
                 <svg
-                    className="absolute -top-[1px] -left-[1px]"
+                    className="absolute -left-[1px] -top-[1px]"
                     width="19"
                     height="19"
                     viewBox="0 0 19 19"
@@ -115,7 +115,7 @@ export function Palette() {
     return (
         <div className="flex flex-row justify-end">
             <motion.div
-                className={cn('p-0.5 flex flex-col')}
+                className={cn('flex flex-col p-0.5')}
                 variants={container}
                 initial="show"
                 animate={'show'}

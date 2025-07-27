@@ -120,7 +120,7 @@ export function EditPlotForm({ plot }: EditPlotFormProps) {
                         <PopoverTrigger
                             render={(props) => (
                                 <IconButton
-                                    className="text-black -translate-x-[1px]"
+                                    className="-translate-x-[1px] text-black"
                                     {...props}
                                 >
                                     <svg
@@ -160,16 +160,16 @@ export function EditPlotForm({ plot }: EditPlotFormProps) {
             <PopoverContent className="w-80">
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
                     <div>
-                        <h3 className="font-semibold mb-2">Edit Plot</h3>
+                        <h3 className="mb-2 font-semibold">Edit Plot</h3>
                     </div>
 
                     {errors.polygon && (
-                        <div className="text-red-600 text-sm mb-2">
+                        <div className="mb-2 text-sm text-red-600">
                             {String(errors.polygon?.message ?? errors.polygon)}
                         </div>
                     )}
                     {errors.root && (
-                        <div className="text-red-600 text-sm mb-2">
+                        <div className="mb-2 text-sm text-red-600">
                             {errors.root.message}
                         </div>
                     )}
@@ -189,7 +189,7 @@ export function EditPlotForm({ plot }: EditPlotFormProps) {
                             className={errors.name ? 'border-red-500' : ''}
                         />
                         {errors.name && (
-                            <div className="text-red-600 text-sm">
+                            <div className="text-sm text-red-600">
                                 {errors.name.message}
                             </div>
                         )}
@@ -212,7 +212,7 @@ export function EditPlotForm({ plot }: EditPlotFormProps) {
                             }
                         />
                         {errors.description && (
-                            <div className="text-red-600 text-sm">
+                            <div className="text-sm text-red-600">
                                 {errors.description.message}
                             </div>
                         )}

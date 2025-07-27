@@ -21,7 +21,7 @@ export function Footer() {
     const user = useSelector(store, (state) => state.context.user);
 
     return (
-        <footer className="fixed bottom-3 left-3 flex w-min flex-col items-center justify-between text-md font-medium text-primary sm:flex-row">
+        <footer className="text-md fixed bottom-3 left-3 flex w-min flex-col items-center justify-between font-medium text-primary sm:flex-row">
             <div className="mb-3 flex items-center justify-between space-x-3 sm:mb-0">
                 <Link
                     href={{
@@ -54,7 +54,7 @@ export function Footer() {
                         )}
                     />
 
-                    <DropdownMenuContent className="flex flex-col border-1.5 border-primary bg-secondary ">
+                    <DropdownMenuContent className="flex flex-col border-1.5 border-primary bg-secondary">
                         <DropdownMenuItem
                             render={(props) => (
                                 <NextLink

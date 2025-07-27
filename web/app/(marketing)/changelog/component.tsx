@@ -8,7 +8,7 @@ import { changelogUpdatedAt } from './updated-at';
 function DateComponent({ date }: { date: Date }) {
     return (
         <time
-            className={'font-bold text-primary '}
+            className={'font-bold text-primary'}
             dateTime={format(date, 'yyyy-MM-dd')}
         >
             {format(date, 'LLLL do')}

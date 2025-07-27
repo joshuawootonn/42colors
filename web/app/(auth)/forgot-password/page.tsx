@@ -9,7 +9,7 @@ export default function Page() {
         <main
             className={cn(
                 ...pageProse,
-                'mt-20 mx-auto flex flex-col justify-center items-left w-110',
+                'items-left mx-auto mt-20 flex w-110 flex-col justify-center',
             )}
         >
             <H1>Forgot Password</H1>
