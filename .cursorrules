@@ -1,0 +1,51 @@
+# Code Comment Standards
+
+## Function Comments
+- Avoid meaningless one-liner comments that just restate the function name
+- Function names should be self-documenting
+- Only add comments when they provide actual value:
+  - Explaining complex logic or algorithms
+  - Documenting edge cases or gotchas
+  - Clarifying non-obvious behavior
+  - Providing context for why something exists
+
+## Examples
+
+### ❌ Bad (redundant comments):
+```typescript
+/**
+ * Clear the WebGPU canvas
+ */
+clear(): void {
+
+/**
+ * Get user by ID
+ */
+getUserById(id: string): User {
+```
+
+### ✅ Good (meaningful comments when needed):
+```typescript
+clear(): void {
+
+/**
+ * Handles the complex case where user sessions can overlap
+ * due to multiple browser tabs. Always validates the most
+ * recent session token first.
+ *
+ * @param tokens - An array of session tokens to resolve
+ * @returns The resolved session
+ */
+resolveUserSession(tokens: string[]): Session {
+```
+
+## JSDoc Comments
+- Use proper JSDoc format when documentation adds value
+- Include parameter descriptions and return types when they're not obvious
+- Document public APIs and complex interfaces
+- Use the @param tag to describe parameters
+- Use the @returns tag to describe the return value
+- Use the @example tag to provide an example of how to use the function
+- Use the @throws tag to describe the exceptions that can be thrown
+- Use the @deprecated tag to describe deprecated functions
+- Use the @version tag to describe the version of the function
