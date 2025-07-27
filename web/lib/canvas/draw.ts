@@ -6,6 +6,7 @@ import {
 } from '../constants';
 import { InitializedStore } from '../store';
 import { canvasToClient } from '../utils/clientToCanvasConversion';
+import { clearChunk, renderPlotsToChunk } from './chunk';
 import { FULLSIZE_CANVAS_BLEED } from './fullsize';
 import {
     getPixelSize,
@@ -58,13 +59,22 @@ export function draw(context: InitializedStore) {
             CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
         );
 
-        context.canvas.rootCanvasContext.drawImage(
-            chunk.elementUI,
-            canvasToClient(chunk.x, context.camera.zoom),
-            canvasToClient(chunk.y, context.camera.zoom),
-            CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
-            CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
-        );
+        if (
+            chunk.webgpuCanvas != null &&
+            chunk.webgpuManager != null &&
+            chunk.plots.length > 0
+        ) {
+            renderPlotsToChunk(chunk);
+            context.canvas.rootCanvasContext.drawImage(
+                chunk.webgpuCanvas,
+                canvasToClient(chunk.x, context.camera.zoom),
+                canvasToClient(chunk.y, context.camera.zoom),
+                CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
+                CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
+            );
+        } else {
+            clearChunk(chunk);
+        }
     });
 
     const pixelSize = getPixelSize(zoomMultiplier);

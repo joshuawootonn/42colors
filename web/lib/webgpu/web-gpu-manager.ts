@@ -178,6 +178,25 @@ export class WebGPUManager {
         this.pixelRenderer.bufferPool.processFrameCompletion();
     }
 
+    clear(): void {
+        // Create command encoder and render pass that just clears
+        const commandEncoder = this.device.createCommandEncoder();
+        const renderPass = commandEncoder.beginRenderPass({
+            colorAttachments: [
+                {
+                    view: this.context.getCurrentTexture().createView(),
+                    clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 0.0 },
+                    loadOp: 'clear',
+                    storeOp: 'store',
+                },
+            ],
+        });
+
+        // End the render pass immediately - we just wanted to clear
+        renderPass.end();
+        this.device.queue.submit([commandEncoder.finish()]);
+    }
+
     /**
      * Generate vertex data for pixels as quads (2 triangles per pixel)
      */

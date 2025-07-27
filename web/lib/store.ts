@@ -7,7 +7,6 @@ import { createStore } from '@xstate/store';
 import {
     Action,
     derivePixelsFromActions,
-    deriveUnsetPixelsFromActions,
     getActionToRedo,
     getActionToUndo,
     resolveActions,
@@ -21,18 +20,18 @@ import {
 } from './canvas/background';
 import {
     ChunkCanvases,
-    clearChunk,
+    cleanupChunkWebGPU,
+    clearChunkCanvas,
     clearChunkPixels,
     createChunkCanvas,
     createUIChunkCanvas,
     drawPixelsToChunkCanvas,
     getChunkKey,
-    unsetChunkPixels,
+    initializeChunkWebGPU,
 } from './canvas/chunk';
 import { draw } from './canvas/draw';
 import { resizeFullsizeCanvas } from './canvas/fullsize';
 import { resizeRealtimeCanvas } from './canvas/realtime';
-import { redrawUserPlots } from './canvas/ui';
 import { CHUNK_LENGTH } from './constants';
 import {
     onGesture,
@@ -80,7 +79,6 @@ import { clampErasureSize } from './tools/erasure/erasure-utils';
 import { PaletteSettings } from './tools/palette';
 import { PanTool } from './tools/pan';
 import { WheelTool } from './tools/wheel';
-import { dedupeCoords } from './utils/dedupe-coords';
 import { isInitialStore } from './utils/is-initial-store';
 import { uuid } from './utils/uuid';
 import { WebGPUManager } from './webgpu/web-gpu-manager';
@@ -263,7 +261,7 @@ export const store = createStore({
         },
 
         unlisten: (
-            _context,
+            context,
             {
                 element,
                 body,
@@ -284,6 +282,12 @@ export const store = createStore({
             body.removeEventListener('gesturestart', onGesture, true);
             body.removeEventListener('gesturemove', onGesture, true);
             body.removeEventListener('gestureend', onGesture, true);
+
+            if (!isInitialStore(context)) {
+                Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
+                    cleanupChunkWebGPU(chunk.webgpuManager);
+                });
+            }
         },
 
         newRealtimePixels: (context, event: { pixels: Pixel[] }, enqueue) => {
@@ -512,25 +516,20 @@ export const store = createStore({
                     const canvasContext = canvas.getContext('2d');
                     canvasContext!.imageSmoothingEnabled = false;
 
-                    const elementUI = createUIChunkCanvas();
-                    const contextUI = elementUI.getContext('2d');
-                    contextUI!.imageSmoothingEnabled = false;
-
                     console.log('setting chunk canvases', context.state);
 
                     context.canvas.chunkCanvases[chunkKey] = {
                         element: canvas,
                         context: canvasContext!,
-                        elementUI: elementUI,
-                        contextUI: contextUI!,
                         x: chunkX,
                         y: chunkY,
                         pixels: [],
                         plots: [],
                         renderConditions: { zoom: context.camera.zoom },
+                        webgpuManager: null,
                     };
 
-                    enqueue.effect(() => {
+                    enqueue.effect(async () => {
                         context.queryClient
                             .fetchQuery({
                                 queryKey: ['pixels', chunkKey],
@@ -568,10 +567,75 @@ export const store = createStore({
                                     })),
                                 }),
                             );
+                        try {
+                            const webgpuCanvas = createUIChunkCanvas();
+                            const webgpuManager =
+                                await initializeChunkWebGPU(webgpuCanvas);
+
+                            if (
+                                webgpuManager &&
+                                context.canvas.chunkCanvases[chunkKey]
+                            ) {
+                                store.trigger.setChunkWebGPUManager({
+                                    chunkKey,
+                                    webgpuManager,
+                                    webgpuCanvas,
+                                });
+
+                                console.log(
+                                    `WebGPU manager initialized for chunk ${chunkKey}`,
+                                );
+                            } else {
+                                throw new Error(
+                                    `WebGPU manager initialization failed for chunk ${chunkKey}`,
+                                );
+                            }
+                        } catch (error) {
+                            console.warn(
+                                `Error initializing WebGPU manager for chunk ${chunkKey}:`,
+                                error,
+                            );
+                        }
                     });
                 }
             }
             return context;
+        },
+
+        setChunkWebGPUManager: (
+            context,
+            {
+                chunkKey,
+                webgpuManager,
+                webgpuCanvas,
+            }: {
+                chunkKey: string;
+                webgpuManager: WebGPUManager;
+                webgpuCanvas: HTMLCanvasElement;
+            },
+            _enqueue,
+        ) => {
+            if (isInitialStore(context)) return;
+
+            const prev = context.canvas.chunkCanvases[chunkKey];
+
+            if (prev == null) {
+                console.log(
+                    `skipping set chunk webgpu manager on uninitialized chunk, chunkKey: ${chunkKey}`,
+                );
+                return;
+            }
+
+            return {
+                ...context,
+                canvas: {
+                    ...context.canvas,
+                    chunkCanvases: {
+                        ...context.canvas.chunkCanvases,
+                        [chunkKey]: { ...prev, webgpuManager, webgpuCanvas },
+                    },
+                },
+            };
         },
 
         updateChunk: (
@@ -603,9 +667,6 @@ export const store = createStore({
             enqueue.effect(() => {
                 if (pixels) {
                     store.trigger.drawPixelsToChunkCanvas({ chunkKey, pixels });
-                }
-                if (plots) {
-                    store.trigger.drawPlotsToChunkCanvasUI({ chunkKey, plots });
                 }
             });
         },
@@ -741,10 +802,6 @@ export const store = createStore({
                     chunkKey,
                     pixels: context.canvas.chunkCanvases[chunkKey].pixels,
                 });
-                store.trigger.drawPlotsToChunkCanvasUI({
-                    chunkKey,
-                    plots: context.canvas.chunkCanvases[chunkKey].plots,
-                });
             });
         },
 
@@ -758,7 +815,7 @@ export const store = createStore({
         clearChunk: (context, { chunkKey }: { chunkKey: string }, enqueue) => {
             if (isInitialStore(context)) return;
             enqueue.effect(() => {
-                clearChunk(context.canvas.chunkCanvases, chunkKey);
+                clearChunkCanvas(context.canvas.chunkCanvases, chunkKey);
             });
         },
 
@@ -772,18 +829,6 @@ export const store = createStore({
                 context.canvas.chunkCanvases[event.chunkKey].context,
                 event.pixels,
             );
-        },
-
-        drawPlotsToChunkCanvasUI: (
-            context,
-            _event: { chunkKey: string; plots: Plot[] },
-        ) => {
-            if (isInitialStore(context)) return;
-            // drawPlotsToUIChunkCanvas(
-            //     context.canvas.chunkCanvases[event.chunkKey].elementUI,
-            //     context.canvas.chunkCanvases[event.chunkKey].contextUI,
-            //     event.plots,
-            // );
         },
 
         moveCamera: (

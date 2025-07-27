@@ -5,6 +5,8 @@ import { Coord, Pixel, pixelSchema } from '../geometry/coord';
 import { COLOR_TABLE } from '../palette';
 import { Plot } from '../tools/claimer/claimer.rest';
 import { dedupe } from '../utils/dedupe';
+import { BLACK } from '../webgpu/colors';
+import { WebGPUManager, createWebGPUManager } from '../webgpu/web-gpu-manager';
 
 export type Chunk = {
     x: number;
@@ -13,11 +15,11 @@ export type Chunk = {
     element: HTMLCanvasElement;
     context: CanvasRenderingContext2D;
     plots: Plot[];
-    elementUI: HTMLCanvasElement;
-    contextUI: CanvasRenderingContext2D;
     renderConditions: {
         zoom: number;
     };
+    webgpuManager?: WebGPUManager | null;
+    webgpuCanvas?: HTMLCanvasElement;
 };
 
 export type ChunkCanvases = Record<string, Chunk>;
@@ -36,6 +38,53 @@ export function createUIChunkCanvas(): HTMLCanvasElement {
     return canvas;
 }
 
+export async function initializeChunkWebGPU(
+    chunkCanvas: HTMLCanvasElement,
+): Promise<WebGPUManager | null> {
+    try {
+        const webgpuManager = await createWebGPUManager(chunkCanvas);
+        if (webgpuManager) {
+            console.log('Chunk WebGPU manager initialized successfully');
+            return webgpuManager;
+        }
+    } catch (error) {
+        console.warn('Failed to initialize chunk WebGPU manager:', error);
+    }
+    return null;
+}
+
+export function cleanupChunkWebGPU(
+    webgpuManager: WebGPUManager | null | undefined,
+): void {
+    webgpuManager?.destroy();
+}
+
+export function renderPlotsToChunk(chunk: Chunk): void {
+    if (!chunk.webgpuManager || chunk.plots.length === 0) {
+        return;
+    }
+
+    const polygonRenderData = chunk.plots.map((plot) => ({
+        polygon: plot.polygon,
+        options: {
+            containsMatchingEndpoints: true,
+            xOffset: 0,
+            yOffset: 0,
+            xCamera: 0,
+            yCamera: 0,
+            pixelSize: 5,
+            lineWidth: 0.25,
+            color: BLACK,
+        },
+    }));
+
+    chunk.webgpuManager.redrawPolygons(polygonRenderData);
+}
+
+export function clearChunk(chunk: Chunk): void {
+    chunk.webgpuManager?.clear();
+}
+
 export function drawPixelsToChunkCanvas(
     canvas: HTMLCanvasElement,
     context: CanvasRenderingContext2D,
@@ -52,9 +101,6 @@ export function drawPixelsToChunkCanvas(
     return canvas;
 }
 
-/**
- * Redraw pixels in their respective chunks
- */
 export function unsetChunkPixels(
     chunkCanvases: ChunkCanvases,
     pixels: Pixel[],
@@ -71,9 +117,6 @@ export function unsetChunkPixels(
     }
 }
 
-/**
- * Clear pixels on chunk that are defined in realtime or local work
- */
 export function clearChunkPixels(
     chunkCanvases: ChunkCanvases,
     pixels: Pixel[],
@@ -88,15 +131,12 @@ export function clearChunkPixels(
     }
 }
 
-export function clearChunk(chunkCanvases: ChunkCanvases, chunkKey: string) {
+export function clearChunkCanvas(
+    chunkCanvases: ChunkCanvases,
+    chunkKey: string,
+) {
     const chunk = chunkCanvases[chunkKey];
     chunk.context.clearRect(0, 0, CHUNK_LENGTH, CHUNK_LENGTH);
-    chunk.contextUI.clearRect(
-        0,
-        0,
-        CHUNK_LENGTH * CANVAS_PIXEL_RATIO,
-        CHUNK_LENGTH * CANVAS_PIXEL_RATIO,
-    );
 }
 
 export const chunkPixelSchema = pixelSchema.brand<'ChunkPixel'>();
