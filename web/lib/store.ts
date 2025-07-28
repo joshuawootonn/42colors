@@ -1325,6 +1325,42 @@ export const store = createStore({
         onWheel: (context, { e }: { e: WheelEvent }, enqueue) => {
             if (isInitialStore(context)) return;
 
+            // Palette navigation with Alt/Option + scroll
+            if (e.altKey) {
+                e.preventDefault();
+                const currentColorRef =
+                    context.toolSettings.palette.currentColorRef;
+                const currentIndex = COLOR_ORDER.indexOf(currentColorRef);
+
+                // Scroll up (negative deltaY) = previous color, scroll down (positive deltaY) = next color
+                if (e.deltaY < 0) {
+                    // Previous color
+                    const previousIndex =
+                        currentIndex > 0
+                            ? currentIndex - 1
+                            : COLOR_ORDER.length - 1;
+                    const previousColor = COLOR_ORDER[previousIndex];
+                    enqueue.effect(() =>
+                        store.trigger.updatePaletteSettings({
+                            palette: { currentColorRef: previousColor },
+                        }),
+                    );
+                } else if (e.deltaY > 0) {
+                    // Next color
+                    const nextIndex =
+                        currentIndex < COLOR_ORDER.length - 1
+                            ? currentIndex + 1
+                            : 0;
+                    const nextColor = COLOR_ORDER[nextIndex];
+                    enqueue.effect(() =>
+                        store.trigger.updatePaletteSettings({
+                            palette: { currentColorRef: nextColor },
+                        }),
+                    );
+                }
+                return context;
+            }
+
             WheelTool.onWheel(context, e, enqueue);
 
             enqueue.effect(() => {
