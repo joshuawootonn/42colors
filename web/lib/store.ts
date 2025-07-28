@@ -54,7 +54,7 @@ import {
     rectToPolygonSchema,
 } from './geometry/polygon';
 import { KeyboardCode } from './keyboard-codes';
-import { TRANSPARENT_REF } from './palette';
+import { COLOR_ORDER, TRANSPARENT_REF } from './palette';
 import { newPixels, setupChannel, setupSocketConnection } from './sockets';
 import {
     DEFAULT_TOOL_SETTINGS,
@@ -1201,6 +1201,43 @@ export const store = createStore({
                     e.preventDefault();
                     enqueue.effect(() =>
                         store.trigger.changeTool({ tool: Tool.Claimer }),
+                    );
+                    return context;
+                }
+
+                // Palette navigation shortcuts
+                if (isHotkey('[', e)) {
+                    e.preventDefault();
+                    const currentColorRef =
+                        context.toolSettings.palette.currentColorRef;
+                    const currentIndex = COLOR_ORDER.indexOf(currentColorRef);
+                    const previousIndex =
+                        currentIndex > 0
+                            ? currentIndex - 1
+                            : COLOR_ORDER.length - 1;
+                    const previousColor = COLOR_ORDER[previousIndex];
+                    enqueue.effect(() =>
+                        store.trigger.updatePaletteSettings({
+                            palette: { currentColorRef: previousColor },
+                        }),
+                    );
+                    return context;
+                }
+
+                if (isHotkey(']', e)) {
+                    e.preventDefault();
+                    const currentColorRef =
+                        context.toolSettings.palette.currentColorRef;
+                    const currentIndex = COLOR_ORDER.indexOf(currentColorRef);
+                    const nextIndex =
+                        currentIndex < COLOR_ORDER.length - 1
+                            ? currentIndex + 1
+                            : 0;
+                    const nextColor = COLOR_ORDER[nextIndex];
+                    enqueue.effect(() =>
+                        store.trigger.updatePaletteSettings({
+                            palette: { currentColorRef: nextColor },
+                        }),
                     );
                     return context;
                 }
