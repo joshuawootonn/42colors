@@ -237,7 +237,8 @@ function redrawTelegraph(context: InitializedStore) {
 
     const relativePoint = getAbsolutePoint(clientX, clientY, context);
     const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
-    const colorHex = COLOR_TABLE[context.toolSettings.palette.currentColorRef];
+    const colorHex =
+        COLOR_TABLE[context.toolSettings.palette.foregroundColorRef];
     const color = hexToRgbaColor(colorHex);
 
     const brushPolygon = getCanvasPolygon(
@@ -366,16 +367,31 @@ function onPointerDown(
 ): InitializedStore {
     const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
+    // Alt + click for color picking
+    if (e.altKey) {
+        // Get the pixel at the clicked position
+        // TODO: Implement color picking functionality
+        // For now, we'll just prevent the normal brush action
+        return context;
+    }
+
     const brushPoints = getBrushPoints(
         [anchorPoint],
         context.toolSettings.brush.size,
         1,
     );
 
+    // Determine color based on mouse button
+    // Left button (0) uses foreground color, right button (2) uses background color
+    const colorRef =
+        e.button === 2
+            ? context.toolSettings.palette.backgroundColorRef
+            : context.toolSettings.palette.foregroundColorRef;
+
     const nextActiveAction = startBrushAction(
         anchorPoint,
         brushPoints,
-        context.toolSettings.palette.currentColorRef,
+        colorRef,
     );
 
     return {

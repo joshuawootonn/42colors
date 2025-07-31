@@ -24,7 +24,7 @@ function onWheel(
     // Pinch gestures seem to have around 40x smaller deltas though,
     // which is why I have this assumption based on the delta being less than 5.
     // console.log(e.deltaY, e.deltaZ);
-    const deltaZoom = e.ctrlKey
+    const deltaZoom = e.metaKey
         ? Math.abs(e.deltaY) < 5
             ? e.deltaY * -4
             : e.deltaY * -0.3
@@ -49,7 +49,7 @@ function onWheel(
           : e.deltaX / pixelWidth;
     const deltaY = deltaZoom
         ? deltaYFromZoom
-        : e.shiftKey || e.ctrlKey
+        : e.shiftKey || e.metaKey
           ? 0
           : e.deltaY / pixelWidth;
 

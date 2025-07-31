@@ -50,3 +50,7 @@ export function onPointerDown(e: PointerEvent) {
     // console.log("onPointerDown");
     store.trigger.onPointerDown({ e });
 }
+
+export function onContextMenu(e: MouseEvent) {
+    e.preventDefault();
+}

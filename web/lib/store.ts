@@ -34,6 +34,7 @@ import { resizeFullsizeCanvas } from './canvas/fullsize';
 import { resizeRealtimeCanvas } from './canvas/realtime';
 import { CHUNK_LENGTH } from './constants';
 import {
+    onContextMenu,
     onGesture,
     onKeyDown,
     onKeyUp,
@@ -54,7 +55,7 @@ import {
     rectToPolygonSchema,
 } from './geometry/polygon';
 import { KeyboardCode } from './keyboard-codes';
-import { COLOR_ORDER, TRANSPARENT_REF } from './palette';
+import { TRANSPARENT_REF, getNextColor, getPreviousColor } from './palette';
 import { newPixels, setupChannel, setupSocketConnection } from './sockets';
 import {
     DEFAULT_TOOL_SETTINGS,
@@ -73,8 +74,7 @@ import {
     getPlotsByChunk,
     getUserPlots,
 } from './tools/claimer/claimer.rest';
-import { ErasureTool } from './tools/erasure/erasure';
-import { ErasureSettings } from './tools/erasure/erasure';
+import { ErasureSettings, ErasureTool } from './tools/erasure/erasure';
 import { clampErasureSize } from './tools/erasure/erasure-utils';
 import { PaletteSettings } from './tools/palette';
 import { PanTool } from './tools/pan';
@@ -251,6 +251,7 @@ export const store = createStore({
             element.addEventListener('pointerdown', onPointerDown);
             element.addEventListener('pointerup', onPointerUp);
             element.addEventListener('pointerout', onPointerOut);
+            element.addEventListener('contextmenu', onContextMenu);
 
             body.addEventListener('touchstart', onTouch, true);
             body.addEventListener('touchmove', onTouch, true);
@@ -1205,20 +1206,17 @@ export const store = createStore({
                     return context;
                 }
 
-                // Palette navigation shortcuts
+                // Palette navigation shortcuts (now for foreground color)
                 if (isHotkey('[', e)) {
                     e.preventDefault();
-                    const currentColorRef =
-                        context.toolSettings.palette.currentColorRef;
-                    const currentIndex = COLOR_ORDER.indexOf(currentColorRef);
-                    const previousIndex =
-                        currentIndex > 0
-                            ? currentIndex - 1
-                            : COLOR_ORDER.length - 1;
-                    const previousColor = COLOR_ORDER[previousIndex];
                     enqueue.effect(() =>
                         store.trigger.updatePaletteSettings({
-                            palette: { currentColorRef: previousColor },
+                            palette: {
+                                foregroundColorRef: getPreviousColor(
+                                    context.toolSettings.palette
+                                        .foregroundColorRef,
+                                ),
+                            },
                         }),
                     );
                     return context;
@@ -1226,17 +1224,63 @@ export const store = createStore({
 
                 if (isHotkey(']', e)) {
                     e.preventDefault();
-                    const currentColorRef =
-                        context.toolSettings.palette.currentColorRef;
-                    const currentIndex = COLOR_ORDER.indexOf(currentColorRef);
-                    const nextIndex =
-                        currentIndex < COLOR_ORDER.length - 1
-                            ? currentIndex + 1
-                            : 0;
-                    const nextColor = COLOR_ORDER[nextIndex];
                     enqueue.effect(() =>
                         store.trigger.updatePaletteSettings({
-                            palette: { currentColorRef: nextColor },
+                            palette: {
+                                foregroundColorRef: getNextColor(
+                                    context.toolSettings.palette
+                                        .foregroundColorRef,
+                                ),
+                            },
+                        }),
+                    );
+                    return context;
+                }
+
+                // Swap foreground and background colors
+                if (isHotkey('x', e)) {
+                    e.preventDefault();
+                    const foregroundColorRef =
+                        context.toolSettings.palette.foregroundColorRef;
+                    const backgroundColorRef =
+                        context.toolSettings.palette.backgroundColorRef;
+                    enqueue.effect(() =>
+                        store.trigger.updatePaletteSettings({
+                            palette: {
+                                foregroundColorRef: backgroundColorRef,
+                                backgroundColorRef: foregroundColorRef,
+                            },
+                        }),
+                    );
+                    return context;
+                }
+
+                // Cycle through foreground colors with 9 and 0 keys
+                if (isHotkey('9', e)) {
+                    e.preventDefault();
+                    enqueue.effect(() =>
+                        store.trigger.updatePaletteSettings({
+                            palette: {
+                                foregroundColorRef: getPreviousColor(
+                                    context.toolSettings.palette
+                                        .foregroundColorRef,
+                                ),
+                            },
+                        }),
+                    );
+                    return context;
+                }
+
+                if (isHotkey('0', e)) {
+                    e.preventDefault();
+                    enqueue.effect(() =>
+                        store.trigger.updatePaletteSettings({
+                            palette: {
+                                foregroundColorRef: getNextColor(
+                                    context.toolSettings.palette
+                                        .foregroundColorRef,
+                                ),
+                            },
                         }),
                     );
                     return context;
@@ -1328,36 +1372,32 @@ export const store = createStore({
             // Palette navigation with Alt/Option + scroll
             if (e.altKey) {
                 e.preventDefault();
-                const currentColorRef =
-                    context.toolSettings.palette.currentColorRef;
-                const currentIndex = COLOR_ORDER.indexOf(currentColorRef);
 
-                // Scroll up (negative deltaY) = previous color, scroll down (positive deltaY) = next color
-                if (e.deltaY < 0) {
-                    // Previous color
-                    const previousIndex =
-                        currentIndex > 0
-                            ? currentIndex - 1
-                            : COLOR_ORDER.length - 1;
-                    const previousColor = COLOR_ORDER[previousIndex];
-                    enqueue.effect(() =>
+                const currentColorRef = e.shiftKey
+                    ? context.toolSettings.palette.backgroundColorRef
+                    : context.toolSettings.palette.foregroundColorRef;
+
+                const nextColorRef =
+                    e.deltaY < 0
+                        ? getPreviousColor(currentColorRef)
+                        : getNextColor(currentColorRef);
+
+                enqueue.effect(() => {
+                    if (e.shiftKey) {
                         store.trigger.updatePaletteSettings({
-                            palette: { currentColorRef: previousColor },
-                        }),
-                    );
-                } else if (e.deltaY > 0) {
-                    // Next color
-                    const nextIndex =
-                        currentIndex < COLOR_ORDER.length - 1
-                            ? currentIndex + 1
-                            : 0;
-                    const nextColor = COLOR_ORDER[nextIndex];
-                    enqueue.effect(() =>
+                            palette: {
+                                backgroundColorRef: nextColorRef,
+                            },
+                        });
+                    } else {
                         store.trigger.updatePaletteSettings({
-                            palette: { currentColorRef: nextColor },
-                        }),
-                    );
-                }
+                            palette: {
+                                foregroundColorRef: nextColorRef,
+                            },
+                        });
+                    }
+                });
+
                 return context;
             }
 

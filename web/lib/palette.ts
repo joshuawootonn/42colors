@@ -142,3 +142,15 @@ export const COLOR_ORDER: ColorRef[] = [
     BLACK_REF,
     WHITE_REF,
 ];
+
+export function getNextColor(currentColorRef: ColorRef): ColorRef {
+    const currentIndex = COLOR_ORDER.indexOf(currentColorRef);
+    return COLOR_ORDER[(currentIndex + 1) % COLOR_ORDER.length];
+}
+
+export function getPreviousColor(currentColorRef: ColorRef): ColorRef {
+    const currentIndex = COLOR_ORDER.indexOf(currentColorRef);
+    return COLOR_ORDER[
+        (currentIndex - 1 + COLOR_ORDER.length) % COLOR_ORDER.length
+    ];
+}

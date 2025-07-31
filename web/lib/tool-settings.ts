@@ -21,7 +21,8 @@ function getByKey(key: string) {
 const BRUSH_SIZE = 'brush-size';
 const ERASURE_SIZE = 'erasure-size';
 const PALETTE_IS_OPEN = 'palette-is-open';
-const PALETTE_CURRENT_COLOR_REF = 'palette-current-color-ref';
+const PALETTE_FOREGROUND_COLOR_REF = 'palette-foreground-color-ref';
+const PALETTE_BACKGROUND_COLOR_REF = 'palette-background-color-ref';
 const CLAIMER_SELECTED_PLOT_ID = 'claimer-selected-plot-id';
 const CURRENT_TOOL = 'current-tool';
 
@@ -39,8 +40,12 @@ export function updateToolSettings(toolSettings: ToolSettings) {
         toolSettings.palette.isOpen.toString(),
     );
     window.localStorage.setItem(
-        createToolKey(PALETTE_CURRENT_COLOR_REF),
-        toolSettings.palette.currentColorRef.toString(),
+        createToolKey(PALETTE_FOREGROUND_COLOR_REF),
+        toolSettings.palette.foregroundColorRef.toString(),
+    );
+    window.localStorage.setItem(
+        createToolKey(PALETTE_BACKGROUND_COLOR_REF),
+        toolSettings.palette.backgroundColorRef.toString(),
     );
     window.localStorage.setItem(
         createToolKey(CLAIMER_SELECTED_PLOT_ID),
@@ -79,7 +84,11 @@ const stringToToolSchema = z
 const toolSettingsSchema = z.object({
     brush: z.object({ size: z.number() }),
     erasure: z.object({ size: z.number() }),
-    palette: z.object({ isOpen: z.boolean(), currentColorRef: colorRefSchema }),
+    palette: z.object({
+        isOpen: z.boolean(),
+        foregroundColorRef: colorRefSchema,
+        backgroundColorRef: colorRefSchema,
+    }),
     claimer: claimerSettingsSchema,
     currentTool: toolSchema,
 });
@@ -101,7 +110,8 @@ export const DEFAULT_TOOL_SETTINGS = toolSettingsSchema.parse({
     },
     palette: {
         isOpen: true,
-        currentColorRef: 1,
+        foregroundColorRef: 1, // Black
+        backgroundColorRef: 2, // White
     },
     claimer: {
         selectedPlotId: undefined,
@@ -116,8 +126,11 @@ export function getToolSettings(): ToolSettings | undefined {
     const paletteIsOpen = stringToBooleanSchema.safeParse(
         getByKey(PALETTE_IS_OPEN),
     );
-    const paletteCurrentColorRef = stringToColorRefSchema.safeParse(
-        getByKey(PALETTE_CURRENT_COLOR_REF),
+    const paletteForegroundColorRef = stringToColorRefSchema.safeParse(
+        getByKey(PALETTE_FOREGROUND_COLOR_REF),
+    );
+    const paletteBackgroundColorRef = stringToColorRefSchema.safeParse(
+        getByKey(PALETTE_BACKGROUND_COLOR_REF),
     );
 
     const toolSettings: ToolSettings = {
@@ -129,9 +142,12 @@ export function getToolSettings(): ToolSettings | undefined {
         },
         palette: {
             isOpen: paletteIsOpen.data ?? DEFAULT_TOOL_SETTINGS.palette.isOpen,
-            currentColorRef:
-                paletteCurrentColorRef.data ??
-                DEFAULT_TOOL_SETTINGS.palette.currentColorRef,
+            foregroundColorRef:
+                paletteForegroundColorRef.data ??
+                DEFAULT_TOOL_SETTINGS.palette.foregroundColorRef,
+            backgroundColorRef:
+                paletteBackgroundColorRef.data ??
+                DEFAULT_TOOL_SETTINGS.palette.backgroundColorRef,
         },
         claimer: {
             selectedPlotId: undefined,

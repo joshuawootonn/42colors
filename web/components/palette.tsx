@@ -11,17 +11,15 @@ import { useSelector } from '@xstate/store/react';
 
 function IconButton({
     colorRef,
-    showCurrentColorIndicator,
+    isForeground,
+    isBackground,
     className,
     ...props
 }: ComponentPropsWithoutRef<typeof motion.button> & {
-    showCurrentColorIndicator: boolean;
+    isForeground: boolean;
+    isBackground: boolean;
     colorRef: ColorRef;
 }) {
-    const currentColor = useSelector(
-        store,
-        (state) => state.context.toolSettings.palette.currentColorRef,
-    );
     const colorString = useMemo(
         () => new Color(COLOR_TABLE[colorRef]).to('lch').toString(),
         [colorRef],
@@ -50,7 +48,7 @@ function IconButton({
             transition={{ duration: 0 }}
             whileHover={{ backgroundColor: hoveredColor }}
         >
-            {currentColor === colorRef && showCurrentColorIndicator && (
+            {isForeground && (
                 <svg
                     className="absolute -left-[1px] -top-[1px]"
                     width="19"
@@ -61,6 +59,23 @@ function IconButton({
                 >
                     <path
                         d="M17 1L1 17V1H17Z"
+                        fill={isLight ? 'black' : 'white'}
+                        stroke={isLight ? 'black' : 'white'}
+                    />
+                </svg>
+            )}
+
+            {isBackground && (
+                <svg
+                    className="absolute -bottom-[1px] -right-[1px]"
+                    width="13"
+                    height="13"
+                    viewBox="0 0 13 13"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    <path
+                        d="M1 12L12 1V12H1Z"
                         fill={isLight ? 'black' : 'white'}
                         stroke={isLight ? 'black' : 'white'}
                     />
@@ -110,6 +125,15 @@ const item: Variants = {
 
 export function Palette() {
     const state = useSelector(store, (state) => state.context.state);
+    const foregroundColor = useSelector(
+        store,
+        (state) => state.context.toolSettings.palette.foregroundColorRef,
+    );
+    const backgroundColor = useSelector(
+        store,
+        (state) => state.context.toolSettings.palette.backgroundColorRef,
+    );
+
     if (state !== 'initialized') return null;
 
     return (
@@ -119,43 +143,8 @@ export function Palette() {
                 variants={container}
                 initial="show"
                 animate={'show'}
-                // initial={isOpen ? "show" : "hidden"}
-                // animate={isOpen ? "show" : "hidden"}
             >
-                <div>
-                    {/* <ToolIconButton
-            key={currentColor}
-            onClick={() =>
-              store.trigger.updatePaletteSettings({
-                palette: { isOpen: !isOpen },
-              })
-            }
-            active={false}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path
-                d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"
-                className="stroke-primary"
-              />
-              <g className="stroke-primary">
-                <circle cx="13.5" cy="6.5" r=".5" />
-                <circle cx="17.5" cy="10.5" r=".5" />
-                <circle cx="6.5" cy="12.5" r=".5" />
-                <circle cx="8.5" cy="7.5" r=".5" />
-              </g>
-            </svg>
-          </ToolIconButton> */}
-                </div>
+                <div></div>
                 {chunk(COLOR_ORDER, 4).map((colorChunk, i) => (
                     <motion.div
                         variants={row}
@@ -164,16 +153,27 @@ export function Palette() {
                     >
                         {colorChunk.map((colorRef) => (
                             <IconButton
-                                onClick={() =>
+                                onClick={(e) => {
+                                    console.log(e.button);
                                     store.trigger.updatePaletteSettings({
                                         palette: {
-                                            currentColorRef: colorRef,
+                                            foregroundColorRef: colorRef,
                                         },
-                                    })
-                                }
+                                    });
+                                }}
+                                onContextMenu={(e) => {
+                                    // Prevent default context menu from appearing
+                                    e.preventDefault();
+                                    store.trigger.updatePaletteSettings({
+                                        palette: {
+                                            backgroundColorRef: colorRef,
+                                        },
+                                    });
+                                }}
                                 key={colorRef}
                                 colorRef={colorRef}
-                                showCurrentColorIndicator={true}
+                                isForeground={foregroundColor === colorRef}
+                                isBackground={backgroundColor === colorRef}
                                 variants={item}
                             />
                         ))}
