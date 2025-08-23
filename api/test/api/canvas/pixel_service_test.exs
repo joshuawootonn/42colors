@@ -49,52 +49,95 @@ defmodule Api.Canvas.PixelServiceTest do
       end)
     end
 
-    test "rejects all pixels when they are outside user's plot", %{user: user} do
+    test "rejects pixels inside others' plots and accepts outside", %{user: user, plot: plot} do
+      # Create a different user with a covering plot at another area
+      {:ok, other_user} =
+        %User{}
+        |> User.registration_changeset(%{email: "other@example.com", password: "password123456!"})
+        |> Repo.insert()
+
+      {:ok, _other_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Other Plot",
+          description: "Other user land",
+          user_id: other_user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{20, 20}, {20, 30}, {30, 30}, {30, 20}, {20, 20}]],
+            srid: 4326
+          }
+        })
+
       invalid_pixels = [
-        # Outside plot
-        %{x: 15, y: 15, color: 1},
-        # Outside plot
+        # Inside other user's plot (should reject for this user)
+        %{x: 25, y: 25, color: 1},
+        # Outside all plots (should accept)
         %{x: -5, y: 5, color: 2}
       ]
 
-      assert {:error, :all_invalid, rejected} = PixelService.create_many(invalid_pixels, user.id)
-      assert length(rejected) == 2
-      assert Enum.all?(rejected, fn pixel -> pixel.x in [15, -5] end)
+      assert {:ok, created, rejected} = PixelService.create_many(invalid_pixels, user.id)
+      assert length(created) == 1
+      assert length(rejected) == 1
+      assert hd(rejected).x == 25
     end
 
     test "accepts valid pixels and rejects invalid ones (partial acceptance)", %{user: user} do
+      # Create another user with a plot
+      {:ok, other_user} =
+        %User{}
+        |> User.registration_changeset(%{
+          email: "other2@example.com",
+          password: "password123456!"
+        })
+        |> Repo.insert()
+
+      {:ok, _other_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Other Plot 2",
+          description: "Other user land 2",
+          user_id: other_user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{15, 15}, {15, 20}, {20, 20}, {20, 15}, {15, 15}]],
+            srid: 4326
+          }
+        })
+
       mixed_pixels = [
-        # Valid
+        # Valid - inside user's own plot
         %{x: 5, y: 5, color: 1},
-        # Invalid
-        %{x: 15, y: 15, color: 2},
-        # Valid
-        %{x: 3, y: 3, color: 3}
+        # Invalid - inside other user's plot
+        %{x: 17, y: 17, color: 2},
+        # Valid - inside user's own plot
+        %{x: 3, y: 3, color: 3},
+        # Valid - outside all plots
+        %{x: 50, y: 50, color: 4}
       ]
 
       assert {:ok, created, rejected} = PixelService.create_many(mixed_pixels, user.id)
-      assert length(created) == 2
+      assert length(created) == 3
       assert length(rejected) == 1
-      assert List.first(rejected).x == 15
+      assert List.first(rejected).x == 17
 
       # Verify the valid pixels were created correctly
       valid_coords = Enum.map(created, fn p -> {p.x, p.y} end)
       assert {5, 5} in valid_coords
       assert {3, 3} in valid_coords
+      assert {50, 50} in valid_coords
     end
 
-    test "returns error when user has no plots" do
-      {:ok, user_no_plots} =
-        %User{}
-        |> User.registration_changeset(%{
-          email: "noplot@example.com",
-          password: "password123456!"
-        })
-        |> Repo.insert()
+    test "allows unauthenticated users to draw outside plots and rejects inside any plot", %{
+      plot: plot
+    } do
+      pixels = [
+        # inside existing plot (belongs to someone, deny)
+        %{x: 5, y: 5, color: 1},
+        # outside all plots (allow)
+        %{x: 50, y: 50, color: 2}
+      ]
 
-      pixels = [%{x: 5, y: 5, color: 1}]
-
-      assert {:error, :no_plots} = PixelService.create_many(pixels, user_no_plots.id)
+      assert {:ok, created, rejected} = PixelService.create_many(pixels, nil)
+      coords_created = Enum.map(created, fn p -> {p.x, p.y} end)
+      assert {50, 50} in coords_created
+      assert Enum.any?(rejected, fn p -> p.x == 5 and p.y == 5 end)
     end
 
     test "returns error for invalid arguments" do

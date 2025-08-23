@@ -86,7 +86,7 @@ defmodule Api.Canvas.Pixel.Repo do
               x: changes.x,
               y: changes.y,
               color: changes.color,
-              user_id: changes.user_id,
+              user_id: Map.get(changes, :user_id),
               plot_id: Map.get(changes, :plot_id),
               inserted_at: now,
               updated_at: now

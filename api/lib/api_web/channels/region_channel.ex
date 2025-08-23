@@ -12,7 +12,43 @@ defmodule ApiWeb.RegionChannel do
     current_user_id = Map.get(socket.assigns, :current_user_id)
 
     if current_user_id == nil do
-      {:reply, {:error, "unauthed_user"}, socket}
+      # Allow unauthenticated users to draw; pixels will be saved without user association
+      # and only outside others' plots (handled in service layer)
+      # Transform pixels to the format expected by PixelService
+      pixel_attrs =
+        Enum.map(pixels, fn pixel ->
+          %{
+            x: Map.get(pixel, "x"),
+            y: Map.get(pixel, "y"),
+            color: Map.get(pixel, "color")
+          }
+        end)
+
+      case PixelService.create_many(pixel_attrs, nil) do
+        {:ok, pixel_changesets} ->
+          PixelCacheSupervisor.write_pixels_to_file(pixel_changesets)
+
+          valid_pixel_coords =
+            Enum.map(pixel_changesets, fn p -> %{"x" => p.x, "y" => p.y, "color" => p.color} end)
+
+          broadcast!(socket, "new_pixels", %{pixels: valid_pixel_coords, store_id: store_id})
+          {:noreply, socket}
+
+        {:ok, pixel_changesets, _invalid_pixels} ->
+          PixelCacheSupervisor.write_pixels_to_file(pixel_changesets)
+
+          valid_pixel_coords =
+            Enum.map(pixel_changesets, fn p -> %{"x" => p.x, "y" => p.y, "color" => p.color} end)
+
+          broadcast!(socket, "new_pixels", %{pixels: valid_pixel_coords, store_id: store_id})
+          {:noreply, socket}
+
+        {:error, :invalid_arguments} ->
+          {:reply, {:error, "invalid_arguments"}, socket}
+
+        {:error, reason} ->
+          {:reply, {:error, to_string(reason)}, socket}
+      end
     else
       # Transform pixels to the format expected by PixelService
       pixel_attrs =
@@ -52,9 +88,6 @@ defmodule ApiWeb.RegionChannel do
               rejected: length(invalid_pixels),
               invalid_pixels: invalid_pixels
             }}, socket}
-
-        {:error, :no_plots} ->
-          {:reply, {:error, "user_has_no_plots"}, socket}
 
         {:error, :all_invalid, invalid_pixels} ->
           {:reply,

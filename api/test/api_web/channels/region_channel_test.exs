@@ -85,7 +85,7 @@ defmodule ApiWeb.RegionChannelTest do
       assert_broadcast "new_pixels", %{pixels: _, store_id: ^store_id}
     end
 
-    test "rejects pixels when user is not authenticated", %{socket: _socket} do
+    test "allows unauthenticated users to draw outside plots and broadcasts", %{socket: _socket} do
       # Create a socket without user_id
       {:ok, unauth_socket} = connect(ApiWeb.CanvasSocket, %{})
       {:ok, _, unauth_socket} = subscribe_and_join(unauth_socket, RegionChannel, "region:general")
@@ -93,13 +93,12 @@ defmodule ApiWeb.RegionChannelTest do
       pixels = [%{"x" => 10, "y" => 20, "color" => 1}]
       store_id = "test_store"
 
-      ref =
-        push(unauth_socket, "new_pixels", %{
-          "pixels" => pixels,
-          "store_id" => store_id
-        })
+      push(unauth_socket, "new_pixels", %{
+        "pixels" => pixels,
+        "store_id" => store_id
+      })
 
-      assert_reply ref, :error, "unauthed_user"
+      assert_broadcast "new_pixels", %{pixels: _any, store_id: ^store_id}
     end
   end
 end

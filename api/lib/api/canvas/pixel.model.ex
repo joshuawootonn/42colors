@@ -16,6 +16,6 @@ defmodule Api.Canvas.Pixel do
   def changeset(pixel, attrs) do
     pixel
     |> cast(attrs, [:x, :y, :color, :user_id, :plot_id])
-    |> validate_required([:x, :y, :color, :user_id])
+    |> validate_required([:x, :y, :color])
   end
 end

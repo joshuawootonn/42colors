@@ -125,48 +125,37 @@ defmodule Api.Canvas.Plot.Repo do
   end
 
   @doc """
-  Efficiently checks which points are within any of the user's plots using a single query.
+  For a list of points, returns a map from {x, y} to the covering plot's id and owner user_id.
 
-  ## Parameters
-  - `points`: List of %Geo.Point{} structs
-  - `user_id`: The user ID to check plots for
-
-  ## Returns
-  - List of points that are within at least one of the user's plots
-
-  ## Examples
-
-      iex> points = [%Geo.Point{coordinates: {5, 5}, srid: 4326}]
-      iex> points_within_plots(points, user_id)
-      [%Geo.Point{coordinates: {5, 5}, srid: 4326}]
-
+  If a point is not covered by any plot, it will not be present in the map.
+  When multiple plots would cover a point, the query selects an arbitrary one
+  (plots are expected to not overlap by policy).
   """
-  def points_within_plots(points, user_id) when is_list(points) and is_integer(user_id) do
+  def plots_covering_points(points) when is_list(points) do
     if Enum.empty?(points) do
-      []
+      %{}
     else
       point_coords = Enum.map(points, fn %Geo.Point{coordinates: {x, y}} -> {x, y} end)
 
       sql = """
-      SELECT DISTINCT
+      SELECT DISTINCT ON (coords.x, coords.y)
         coords.x,
-        coords.y
+        coords.y,
+        p.id as plot_id,
+        p.user_id
       FROM unnest($1::float[], $2::float[]) as coords(x, y)
-      WHERE EXISTS (
-        SELECT 1 FROM plots
-        WHERE user_id = $3
-        AND polygon IS NOT NULL
-        AND ST_Covers(polygon, ST_SetSRID(ST_MakePoint(coords.x, coords.y), 4326))
-      )
+      JOIN plots p ON p.polygon IS NOT NULL
+        AND ST_Covers(p.polygon, ST_SetSRID(ST_MakePoint(coords.x, coords.y), 4326))
+      ORDER BY coords.x, coords.y, p.id
       """
 
       x_coords = Enum.map(point_coords, &elem(&1, 0))
       y_coords = Enum.map(point_coords, &elem(&1, 1))
 
-      result = Repo.query!(sql, [x_coords, y_coords, user_id])
+      result = Repo.query!(sql, [x_coords, y_coords])
 
-      Enum.map(result.rows, fn [x, y] ->
-        %Geo.Point{coordinates: {x, y}, srid: 4326}
+      Enum.reduce(result.rows, %{}, fn [x, y, plot_id, user_id], acc ->
+        Map.put(acc, {trunc(x), trunc(y)}, %{plot_id: plot_id, user_id: user_id})
       end)
     end
   end
