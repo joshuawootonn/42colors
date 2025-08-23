@@ -14,6 +14,7 @@ import { store } from '@/lib/store';
 import { useSelector } from '@xstate/store/react';
 
 import { Link } from './link';
+import { PlotsListDialog } from './plots-list-dialog';
 
 export function Footer() {
     const searchParams = useSearchParams();
@@ -85,6 +86,8 @@ export function Footer() {
                         />
                     </DropdownMenuContent>
                 </DropdownMenu>
+                <div>/ </div>
+                <PlotsListDialog />
                 <div>/ </div>
                 {user != null ? (
                     <>
