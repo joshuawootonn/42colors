@@ -15,6 +15,8 @@ import { useMutation } from '@tanstack/react-query';
 
 import { store } from '../../store';
 import { PlotError, createPlot } from './claimer.rest';
+import { getIntersectionPolygons, rectToPolygonSchema, getCompositePolygons } from '../../geometry/polygon';
+import { rectSchema } from '../../geometry/rect';
 
 const plotCreateSchema = z.object({
     name: z
@@ -87,6 +89,44 @@ export function CreatePlotForm() {
     });
 
     const onSubmit = (data: PlotCreateForm) => {
+        const context = store.getSnapshot().context;
+        // Ensure we are in a claimer-active state and can compute the active polygon(s)
+        if (
+            context.state === 'initialized' &&
+            context.activeAction?.type === 'claimer-active'
+        ) {
+            const rects = [...context.activeAction.rects];
+            if (context.activeAction.nextRect != null) {
+                rects.push(context.activeAction.nextRect);
+            }
+            // Merge rectangles into polygons as used by the backend
+            const activePolygons = getCompositePolygons(
+                rects.map((rect) => rectToPolygonSchema.parse(rect)),
+            );
+
+            // Compare against existing plots loaded in chunks
+            const existingPolygons = Object.values(
+                context.canvas.chunkCanvases,
+            )
+                .flatMap((chunk) => chunk.plots)
+                .map((p) => p.polygon);
+
+            const hasIntersection = activePolygons.some((ap) =>
+                existingPolygons.some(
+                    (ep) => getIntersectionPolygons(ap, ep).length > 0,
+                ),
+            );
+
+            if (hasIntersection) {
+                setError('polygon', {
+                    type: 'client',
+                    message:
+                        'Your selection overlaps an existing plot. Adjust selection to avoid intersections.',
+                });
+                return;
+            }
+        }
+
         createPlotMutation({
             name: data.name.trim(),
             description: data.description?.trim(),

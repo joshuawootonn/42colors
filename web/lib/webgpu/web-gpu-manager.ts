@@ -58,6 +58,7 @@ export class WebGPUManager {
                 containsMatchingEndpoints?: boolean;
                 color?: [number, number, number, number];
                 lineWidth?: number;
+                filled?: boolean;
             };
         }>,
     ): void {
