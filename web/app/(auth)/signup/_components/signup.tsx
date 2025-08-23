@@ -52,12 +52,22 @@ export function Signup() {
             router.back();
         } catch (error: unknown) {
             if (error instanceof AuthError) {
+                let hasFieldErrors = false;
                 Object.entries(error.errors).forEach(([field, messages]) => {
-                    setError(field as keyof SignupFormData, {
-                        type: 'server',
-                        message: messages[0],
-                    });
+                    if (messages && messages.length > 0) {
+                        hasFieldErrors = true;
+                        setError(field as keyof SignupFormData, {
+                            type: 'server',
+                            message: messages[0],
+                        });
+                    }
                 });
+                if (!hasFieldErrors && error.message) {
+                    setError('root', {
+                        type: 'server',
+                        message: error.message,
+                    });
+                }
             } else {
                 setError('root', {
                     type: 'server',
