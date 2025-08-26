@@ -142,7 +142,7 @@ export async function deletePlot(plotId: number): Promise<void> {
 
 export async function updatePlot(
     plotId: number,
-    plot: Partial<Pick<Plot, 'name' | 'description'>>,
+    plot: Partial<Pick<Plot, 'name' | 'description' | 'polygon'>>,
 ): Promise<Plot> {
     const context = store.getSnapshot().context;
     if (isInitialStore(context)) {
