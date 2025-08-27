@@ -216,6 +216,35 @@ export function isIneligiblePolygon(p: Polygon): boolean {
     );
 }
 
+/**
+ * Returns all intersection polygons between two polygons.
+ */
+export function getIntersectionPolygons(
+    polygon1: Polygon,
+    polygon2: Polygon,
+): Polygon[] {
+    if (isIneligiblePolygon(polygon1) || isIneligiblePolygon(polygon2))
+        return [];
+
+    try {
+        // In this codebase, clipArray(..., true) is used for union.
+        // Using false here computes the clipped intersection regions.
+        const result = clipArray([polygon1.vertices], [polygon2.vertices], false);
+        if (!result || result.length === 0) return [];
+
+        return result.map((poly) =>
+            sortPolygonVerticesIntoClockwiseOrder(
+                polygonSchema.parse({ vertices: poly }),
+            ),
+        );
+    } catch (e) {
+        console.log(`Failed to compute polygon intersection of:\n\n${JSON.stringify(
+            polygon1,
+        )}\n\n${JSON.stringify(polygon2)}\n\n`);
+        return [];
+    }
+}
+
 export function getCanvasPolygon(
     centerX: number,
     centerY: number,

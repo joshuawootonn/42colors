@@ -4,10 +4,12 @@ import {
     Polygon,
     getCompositePolygons,
     rectToPolygonSchema,
+    getIntersectionPolygons,
 } from '../../geometry/polygon';
 import { Rect, rectSchema } from '../../geometry/rect';
 import { InitializedStore } from '../../store';
 import { CLAIMER_YELLOW } from '../../webgpu/colors';
+import { ERROR_RED } from '../../webgpu/colors';
 import { EnqueueObject } from '../../xstate-internal-types';
 import { getAbsolutePoint, getCameraOffset } from '../brush/brush';
 import { getUserPlots } from './claimer.rest';
@@ -51,7 +53,33 @@ function redrawTelegraph(context: InitializedStore) {
         },
     }));
 
-    telegraphWebGPUManager.redrawPolygons(webGPUPolygons);
+    // Compute intersections with existing plots in loaded chunks
+    const existingPolygons = Object.values(context.canvas.chunkCanvases)
+        .flatMap((chunk) => chunk.plots)
+        .map((p) => p.polygon);
+
+    const intersectionPolys = aggregatedPolygons.flatMap((ap) =>
+        existingPolygons.flatMap((ep) => getIntersectionPolygons(ap, ep)),
+    );
+
+    const intersectionRenderData = intersectionPolys.map((polygon) => ({
+        polygon,
+        options: {
+            xOffset,
+            yOffset,
+            xCamera: context.camera.x,
+            yCamera: context.camera.y,
+            pixelSize,
+            color: ERROR_RED,
+            filled: true,
+            containsMatchingEndpoints: false,
+        },
+    }));
+
+    telegraphWebGPUManager.redrawPolygons([
+        ...webGPUPolygons,
+        ...intersectionRenderData,
+    ]);
 }
 
 export type ClaimerComplete = {

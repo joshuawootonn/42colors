@@ -3,6 +3,7 @@ export type Color = [number, number, number, number];
 export const BLUE: Color = [0, 0, 1, 1];
 export const BLACK: Color = [0, 0, 0, 1];
 export const CLAIMER_YELLOW: Color = [246 / 255, 240 / 255, 74 / 255, 1];
+export const ERROR_RED: Color = [1, 0, 0, 0.6];
 
 export function hexToRgbaColor(hex: string): Color {
     // Remove # if present
