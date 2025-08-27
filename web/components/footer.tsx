@@ -41,6 +41,15 @@ export function Footer() {
                     changelog
                 </Link>
                 <div>/</div>
+                <Link
+                    href={{
+                        pathname: '/keyboard-reference',
+                        query: searchParams.toString(),
+                    }}
+                >
+                    keyboard reference
+                </Link>
+                <div>/</div>
                 <DropdownMenu>
                     <DropdownMenuTrigger
                         render={(props) => (
