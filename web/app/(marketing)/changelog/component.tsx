@@ -26,7 +26,7 @@ export default function Changelog() {
                 </span>
             </div>
             <p>A list of all that new and improved in 42colors.</p>
-            <hr className="w-full border-t-2 border-black dark:border-white" />
+            <hr className="w-full border-t-2 border-border" />
             <ul>
                 <li>
                     <DateComponent date={new Date('6/29/2025')} />

@@ -6,7 +6,7 @@ export function PrivacyPolicy() {
         <>
             <H1 className="mb-4">privacy policy</H1>
             <p className="mb-10">details about what data 42colors collects</p>
-            <hr className="mx-0 w-full border-t-2 border-black dark:border-white" />
+            <hr className="mx-0 w-full border-t-2 border-border" />
 
             <H2>what data does 42colors collect?</H2>
             <div>

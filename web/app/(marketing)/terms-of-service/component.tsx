@@ -8,7 +8,7 @@ export function TermsOfService() {
             <p>
                 These terms of service were last updated on November 17, 2024.
             </p>
-            <hr className="mx-0 w-full border-t-2 border-black dark:border-white" />
+            <hr className="mx-0 w-full border-t-2 border-border" />
             <H2>Agreement</H2>
             <p>
                 By accessing this Website, accessible from 42colors.com, you are

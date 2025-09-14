@@ -85,7 +85,7 @@ const PopoverContent = React.forwardRef<
                     <PopoverPrimitive.Popup
                         ref={combinedRef}
                         className={cn(
-                            'select-none border-1.5 border-black bg-popover p-2 text-popover-foreground shadow-md outline-none',
+                            'select-none border-1.5 border-border bg-popover p-2 text-popover-foreground shadow-md outline-none',
                             isDragging && 'cursor-grabbing',
                             className,
                         )}

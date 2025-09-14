@@ -15,9 +15,9 @@ export function ToolIconButton({
         <button
             {...props}
             className={cn(
-                'group flex size-8 items-center justify-center border-1.5 border-black bg-white text-white',
+                'group flex size-8 items-center justify-center border-1.5 border-border bg-white text-white',
                 'relative',
-                'rounded-none outline-none focus-visible:border-black',
+                'rounded-none outline-none focus-visible:border-border',
                 active && 'border-white ring-white invert',
                 className,
             )}

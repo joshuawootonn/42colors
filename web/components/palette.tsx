@@ -40,8 +40,8 @@ function IconButton({
         <motion.button
             {...props}
             className={cn(
-                'border-1 group relative flex size-8 items-center justify-center border-black bg-white text-white ring-2 ring-black',
-                'rounded-none outline-none focus-visible:border-black',
+                'border-1 group relative flex size-8 items-center justify-center border-border bg-white text-white ring-2 ring-black',
+                'rounded-none outline-none focus-visible:border-border',
                 className,
             )}
             initial={{ backgroundColor: colorString }}
