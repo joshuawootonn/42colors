@@ -1019,21 +1019,37 @@ export const store = createStore({
         selectPlot: (context, { plotId }: { plotId: number }, enqueue) => {
             if (isInitialStore(context)) return;
 
-            const plots = context.queryClient.getQueryData([
+            const userPlots = (context.queryClient.getQueryData([
                 'user',
                 'plots',
-            ]) as Plot[];
+            ]) ?? []) as Plot[];
+
+            const recentPlots = (context.queryClient.getQueryData([
+                'plots',
+                'list',
+            ]) ?? []) as Plot[];
+
+            const polygon =
+                userPlots.find((plot) => plot.id === plotId)?.polygon ??
+                recentPlots.find((plot) => plot.id === plotId)?.polygon;
 
             enqueue.effect(() => {
-                store.trigger.moveCamera({
-                    camera: centerCameraOnPoint(
-                        getCenterPoint(
-                            plots.find((plot) => plot.id === plotId)!.polygon,
+                if (polygon != null) {
+                    store.trigger.moveCamera({
+                        camera: centerCameraOnPoint(
+                            getCenterPoint(polygon),
+                            store.getSnapshot().context.camera,
                         ),
-                        store.getSnapshot().context.camera,
-                    ),
-                    options: { deselectPlot: false },
-                });
+                        options: { deselectPlot: false },
+                    });
+                } else {
+                    console.log('userPlots', userPlots);
+                    console.log('recentPlots', recentPlots);
+                    console.log(
+                        'No polygon found for plot, so not moving camera',
+                        plotId,
+                    );
+                }
             });
 
             return {
