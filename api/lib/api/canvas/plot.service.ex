@@ -145,6 +145,33 @@ defmodule Api.Canvas.Plot.Service do
   end
 
   @doc """
+  Lists plots with configurable options.
+
+  This function provides a global list of all plots with configurable
+  sorting and filtering options. Currently supports limit configuration,
+  with future extensibility for user filtering, different sort orders, etc.
+
+  ## Parameters
+  - `opts`: Map of list options
+    - `limit`: Maximum number of plots to return (default: 10, max: 100)
+
+  ## Returns
+  - List of %Plot{} structs sorted by creation date (newest first)
+
+  ## Examples
+
+      iex> Plot.Service.list_plots(%{})
+      [%Plot{}, ...]
+
+      iex> Plot.Service.list_plots(%{limit: 5})
+      [%Plot{}, ...]
+
+  """
+  def list_plots(opts \\ %{}) do
+    Plot.Repo.list_plots(opts)
+  end
+
+  @doc """
   Returns the chunk size used for spatial queries.
   """
   def chunk_size, do: @chunk_size

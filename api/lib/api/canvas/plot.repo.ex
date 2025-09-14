@@ -125,6 +125,45 @@ defmodule Api.Canvas.Plot.Repo do
   end
 
   @doc """
+  Lists plots with configurable options.
+
+  ## Options
+  - `limit`: Maximum number of plots to return (default: 10, max: 100)
+  - Future options will include user_id filtering, different sort orders, etc.
+
+  ## Returns
+  - List of %Plot{} structs sorted by creation date (newest first)
+
+  ## Examples
+
+      iex> list_plots(%{})
+      [%Plot{}, ...]
+
+      iex> list_plots(%{limit: 5})
+      [%Plot{}, ...]
+
+  """
+  def list_plots(opts \\ %{}) do
+    limit = get_list_limit(opts)
+
+    Plot
+    |> order_by([p], desc: p.inserted_at)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  # Private function to handle limit validation
+  defp get_list_limit(%{limit: limit}) when is_integer(limit) and limit > 0 do
+    # Cap at maximum of 100
+    min(limit, 100)
+  end
+
+  defp get_list_limit(%{limit: 0}), do: 0
+
+  # Default limit
+  defp get_list_limit(_), do: 10
+
+  @doc """
   For a list of points, returns a map from {x, y} to the covering plot's id and owner user_id.
 
   If a point is not covered by any plot, it will not be present in the map.

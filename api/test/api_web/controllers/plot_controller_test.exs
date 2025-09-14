@@ -16,7 +16,7 @@ defmodule ApiWeb.PlotControllerTest do
     {:ok, conn: conn, user: user}
   end
 
-  describe "index (chunk-based)" do
+  describe "index" do
     test "returns plots within chunk when x,y parameters provided", %{conn: conn, user: user} do
       # Create a plot that should be found in the chunk
       plot =
@@ -53,10 +53,10 @@ defmodule ApiWeb.PlotControllerTest do
       assert response["error"] == "x and y query parameters are required"
     end
 
-    test "returns error when both x and y parameters are missing", %{conn: conn} do
+    test "returns list of plots when both x and y parameters are missing", %{conn: conn} do
       conn = get(conn, ~p"/api/plots")
-      response = json_response(conn, 400)
-      assert response["error"] == "x and y query parameters are required"
+      response = json_response(conn, 200)
+      assert is_list(response["data"])
     end
 
     test "returns error for invalid x coordinate", %{conn: conn} do
@@ -133,6 +133,101 @@ defmodule ApiWeb.PlotControllerTest do
       plot_ids = Enum.map(response, & &1["id"])
       assert plot1.id in plot_ids
       assert plot2.id in plot_ids
+    end
+
+    test "returns all plots sorted by creation date (newest first) when no x,y provided", %{
+      conn: conn
+    } do
+      # Create multiple users and plots
+      user1 = user_fixture()
+      user2 = user_fixture()
+
+      # Create plots with different creation times
+      {:ok, plot1} =
+        Plot.Repo.create_plot(%{
+          name: "First Plot",
+          description: "First plot",
+          user_id: user1.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+            srid: 4326
+          }
+        })
+
+      Process.sleep(10)
+
+      {:ok, plot2} =
+        Plot.Repo.create_plot(%{
+          name: "Second Plot",
+          description: "Second plot",
+          user_id: user2.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{30, 30}, {30, 40}, {40, 40}, {40, 30}, {30, 30}]],
+            srid: 4326
+          }
+        })
+
+      conn = get(conn, ~p"/api/plots")
+      response = json_response(conn, 200)["data"]
+
+      # Should include plots from both users
+      assert length(response) >= 2
+
+      # Should be sorted by creation date (newest first)
+      timestamps = Enum.map(response, & &1["insertedAt"])
+      sorted_timestamps = Enum.sort(timestamps, :desc)
+      assert timestamps == sorted_timestamps
+
+      # Should include both plots
+      plot_ids = Enum.map(response, & &1["id"])
+      assert plot1.id in plot_ids
+      assert plot2.id in plot_ids
+    end
+
+    test "respects limit parameter when no x,y provided", %{conn: conn} do
+      # Create multiple plots
+      user = user_fixture()
+
+      for i <- 1..5 do
+        Plot.Repo.create_plot(%{
+          name: "Plot #{i}",
+          description: "Plot #{i}",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{i, i}, {i, i + 10}, {i + 10, i + 10}, {i + 10, i}, {i, i}]],
+            srid: 4326
+          }
+        })
+
+        Process.sleep(1)
+      end
+
+      # Test limit of 3
+      conn = get(conn, ~p"/api/plots?limit=3")
+      response = json_response(conn, 200)["data"]
+      assert length(response) == 3
+    end
+
+    test "handles limit of 0 when no x,y provided", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots?limit=0")
+      response = json_response(conn, 200)["data"]
+      assert response == []
+    end
+
+    test "handles invalid limit by using default when no x,y provided", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots?limit=invalid")
+      response = json_response(conn, 200)["data"]
+      # Should use default limit and return results
+      assert is_list(response)
+    end
+
+    test "returns empty list when no plots exist and no x,y provided", %{conn: conn} do
+      # Delete all plots
+      Api.Repo.delete_all(Plot)
+
+      conn = get(conn, ~p"/api/plots")
+      response = json_response(conn, 200)["data"]
+      assert response == []
     end
   end
 

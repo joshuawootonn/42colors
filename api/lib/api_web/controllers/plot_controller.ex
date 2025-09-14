@@ -8,6 +8,20 @@ defmodule ApiWeb.PlotController do
 
   def index(conn, params) do
     case {Map.get(params, "x"), Map.get(params, "y")} do
+      {nil, nil} ->
+        # No x,y provided - return global list of plots
+        limit_param = Map.get(params, "limit")
+
+        list_opts =
+          case parse_limit(limit_param) do
+            {:ok, limit} -> %{limit: limit}
+            # Use default limit
+            {:error, _} -> %{}
+          end
+
+        plots = Plot.Service.list_plots(list_opts)
+        render(conn, :index, plots: plots)
+
       {nil, _} ->
         conn
         |> put_status(:bad_request)
@@ -247,4 +261,19 @@ defmodule ApiWeb.PlotController do
   end
 
   defp parse_integer(_), do: {:error, :invalid_integer}
+
+  defp parse_limit(nil), do: {:error, :no_limit}
+
+  defp parse_limit(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {limit, ""} when limit > 0 and limit <= 100 -> {:ok, limit}
+      # Cap at max
+      {limit, ""} when limit > 100 -> {:ok, 100}
+      # Allow 0 for empty results
+      {0, ""} -> {:ok, 0}
+      _ -> {:error, :invalid_limit}
+    end
+  end
+
+  defp parse_limit(_), do: {:error, :invalid_limit}
 end

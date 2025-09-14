@@ -283,6 +283,226 @@ defmodule Api.Canvas.Plot.ServiceTest do
     end
   end
 
+  describe "list_plots/1" do
+    setup do
+      # Create multiple users
+      user1 = user_fixture()
+      user2 = user_fixture()
+      user3 = user_fixture()
+
+      # Create plots with different creation times to test sorting
+      # We'll insert them in a specific order to test the sorting functionality
+
+      # Oldest plot (created first)
+      {:ok, oldest_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Oldest Plot",
+          description: "This is the oldest plot",
+          user_id: user1.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+            srid: 4326
+          }
+        })
+
+      # Sleep to ensure different timestamps
+      Process.sleep(10)
+
+      # Middle plot
+      {:ok, middle_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Middle Plot",
+          description: "This is a middle plot",
+          user_id: user2.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{30, 30}, {30, 40}, {40, 40}, {40, 30}, {30, 30}]],
+            srid: 4326
+          }
+        })
+
+      Process.sleep(10)
+
+      # Newest plot (created last)
+      {:ok, newest_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Newest Plot",
+          description: "This is the newest plot",
+          user_id: user3.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{50, 50}, {50, 60}, {60, 60}, {60, 50}, {50, 50}]],
+            srid: 4326
+          }
+        })
+
+      Process.sleep(10)
+
+      # Plot without polygon (should still be included in search)
+      {:ok, no_polygon_plot} =
+        Plot.Repo.create_plot(%{
+          name: "No Polygon Plot",
+          description: "Plot without polygon",
+          user_id: user1.id,
+          polygon: nil
+        })
+
+      %{
+        user1: user1,
+        user2: user2,
+        user3: user3,
+        oldest_plot: oldest_plot,
+        middle_plot: middle_plot,
+        newest_plot: newest_plot,
+        no_polygon_plot: no_polygon_plot
+      }
+    end
+
+    test "returns all plots sorted by creation date (newest first) with default limit", %{
+      oldest_plot: oldest_plot,
+      middle_plot: middle_plot,
+      newest_plot: newest_plot,
+      no_polygon_plot: no_polygon_plot
+    } do
+      results = Plot.Service.list_plots(%{})
+
+      # Should return all plots (4 total) since we're under the default limit of 10
+      assert length(results) == 4
+
+      # Should be sorted by creation date (newest first)
+      # Verify that each subsequent plot has an earlier or equal inserted_at timestamp
+      timestamps = Enum.map(results, & &1.inserted_at)
+
+      # Check that timestamps are in descending order (newest first)
+      sorted_timestamps = Enum.sort(timestamps, {:desc, DateTime})
+      assert timestamps == sorted_timestamps
+
+      # Verify all our test plots are included
+      result_ids = Enum.map(results, & &1.id) |> MapSet.new()
+
+      expected_ids =
+        [oldest_plot.id, middle_plot.id, newest_plot.id, no_polygon_plot.id] |> MapSet.new()
+
+      assert MapSet.equal?(result_ids, expected_ids)
+    end
+
+    test "respects custom limit parameter", %{} do
+      # Test limit of 2
+      results = Plot.Service.list_plots(%{limit: 2})
+      assert length(results) == 2
+
+      # Should return the 2 newest plots, with newest first
+      timestamps = Enum.map(results, & &1.inserted_at)
+      sorted_timestamps = Enum.sort(timestamps, {:desc, DateTime})
+      assert timestamps == sorted_timestamps
+    end
+
+    test "enforces maximum limit of 100" do
+      user = user_fixture()
+
+      for i <- 1..150 do
+        Plot.Repo.create_plot(%{
+          name: "Bulk Plot #{i}",
+          description: "Bulk created plot #{i}",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{i, i}, {i, i + 10}, {i + 10, i + 10}, {i + 10, i}, {i, i}]],
+            srid: 4326
+          }
+        })
+
+        # Small delay to ensure different timestamps
+        Process.sleep(1)
+      end
+
+      # Test that requesting more than 100 plots still returns max 100
+      results = Plot.Service.list_plots(%{limit: 150})
+      assert length(results) <= 100
+    end
+
+    test "handles limit of 0" do
+      results = Plot.Service.list_plots(%{limit: 0})
+      assert results == []
+    end
+
+    test "handles negative limit by using default" do
+      results = Plot.Service.list_plots(%{limit: -5})
+
+      # Should fall back to default behavior (return all plots up to default limit)
+      assert length(results) == 4
+    end
+
+    test "returns plots from all users (global search)", %{
+      user1: user1,
+      user2: user2,
+      user3: user3
+    } do
+      results = Plot.Service.list_plots(%{})
+
+      # Should include plots from all users
+      user_ids = results |> Enum.map(& &1.user_id) |> Enum.uniq() |> Enum.sort()
+      expected_user_ids = [user1.id, user2.id, user3.id] |> Enum.sort()
+      assert user_ids == expected_user_ids
+    end
+
+    test "includes plots with and without polygons" do
+      results = Plot.Service.list_plots(%{})
+
+      # Should include both plots with polygons and without
+      plots_with_polygon = Enum.filter(results, &(&1.polygon != nil))
+      plots_without_polygon = Enum.filter(results, &(&1.polygon == nil))
+
+      assert length(plots_with_polygon) == 3
+      assert length(plots_without_polygon) == 1
+    end
+
+    test "returns empty list when no plots exist" do
+      # Delete all plots
+      Api.Repo.delete_all(Plot)
+
+      results = Plot.Service.list_plots(%{})
+      assert results == []
+    end
+
+    test "handles large dataset efficiently" do
+      # Create many plots to test performance and limits
+      user = user_fixture()
+
+      # Create 15 additional plots
+      for i <- 1..15 do
+        Plot.Repo.create_plot(%{
+          name: "Bulk Plot #{i}",
+          description: "Bulk created plot #{i}",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{i, i}, {i, i + 10}, {i + 10, i + 10}, {i + 10, i}, {i, i}]],
+            srid: 4326
+          }
+        })
+
+        # Small delay to ensure different timestamps
+        Process.sleep(1)
+      end
+
+      # Test default limit (should return 10 most recent)
+      results_default = Plot.Service.list_plots(%{})
+      assert length(results_default) == 10
+
+      # Test custom limit within max
+      results_custom = Plot.Service.list_plots(%{limit: 15})
+      assert length(results_custom) == 15
+
+      # Test that results are properly sorted (newest first)
+      # Since we created 15 bulk plots after the 4 setup plots,
+      # the bulk plots should be among the most recent
+      bulk_plots_in_results =
+        Enum.count(results_default, fn plot ->
+          String.contains?(plot.name, "Bulk Plot")
+        end)
+
+      # We should have some bulk plots in the top 10 results
+      assert bulk_plots_in_results > 0
+    end
+  end
+
   describe "create_plot/1" do
     test "creates plot successfully when no overlaps exist" do
       user = user_fixture()
