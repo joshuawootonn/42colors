@@ -17,6 +17,25 @@ const PopoverTrigger = PopoverPrimitive.Trigger;
 
 const PopoverAnchor = PopoverPrimitive.Root;
 
+const PopoverHeading = React.forwardRef<
+    React.ElementRef<'h3'>,
+    React.ComponentPropsWithoutRef<'h3'>
+>(({ className, ...props }, ref) => (
+    <>
+        <div className="mb-8.5" />
+
+        <h3
+            ref={ref}
+            className={cn(
+                'text-md absolute left-0 right-0 top-0 line-clamp-1 truncate border-1.5 border-border bg-secondary py-1 pl-2 pr-9 font-medium text-primary',
+                className,
+            )}
+            {...props}
+        />
+    </>
+));
+PopoverHeading.displayName = 'PopoverHeading';
+
 const PopoverContent = React.forwardRef<
     React.ElementRef<typeof PopoverPrimitive.Popup>,
     React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Popup> & {
@@ -91,18 +110,15 @@ const PopoverContent = React.forwardRef<
                         )}
                         {...props}
                     >
+                        {children}
                         <div
                             className={cn(
-                                'absolute inset-x-0 top-0 h-6 cursor-grab transition-colors',
+                                'absolute inset-x-0 top-0 h-8.5 cursor-grab transition-colors',
                                 'flex items-center justify-center',
                                 isDragging && 'cursor-grabbing',
                             )}
                             onPointerDown={onPointerDown}
-                        >
-                            <div className="h-1 w-8 bg-black" />
-                        </div>
-
-                        {children}
+                        ></div>
 
                         <PopoverPrimitive.Close
                             render={(props) => (
@@ -125,4 +141,11 @@ PopoverContent.displayName = PopoverPrimitive.Popup.displayName;
 
 const PopoverArrow = PopoverPrimitive.Arrow;
 
-export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor, PopoverArrow };
+export {
+    Popover,
+    PopoverTrigger,
+    PopoverContent,
+    PopoverAnchor,
+    PopoverArrow,
+    PopoverHeading,
+};

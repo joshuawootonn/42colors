@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import {
     Popover,
     PopoverContent,
+    PopoverHeading,
     PopoverTrigger,
 } from '@/components/ui/popover';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -108,9 +109,7 @@ export function CreatePlotForm() {
 
             <PopoverContent className="w-80">
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
-                    <div>
-                        <h3 className="mb-2 font-semibold">Create Plot</h3>
-                    </div>
+                    <PopoverHeading>Create Plot</PopoverHeading>
 
                     {errors.polygon && (
                         <div className="mb-2 text-sm text-red-600">
