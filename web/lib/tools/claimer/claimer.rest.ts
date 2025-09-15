@@ -19,7 +19,7 @@ const plotSchema = z.object({
     updatedAt: z.string(),
 });
 
-const arrayPlotResponseSchema = z.object({ data: z.array(plotSchema) });
+export const arrayPlotResponseSchema = z.object({ data: z.array(plotSchema) });
 
 const errorResponseSchema = z.object({
     status: z.literal('error'),
@@ -195,31 +195,6 @@ export async function getPlotsByChunk(x: number, y: number): Promise<Plot[]> {
             method: 'GET',
         },
     );
-
-    const json = await response.json();
-
-    return arrayPlotResponseSchema.parse(json).data;
-}
-
-export async function getRecentPlots(limit: number = 10): Promise<Plot[]> {
-    const context = store.getSnapshot().context;
-    if (isInitialStore(context)) {
-        throw new Error('Server context is not initialized');
-    }
-
-    const search = new URLSearchParams();
-    search.set('limit', limit.toString());
-
-    const response = await fetch(
-        new URL(`/api/plots?${search}`, context.server.apiOrigin),
-        {
-            method: 'GET',
-        },
-    );
-
-    if (!response.ok) {
-        throw new Error('Failed to fetch recent plots');
-    }
 
     const json = await response.json();
 
