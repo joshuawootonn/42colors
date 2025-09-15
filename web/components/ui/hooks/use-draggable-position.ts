@@ -1,19 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-interface UseDraggablePositionOptions {
+type UseDraggablePositionOptions = {
     isEnabled?: boolean;
     onPositionChange?: (position: { x: number; y: number }) => void;
     constrainToViewport?: boolean;
     elementRef: React.RefObject<HTMLElement | null>;
-}
+};
 
-interface UseDraggablePositionReturn {
+type UseDraggablePositionReturn = {
     position: { x: number; y: number };
     isDragging: boolean;
     hasDragged: boolean;
     onPointerDown: (event: React.PointerEvent) => void;
     setPosition: (position: { x: number; y: number }) => void;
-}
+};
 
 type Point = {
     x: number;
@@ -29,8 +29,10 @@ export function useDraggablePosition({
     elementRef,
 }: UseDraggablePositionOptions): UseDraggablePositionReturn {
     const [position, setPositionState] = useState({ x: 0, y: 0 });
+    const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [hasDragged, setHasDragged] = useState(false);
+    const scrollStartPos = useRef<Point | null>(null);
     const dragStartPos = useRef<Point | null>(null);
     const elementStartPos = useRef<Point | null>(null);
 
@@ -85,6 +87,7 @@ export function useDraggablePosition({
 
             setIsDragging(true);
             dragStartPos.current = { x: event.clientX, y: event.clientY };
+            scrollStartPos.current = { x: window.scrollX, y: window.scrollY };
 
             const elementRect = elementRef.current?.getBoundingClientRect();
 
@@ -104,19 +107,27 @@ export function useDraggablePosition({
             if (
                 !isDragging ||
                 !dragStartPos.current ||
+                !scrollStartPos.current ||
                 !elementStartPos.current
             )
                 return;
 
             const deltaX = event.clientX - dragStartPos.current.x;
             const deltaY = event.clientY - dragStartPos.current.y;
+            const deltaScrollX = window.scrollX - scrollStartPos.current.x;
+            const deltaScrollY = window.scrollY - scrollStartPos.current.y;
 
             const newPosition = {
-                x: elementStartPos.current.x + deltaX,
-                y: elementStartPos.current.y + deltaY,
+                x: elementStartPos.current.x + deltaX - deltaScrollX,
+                y: elementStartPos.current.y + deltaY - deltaScrollY,
+            };
+            const newScrollPosition = {
+                x: window.scrollX,
+                y: window.scrollY,
             };
 
             setPosition(newPosition);
+            setScrollPosition(newScrollPosition);
             if (!hasDragged) {
                 setHasDragged(true);
             }
@@ -130,22 +141,36 @@ export function useDraggablePosition({
         setIsDragging(false);
         dragStartPos.current = null;
         elementStartPos.current = null;
+        scrollStartPos.current = null;
     }, [isDragging]);
+
+    const onScroll = useCallback(() => {
+        setScrollPosition({ x: window.scrollX, y: window.scrollY });
+    }, []);
 
     useEffect(() => {
         if (isDragging) {
             document.addEventListener('pointermove', onPointerMove);
             document.addEventListener('pointerup', onPointerUp);
+            document.addEventListener('scroll', onScroll);
 
             return () => {
                 document.removeEventListener('pointermove', onPointerMove);
                 document.removeEventListener('pointerup', onPointerUp);
+                document.removeEventListener('scroll', onScroll);
             };
         }
-    }, [isDragging, onPointerMove, onPointerUp]);
+    }, [isDragging, onPointerMove, onPointerUp, onScroll]);
+
+    const derivedPosition = useMemo(() => {
+        return {
+            x: position.x + scrollPosition.x,
+            y: position.y + scrollPosition.y,
+        };
+    }, [position, scrollPosition]);
 
     return {
-        position,
+        position: derivedPosition,
         isDragging,
         hasDragged,
         onPointerDown: onPointerDown,
