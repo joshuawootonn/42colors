@@ -114,7 +114,7 @@ export function EditPlotForm({ plot }: EditPlotFormProps) {
     };
 
     return (
-        <Popover open={isOpen} onOpenChange={handleOpenChange}>
+        <Popover type="temporary" open={isOpen} onOpenChange={handleOpenChange}>
             <Tooltip.Root>
                 <Tooltip.Trigger
                     render={

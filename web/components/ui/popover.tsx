@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRef } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { useForwardedRef } from '@/components/ui/hooks/use-forwarded-ref';
 import { cn } from '@/lib/utils';
@@ -11,7 +11,46 @@ import { X } from '../icons/x';
 import { useCornerAnchor } from './hooks/use-corner-anchor';
 import { useDraggablePosition } from './hooks/use-draggable-position';
 
-const Popover = PopoverPrimitive.Root;
+// internal type from base-ui-components/react/popover that is not exported
+export type BaseOpenChangeReason =
+    | 'trigger-press'
+    | 'trigger-hover'
+    | 'trigger-focus'
+    | 'focus-out'
+    | 'escape-key'
+    | 'outside-press'
+    | 'list-navigation'
+    | 'item-press'
+    | 'cancel-open'
+    | 'close-press';
+
+const Popover = function ({
+    onOpenChange,
+    type = 'temporary',
+    ...props
+}: React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Root> & {
+    type: 'temporary' | 'persistent';
+}) {
+    const handleOpenChange = useCallback(
+        (
+            open: boolean,
+            event: Event | undefined,
+            reason: BaseOpenChangeReason | undefined,
+        ) => {
+            if (
+                type === 'persistent' &&
+                reason !== 'close-press' &&
+                open === false
+            ) {
+                return;
+            }
+            onOpenChange?.(open, event, reason);
+        },
+        [onOpenChange, type],
+    );
+
+    return <PopoverPrimitive.Root {...props} onOpenChange={handleOpenChange} />;
+};
 
 const PopoverTrigger = PopoverPrimitive.Trigger;
 

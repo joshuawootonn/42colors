@@ -35,7 +35,7 @@ export function EmailLink({
     }, [isOpen]);
 
     return (
-        <Popover open={isOpen}>
+        <Popover open={isOpen} type="temporary">
             <PopoverTrigger
                 render={(props) => (
                     <button

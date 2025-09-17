@@ -42,7 +42,12 @@ export function PlotsPopoverMarkup({
     selectPlot: (plotId: number) => void;
 }) {
     return (
-        <Popover modal={false} open={isOpen} onOpenChange={setIsOpen}>
+        <Popover
+            type="persistent"
+            modal={false}
+            open={isOpen}
+            onOpenChange={setIsOpen}
+        >
             {children}
             <PopoverContent
                 className="w-80"

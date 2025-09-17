@@ -102,7 +102,7 @@ export function CreatePlotForm() {
     };
 
     return (
-        <Popover open={isOpen} onOpenChange={handleOpenChange}>
+        <Popover type="temporary" open={isOpen} onOpenChange={handleOpenChange}>
             <PopoverTrigger
                 render={(props) => <Button {...props}>Claim</Button>}
             />
