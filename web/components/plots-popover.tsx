@@ -57,7 +57,7 @@ export function PlotsPopoverMarkup({
                 }}
             >
                 <PopoverHeading>Recent Plots</PopoverHeading>
-                <div className="max-h-96 space-y-2 overflow-y-auto">
+                <div className="max-h-96 overflow-auto">
                     {isLoading ? (
                         <div className="py-20 text-center text-sm text-muted-foreground">
                             Loading plots...
@@ -71,13 +71,14 @@ export function PlotsPopoverMarkup({
                             No plots found
                         </div>
                     ) : (
-                        <div className="space-y-1">
+                        <div className="flex flex-col space-y-1">
                             {plots.map((plot) => (
                                 <button
                                     key={plot.id}
                                     onClick={() => selectPlot(plot.id)}
                                     className={cn(
-                                        'group w-full border-1.5 border-transparent bg-background p-2 text-left text-foreground',
+                                        'svg-outline-border relative',
+                                        'group border-1.5 border-transparent bg-transparent p-2 text-left text-foreground',
                                         'hover:bg-foreground hover:text-background',
                                         selectedPlotId === plot.id &&
                                             'border-border bg-secondary/50',
