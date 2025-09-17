@@ -140,7 +140,10 @@ export function PlotsPopover({ children }: { children: ReactNode }) {
             error={error}
             plots={plots}
             selectedPlotId={selectedPlotId ?? undefined}
-            selectPlot={(plotId) => store.trigger.selectPlot({ plotId })}
+            selectPlot={(plotId) => {
+                store.trigger.selectPlot({ plotId });
+                store.trigger.fetchPixels();
+            }}
         >
             {children}
         </PlotsPopoverMarkup>
