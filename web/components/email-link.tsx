@@ -4,21 +4,14 @@ import clsx from 'clsx';
 
 import { useEffect, useState } from 'react';
 
-import {
-    Popover,
-    PopoverArrow,
-    PopoverContent,
-    PopoverTrigger,
-} from './ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 
 export function EmailLink({
     children,
     className,
-    popoverClassName,
 }: {
     children?: string;
     className?: string;
-    popoverClassName?: string;
 }) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -61,15 +54,15 @@ export function EmailLink({
                 )}
             />
             <PopoverContent
-                className="block border-2 border-primary bg-secondary px-2 py-1 font-medium outline-none"
                 positionerProps={{
                     side: 'top',
                     sideOffset: 4,
                 }}
+                isDraggable={false}
+                hideCloseButton={true}
+                className="px-2 py-1"
             >
-                <span className={clsx(popoverClassName)}>Copied</span>
-
-                <PopoverArrow className="PopoverArrow dark:fill-secondary" />
+                Copied
             </PopoverContent>
         </Popover>
     );

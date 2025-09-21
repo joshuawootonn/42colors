@@ -82,6 +82,7 @@ const PopoverContent = React.forwardRef<
             typeof PopoverPrimitive.Positioner
         >;
         isDraggable?: boolean;
+        hideCloseButton?: boolean;
         onPositionChange?: (position: { x: number; y: number }) => void;
     }
 >(
@@ -98,6 +99,7 @@ const PopoverContent = React.forwardRef<
             isDraggable = true,
             onPositionChange,
             children,
+            hideCloseButton = false,
             ...props
         },
         ref,
@@ -150,26 +152,30 @@ const PopoverContent = React.forwardRef<
                         {...props}
                     >
                         {children}
-                        <div
-                            className={cn(
-                                'absolute inset-x-0 top-0 h-8.5 cursor-grab transition-colors',
-                                'flex items-center justify-center',
-                                isDragging && 'cursor-grabbing',
-                            )}
-                            onPointerDown={onPointerDown}
-                        ></div>
+                        {isDraggable && (
+                            <div
+                                className={cn(
+                                    'absolute inset-x-0 top-0 h-8.5 cursor-grab transition-colors',
+                                    'flex items-center justify-center',
+                                    isDragging && 'cursor-grabbing',
+                                )}
+                                onPointerDown={onPointerDown}
+                            ></div>
+                        )}
 
-                        <PopoverPrimitive.Close
-                            render={(props) => (
-                                <button
-                                    className="svg-outline absolute right-0 top-0 border-1.5 border-primary bg-white text-primary"
-                                    {...props}
-                                >
-                                    <X />
-                                    <span className="sr-only">Close</span>
-                                </button>
-                            )}
-                        />
+                        {!hideCloseButton && (
+                            <PopoverPrimitive.Close
+                                render={(props) => (
+                                    <button
+                                        className="svg-outline absolute right-0 top-0 border-1.5 border-primary bg-white text-primary"
+                                        {...props}
+                                    >
+                                        <X />
+                                        <span className="sr-only">Close</span>
+                                    </button>
+                                )}
+                            />
+                        )}
                     </PopoverPrimitive.Popup>
                 </PopoverPrimitive.Positioner>
             </PopoverPrimitive.Portal>
