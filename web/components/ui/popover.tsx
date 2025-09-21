@@ -40,6 +40,7 @@ const Popover = function ({
             if (
                 type === 'persistent' &&
                 reason !== 'close-press' &&
+                reason !== 'trigger-press' &&
                 open === false
             ) {
                 return;
