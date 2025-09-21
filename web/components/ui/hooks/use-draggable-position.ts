@@ -98,8 +98,20 @@ export function useDraggablePosition({
             }
 
             elementStartPos.current = elementRect;
+
+            const deltaX = event.clientX - dragStartPos.current.x;
+            const deltaY = event.clientY - dragStartPos.current.y;
+            const deltaScrollX = window.scrollX - scrollStartPos.current.x;
+            const deltaScrollY = window.scrollY - scrollStartPos.current.y;
+
+            const newPosition = {
+                x: elementStartPos.current.x + deltaX - deltaScrollX,
+                y: elementStartPos.current.y + deltaY - deltaScrollY,
+            };
+
+            setPosition(newPosition);
         },
-        [isEnabled, elementRef],
+        [isEnabled, elementRef, setPosition],
     );
 
     const onPointerMove = useCallback(
