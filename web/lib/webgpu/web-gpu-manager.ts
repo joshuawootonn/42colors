@@ -49,16 +49,7 @@ export class WebGPUManager {
     redrawPolygons(
         polygons: Array<{
             polygon: Polygon;
-            options?: {
-                xOffset?: number;
-                yOffset?: number;
-                xCamera?: number;
-                yCamera?: number;
-                pixelSize?: number;
-                containsMatchingEndpoints?: boolean;
-                color?: [number, number, number, number];
-                lineWidth?: number;
-            };
+            options?: Partial<RenderOptions>;
         }>,
     ): void {
         if (!this.polygonRenderer) {

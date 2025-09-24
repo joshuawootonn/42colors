@@ -1,6 +1,7 @@
 import earcut from 'earcut';
 
 import { Polygon } from '../geometry/polygon';
+import { absolutePointTupleSchema } from '../line';
 import { WebGPUBufferPool } from './buffer-pool';
 import { Color } from './colors';
 
@@ -16,18 +17,48 @@ export interface WebGPUPolygonRenderer {
     bufferPool: WebGPUBufferPool;
 }
 
+/**
+ * Configuration options for rendering polygons with WebGPU
+ */
 export interface RenderOptions {
+    /** The number of pixels between the viewport edge and your first full pixel on the X-axis */
     xOffset?: number;
+
+    /** The number of pixels between the viewport edge and your first full pixel on the  Y-axis */
     yOffset?: number;
+
+    /** Camera X position for viewport transformation */
     xCamera?: number;
+
+    /** Camera Y position for viewport transformation */
     yCamera?: number;
+
+    /** Size of each pixel in the grid system */
     pixelSize?: number;
+
+    /**
+     * Whether the polygon vertices include a duplicate endpoint
+     * (i.e., first vertex is repeated at the end)
+     */
     containsMatchingEndpoints?: boolean;
+
+    /** RGBA color values for rendering the polygon */
     color?: Color;
+
+    /** Width of the canvas in pixels */
     canvasWidth: number;
+
+    /** Height of the canvas in pixels */
     canvasHeight: number;
+
+    /** Width of the outline stroke when rendering polygon edges */
     lineWidth?: number;
+
+    /** Whether to render the polygon as a filled shape or just the outline */
     filled?: boolean;
+
+    /** Whether the polygon should be rendered with covering/adjustment logic. This is helpful for covering plots, but not helpful for creating exact shapes for telegraphs. */
+    covered?: boolean;
 }
 
 export async function createWebGPUPolygonRenderer(
@@ -301,16 +332,30 @@ function generateFilledPolygonTriangles(
         ? polygon.vertices.slice(0, -1)
         : polygon.vertices;
 
-    if (points.length < 3) {
+    if (points.length === 2 || points.length === 3 || points.length === 0) {
         return new Float32Array([]);
     }
 
     const flatVertices: number[] = [];
-    for (const point of points) {
+    if (points.length === 1) {
+        console.log('points.length === 1');
         flatVertices.push(
-            point[0] - xCamera + xOffset,
-            point[1] - yCamera + yOffset,
+            polygon.vertices[0][0] - xCamera + xOffset,
+            polygon.vertices[0][1] - yCamera + yOffset,
+            polygon.vertices[0][0] - xCamera + xOffset + 1,
+            polygon.vertices[0][1] - yCamera + yOffset,
+            polygon.vertices[0][0] - xCamera + xOffset + 1,
+            polygon.vertices[0][1] - yCamera + yOffset + 1,
+            polygon.vertices[0][0] - xCamera + xOffset,
+            polygon.vertices[0][1] - yCamera + yOffset + 1,
         );
+    } else {
+        for (const point of points) {
+            flatVertices.push(
+                point[0] - xCamera + xOffset,
+                point[1] - yCamera + yOffset,
+            );
+        }
     }
 
     const triangleIndices = earcut(flatVertices);
@@ -325,6 +370,86 @@ function generateFilledPolygonTriangles(
     }
 
     return new Float32Array(triangleVertices);
+}
+
+export function getCoveringPolygon(
+    polygon: Polygon,
+    options: Partial<RenderOptions> = {},
+): Polygon {
+    const { containsMatchingEndpoints = false } = options;
+
+    const baseOffset = 1;
+
+    if (polygon.vertices.length < 3) {
+        return polygon;
+    }
+
+    const points = containsMatchingEndpoints
+        ? polygon.vertices.slice(0, -1)
+        : polygon.vertices;
+
+    // We need to adjust each vertex based on the turn from previous edge to current edge
+    const coveringVertices = points.map((vertex, i) => {
+        // Get previous, current, and next vertices (wrapping around)
+        const prevVertex = points[(i - 1 + points.length) % points.length];
+        const currentVertex = vertex;
+        const nextVertex = points[(i + 1) % points.length];
+
+        // Calculate previous edge direction (to current vertex)
+        const prevDx = currentVertex[0] - prevVertex[0];
+        const prevDy = currentVertex[1] - prevVertex[1];
+
+        // Calculate current edge direction (from current vertex)
+        const currDx = nextVertex[0] - currentVertex[0];
+        const currDy = nextVertex[1] - currentVertex[1];
+
+        // Determine offset based on the turn from previous edge to current edge
+        let xOffset = 0;
+        let yOffset = 0;
+
+        // Normalize directions to -1, 0, 1 for cleaner logic
+        const prevDirX = prevDx > 0 ? 1 : prevDx < 0 ? -1 : 0;
+        const prevDirY = prevDy > 0 ? 1 : prevDy < 0 ? -1 : 0;
+        const currDirX = currDx > 0 ? 1 : currDx < 0 ? -1 : 0;
+        const currDirY = currDy > 0 ? 1 : currDy < 0 ? -1 : 0;
+
+        // Based on your expected pattern, handle all the turn combinations:
+
+        if (prevDirY === -1 && currDirX === 1) {
+            // Previous: UP, Current: RIGHT → no offset
+            // Do nothing
+        } else if (prevDirX === 1 && currDirY === 1) {
+            // Previous: RIGHT, Current: DOWN → +X offset
+            xOffset = baseOffset;
+        } else if (prevDirY === 1 && currDirX === -1) {
+            // Previous: DOWN, Current: LEFT → +X, +Y offset
+            xOffset = baseOffset;
+            yOffset = baseOffset;
+        } else if (prevDirX === -1 && currDirY === -1) {
+            // Previous: LEFT, Current: UP → +Y offset
+            yOffset = baseOffset;
+        } else if (prevDirY === 1 && currDirX === 1) {
+            // Previous: DOWN, Current: RIGHT → +X offset (new case from complex polygon)
+            xOffset = baseOffset;
+        } else if (prevDirY === -1 && currDirX === -1) {
+            // Previous: UP, Current: LEFT → +Y offset (new case from complex polygon)
+            yOffset = baseOffset;
+        } else if (prevDirX === -1 && currDirY === 1) {
+            // Previous: LEFT, Current: DOWN → +X, +Y offset (new case!)
+            xOffset = baseOffset;
+            yOffset = baseOffset;
+        }
+
+        return absolutePointTupleSchema.parse([
+            vertex[0] + xOffset,
+            vertex[1] + yOffset,
+        ]);
+    });
+
+    return {
+        ...polygon,
+        vertices: [...coveringVertices, coveringVertices.at(0)!],
+    };
 }
 
 export function renderPolygon(
@@ -343,6 +468,7 @@ export function renderPolygon(
         canvasWidth,
         canvasHeight,
         filled = false,
+        covered = true,
     } = options;
 
     // Update transform uniform buffer
@@ -366,14 +492,19 @@ export function renderPolygon(
     const colorData = new Float32Array(color);
     renderer.device.queue.writeBuffer(renderer.colorBuffer, 0, colorData);
 
-    // Generate vertex data based on filled or outline mode
+    const coveringPolygon = covered
+        ? getCoveringPolygon(polygon, options)
+        : polygon;
+
     const vertexData = filled
-        ? generateFilledPolygonTriangles(polygon, options)
-        : generatePolygonLineSegments(polygon, options);
+        ? generateFilledPolygonTriangles(coveringPolygon, options)
+        : generatePolygonLineSegments(coveringPolygon, options);
 
     if (vertexData.length === 0) {
         return;
     }
+
+    // console.log('renderPolygon', vertexData);
 
     // Get a buffer from the pool
     const vertexBuffer = renderer.bufferPool.getBuffer(vertexData.length * 4);
