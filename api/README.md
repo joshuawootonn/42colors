@@ -25,6 +25,11 @@ Only do this if something goes really wrong with Kamal
   - just doing this to make sure it worked
 - `mix ecto.migrate`
 
+
+## How to run tests
+
+- `export $(xargs <.env.test) && mix clean && mix compile && mix test`
+
 ## How I added a volume in and setup auto mounting
 
 - https://docs.digitalocean.com/products/volumes/how-to/mount/
