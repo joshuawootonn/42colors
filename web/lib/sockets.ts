@@ -46,6 +46,15 @@ const newPixelResponseToPixelSchmea = newPixelResponseSchema.transform(
 
 export type PixelResponse = z.infer<typeof newPixelResponseSchema>;
 
+const errorResponses = z.union([
+    z.object({
+        error_code: z.literal(ErrorCode.PROHIBITED_PIXELS),
+        message: z.string(),
+        plot_ids: z.array(z.number()),
+    }),
+    z.literal(ErrorCode.UNAUTHED_USER),
+]);
+
 export function newPixels(context: InitializedStore, pixels: Pixel[]) {
     if (isInitialStore(context)) return;
     const authURL = context.server.authURL;
@@ -62,7 +71,11 @@ export function newPixels(context: InitializedStore, pixels: Pixel[]) {
             store_id: context.id,
         })
         .receive('error', (resp) => {
-            if (resp === ErrorCode.UNAUTHED_USER) {
+            const response = errorResponses.safeParse(resp);
+
+            if (!response.success) return;
+
+            if (response.data === ErrorCode.UNAUTHED_USER) {
                 toast({
                     title: 'Login (when you are ready)',
                     description: 'to save and share your pixels.',
@@ -74,6 +87,14 @@ export function newPixels(context: InitializedStore, pixels: Pixel[]) {
                               },
                           }
                         : undefined,
+                });
+                return;
+            }
+
+            if (response.data.error_code === ErrorCode.PROHIBITED_PIXELS) {
+                toast({
+                    title: "You can't draw here",
+                    description: "it's someone else's plot",
                 });
             }
         });
