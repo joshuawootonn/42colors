@@ -49,7 +49,7 @@ defmodule Api.Canvas.PixelServiceTest do
       end)
     end
 
-    test "rejects pixels inside others' plots and accepts outside", %{user: user, plot: plot} do
+    test "rejects pixels inside others' plots and accepts outside", %{user: user, plot: _plot} do
       # Create a different user with a covering plot at another area
       {:ok, other_user} =
         %User{}
@@ -74,7 +74,15 @@ defmodule Api.Canvas.PixelServiceTest do
         %{x: -5, y: 5, color: 2}
       ]
 
-      assert {:ok, created, rejected} = PixelService.create_many(invalid_pixels, user.id)
+      {created, rejected} =
+        case PixelService.create_many(invalid_pixels, user.id) do
+          {:ok, created, rejected, _plot_ids} ->
+            {created, rejected}
+
+          other ->
+            flunk("Expected success with mixed results, got: #{inspect(other)}")
+        end
+
       assert length(created) == 1
       assert length(rejected) == 1
       assert hd(rejected).x == 25
@@ -112,7 +120,15 @@ defmodule Api.Canvas.PixelServiceTest do
         %{x: 50, y: 50, color: 4}
       ]
 
-      assert {:ok, created, rejected} = PixelService.create_many(mixed_pixels, user.id)
+      {created, rejected} =
+        case PixelService.create_many(mixed_pixels, user.id) do
+          {:ok, created, rejected, _plot_ids} ->
+            {created, rejected}
+
+          other ->
+            flunk("Expected success with mixed results, got: #{inspect(other)}")
+        end
+
       assert length(created) == 3
       assert length(rejected) == 1
       assert List.first(rejected).x == 17
@@ -125,7 +141,7 @@ defmodule Api.Canvas.PixelServiceTest do
     end
 
     test "allows unauthenticated users to draw outside plots and rejects inside any plot", %{
-      plot: plot
+      plot: _plot
     } do
       pixels = [
         # inside existing plot (belongs to someone, deny)
@@ -134,7 +150,15 @@ defmodule Api.Canvas.PixelServiceTest do
         %{x: 50, y: 50, color: 2}
       ]
 
-      assert {:ok, created, rejected} = PixelService.create_many(pixels, nil)
+      {created, rejected} =
+        case PixelService.create_many(pixels, nil) do
+          {:ok, created, rejected, _plot_ids} ->
+            {created, rejected}
+
+          other ->
+            flunk("Expected success with mixed results, got: #{inspect(other)}")
+        end
+
       coords_created = Enum.map(created, fn p -> {p.x, p.y} end)
       assert {50, 50} in coords_created
       assert Enum.any?(rejected, fn p -> p.x == 5 and p.y == 5 end)
@@ -163,13 +187,97 @@ defmodule Api.Canvas.PixelServiceTest do
         {:ok, pixels} ->
           assert length(pixels) == 4
 
-        {:ok, pixels, rejected} ->
+        {:ok, pixels, rejected, _plot_ids} ->
           # Some boundary pixels accepted, some rejected
           assert length(pixels) + length(rejected) == 4
 
-        {:error, :all_invalid, rejected} ->
+        {:error, :all_invalid, rejected, _plot_ids} ->
           # If all boundary pixels are rejected, that's also acceptable behavior
           assert length(rejected) == 4
+      end
+    end
+
+    test "returns plot IDs when pixels are rejected due to being in other user's plots", %{
+      user: user,
+      plot: _plot
+    } do
+      # Create another user and their plot
+      {:ok, other_user} =
+        %User{}
+        |> User.registration_changeset(%{email: "other@example.com", password: "password123456!"})
+        |> Repo.insert()
+
+      other_plot_attrs = %{
+        name: "Other User's Plot",
+        description: "Another plot",
+        user_id: other_user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{20, 20}, {20, 30}, {30, 30}, {30, 20}, {20, 20}]],
+          srid: 4326
+        }
+      }
+
+      {:ok, other_plot} = Plot.Repo.create_plot(other_plot_attrs)
+
+      # Try to draw pixels in both plots
+      pixels = [
+        # Inside current user's plot (should be accepted)
+        %{x: 5, y: 5, color: 1},
+        # Inside other user's plot (should be rejected)
+        %{x: 25, y: 25, color: 2},
+        # Outside all plots (should be accepted)
+        %{x: 50, y: 50, color: 3}
+      ]
+
+      case PixelService.create_many(pixels, user.id) do
+        {:ok, created_pixels, rejected_pixels, rejected_plot_ids} ->
+          # Should have 2 accepted pixels and 1 rejected
+          assert length(created_pixels) == 2
+          assert length(rejected_pixels) == 1
+          assert rejected_plot_ids == [other_plot.id]
+
+          # Check that the rejected pixel is the one in the other user's plot
+          rejected_pixel = List.first(rejected_pixels)
+          assert rejected_pixel.x == 25
+          assert rejected_pixel.y == 25
+
+        other ->
+          flunk("Expected partial success with rejected pixels, got: #{inspect(other)}")
+      end
+    end
+
+    test "returns all plot IDs when all pixels are rejected", %{user: user} do
+      # Create another user and their plot
+      {:ok, other_user} =
+        %User{}
+        |> User.registration_changeset(%{email: "other@example.com", password: "password123456!"})
+        |> Repo.insert()
+
+      other_plot_attrs = %{
+        name: "Other User's Plot",
+        description: "Another plot",
+        user_id: other_user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{20, 20}, {20, 30}, {30, 30}, {30, 20}, {20, 20}]],
+          srid: 4326
+        }
+      }
+
+      {:ok, other_plot} = Plot.Repo.create_plot(other_plot_attrs)
+
+      # Try to draw all pixels in the other user's plot
+      pixels = [
+        %{x: 25, y: 25, color: 1},
+        %{x: 26, y: 26, color: 2}
+      ]
+
+      case PixelService.create_many(pixels, user.id) do
+        {:error, :all_invalid, rejected_pixels, rejected_plot_ids} ->
+          assert length(rejected_pixels) == 2
+          assert rejected_plot_ids == [other_plot.id]
+
+        other ->
+          flunk("Expected all pixels to be rejected, got: #{inspect(other)}")
       end
     end
   end

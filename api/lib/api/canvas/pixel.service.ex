@@ -20,9 +20,15 @@ defmodule Api.Canvas.PixelService do
     points = Enum.map(pixels, fn pixel -> create_point(pixel.x, pixel.y) end)
     point_to_plot = Plot.Repo.plots_covering_points(points)
 
-    {accepted, rejected} =
-      Enum.split_with(pixels, fn pixel ->
-        case Map.get(point_to_plot, {pixel.x, pixel.y}) do
+    # Split pixels and collect plot info for rejected pixels
+    {accepted, rejected_with_plots} =
+      pixels
+      |> Enum.map(fn pixel ->
+        plot_info = Map.get(point_to_plot, {pixel.x, pixel.y})
+        {pixel, plot_info}
+      end)
+      |> Enum.split_with(fn {_pixel, plot_info} ->
+        case plot_info do
           nil ->
             # Not inside any plot: accept
             true
@@ -36,8 +42,25 @@ defmodule Api.Canvas.PixelService do
         end
       end)
 
+    # Extract just the pixels from accepted tuples
+    accepted = Enum.map(accepted, fn {pixel, _plot_info} -> pixel end)
+
+    # Extract rejected pixels and their plot IDs
+    rejected = Enum.map(rejected_with_plots, fn {pixel, _plot_info} -> pixel end)
+
+    rejected_plot_ids =
+      rejected_with_plots
+      |> Enum.map(fn {_pixel, plot_info} ->
+        case plot_info do
+          %{plot_id: plot_id} -> plot_id
+          _ -> nil
+        end
+      end)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
+
     if Enum.empty?(accepted) do
-      {:error, :all_invalid, rejected}
+      {:error, :all_invalid, rejected, rejected_plot_ids}
     else
       # Attach user_id when present and plot_id when the accepted pixel is inside the user's own plot
       accepted_attrs =
@@ -59,7 +82,7 @@ defmodule Api.Canvas.PixelService do
           if Enum.empty?(rejected) do
             {:ok, created_pixels}
           else
-            {:ok, created_pixels, rejected}
+            {:ok, created_pixels, rejected, rejected_plot_ids}
           end
 
         {:error, changeset} ->

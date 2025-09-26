@@ -8,7 +8,7 @@ defmodule ApiWeb.RegionChannel do
     {:ok, socket}
   end
 
-  def handle_in("new_pixels", %{"pixels" => pixels, "store_id" => store_id}, socket) do
+  def handle_in("new_pixels", %{"pixels" => pixels, "store_id" => store_id} = payload, socket) do
     current_user_id = Map.get(socket.assigns, :current_user_id)
 
     if current_user_id == nil do
@@ -34,14 +34,38 @@ defmodule ApiWeb.RegionChannel do
           broadcast!(socket, "new_pixels", %{pixels: valid_pixel_coords, store_id: store_id})
           {:noreply, socket}
 
-        {:ok, pixel_changesets, _invalid_pixels} ->
+        {:ok, pixel_changesets, invalid_pixels, rejected_plot_ids} ->
           PixelCacheSupervisor.write_pixels_to_file(pixel_changesets)
 
           valid_pixel_coords =
             Enum.map(pixel_changesets, fn p -> %{"x" => p.x, "y" => p.y, "color" => p.color} end)
 
           broadcast!(socket, "new_pixels", %{pixels: valid_pixel_coords, store_id: store_id})
-          {:noreply, socket}
+
+          action_id = Map.get(payload, "action_id")
+
+          {:reply,
+           {:error,
+            %{
+              error_code: "prohibited_pixels",
+              action_id: action_id,
+              rejected_pixels: invalid_pixels,
+              plot_ids: rejected_plot_ids,
+              message: "Some pixels were rejected because they were within someone else's plot"
+            }}, socket}
+
+        {:error, :all_invalid, invalid_pixels, rejected_plot_ids} ->
+          action_id = Map.get(payload, "action_id")
+
+          {:reply,
+           {:error,
+            %{
+              error_code: "prohibited_pixels",
+              action_id: action_id,
+              rejected_pixels: invalid_pixels,
+              plot_ids: rejected_plot_ids,
+              message: "All pixels were rejected because they were within someone else's plot"
+            }}, socket}
 
         {:error, :invalid_arguments} ->
           {:reply, {:error, "invalid_arguments"}, socket}
@@ -71,8 +95,8 @@ defmodule ApiWeb.RegionChannel do
           broadcast!(socket, "new_pixels", %{pixels: valid_pixel_coords, store_id: store_id})
           {:noreply, socket}
 
-        {:ok, pixel_changesets, invalid_pixels} ->
-          # Some pixels were valid and created, some were invalid
+        {:ok, pixel_changesets, invalid_pixels, rejected_plot_ids} ->
+          # Some pixels were valid and created, some were invalid due to being in other users' plots
           PixelCacheSupervisor.write_pixels_to_file(pixel_changesets)
 
           # Only broadcast the valid pixels that were actually created
@@ -81,18 +105,30 @@ defmodule ApiWeb.RegionChannel do
 
           broadcast!(socket, "new_pixels", %{pixels: valid_pixel_coords, store_id: store_id})
 
+          action_id = Map.get(payload, "action_id")
+
           {:reply,
-           {:ok,
+           {:error,
             %{
-              created: length(pixel_changesets),
-              rejected: length(invalid_pixels),
-              invalid_pixels: invalid_pixels
+              error_code: "prohibited_pixels",
+              action_id: action_id,
+              rejected_pixels: invalid_pixels,
+              plot_ids: rejected_plot_ids,
+              message: "Some pixels were rejected because they were within someone else's plot"
             }}, socket}
 
-        {:error, :all_invalid, invalid_pixels} ->
+        {:error, :all_invalid, invalid_pixels, rejected_plot_ids} ->
+          action_id = Map.get(payload, "action_id")
+
           {:reply,
-           {:error, %{message: "all_pixels_outside_plots", invalid_pixels: invalid_pixels}},
-           socket}
+           {:error,
+            %{
+              error_code: "prohibited_pixels",
+              action_id: action_id,
+              rejected_pixels: invalid_pixels,
+              plot_ids: rejected_plot_ids,
+              message: "All pixels were rejected because they were within someone else's plot"
+            }}, socket}
 
         {:error, :invalid_arguments} ->
           {:reply, {:error, "invalid_arguments"}, socket}
