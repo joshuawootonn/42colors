@@ -159,9 +159,8 @@ export function EditPlotForm({ plot }: EditPlotFormProps) {
             </Tooltip.Root>
 
             <PopoverContent className="w-80">
+                <PopoverHeading>Edit Plot</PopoverHeading>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
-                    <PopoverHeading>Edit Plot</PopoverHeading>
-
                     {errors.polygon && (
                         <div className="mb-2 text-sm text-red-600">
                             {String(errors.polygon?.message ?? errors.polygon)}
