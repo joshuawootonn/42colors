@@ -12,7 +12,7 @@ defmodule AssertionTest do
     Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
   end
 
-  describe "initialize_file" do
+  describe "initialize_file when the file does not exist" do
     test "happy path" do
       file_path = Application.get_env(:api, Api.PixelCache)[:pixel_cache_file_name]
       PixelCache.initialize_file()
@@ -34,10 +34,10 @@ defmodule AssertionTest do
       PixelCache.initialize_file()
 
       initial_list = [
-        %{x: 1, y: 1, color: 1},
-        %{x: 2, y: 2, color: 1},
-        %{x: 3, y: 3, color: 1},
-        %{x: 4, y: 4, color: 1}
+        %{x: 1, y: 1, color_ref: 1},
+        %{x: 2, y: 2, color_ref: 1},
+        %{x: 3, y: 3, color_ref: 1},
+        %{x: 4, y: 4, color_ref: 1}
       ]
 
       PixelCache.write_coordinates_to_file(initial_list)
@@ -53,10 +53,10 @@ defmodule AssertionTest do
       PixelCache.initialize_file()
 
       initial_list = [
-        %{x: 1, y: 1, color: 3},
-        %{x: 2, y: 2, color: 4},
-        %{x: 3, y: 3, color: 5},
-        %{x: 4, y: 4, color: 6}
+        %{x: 1, y: 1, color_ref: 3},
+        %{x: 2, y: 2, color_ref: 4},
+        %{x: 3, y: 3, color_ref: 5},
+        %{x: 4, y: 4, color_ref: 6}
       ]
 
       PixelCache.write_coordinates_to_file(initial_list)
@@ -72,10 +72,10 @@ defmodule AssertionTest do
       PixelCache.initialize_file()
 
       initial_list = [
-        %{x: -1, y: 1, color: 1},
-        %{x: -2, y: -2, color: 1},
-        %{x: 3, y: -3, color: 1},
-        %{x: -4, y: -4, color: 1}
+        %{x: -1, y: 1, color_ref: 1},
+        %{x: -2, y: -2, color_ref: 1},
+        %{x: 3, y: -3, color_ref: 1},
+        %{x: -4, y: -4, color_ref: 1}
       ]
 
       PixelCache.write_coordinates_to_file(initial_list)
@@ -92,11 +92,11 @@ defmodule AssertionTest do
       PixelCache.initialize_file()
 
       initial_list = [
-        %{x: 4, y: 4, color: 1},
-        %{x: 0, y: 0, color: 1},
-        %{x: -5, y: -5, color: 1},
-        %{x: 4, y: -5, color: 1},
-        %{x: -5, y: 4, color: 1}
+        %{x: 4, y: 4, color_ref: 1},
+        %{x: 0, y: 0, color_ref: 1},
+        %{x: -5, y: -5, color_ref: 1},
+        %{x: 4, y: -5, color_ref: 1},
+        %{x: -5, y: 4, color_ref: 1}
       ]
 
       PixelCache.write_coordinates_to_file(initial_list)
@@ -111,10 +111,10 @@ defmodule AssertionTest do
   describe "read binary from file" do
     test "positive numbers" do
       initial_list = [
-        %{x: 1, y: 1, color: 1},
-        %{x: 2, y: 2, color: 1},
-        %{x: 3, y: 3, color: 1},
-        %{x: 4, y: 4, color: 1}
+        %{x: 1, y: 1, color_ref: 1},
+        %{x: 2, y: 2, color_ref: 1},
+        %{x: 3, y: 3, color_ref: 1},
+        %{x: 4, y: 4, color_ref: 1}
       ]
 
       PixelCache.initialize_file()
@@ -128,10 +128,10 @@ defmodule AssertionTest do
 
     test "negative numbers" do
       initial_list = [
-        %{x: -1, y: 1, color: 1},
-        %{x: -2, y: -2, color: 1},
-        %{x: 3, y: -3, color: 1},
-        %{x: -4, y: -4, color: 1}
+        %{x: -1, y: 1, color_ref: 1},
+        %{x: -2, y: -2, color_ref: 1},
+        %{x: 3, y: -3, color_ref: 1},
+        %{x: -4, y: -4, color_ref: 1}
       ]
 
       PixelCache.initialize_file()
@@ -143,11 +143,11 @@ defmodule AssertionTest do
 
     test "edge cases" do
       initial_list = [
-        %{x: 4, y: 4, color: 1},
-        %{x: 0, y: 0, color: 1},
-        %{x: -5, y: -5, color: 1},
-        %{x: 4, y: -5, color: 1},
-        %{x: -5, y: 4, color: 1}
+        %{x: 4, y: 4, color_ref: 1},
+        %{x: 0, y: 0, color_ref: 1},
+        %{x: -5, y: -5, color_ref: 1},
+        %{x: 4, y: -5, color_ref: 1},
+        %{x: -5, y: 4, color_ref: 1}
       ]
 
       PixelCache.initialize_file()

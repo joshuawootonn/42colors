@@ -307,21 +307,21 @@ export function bresenhamLine(
 
 export function pointsToPixels(
     points: AbsolutePoint[],
-    colorRef: ColorRef,
+    color_ref: ColorRef,
 ): Pixel[] {
     return points.map(
         (point) =>
             ({
                 x: point.x,
                 y: point.y,
-                colorRef: colorRef,
+                color_ref,
             }) as Pixel,
     );
 }
 
 export type BrushActive = {
     type: 'brush-active';
-    colorRef: ColorRef;
+    color_ref: ColorRef;
     points: AbsolutePoint[];
     anchorPoints: AbsolutePoint[];
 };
@@ -339,11 +339,11 @@ export function isDuplicatePoint(
 export function startBrushAction(
     anchorPoint: AbsolutePoint,
     brushPoints: AbsolutePoint[],
-    colorRef: ColorRef,
+    color_ref: ColorRef,
 ): BrushActive {
     return {
         type: 'brush-active',
-        colorRef: colorRef,
+        color_ref,
         points: brushPoints,
         anchorPoints: [anchorPoint],
     };
@@ -384,7 +384,7 @@ function onPointerDown(
 
     // Determine color based on mouse button
     // Left button (0) uses foreground color, right button (2) uses background color
-    const colorRef =
+    const color_ref =
         e.button === 2
             ? context.toolSettings.palette.backgroundColorRef
             : context.toolSettings.palette.foregroundColorRef;
@@ -392,7 +392,7 @@ function onPointerDown(
     const nextActiveAction = startBrushAction(
         anchorPoint,
         brushPoints,
-        colorRef,
+        color_ref,
     );
 
     return {
@@ -495,11 +495,11 @@ function onPointerOut(
     enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     if (context.activeAction?.type !== 'brush-active') return context;
-    const colorRef = context.activeAction.colorRef;
+    const color_ref = context.activeAction.color_ref;
     const points = context.activeAction.points;
     enqueue.effect(() => {
         store.trigger.newPixels({
-            pixels: pointsToPixels(points, colorRef),
+            pixels: pointsToPixels(points, color_ref),
         });
     });
     return {
@@ -516,11 +516,11 @@ function onPointerUp(
 ): InitializedStore {
     if (context.activeAction?.type !== 'brush-active') return context;
 
-    const colorRef = context.activeAction.colorRef;
+    const color_ref = context.activeAction.color_ref;
     const points = context.activeAction.points;
     enqueue.effect(() => {
         store.trigger.newPixels({
-            pixels: pointsToPixels(points, colorRef),
+            pixels: pointsToPixels(points, color_ref),
         });
     });
     return {

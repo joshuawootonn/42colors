@@ -73,7 +73,7 @@ defmodule ApiWeb.RegionChannelTest do
           }
         })
 
-      pixels = [%{"x" => 10, "y" => 20, "color" => 1}]
+      pixels = [%{"x" => 10, "y" => 20, "color_ref" => 1}]
       store_id = "test_store"
 
       push(socket, "new_pixels", %{
@@ -90,7 +90,7 @@ defmodule ApiWeb.RegionChannelTest do
       {:ok, unauth_socket} = connect(ApiWeb.CanvasSocket, %{})
       {:ok, _, unauth_socket} = subscribe_and_join(unauth_socket, RegionChannel, "region:general")
 
-      pixels = [%{"x" => 10, "y" => 20, "color" => 1}]
+      pixels = [%{"x" => 10, "y" => 20, "color_ref" => 1}]
       store_id = "test_store"
 
       push(unauth_socket, "new_pixels", %{

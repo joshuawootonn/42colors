@@ -94,7 +94,7 @@ export function drawPixelsToChunkCanvas(
 
     for (let i = 0; i < pixels.length; i++) {
         const pixel = pixels[i];
-        context.fillStyle = COLOR_TABLE[pixel.colorRef];
+        context.fillStyle = COLOR_TABLE[pixel.color_ref];
         context.fillRect(pixel.x, pixel.y, 1, 1);
     }
 
@@ -146,7 +146,7 @@ function getChunkPixel(chunkOrigin: Coord, pixel: Pixel): ChunkPixel {
     return {
         x: pixel.x - chunkOrigin.x,
         y: pixel.y - chunkOrigin.y,
-        colorRef: pixel.colorRef,
+        color_ref: pixel.color_ref,
     } as ChunkPixel;
 }
 

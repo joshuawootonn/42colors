@@ -25,7 +25,7 @@ export function setupSocketConnection(
 
 export const newPixelResponseSchema = z.object({
     pixels: z.array(
-        z.object({ x: z.number(), y: z.number(), color: colorRefSchema }),
+        z.object({ x: z.number(), y: z.number(), color_ref: colorRefSchema }),
     ),
     store_id: z.string(),
 });
@@ -33,18 +33,6 @@ export const newPixelResponseSchema = z.object({
 type NewPixelResponse = z.infer<typeof newPixelResponseSchema>;
 
 const pixelsSchema = z.array(pixelSchema);
-
-const newPixelResponseToPixelSchmea = newPixelResponseSchema.transform(
-    (response) =>
-        pixelsSchema.parse(
-            response.pixels.map((pixel) => ({
-                ...pixel,
-                colorRef: pixel.color,
-            })),
-        ),
-);
-
-export type PixelResponse = z.infer<typeof newPixelResponseSchema>;
 
 const errorResponses = z.union([
     z.object({
@@ -63,11 +51,7 @@ export function newPixels(context: InitializedStore, pixels: Pixel[]) {
 
     context.server.channel
         .push('new_pixels', {
-            pixels: pixels.map((pixel) => ({
-                x: pixel.x,
-                y: pixel.y,
-                color: pixel.colorRef,
-            })),
+            pixels,
             store_id: context.id,
         })
         .receive('error', (resp) => {
@@ -100,6 +84,10 @@ export function newPixels(context: InitializedStore, pixels: Pixel[]) {
         });
 }
 
+const pixelResponseSchema = z.object({
+    pixels: pixelsSchema,
+});
+
 export function setupChannel(socket: Socket): Channel {
     const channel = socket.channel('region:general', {});
     channel
@@ -116,8 +104,12 @@ export function setupChannel(socket: Socket): Channel {
             console.log(`skipping realtime since they came from this store`);
             return;
         }
+
+        const response = pixelResponseSchema.safeParse(payload);
+        if (!response.success) return;
+
         store.trigger.newRealtimePixels({
-            pixels: newPixelResponseToPixelSchmea.parse(payload),
+            pixels: response.data.pixels,
         });
     });
 

@@ -31,9 +31,9 @@ defmodule Api.Canvas.PixelServiceTest do
 
     test "creates pixels when they are within user's plot", %{user: user} do
       valid_pixels = [
-        %{x: 5, y: 5, color: 1},
-        %{x: 2, y: 8, color: 2},
-        %{x: 9, y: 1, color: 3}
+        %{x: 5, y: 5, color_ref: 1},
+        %{x: 2, y: 8, color_ref: 2},
+        %{x: 9, y: 1, color_ref: 3}
       ]
 
       assert {:ok, pixels} = PixelService.create_many(valid_pixels, user.id)
@@ -44,7 +44,7 @@ defmodule Api.Canvas.PixelServiceTest do
       |> Enum.each(fn {input, created} ->
         assert created.x == input.x
         assert created.y == input.y
-        assert created.color == input.color
+        assert created.color_ref == input.color_ref
         assert created.user_id == user.id
       end)
     end
@@ -69,9 +69,9 @@ defmodule Api.Canvas.PixelServiceTest do
 
       invalid_pixels = [
         # Inside other user's plot (should reject for this user)
-        %{x: 25, y: 25, color: 1},
+        %{x: 25, y: 25, color_ref: 1},
         # Outside all plots (should accept)
-        %{x: -5, y: 5, color: 2}
+        %{x: -5, y: 5, color_ref: 2}
       ]
 
       {created, rejected} =
@@ -111,13 +111,13 @@ defmodule Api.Canvas.PixelServiceTest do
 
       mixed_pixels = [
         # Valid - inside user's own plot
-        %{x: 5, y: 5, color: 1},
+        %{x: 5, y: 5, color_ref: 1},
         # Invalid - inside other user's plot
-        %{x: 17, y: 17, color: 2},
+        %{x: 17, y: 17, color_ref: 2},
         # Valid - inside user's own plot
-        %{x: 3, y: 3, color: 3},
+        %{x: 3, y: 3, color_ref: 3},
         # Valid - outside all plots
-        %{x: 50, y: 50, color: 4}
+        %{x: 50, y: 50, color_ref: 4}
       ]
 
       {created, rejected} =
@@ -145,9 +145,9 @@ defmodule Api.Canvas.PixelServiceTest do
     } do
       pixels = [
         # inside existing plot (belongs to someone, deny)
-        %{x: 5, y: 5, color: 1},
+        %{x: 5, y: 5, color_ref: 1},
         # outside all plots (allow)
-        %{x: 50, y: 50, color: 2}
+        %{x: 50, y: 50, color_ref: 2}
       ]
 
       {created, rejected} =
@@ -172,13 +172,13 @@ defmodule Api.Canvas.PixelServiceTest do
     test "handles edge case pixels on plot boundary", %{user: user} do
       boundary_pixels = [
         # Corner
-        %{x: 0, y: 0, color: 1},
+        %{x: 0, y: 0, color_ref: 1},
         # Opposite corner
-        %{x: 10, y: 10, color: 2},
+        %{x: 10, y: 10, color_ref: 2},
         # Edge
-        %{x: 5, y: 0, color: 3},
+        %{x: 5, y: 0, color_ref: 3},
         # Edge
-        %{x: 0, y: 5, color: 4}
+        %{x: 0, y: 5, color_ref: 4}
       ]
 
       # Note: Depending on how PostGIS handles boundary conditions,
@@ -222,11 +222,11 @@ defmodule Api.Canvas.PixelServiceTest do
       # Try to draw pixels in both plots
       pixels = [
         # Inside current user's plot (should be accepted)
-        %{x: 5, y: 5, color: 1},
+        %{x: 5, y: 5, color_ref: 1},
         # Inside other user's plot (should be rejected)
-        %{x: 25, y: 25, color: 2},
+        %{x: 25, y: 25, color_ref: 2},
         # Outside all plots (should be accepted)
-        %{x: 50, y: 50, color: 3}
+        %{x: 50, y: 50, color_ref: 3}
       ]
 
       case PixelService.create_many(pixels, user.id) do
@@ -267,8 +267,8 @@ defmodule Api.Canvas.PixelServiceTest do
 
       # Try to draw all pixels in the other user's plot
       pixels = [
-        %{x: 25, y: 25, color: 1},
-        %{x: 26, y: 26, color: 2}
+        %{x: 25, y: 25, color_ref: 1},
+        %{x: 26, y: 26, color_ref: 2}
       ]
 
       case PixelService.create_many(pixels, user.id) do

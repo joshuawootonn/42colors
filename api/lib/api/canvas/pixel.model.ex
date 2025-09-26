@@ -5,7 +5,7 @@ defmodule Api.Canvas.Pixel do
   schema "pixels" do
     field(:y, :integer)
     field(:x, :integer)
-    field(:color, :integer)
+    field(:color_ref, :integer)
     belongs_to :user, Api.Accounts.User
     belongs_to :plot, Api.Canvas.Plot
 
@@ -15,7 +15,7 @@ defmodule Api.Canvas.Pixel do
   @doc false
   def changeset(pixel, attrs) do
     pixel
-    |> cast(attrs, [:x, :y, :color, :user_id, :plot_id])
-    |> validate_required([:x, :y, :color])
+    |> cast(attrs, [:x, :y, :color_ref, :user_id, :plot_id])
+    |> validate_required([:x, :y, :color_ref])
   end
 end

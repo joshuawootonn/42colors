@@ -60,7 +60,7 @@ defmodule Api.Canvas.Pixel.Repo do
 
   ## Examples
 
-      iex> create_many_pixels([%{x: 1, y: 1, color: 1, user_id: 1}])
+      iex> create_many_pixels([%{x: 1, y: 1, color_ref: 1, user_id: 1}])
       {:ok, [%Pixel{}, ...]}
 
       iex> create_many_pixels([%{x: 1, y: 1}])  # missing required fields
@@ -85,7 +85,7 @@ defmodule Api.Canvas.Pixel.Repo do
             %{
               x: changes.x,
               y: changes.y,
-              color: changes.color,
+              color_ref: changes.color_ref,
               user_id: Map.get(changes, :user_id),
               plot_id: Map.get(changes, :plot_id),
               inserted_at: now,

@@ -20,7 +20,7 @@ defmodule ApiWeb.RegionChannel do
           %{
             x: Map.get(pixel, "x"),
             y: Map.get(pixel, "y"),
-            color: Map.get(pixel, "color")
+            color_ref: Map.get(pixel, "color_ref")
           }
         end)
 
@@ -29,7 +29,9 @@ defmodule ApiWeb.RegionChannel do
           PixelCacheSupervisor.write_pixels_to_file(pixel_changesets)
 
           valid_pixel_coords =
-            Enum.map(pixel_changesets, fn p -> %{"x" => p.x, "y" => p.y, "color" => p.color} end)
+            Enum.map(pixel_changesets, fn p ->
+              %{"x" => p.x, "y" => p.y, "color_ref" => p.color_ref}
+            end)
 
           broadcast!(socket, "new_pixels", %{pixels: valid_pixel_coords, store_id: store_id})
           {:noreply, socket}
@@ -38,7 +40,9 @@ defmodule ApiWeb.RegionChannel do
           PixelCacheSupervisor.write_pixels_to_file(pixel_changesets)
 
           valid_pixel_coords =
-            Enum.map(pixel_changesets, fn p -> %{"x" => p.x, "y" => p.y, "color" => p.color} end)
+            Enum.map(pixel_changesets, fn p ->
+              %{"x" => p.x, "y" => p.y, "color_ref" => p.color_ref}
+            end)
 
           broadcast!(socket, "new_pixels", %{pixels: valid_pixel_coords, store_id: store_id})
 
@@ -80,7 +84,7 @@ defmodule ApiWeb.RegionChannel do
           %{
             x: Map.get(pixel, "x"),
             y: Map.get(pixel, "y"),
-            color: Map.get(pixel, "color")
+            color_ref: Map.get(pixel, "color_ref")
           }
         end)
 
@@ -90,7 +94,9 @@ defmodule ApiWeb.RegionChannel do
           PixelCacheSupervisor.write_pixels_to_file(pixel_changesets)
 
           valid_pixel_coords =
-            Enum.map(pixel_changesets, fn p -> %{"x" => p.x, "y" => p.y, "color" => p.color} end)
+            Enum.map(pixel_changesets, fn p ->
+              %{"x" => p.x, "y" => p.y, "color_ref" => p.color_ref}
+            end)
 
           broadcast!(socket, "new_pixels", %{pixels: valid_pixel_coords, store_id: store_id})
           {:noreply, socket}
@@ -101,7 +107,9 @@ defmodule ApiWeb.RegionChannel do
 
           # Only broadcast the valid pixels that were actually created
           valid_pixel_coords =
-            Enum.map(pixel_changesets, fn p -> %{"x" => p.x, "y" => p.y, "color" => p.color} end)
+            Enum.map(pixel_changesets, fn p ->
+              %{"x" => p.x, "y" => p.y, "color_ref" => p.color_ref}
+            end)
 
           broadcast!(socket, "new_pixels", %{pixels: valid_pixel_coords, store_id: store_id})
 

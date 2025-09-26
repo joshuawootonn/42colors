@@ -14,7 +14,7 @@ function binaryToPixels(binary: ArrayBuffer): ChunkPixel[] {
                 chunkPixelSchema.parse({
                     x: i % CHUNK_LENGTH,
                     y: Math.floor(i / CHUNK_LENGTH),
-                    colorRef: parsedArray[i] as ColorRef,
+                    color_ref: parsedArray[i] as ColorRef,
                 }),
             );
         }

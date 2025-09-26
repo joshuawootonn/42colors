@@ -6,12 +6,12 @@ import { dedupeCoords } from './dedupe-coords';
 describe('dedupe pixels', () => {
     test('happy path', () => {
         const arr: Pixel[] = [
-            pixelSchema.parse({ x: 1, y: 1, colorRef: 1 }),
-            pixelSchema.parse({ x: 1, y: 1, colorRef: 0 }),
+            pixelSchema.parse({ x: 1, y: 1, color_ref: 1 }),
+            pixelSchema.parse({ x: 1, y: 1, color_ref: 0 }),
         ];
 
         expect(dedupeCoords(arr)).toEqual([
-            pixelSchema.parse({ x: 1, y: 1, colorRef: 0 }),
+            pixelSchema.parse({ x: 1, y: 1, color_ref: 0 }),
         ]);
     });
 });

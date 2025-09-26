@@ -65,7 +65,7 @@ defmodule Api.Canvas.PixelService do
       # Attach user_id when present and plot_id when the accepted pixel is inside the user's own plot
       accepted_attrs =
         Enum.map(accepted, fn pixel ->
-          base = %{x: pixel.x, y: pixel.y, color: pixel.color}
+          base = %{x: pixel.x, y: pixel.y, color_ref: pixel.color_ref}
           base = if is_integer(user_id), do: Map.put(base, :user_id, user_id), else: base
 
           case Map.get(point_to_plot, {pixel.x, pixel.y}) do

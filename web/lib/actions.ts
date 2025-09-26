@@ -31,10 +31,10 @@ export type Action =
     | Undo
     | Redo;
 
-function brush(points: AbsolutePoint[], colorRef: ColorRef): BrushActive {
+function brush(points: AbsolutePoint[], color_ref: ColorRef): BrushActive {
     return {
         type: 'brush-active',
-        colorRef,
+        color_ref,
         points,
         //todo(josh): these shouldn't be faked like this, update the function
         anchorPoints: points,
@@ -95,7 +95,7 @@ export function derivePixelsFromActions(actions: Action[]): Pixel[] {
         const action = completedActions[i];
 
         if (action.type === 'brush-active') {
-            pixels.push(...pointsToPixels(action.points, action.colorRef));
+            pixels.push(...pointsToPixels(action.points, action.color_ref));
         } else if (action.type === 'erasure-active') {
             pixels.push(...pointsToPixels(action.points, TRANSPARENT_REF));
         } else if (action.type === 'realtime-active') {
@@ -126,7 +126,7 @@ export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
                 if (undoAction.type === 'brush-active') {
                     const undonePixels = pointsToPixels(
                         undoAction.points,
-                        undoAction.colorRef,
+                        undoAction.color_ref,
                     );
                     unsetPixels = unsetPixels.filter(
                         (pixel) =>
@@ -158,7 +158,7 @@ export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
                 undoStack.push(action);
                 if (action.type === 'brush-active') {
                     unsetPixels.push(
-                        ...pointsToPixels(action.points, action.colorRef),
+                        ...pointsToPixels(action.points, action.color_ref),
                     );
                 } else if (action.type === 'erasure-active') {
                     unsetPixels.push(

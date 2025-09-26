@@ -331,7 +331,7 @@ export const store = createStore({
                 actionToUndo.points,
                 actionToUndo.type === 'erasure-active'
                     ? TRANSPARENT_REF
-                    : actionToUndo.colorRef,
+                    : actionToUndo.color_ref,
             );
 
             const resolvedActions = resolveActions(nextActions);
@@ -350,7 +350,7 @@ export const store = createStore({
                     ({
                         x: pixel.x,
                         y: pixel.y,
-                        colorRef: 0,
+                        color_ref: 0,
                     } as Pixel);
                 next.push(lastPixelValue);
             }
@@ -381,7 +381,7 @@ export const store = createStore({
                 actionToRedo.points,
                 actionToRedo.type === 'erasure-active'
                     ? TRANSPARENT_REF
-                    : actionToRedo.colorRef,
+                    : actionToRedo.color_ref,
             );
 
             const resolvedActions = resolveActions(nextActions);
@@ -400,7 +400,7 @@ export const store = createStore({
                     ({
                         x: pixel.x,
                         y: pixel.y,
-                        colorRef: 0,
+                        color_ref: 0,
                     } as Pixel);
                 next.push(lastPixelValue);
             }

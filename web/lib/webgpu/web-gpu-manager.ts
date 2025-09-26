@@ -196,8 +196,8 @@ export class WebGPUManager {
 
         for (const pixel of pixels) {
             // Get color from palette
-            const colorRef = pixel.colorRef;
-            const color = this.getColorFromRef(colorRef);
+            const color_ref = pixel.color_ref;
+            const color = this.getColorFromRef(color_ref);
 
             // Create a 1x1 pixel quad
             const x = pixel.x;
@@ -239,9 +239,9 @@ export class WebGPUManager {
      * Convert color reference to RGBA color
      */
     private getColorFromRef(
-        colorRef: number,
+        color_ref: number,
     ): [number, number, number, number] {
-        const colorHex = COLOR_TABLE[colorRef as keyof typeof COLOR_TABLE];
+        const colorHex = COLOR_TABLE[color_ref as keyof typeof COLOR_TABLE];
         return hexToRgbaColor(colorHex);
     }
 

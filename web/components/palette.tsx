@@ -10,7 +10,7 @@ import { chunk } from '@/lib/utils/chunk';
 import { useSelector } from '@xstate/store/react';
 
 function IconButton({
-    colorRef,
+    color_ref,
     isForeground,
     isBackground,
     className,
@@ -18,23 +18,23 @@ function IconButton({
 }: ComponentPropsWithoutRef<typeof motion.button> & {
     isForeground: boolean;
     isBackground: boolean;
-    colorRef: ColorRef;
+    color_ref: ColorRef;
 }) {
     const colorString = useMemo(
-        () => new Color(COLOR_TABLE[colorRef]).to('lch').toString(),
-        [colorRef],
+        () => new Color(COLOR_TABLE[color_ref]).to('lch').toString(),
+        [color_ref],
     );
     const isLight = useMemo(
-        () => new Color(COLOR_TABLE[colorRef]).lch[0] > 50,
-        [colorRef],
+        () => new Color(COLOR_TABLE[color_ref]).lch[0] > 50,
+        [color_ref],
     );
     const hoveredColor = useMemo(() => {
-        const hoveredColor = new Color(COLOR_TABLE[colorRef]);
+        const hoveredColor = new Color(COLOR_TABLE[color_ref]);
 
         hoveredColor.lch[0] = hoveredColor.lch[0] + 10;
 
         return hoveredColor.toString();
-    }, [colorRef]);
+    }, [color_ref]);
 
     return (
         <motion.button
@@ -151,13 +151,13 @@ export function Palette() {
                         key={i}
                         className="flex flex-row"
                     >
-                        {colorChunk.map((colorRef) => (
+                        {colorChunk.map((color_ref) => (
                             <IconButton
                                 onClick={(e) => {
                                     console.log(e.button);
                                     store.trigger.updatePaletteSettings({
                                         palette: {
-                                            foregroundColorRef: colorRef,
+                                            foregroundColorRef: color_ref,
                                         },
                                     });
                                 }}
@@ -166,14 +166,14 @@ export function Palette() {
                                     e.preventDefault();
                                     store.trigger.updatePaletteSettings({
                                         palette: {
-                                            backgroundColorRef: colorRef,
+                                            backgroundColorRef: color_ref,
                                         },
                                     });
                                 }}
-                                key={colorRef}
-                                colorRef={colorRef}
-                                isForeground={foregroundColor === colorRef}
-                                isBackground={backgroundColor === colorRef}
+                                key={color_ref}
+                                color_ref={color_ref}
+                                isForeground={foregroundColor === color_ref}
+                                isBackground={backgroundColor === color_ref}
                                 variants={item}
                             />
                         ))}

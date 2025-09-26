@@ -20,7 +20,7 @@ defmodule Api.CanvasFixtures do
       |> Enum.into(%{
         x: 42,
         y: 42,
-        color: 1,
+        color_ref: 1,
         user_id: user.id
       })
       |> Api.Canvas.Pixel.Repo.create_pixel()
