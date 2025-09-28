@@ -305,12 +305,48 @@ export const store = createStore({
             };
         },
 
-        newPixels: (context, event: { pixels: Pixel[] }) => {
+        newPixels: (context, event: { pixels: Pixel[]; action_id: string }) => {
             if (isInitialStore(context)) return;
 
-            newPixels(context, event.pixels);
+            newPixels(context, event.pixels, event.action_id);
 
             return context;
+        },
+
+        filter_pixels_from_action: (
+            context,
+            event: { action_id: string; rejected_pixels: Pixel[] },
+        ) => {
+            if (isInitialStore(context)) return;
+
+            const next_actions = context.actions.map((action) => {
+                if (
+                    (action.type === 'brush-active' ||
+                        action.type === 'erasure-active') &&
+                    action.action_id === event.action_id
+                ) {
+                    // todo(josh): I think this could be much faster. Need to learn about perf.
+                    const rejected_coords = new Set(
+                        event.rejected_pixels.map((p) => `${p.x},${p.y}`),
+                    );
+
+                    const points = action.points.filter(
+                        (point) =>
+                            !rejected_coords.has(`${point.x},${point.y}`),
+                    );
+
+                    return {
+                        ...action,
+                        points,
+                    };
+                }
+                return action;
+            });
+
+            return {
+                ...context,
+                actions: next_actions,
+            };
         },
 
         undo: (context, _, _enqueue) => {

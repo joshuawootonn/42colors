@@ -31,8 +31,12 @@ export type Action =
     | Undo
     | Redo;
 
-function brush(points: AbsolutePoint[], color_ref: ColorRef): BrushActive {
+function create_brush_fixture(
+    points: AbsolutePoint[],
+    color_ref: ColorRef,
+): BrushActive {
     return {
+        action_id: '00000000-0000-0000-0000-000000000000',
         type: 'brush-active',
         color_ref,
         points,
@@ -40,8 +44,9 @@ function brush(points: AbsolutePoint[], color_ref: ColorRef): BrushActive {
         anchorPoints: points,
     };
 }
-function erase(points: AbsolutePoint[]): ErasureActive {
+function create_erase_fixture(points: AbsolutePoint[]): ErasureActive {
     return {
+        action_id: '11111111-1111-1111-1111-111111111111',
         type: 'erasure-active',
         points,
         //todo(josh): these shouldn't be faked like this, update the function
@@ -56,8 +61,8 @@ function redo(): Redo {
 }
 
 export const Actions = {
-    brush,
-    erase,
+    brush: create_brush_fixture,
+    erase: create_erase_fixture,
     undo,
     redo,
 };

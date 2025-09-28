@@ -37,13 +37,19 @@ const pixelsSchema = z.array(pixelSchema);
 const errorResponses = z.union([
     z.object({
         error_code: z.literal(ErrorCode.PROHIBITED_PIXELS),
-        message: z.string(),
+        action_id: z.string(),
+        rejected_pixels: pixelsSchema,
         plot_ids: z.array(z.number()),
+        message: z.string(),
     }),
     z.literal(ErrorCode.UNAUTHED_USER),
 ]);
 
-export function newPixels(context: InitializedStore, pixels: Pixel[]) {
+export function newPixels(
+    context: InitializedStore,
+    pixels: Pixel[],
+    action_id?: string,
+) {
     if (isInitialStore(context)) return;
     const authURL = context.server.authURL;
 
@@ -53,6 +59,7 @@ export function newPixels(context: InitializedStore, pixels: Pixel[]) {
         .push('new_pixels', {
             pixels,
             store_id: context.id,
+            action_id,
         })
         .receive('error', (resp) => {
             const response = errorResponses.safeParse(resp);
@@ -76,6 +83,11 @@ export function newPixels(context: InitializedStore, pixels: Pixel[]) {
             }
 
             if (response.data.error_code === ErrorCode.PROHIBITED_PIXELS) {
+                store.trigger.filter_pixels_from_action({
+                    action_id: response.data.action_id,
+                    rejected_pixels: response.data.rejected_pixels,
+                });
+
                 toast({
                     title: "You can't draw here",
                     description: "it's someone else's plot",

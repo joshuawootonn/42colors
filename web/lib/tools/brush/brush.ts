@@ -13,6 +13,7 @@ import { InitializedStore, store } from '../../store';
 import { clientToCanvas } from '../../utils/clientToCanvasConversion';
 import { dedupeCoords } from '../../utils/dedupe-coords';
 import { newNewCoords } from '../../utils/net-new-coords';
+import { uuid } from '../../utils/uuid';
 import { hexToRgbaColor } from '../../webgpu/colors';
 import { EnqueueObject } from '../../xstate-internal-types';
 
@@ -321,6 +322,7 @@ export function pointsToPixels(
 
 export type BrushActive = {
     type: 'brush-active';
+    action_id: string;
     color_ref: ColorRef;
     points: AbsolutePoint[];
     anchorPoints: AbsolutePoint[];
@@ -343,6 +345,7 @@ export function startBrushAction(
 ): BrushActive {
     return {
         type: 'brush-active',
+        action_id: uuid(),
         color_ref,
         points: brushPoints,
         anchorPoints: [anchorPoint],
@@ -495,11 +498,14 @@ function onPointerOut(
     enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     if (context.activeAction?.type !== 'brush-active') return context;
+
     const color_ref = context.activeAction.color_ref;
     const points = context.activeAction.points;
+    const action_id = context.activeAction.action_id;
     enqueue.effect(() => {
         store.trigger.newPixels({
             pixels: pointsToPixels(points, color_ref),
+            action_id,
         });
     });
     return {
@@ -518,9 +524,11 @@ function onPointerUp(
 
     const color_ref = context.activeAction.color_ref;
     const points = context.activeAction.points;
+    const action_id = context.activeAction.action_id;
     enqueue.effect(() => {
         store.trigger.newPixels({
             pixels: pointsToPixels(points, color_ref),
+            action_id: action_id,
         });
     });
     return {

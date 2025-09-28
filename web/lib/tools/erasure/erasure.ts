@@ -5,6 +5,7 @@ import { getCanvasPolygon } from '../../geometry/polygon';
 import { BLACK_REF, COLOR_TABLE, TRANSPARENT_REF } from '../../palette';
 import { InitializedStore, store } from '../../store';
 import { newNewCoords } from '../../utils/net-new-coords';
+import { uuid } from '../../utils/uuid';
 import { hexToRgbaColor } from '../../webgpu/colors';
 import { EnqueueObject } from '../../xstate-internal-types';
 import {
@@ -74,6 +75,7 @@ function redrawTelegraph(context: InitializedStore) {
 
 export type ErasureActive = {
     type: 'erasure-active';
+    action_id: string;
     points: AbsolutePoint[];
     anchorPoints: AbsolutePoint[];
 };
@@ -84,6 +86,7 @@ export function startErasureAction(
 ): ErasureActive {
     return {
         type: 'erasure-active',
+        action_id: uuid(),
         points: erasurePoints,
         anchorPoints: [anchorPoint],
     };
@@ -218,9 +221,11 @@ function onPointerOut(
     if (context.activeAction?.type !== 'erasure-active') return context;
 
     const points = context.activeAction.points;
+    const action_id = context.activeAction.action_id;
     enqueue.effect(() => {
         store.trigger.newPixels({
             pixels: pointsToPixels(points, TRANSPARENT_REF),
+            action_id,
         });
     });
 
@@ -239,9 +244,11 @@ function onPointerUp(
     if (context.activeAction?.type !== 'erasure-active') return context;
 
     const points = context.activeAction.points;
+    const action_id = context.activeAction.action_id;
     enqueue.effect(() => {
         store.trigger.newPixels({
             pixels: pointsToPixels(points, TRANSPARENT_REF),
+            action_id,
         });
     });
 
