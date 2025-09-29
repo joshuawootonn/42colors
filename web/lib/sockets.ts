@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { toast } from '@/components/ui/toast';
 
+import { startRejectedPlotsAnimation } from './canvas/ui';
 import { ErrorCode } from './error-codes';
 import { Pixel, pixelSchema } from './geometry/coord';
 import { polygonSchema } from './geometry/polygon';
@@ -87,6 +88,8 @@ export function newPixels(
                     action_id: response.data.action_id,
                     rejected_pixels: response.data.rejected_pixels,
                 });
+
+                startRejectedPlotsAnimation(response.data.plot_ids);
 
                 toast({
                     title: "You can't draw here",

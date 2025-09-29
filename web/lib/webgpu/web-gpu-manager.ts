@@ -15,6 +15,11 @@ import {
     renderPolygon,
 } from './polygon-renderer';
 
+export type RedrawPolygonsItem = {
+    polygon: Polygon;
+    options?: Partial<RenderOptions>;
+};
+
 export class WebGPUManager {
     private polygonRenderer: WebGPUPolygonRenderer | null = null;
     private pixelRenderer: WebGPUPixelRenderer | null = null;
@@ -46,12 +51,7 @@ export class WebGPUManager {
     /**
      * Render multiple polygons in a single render pass for better performance
      */
-    redrawPolygons(
-        polygons: Array<{
-            polygon: Polygon;
-            options?: Partial<RenderOptions>;
-        }>,
-    ): void {
+    redrawPolygons(polygonItem: RedrawPolygonsItem[]): void {
         if (!this.polygonRenderer) {
             throw new Error(
                 'WebGPU polygon renderer not initialized. Call initialize() first.',
@@ -74,7 +74,7 @@ export class WebGPUManager {
         });
 
         // Render all polygons
-        for (const { polygon, options = {} } of polygons) {
+        for (const { polygon, options = {} } of polygonItem) {
             const renderOptions: RenderOptions = {
                 ...options,
                 canvasWidth: canvas.width,
