@@ -15,6 +15,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
         <Sonner
             theme={theme as ToasterProps['theme']}
             className="toaster group"
+            duration={5000}
+            style={{ '--width': '420px' } as React.CSSProperties}
+            offset={12}
+            gap={12}
+            position="bottom-center"
+            expand
             {...props}
         />
     );
@@ -56,11 +62,13 @@ export function Toast(props: ToastProps) {
     const { title, description, button, id } = props;
 
     return (
-        <div className="flex w-full items-center border-1.5 border-primary bg-secondary p-4 font-sans shadow-lg md:max-w-96">
+        <div className="flex w-full items-center border-1.5 border-primary bg-secondary p-4 font-sans shadow-lg md:max-w-120">
             <div className="flex flex-1 items-center">
                 <div className="w-full">
                     <p className="text-sm text-primary">{title}</p>
-                    <p className="mt-1 text-sm text-gray-500">{description}</p>
+                    <p className="mt-1 text-pretty text-sm text-gray-500">
+                        {description}
+                    </p>
                 </div>
             </div>
             <div className="ml-4 shrink-0">

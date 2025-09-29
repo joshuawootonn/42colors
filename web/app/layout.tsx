@@ -1,5 +1,3 @@
-import { Toaster } from 'sonner';
-
 import type { Metadata } from 'next';
 import { Space_Mono } from 'next/font/google';
 import { cookies } from 'next/headers';
@@ -8,6 +6,7 @@ import { Fathom } from '@/components/fathom';
 import { Intro } from '@/components/intro';
 import { Link } from '@/components/link';
 import { Logo } from '@/components/logo';
+import { Toaster } from '@/components/ui/toast';
 import { INTRO_SEEN } from '@/lib/storage-keys';
 
 import './globals.css';
@@ -60,15 +59,7 @@ export default async function RootLayout({
                     <Providers>{children}</Providers>
                     <Fathom />
                     <Intro defaultOpen={defaultOpen} />
-                    <Toaster
-                        className="w-96"
-                        // @ts-expect-error just trying to set an "unknown property"
-                        style={{ '--width': '380px' }}
-                        offset={12}
-                        gap={12}
-                        position="bottom-center"
-                        expand
-                    />
+                    <Toaster />
                 </div>
             </body>
         </html>
