@@ -47,23 +47,29 @@ export function redrawUserPlots(context: InitializedStore) {
 }
 
 type PlotFlickerState = {
-    rejected_plot_ids: Set<number>;
+    rejected_plot_ids: Map<number, NodeJS.Timeout>;
 };
 
 export const rejectedPlotIdsAtom = createAtom<PlotFlickerState>({
-    rejected_plot_ids: new Set<number>(),
+    rejected_plot_ids: new Map<number, NodeJS.Timeout>(),
 });
 
 export function startRejectedPlotsAnimation(rejected_plot_ids: number[]) {
-    rejectedPlotIdsAtom.set({
-        rejected_plot_ids: new Set(rejected_plot_ids),
-    });
+    const current = rejectedPlotIdsAtom.get();
 
-    setTimeout(() => {
-        rejectedPlotIdsAtom.set({
-            rejected_plot_ids: new Set<number>(),
-        });
-    }, 2000);
+    for (const plotId of rejected_plot_ids) {
+        const timer =
+            current.rejected_plot_ids.has(plotId) &&
+            current.rejected_plot_ids.get(plotId);
+        if (timer) clearTimeout(timer);
+
+        current.rejected_plot_ids.set(
+            plotId,
+            setTimeout(() => {
+                current.rejected_plot_ids.delete(plotId);
+            }, 2000),
+        );
+    }
 }
 
 export function redrawRejectedPlots(context: InitializedStore) {
