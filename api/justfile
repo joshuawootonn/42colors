@@ -1,0 +1,56 @@
+# Show available API commands
+default:
+  @just --list
+
+# Setup and dependencies
+install:
+  mix deps.get
+
+# Testing
+test:
+  export $(xargs <.env.test) && mix clean && mix compile && mix test
+
+test-watch:
+  export $(xargs <.env.test) && mix clean && mix compile && mix test.watch
+
+# Database
+migrate:
+  export $(xargs <.env.dev) && mix ecto.migrate
+
+migrate-test:
+  export $(xargs <.env.test) && mix ecto.migrate
+
+reset-dev-db:
+  export $(xargs <.env.dev) && mix ecto.reset
+
+reset-test-db:
+  export $(xargs <.env.test) && mix ecto.reset
+
+# Development server
+dev:
+  kill $(lsof -t -i:4000) || true && orb start && docker compose --project-directory ../docker up -d && export $(xargs <.env.dev) && mix phx.server
+
+# Code quality
+format:
+  mix format
+
+format-check:
+  mix format --check-formatted
+
+# Utilities
+clean:
+  mix clean
+
+compile:
+  export $(xargs <.env.dev) && mix compile
+
+# Email dashboard (development)
+dashboards:
+  @echo "📧 Email dashboard: http://localhost:4000/dev/mailbox"
+  @echo "📊 LiveDashboard: http://localhost:4000/dev/dashboard"
+
+deploy: 
+  kamal deploy
+
+logs:
+  kamal app logs

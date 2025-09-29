@@ -1,0 +1,53 @@
+# Show available web commands
+default:
+  @just --list
+
+# Setup and dependencies
+install:
+  bun install
+
+# Development
+dev:
+  kill $(lsof -t -i:4242) || true && bun run dev
+
+build:
+  bun run build
+
+start: 
+  kill $(lsof -t -i:4242) || true && bun run build && bun run start
+
+# Testing
+test:
+  bun run test
+
+test-watch:
+  bun run test --watch
+
+test-ui:
+  bun run test --ui
+
+# Code quality
+lint:
+  bun run lint --fix
+
+lint-check:
+  bun run lint
+
+format:
+  bun run format
+
+format-check:
+  bun run format --check
+
+type-check:
+  bun run tsc --noEmit
+
+# Utilities
+clean:
+  rm -rf .next node_modules/.cache
+
+clean-all:
+  rm -rf .next node_modules node_modules/.cache bun.lockb
+
+reinstall: clean-all install
+
