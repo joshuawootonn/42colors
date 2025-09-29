@@ -99,8 +99,9 @@ export function newPixels(
                 });
 
                 toast({
-                    title: "You can't draw here",
-                    description: "it's someone else's plot",
+                    title: "You can't draw here!",
+                    description:
+                        "It's someone else's plot. Either draw in the open area or claim a plot for yourself.",
                 });
                 return;
             }
