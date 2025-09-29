@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { toast } from '@/components/ui/toast';
 
+import { getUniqueChunksFromPixels } from './canvas/chunk';
 import { startRejectedPlotsAnimation } from './canvas/ui';
 import { ErrorCode } from './error-codes';
 import { Pixel, pixelSchema } from './geometry/coord';
@@ -91,10 +92,17 @@ export function newPixels(
 
                 startRejectedPlotsAnimation(response.data.rejected_plot_ids);
 
+                getUniqueChunksFromPixels(pixels).forEach((chunkKey) => {
+                    store.trigger.redrawChunk({
+                        chunkKey,
+                    });
+                });
+
                 toast({
                     title: "You can't draw here",
                     description: "it's someone else's plot",
                 });
+                return;
             }
         });
 }

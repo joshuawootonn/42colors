@@ -160,3 +160,12 @@ export function getChunkKey(x: number, y: number): string {
     const chunkOrigin = getChunkOrigin(x, y);
     return `x: ${chunkOrigin.x} y: ${chunkOrigin.y}`;
 }
+
+export function getUniqueChunksFromPixels(pixels: Pixel[]): string[] {
+    const chunks: Set<string> = new Set();
+    for (let i = 0; i < pixels.length; i++) {
+        const pixel = pixels[i];
+        chunks.add(getChunkKey(pixel.x, pixel.y));
+    }
+    return Array.from(chunks);
+}

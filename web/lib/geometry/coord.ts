@@ -7,6 +7,8 @@ export const pixelSchema = z
     .object({ x: z.number(), y: z.number(), color_ref: colorRefSchema })
     .brand<'Pixel'>();
 
+export const pixelArraySchema = z.array(pixelSchema);
+
 export type Pixel = z.infer<typeof pixelSchema>;
 
 export function isSamePixel(a: Pixel, b: Pixel) {
