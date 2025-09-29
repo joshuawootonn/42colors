@@ -54,7 +54,7 @@ defmodule ApiWeb.RegionChannel do
               error_code: "prohibited_pixels",
               action_id: action_id,
               rejected_pixels: invalid_pixels,
-              plot_ids: rejected_plot_ids,
+              rejected_plot_ids: rejected_plot_ids,
               message: "Some pixels were rejected because they were within someone else's plot"
             }}, socket}
 
@@ -67,7 +67,7 @@ defmodule ApiWeb.RegionChannel do
               error_code: "prohibited_pixels",
               action_id: action_id,
               rejected_pixels: invalid_pixels,
-              plot_ids: rejected_plot_ids,
+              rejected_plot_ids: rejected_plot_ids,
               message: "All pixels were rejected because they were within someone else's plot"
             }}, socket}
 
@@ -121,7 +121,7 @@ defmodule ApiWeb.RegionChannel do
               error_code: "prohibited_pixels",
               action_id: action_id,
               rejected_pixels: invalid_pixels,
-              plot_ids: rejected_plot_ids,
+              rejected_plot_ids: rejected_plot_ids,
               message: "Some pixels were rejected because they were within someone else's plot"
             }}, socket}
 
@@ -134,7 +134,7 @@ defmodule ApiWeb.RegionChannel do
               error_code: "prohibited_pixels",
               action_id: action_id,
               rejected_pixels: invalid_pixels,
-              plot_ids: rejected_plot_ids,
+              rejected_plot_ids: rejected_plot_ids,
               message: "All pixels were rejected because they were within someone else's plot"
             }}, socket}
 

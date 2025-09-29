@@ -40,7 +40,7 @@ const errorResponses = z.union([
         error_code: z.literal(ErrorCode.PROHIBITED_PIXELS),
         action_id: z.string(),
         rejected_pixels: pixelsSchema,
-        plot_ids: z.array(z.number()),
+        rejected_plot_ids: z.array(z.number()),
         message: z.string(),
     }),
     z.literal(ErrorCode.UNAUTHED_USER),
@@ -89,7 +89,7 @@ export function newPixels(
                     rejected_pixels: response.data.rejected_pixels,
                 });
 
-                startRejectedPlotsAnimation(response.data.plot_ids);
+                startRejectedPlotsAnimation(response.data.rejected_plot_ids);
 
                 toast({
                     title: "You can't draw here",

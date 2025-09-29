@@ -54,9 +54,9 @@ export const rejectedPlotIdsAtom = createAtom<PlotFlickerState>({
     rejected_plot_ids: new Set<number>(),
 });
 
-export function startRejectedPlotsAnimation(plot_ids: number[]) {
+export function startRejectedPlotsAnimation(rejected_plot_ids: number[]) {
     rejectedPlotIdsAtom.set({
-        rejected_plot_ids: new Set(plot_ids),
+        rejected_plot_ids: new Set(rejected_plot_ids),
     });
 
     setTimeout(() => {
