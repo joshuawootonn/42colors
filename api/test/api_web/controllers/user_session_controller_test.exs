@@ -51,6 +51,7 @@ defmodule ApiWeb.UserSessionControllerTest do
       response = json_response(conn, 401)
       assert response["status"] == "error"
       assert response["message"] == "Invalid email or password"
+      assert response["errors"]["root"] == ["Invalid email or password"]
     end
 
     test "renders errors for missing email", %{conn: conn} do

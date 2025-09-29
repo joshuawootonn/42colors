@@ -27,7 +27,10 @@ defmodule ApiWeb.UserSessionController do
         |> put_status(:unauthorized)
         |> json(%{
           status: "error",
-          message: "Invalid email or password"
+          message: "Invalid email or password",
+          errors: %{
+            root: ["Invalid email or password"]
+          }
         })
       end
     else

@@ -67,7 +67,7 @@ export function Login() {
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
             {errors.root && (
-                <div className="mb-4 text-sm text-red-600">
+                <div className="mb-1.5 text-sm text-red-600">
                     {errors.root.message}
                 </div>
             )}
