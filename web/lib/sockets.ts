@@ -84,7 +84,7 @@ export function newPixels(
             }
 
             if (response.data.error_code === ErrorCode.PROHIBITED_PIXELS) {
-                store.trigger.filter_pixels_from_action({
+                store.trigger.filterPixelsFromActions({
                     action_id: response.data.action_id,
                     rejected_pixels: response.data.rejected_pixels,
                 });

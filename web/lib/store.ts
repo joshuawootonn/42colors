@@ -313,7 +313,7 @@ export const store = createStore({
             return context;
         },
 
-        filter_pixels_from_action: (
+        filterPixelsFromActions: (
             context,
             event: { action_id: string; rejected_pixels: Pixel[] },
         ) => {
