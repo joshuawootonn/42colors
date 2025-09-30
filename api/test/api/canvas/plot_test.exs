@@ -62,10 +62,18 @@ defmodule Api.PlotTest do
       assert plot == Plot.Repo.get_plot!(plot.id)
     end
 
-    test "delete_plot/1 deletes the plot" do
+    test "delete_plot/1 soft deletes the plot" do
       plot = plot_fixture()
-      assert {:ok, %Plot{}} = Plot.Repo.delete_plot(plot)
+      assert {:ok, %Plot{} = deleted_plot} = Plot.Repo.delete_plot(plot)
+
+      # Plot should have deleted_at timestamp
+      assert deleted_plot.deleted_at != nil
+
+      # Plot should not be found by normal queries
       assert_raise Ecto.NoResultsError, fn -> Plot.Repo.get_plot!(plot.id) end
+
+      # Plot should not appear in user plots list
+      assert Plot.Repo.list_user_plots(plot.user_id) == []
     end
 
     test "change_plot/1 returns a plot changeset" do
@@ -320,6 +328,33 @@ defmodule Api.PlotTest do
       assert plot_a.id in result_ids
       assert plot_b.id in result_ids
       assert length(results) >= 2
+    end
+
+    test "excludes soft-deleted plots from spatial queries", %{search_polygon: search_polygon} do
+      user = user_fixture()
+
+      # Create a plot that intersects with search area
+      {:ok, plot} =
+        Plot.Repo.create_plot(%{
+          name: "To Be Deleted",
+          description: "Plot that will be soft deleted",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{2, 2}, {2, 8}, {8, 8}, {8, 2}, {2, 2}]],
+            srid: 4326
+          }
+        })
+
+      # Verify plot is found before deletion
+      results_before = Plot.Repo.list_plots_within_polygon(search_polygon)
+      assert plot.id in Enum.map(results_before, & &1.id)
+
+      # Soft delete the plot
+      {:ok, _deleted_plot} = Plot.Repo.delete_plot(plot)
+
+      # Verify plot is not found after soft deletion
+      results_after = Plot.Repo.list_plots_within_polygon(search_polygon)
+      refute plot.id in Enum.map(results_after, & &1.id)
     end
   end
 end

@@ -20,6 +20,7 @@ defmodule Api.Canvas.Plot.Repo do
   def list_user_plots(user_id) do
     Plot
     |> where([p], p.user_id == ^user_id)
+    |> where([p], is_nil(p.deleted_at))
     |> Repo.all()
   end
 
@@ -37,7 +38,12 @@ defmodule Api.Canvas.Plot.Repo do
       ** (Ecto.NoResultsError)
 
   """
-  def get_plot!(id), do: Repo.get!(Plot, id)
+  def get_plot!(id) do
+    Plot
+    |> where([p], p.id == ^id)
+    |> where([p], is_nil(p.deleted_at))
+    |> Repo.one!()
+  end
 
   @doc """
   Gets a single plot for a specific user.
@@ -56,6 +62,7 @@ defmodule Api.Canvas.Plot.Repo do
   def get_user_plot!(id, user_id) do
     Plot
     |> where([p], p.id == ^id and p.user_id == ^user_id)
+    |> where([p], is_nil(p.deleted_at))
     |> Repo.one()
   end
 
@@ -108,7 +115,9 @@ defmodule Api.Canvas.Plot.Repo do
 
   """
   def delete_plot(%Plot{} = plot) do
-    Repo.delete(plot)
+    plot
+    |> Plot.changeset(%{deleted_at: DateTime.utc_now()})
+    |> Repo.update()
   end
 
   @doc """
@@ -147,6 +156,7 @@ defmodule Api.Canvas.Plot.Repo do
     limit = get_list_limit(opts)
 
     Plot
+    |> where([p], is_nil(p.deleted_at))
     |> order_by([p], desc: p.inserted_at)
     |> limit(^limit)
     |> Repo.all()
@@ -184,6 +194,7 @@ defmodule Api.Canvas.Plot.Repo do
         p.user_id
       FROM unnest($1::float[], $2::float[]) as coords(x, y)
       JOIN plots p ON p.polygon IS NOT NULL
+        AND p.deleted_at IS NULL
         AND ST_Covers(p.polygon, ST_SetSRID(ST_MakePoint(coords.x, coords.y), 4326))
       ORDER BY coords.x, coords.y, p.id
       """
@@ -218,6 +229,7 @@ defmodule Api.Canvas.Plot.Repo do
   def list_plots_within_polygon(%Geo.Polygon{} = polygon) do
     Plot
     |> where([p], not is_nil(p.polygon))
+    |> where([p], is_nil(p.deleted_at))
     |> where([p], fragment("ST_Intersects(?, ?)", p.polygon, ^polygon))
     |> Repo.all()
   end

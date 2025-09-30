@@ -34,4 +34,11 @@ defmodule Api.Canvas.Plot do
       message: "You already have a plot with this name"
     )
   end
+
+  @doc """
+  Soft deletes a plot by setting deleted_at timestamp.
+  """
+  def soft_delete_changeset(plot) do
+    changeset(plot, %{deleted_at: DateTime.utc_now()})
+  end
 end
