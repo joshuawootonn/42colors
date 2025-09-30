@@ -20,11 +20,44 @@ migrate:
 migrate-test:
   export $(xargs <.env.test) && mix ecto.migrate
 
+# Reset database (drops, creates, migrates, seeds)
 reset-dev-db:
   export $(xargs <.env.dev) && mix ecto.reset
 
 reset-test-db:
   export $(xargs <.env.test) && mix ecto.reset
+
+# Force reset by dropping connections first (use when reset-dev-db fails)
+reset-force:
+  #!/usr/bin/env bash
+  export $(xargs <.env.dev)
+  echo "🧹 Cleaning and compiling dev environment..."
+  mix clean
+  mix compile
+  echo "🔌 Terminating active database connections..."
+  mix ecto.drop --force
+  echo "🗄️  Creating fresh database..."
+  mix ecto.create
+  echo "⬆️  Running migrations..."
+  mix ecto.migrate
+  echo "🌱 Seeding database..."
+  mix run priv/repo/seeds.exs
+  echo "✅ Database reset complete!"
+
+# Force reset test database
+reset-test-force:
+  #!/usr/bin/env bash
+  export $(xargs <.env.test)
+  echo "🧹 Cleaning and compiling test environment..."
+  mix clean
+  mix compile
+  echo "🔌 Terminating active test database connections..."
+  mix ecto.drop --force
+  echo "🗄️  Creating fresh test database..."
+  mix ecto.create
+  echo "⬆️  Running test migrations..."
+  mix ecto.migrate
+  echo "✅ Test database reset complete!"
 
 # Development server
 dev:
