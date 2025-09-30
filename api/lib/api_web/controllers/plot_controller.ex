@@ -207,7 +207,7 @@ defmodule ApiWeb.PlotController do
         # Calculate chunk keys before deleting
         chunk_keys = ChunkUtils.get_affected_chunk_keys(plot.polygon)
 
-        case Plot.Repo.delete_plot(plot) do
+        case Plot.Service.delete_plot(plot) do
           {:ok, %Plot{}} ->
             # Broadcast to region channel
             ApiWeb.Endpoint.broadcast("region:general", "delete_plot", %{

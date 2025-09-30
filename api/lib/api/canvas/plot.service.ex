@@ -144,6 +144,10 @@ defmodule Api.Canvas.Plot.Service do
     end
   end
 
+  def delete_plot(%Plot{} = plot) do
+    Plot.Repo.delete_plot(plot)
+  end
+
   @doc """
   Lists plots with configurable options.
 
