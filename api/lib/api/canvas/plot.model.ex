@@ -30,7 +30,7 @@ defmodule Api.Canvas.Plot do
     )
     |> foreign_key_constraint(:user_id, message: "User does not exist")
     |> unique_constraint([:name, :user_id],
-      name: :plots_name_user_id_index,
+      name: :plots_name_user_id_deleted_at_null_index,
       message: "You already have a plot with this name"
     )
   end

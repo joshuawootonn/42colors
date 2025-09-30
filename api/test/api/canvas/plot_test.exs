@@ -80,6 +80,71 @@ defmodule Api.PlotTest do
       plot = plot_fixture()
       assert %Ecto.Changeset{} = Plot.Repo.change_plot(plot)
     end
+
+    test "allows reusing plot names after soft deletion" do
+      user = user_fixture()
+      plot_name = "Reusable Plot Name"
+
+      # Create first plot
+      assert {:ok, %Plot{} = plot1} =
+               Plot.Repo.create_plot(%{
+                 name: plot_name,
+                 description: "First plot with this name",
+                 user_id: user.id
+               })
+
+      # Verify we can't create another plot with the same name
+      assert {:error, %Ecto.Changeset{}} =
+               Plot.Repo.create_plot(%{
+                 name: plot_name,
+                 description: "Duplicate name should fail",
+                 user_id: user.id
+               })
+
+      # Soft delete the first plot
+      assert {:ok, %Plot{}} = Plot.Repo.delete_plot(plot1)
+
+      # Now we should be able to create a new plot with the same name
+      assert {:ok, %Plot{} = plot2} =
+               Plot.Repo.create_plot(%{
+                 name: plot_name,
+                 description: "Second plot reusing the name",
+                 user_id: user.id
+               })
+
+      # Verify the new plot is different from the deleted one
+      assert plot2.id != plot1.id
+      assert plot2.description == "Second plot reusing the name"
+
+      # Verify only the new plot appears in user plots list
+      user_plots = Plot.Repo.list_user_plots(user.id)
+      assert length(user_plots) == 1
+      assert hd(user_plots).id == plot2.id
+    end
+
+    test "unique constraint still works for active plots" do
+      user = user_fixture()
+      plot_name = "Unique Active Plot"
+
+      # Create first plot
+      assert {:ok, %Plot{}} =
+               Plot.Repo.create_plot(%{
+                 name: plot_name,
+                 description: "First active plot",
+                 user_id: user.id
+               })
+
+      # Try to create another plot with the same name (should fail)
+      assert {:error, %Ecto.Changeset{errors: errors}} =
+               Plot.Repo.create_plot(%{
+                 name: plot_name,
+                 description: "Duplicate active plot",
+                 user_id: user.id
+               })
+
+      # Verify the error is about the unique constraint
+      assert Keyword.has_key?(errors, :name)
+    end
   end
 
   describe "list_plots_within_polygon/1" do
