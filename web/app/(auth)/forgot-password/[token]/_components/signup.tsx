@@ -82,6 +82,7 @@ export function UpdatePassword({ token }: { token: string }) {
                 <Input
                     id="password"
                     type="password"
+                    allowPasswordManager={true}
                     {...register('password')}
                     className={errors.password ? 'border-red-500' : ''}
                 />
@@ -97,6 +98,7 @@ export function UpdatePassword({ token }: { token: string }) {
                 <Input
                     id="password_confirmation"
                     type="password"
+                    allowPasswordManager={true}
                     {...register('password_confirmation')}
                     className={
                         errors.password_confirmation ? 'border-red-500' : ''

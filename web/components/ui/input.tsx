@@ -2,8 +2,24 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<'input'>>(
-    ({ className, type, ...props }, ref) => {
+type InputProps = React.ComponentProps<'input'> & {
+    allowPasswordManager?: boolean;
+};
+
+const PASSWORD_MANAGER_DISABLED_PROPS = {
+    autoComplete: 'off' as const,
+    'data-form-type': 'other',
+    'data-lpignore': 'true',
+};
+
+const PASSWORD_MANAGER_ENABLED_PROPS = {};
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+    ({ className, type, allowPasswordManager = false, ...props }, ref) => {
+        const passwordManagerProps = allowPasswordManager
+            ? PASSWORD_MANAGER_ENABLED_PROPS
+            : PASSWORD_MANAGER_DISABLED_PROPS;
+
         return (
             <div className={cn('svg-outline-within-sm relative', className)}>
                 <input
@@ -16,6 +32,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<'input'>>(
                         'disabled:cursor-not-allowed disabled:opacity-50',
                     )}
                     ref={ref}
+                    {...passwordManagerProps}
                     {...props}
                 />
             </div>

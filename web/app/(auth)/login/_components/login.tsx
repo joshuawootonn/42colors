@@ -77,6 +77,7 @@ export function Login() {
                 <Input
                     id="email"
                     type="email"
+                    allowPasswordManager={true}
                     {...register('email')}
                     className={errors.email ? 'border-red-500' : ''}
                 />
@@ -92,6 +93,7 @@ export function Login() {
                 <Input
                     id="password"
                     type="password"
+                    allowPasswordManager={true}
                     {...register('password')}
                     className={errors.password ? 'border-red-500' : ''}
                 />
