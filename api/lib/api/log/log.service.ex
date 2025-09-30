@@ -22,7 +22,7 @@ defmodule Api.Logs.Log.Service do
     * `attrs` - Map with log attributes:
       * `:user_id` - Required. The user receiving/spending currency
       * `:amount` - Required. Log amount (positive or negative, but not zero)
-      * `:log_type` - Required. One of: "initial_grant", "plot_claimed", "plot_deleted"
+      * `:log_type` - Required. One of: "initial_grant", "plot_created", "plot_deleted"
       * `:plot_id` - Optional. Associated plot ID
       * `:metadata` - Optional. Additional context data
 
@@ -35,11 +35,11 @@ defmodule Api.Logs.Log.Service do
 
   ## Examples
 
-      # Claiming a plot (spending currency)
+      # Creating a plot (spending currency)
       iex> create_log(%{
       ...>   user_id: 1,
       ...>   amount: -100,
-      ...>   log_type: "plot_claimed",
+      ...>   log_type: "plot_created",
       ...>   plot_id: 5,
       ...>   metadata: %{pixel_count: 100}
       ...> })
@@ -59,7 +59,7 @@ defmodule Api.Logs.Log.Service do
       iex> create_log(%{
       ...>   user_id: 1,
       ...>   amount: -1000,
-      ...>   log_type: "plot_claimed"
+      ...>   log_type: "plot_created"
       ...> })
       {:error, :insufficient_balance}
 
@@ -119,14 +119,14 @@ defmodule Api.Logs.Log.Service do
   end
 
   @doc """
-  Creates a log for claiming a plot.
+  Creates a log for creating a plot.
 
   Convenience wrapper that calculates the cost and creates the appropriate log.
 
   ## Parameters
 
-    * `user_id` - ID of the user claiming the plot
-    * `plot_id` - ID of the plot being claimed
+    * `user_id` - ID of the user creating the plot
+    * `plot_id` - ID of the plot being created
     * `pixel_count` - Number of pixels in the plot
 
   ## Returns
@@ -136,15 +136,15 @@ defmodule Api.Logs.Log.Service do
 
   ## Examples
 
-      iex> create_claim_plot_log(1, 5, 100)
+      iex> create_create_plot_log(1, 5, 100)
       {:ok, {%Log{amount: -100}, %User{balance: 400}}}
 
   """
-  def create_claim_plot_log(user_id, plot_id, pixel_count) do
+  def create_create_plot_log(user_id, plot_id, pixel_count) do
     create_log(%{
       user_id: user_id,
       amount: -pixel_count,
-      log_type: "plot_claimed",
+      log_type: "plot_created",
       plot_id: plot_id,
       metadata: %{pixel_count: pixel_count}
     })

@@ -63,7 +63,7 @@ defmodule Api.Logs.Log.Repo do
       iex> list(user_id: 1, limit: 10)
       [%Log{}, ...]
 
-      iex> list(log_type: "plot_claimed", preload: [:plot])
+      iex> list(log_type: "plot_created", preload: [:plot])
       [%Log{}, ...]
 
   """
@@ -123,7 +123,7 @@ defmodule Api.Logs.Log.Repo do
 
   ## Examples
 
-      iex> create(%{user_id: 1, amount: 100, log_type: "plot_claimed"})
+      iex> create(%{user_id: 1, amount: 100, log_type: "plot_created"})
       {:ok, %Log{}}
 
       iex> create(%{amount: 100})
@@ -141,7 +141,7 @@ defmodule Api.Logs.Log.Repo do
 
   ## Examples
 
-      iex> create!(%{user_id: 1, amount: 100, log_type: "plot_claimed"})
+      iex> create!(%{user_id: 1, amount: 100, log_type: "plot_created"})
       %Log{}
 
       iex> create!(%{amount: 100})

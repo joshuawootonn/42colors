@@ -26,7 +26,7 @@ defmodule Api.Repo.Migrations.CreateLogModel do
     create index(:logs, [:log_type])
     create index(:logs, [:inserted_at])
 
-    # Add claim tracking fields to plots
+    # Add create tracking fields to plots
     alter table(:plots) do
       add :deleted_at, :utc_datetime
     end

@@ -12,14 +12,14 @@ defmodule Api.Logs.Log.ServiceTest do
       attrs = %{
         user_id: user.id,
         amount: -100,
-        log_type: "plot_claimed",
+        log_type: "plot_created",
         metadata: %{pixel_count: 100}
       }
 
       assert {:ok, {log, updated_user}} = LogService.create_log(attrs)
       assert log.user_id == user.id
       assert log.amount == -100
-      assert log.log_type == "plot_claimed"
+      assert log.log_type == "plot_created"
       assert updated_user.balance == 400
     end
 
@@ -45,7 +45,7 @@ defmodule Api.Logs.Log.ServiceTest do
       attrs = %{
         user_id: user.id,
         amount: -100,
-        log_type: "plot_claimed",
+        log_type: "plot_created",
         plot_id: plot.id
       }
 
@@ -59,7 +59,7 @@ defmodule Api.Logs.Log.ServiceTest do
       attrs = %{
         user_id: user.id,
         amount: -50,
-        log_type: "plot_claimed",
+        log_type: "plot_created",
         metadata: %{pixel_count: 50, note: "test"}
       }
 
@@ -72,7 +72,7 @@ defmodule Api.Logs.Log.ServiceTest do
       attrs = %{
         user_id: 99999,
         amount: -100,
-        log_type: "plot_claimed"
+        log_type: "plot_created"
       }
 
       assert {:error, :user_not_found} = LogService.create_log(attrs)
@@ -84,7 +84,7 @@ defmodule Api.Logs.Log.ServiceTest do
       attrs = %{
         user_id: user.id,
         amount: -100,
-        log_type: "plot_claimed"
+        log_type: "plot_created"
       }
 
       assert {:error, :insufficient_balance} = LogService.create_log(attrs)
@@ -100,7 +100,7 @@ defmodule Api.Logs.Log.ServiceTest do
       attrs = %{
         user_id: user.id,
         amount: 0,
-        log_type: "plot_claimed"
+        log_type: "plot_created"
       }
 
       assert {:error, %Ecto.Changeset{} = changeset} =
@@ -137,7 +137,7 @@ defmodule Api.Logs.Log.ServiceTest do
       attrs = %{
         user_id: user.id,
         amount: -100,
-        log_type: "plot_claimed"
+        log_type: "plot_created"
       }
 
       assert {:ok, {_log, updated_user}} = LogService.create_log(attrs)
@@ -150,7 +150,7 @@ defmodule Api.Logs.Log.ServiceTest do
       attrs = %{
         user_id: user.id,
         amount: -51,
-        log_type: "plot_claimed"
+        log_type: "plot_created"
       }
 
       assert {:error, :insufficient_balance} = LogService.create_log(attrs)
@@ -183,7 +183,7 @@ defmodule Api.Logs.Log.ServiceTest do
       attrs = %{
         "user_id" => user.id,
         "amount" => -100,
-        "log_type" => "plot_claimed"
+        "log_type" => "plot_created"
       }
 
       assert {:ok, {log, updated_user}} = LogService.create_log(attrs)
@@ -198,7 +198,7 @@ defmodule Api.Logs.Log.ServiceTest do
       attrs1 = %{
         user_id: user.id,
         amount: -100,
-        log_type: "plot_claimed"
+        log_type: "plot_created"
       }
 
       assert {:ok, {_, user_after_1}} = LogService.create_log(attrs1)
@@ -218,7 +218,7 @@ defmodule Api.Logs.Log.ServiceTest do
       attrs3 = %{
         user_id: user.id,
         amount: -200,
-        log_type: "plot_claimed"
+        log_type: "plot_created"
       }
 
       assert {:ok, {_, user_after_3}} = LogService.create_log(attrs3)
@@ -226,16 +226,16 @@ defmodule Api.Logs.Log.ServiceTest do
     end
   end
 
-  describe "create_claim_plot_log/3" do
-    test "creates claim log with negative amount" do
+  describe "create_create_plot_log/3" do
+    test "creates create log with negative amount" do
       user = insert_user(balance: 500)
       plot = insert_plot(user_id: user.id)
 
       assert {:ok, {log, updated_user}} =
-               LogService.create_claim_plot_log(user.id, plot.id, 100)
+               LogService.create_create_plot_log(user.id, plot.id, 100)
 
       assert log.amount == -100
-      assert log.log_type == "plot_claimed"
+      assert log.log_type == "plot_created"
       assert log.plot_id == plot.id
 
       assert log.metadata[:pixel_count] == 100 ||
@@ -249,7 +249,7 @@ defmodule Api.Logs.Log.ServiceTest do
       plot = insert_plot(user_id: user.id)
 
       assert {:error, :insufficient_balance} =
-               LogService.create_claim_plot_log(user.id, plot.id, 100)
+               LogService.create_create_plot_log(user.id, plot.id, 100)
     end
   end
 
@@ -270,7 +270,7 @@ defmodule Api.Logs.Log.ServiceTest do
       LogService.create_log(%{
         user_id: user.id,
         amount: -100,
-        log_type: "plot_claimed"
+        log_type: "plot_created"
       })
 
       assert {:ok, 400} = LogService.get_user_balance(user.id)

@@ -96,10 +96,10 @@ defmodule Api.Logs.Log.RepoTest do
 
     test "filters by log_type" do
       user = insert_user()
-      log1 = insert_log(user_id: user.id, log_type: "plot_claimed")
+      log1 = insert_log(user_id: user.id, log_type: "plot_created")
       _log2 = insert_log(user_id: user.id, log_type: "plot_deleted")
 
-      logs = LogRepo.list(log_type: "plot_claimed")
+      logs = LogRepo.list(log_type: "plot_created")
 
       assert length(logs) == 1
       assert hd(logs).id == log1.id
@@ -219,13 +219,13 @@ defmodule Api.Logs.Log.RepoTest do
       attrs = %{
         user_id: user.id,
         amount: 100,
-        log_type: "plot_claimed"
+        log_type: "plot_created"
       }
 
       assert {:ok, %Log{} = log} = LogRepo.create(attrs)
       assert log.user_id == user.id
       assert log.amount == 100
-      assert log.log_type == "plot_claimed"
+      assert log.log_type == "plot_created"
     end
 
     test "creates log with metadata" do
@@ -234,7 +234,7 @@ defmodule Api.Logs.Log.RepoTest do
       attrs = %{
         user_id: user.id,
         amount: 100,
-        log_type: "plot_claimed",
+        log_type: "plot_created",
         metadata: %{pixel_count: 100, note: "test"}
       }
 
@@ -253,7 +253,7 @@ defmodule Api.Logs.Log.RepoTest do
       attrs = %{
         user_id: user.id,
         amount: -100,
-        log_type: "plot_claimed",
+        log_type: "plot_created",
         plot_id: plot.id
       }
 
@@ -275,7 +275,7 @@ defmodule Api.Logs.Log.RepoTest do
       attrs = %{
         user_id: user.id,
         amount: 0,
-        log_type: "plot_claimed"
+        log_type: "plot_created"
       }
 
       assert {:error, %Ecto.Changeset{} = changeset} = LogRepo.create(attrs)
@@ -301,7 +301,7 @@ defmodule Api.Logs.Log.RepoTest do
       attrs = %{
         user_id: user.id,
         amount: -100,
-        log_type: "plot_claimed"
+        log_type: "plot_created"
       }
 
       assert {:ok, %Log{} = log} = LogRepo.create(attrs)
@@ -316,7 +316,7 @@ defmodule Api.Logs.Log.RepoTest do
       attrs = %{
         user_id: user.id,
         amount: 100,
-        log_type: "plot_claimed"
+        log_type: "plot_created"
       }
 
       assert %Log{} = log = LogRepo.create!(attrs)
@@ -406,11 +406,11 @@ defmodule Api.Logs.Log.RepoTest do
 
     test "counts logs filtered by log_type" do
       user = insert_user()
-      insert_log(user_id: user.id, log_type: "plot_claimed")
+      insert_log(user_id: user.id, log_type: "plot_created")
       insert_log(user_id: user.id, log_type: "plot_deleted")
-      insert_log(user_id: user.id, log_type: "plot_claimed")
+      insert_log(user_id: user.id, log_type: "plot_created")
 
-      assert LogRepo.count(log_type: "plot_claimed") == 2
+      assert LogRepo.count(log_type: "plot_created") == 2
     end
 
     test "returns 0 when no logs match filters" do
@@ -457,7 +457,7 @@ defmodule Api.Logs.Log.RepoTest do
   defp insert_log(attrs) do
     default_attrs = %{
       amount: 100,
-      log_type: "plot_claimed",
+      log_type: "plot_created",
       metadata: %{}
     }
 
