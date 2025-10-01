@@ -14,6 +14,10 @@ test-watch:
   export $(xargs <.env.test) && mix clean && mix compile && mix test.watch
 
 # Database
+
+create-migration name:
+  mix ecto.gen.migration {{name}}
+
 migrate:
   export $(xargs <.env.dev) && mix ecto.migrate
 
