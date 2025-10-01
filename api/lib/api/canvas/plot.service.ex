@@ -4,6 +4,9 @@ defmodule Api.Canvas.Plot.Service do
   """
 
   alias Api.Canvas.Plot
+  alias Api.Logs.Log.Service, as: LogService
+  alias Ecto.Multi
+  alias Api.Repo
 
   @chunk_size 400
 
@@ -88,13 +91,101 @@ defmodule Api.Canvas.Plot.Service do
       polygon ->
         case check_for_overlaps(polygon, nil) do
           [] ->
-            # No overlaps, proceed with creation
-            Plot.Repo.create_plot(attrs)
+            # No overlaps, proceed with creation and logging
+            user_id = Map.get(attrs, "user_id") || Map.get(attrs, :user_id)
+            pixel_count = Plot.Repo.get_size(polygon)
+            # Negative because user is spending currency
+            cost = -pixel_count
+
+            # Calculate what fields are being set (for logging)
+            empty_plot = %Plot{}
+            changes = get_plot_diff(empty_plot, attrs)
+
+            Multi.new()
+            |> Multi.insert(:plot, Plot.changeset(%Plot{}, attrs))
+            |> Multi.run(:log, fn _repo, %{plot: plot} ->
+              LogService.create_log(%{
+                user_id: user_id,
+                amount: cost,
+                log_type: "plot_created",
+                plot_id: plot.id,
+                metadata: %{
+                  name: plot.name,
+                  description: plot.description,
+                  size: pixel_count,
+                  diffs: changes
+                }
+              })
+            end)
+            |> Repo.transaction()
+            |> case do
+              {:ok, %{plot: plot, log: {_log, _user}}} ->
+                {:ok, plot}
+
+              {:error, :plot, changeset, _changes} ->
+                {:error, changeset}
+
+              {:error, :log, reason, _changes} ->
+                {:error, reason}
+
+              {:error, _failed_operation, reason, _changes} ->
+                {:error, reason}
+            end
 
           overlapping_plots ->
             # Found overlaps, return error with details
             {:error, :overlapping_plots, overlapping_plots}
         end
+    end
+  end
+
+  # Private helper function for updating with logging
+  defp _update_plot(%Plot{} = plot, attrs, changes) do
+    # Only create log if there are actual changes
+    if Enum.empty?(changes) do
+      # No changes, just return the plot as-is
+      {:ok, plot}
+    else
+      # Calculate pixel count difference for cost calculation
+      old_pixel_count = Plot.Repo.get_size(plot.polygon)
+      new_polygon = Map.get(attrs, "polygon") || Map.get(attrs, :polygon) || plot.polygon
+      new_pixel_count = Plot.Repo.get_size(new_polygon)
+      pixel_diff = new_pixel_count - old_pixel_count
+      # Negative if user needs to pay more, positive if refund
+      cost = -pixel_diff
+
+      # Use actual cost (can be zero for metadata-only changes)
+
+      Multi.new()
+      |> Multi.update(:plot, Plot.changeset(plot, attrs))
+      |> Multi.run(:log, fn _repo, %{plot: updated_plot} ->
+        LogService.create_log(%{
+          user_id: plot.user_id,
+          amount: cost,
+          log_type: "plot_updated",
+          plot_id: plot.id,
+          metadata: %{
+            name: updated_plot.name,
+            description: updated_plot.description,
+            size: new_pixel_count,
+            diffs: changes
+          }
+        })
+      end)
+      |> Repo.transaction()
+      |> case do
+        {:ok, %{plot: plot, log: {_log, _user}}} ->
+          {:ok, plot}
+
+        {:error, :plot, changeset, _changes} ->
+          {:error, changeset}
+
+        {:error, :log, reason, _changes} ->
+          {:error, reason}
+
+        {:error, _failed_operation, reason, _changes} ->
+          {:error, reason}
+      end
     end
   end
 
@@ -126,16 +217,19 @@ defmodule Api.Canvas.Plot.Service do
     # Check if polygon is being updated
     new_polygon = Map.get(attrs, "polygon") || Map.get(attrs, :polygon)
 
+    # Calculate changes for logging
+    changes = get_plot_diff(plot, attrs)
+
     case new_polygon do
       nil ->
-        # No polygon update, proceed with normal update
-        Plot.Repo.update_plot(plot, attrs)
+        # No polygon update, proceed with normal update and logging
+        _update_plot(plot, attrs, changes)
 
       polygon ->
         case check_for_overlaps(polygon, plot.id) do
           [] ->
-            # No overlaps, proceed with update
-            Plot.Repo.update_plot(plot, attrs)
+            # No overlaps, proceed with update and logging
+            _update_plot(plot, attrs, changes)
 
           overlapping_plots ->
             # Found overlaps, return error with details
@@ -145,7 +239,45 @@ defmodule Api.Canvas.Plot.Service do
   end
 
   def delete_plot(%Plot{} = plot) do
-    Plot.Repo.delete_plot(plot)
+    # Calculate refund amount based on original pixel count
+    pixel_count = Plot.Repo.get_size(plot.polygon)
+    # Positive because user is getting currency back
+    refund_amount = pixel_count
+
+    # Calculate diffs for deletion (all fields go from current values to nil/deleted)
+    deletion_attrs = %{deleted_at: DateTime.utc_now()}
+    diffs = get_plot_diff(plot, deletion_attrs)
+
+    Multi.new()
+    |> Multi.update(:plot, Plot.changeset(plot, deletion_attrs))
+    |> Multi.run(:log, fn _repo, %{plot: _updated_plot} ->
+      LogService.create_log(%{
+        user_id: plot.user_id,
+        amount: refund_amount,
+        log_type: "plot_deleted",
+        plot_id: plot.id,
+        metadata: %{
+          name: plot.name,
+          description: plot.description,
+          size: pixel_count,
+          diffs: diffs
+        }
+      })
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{plot: plot, log: {_log, _user}}} ->
+        {:ok, plot}
+
+      {:error, :plot, changeset, _changes} ->
+        {:error, changeset}
+
+      {:error, :log, reason, _changes} ->
+        {:error, reason}
+
+      {:error, _failed_operation, reason, _changes} ->
+        {:error, reason}
+    end
   end
 
   @doc """
@@ -179,6 +311,89 @@ defmodule Api.Canvas.Plot.Service do
   Returns the chunk size used for spatial queries.
   """
   def chunk_size, do: @chunk_size
+
+  # Private helper function to calculate what changed in a plot update
+  defp get_plot_diff(%Plot{} = plot, attrs) do
+    changes = []
+
+    # Check name change
+    changes =
+      if Map.has_key?(attrs, "name") || Map.has_key?(attrs, :name) do
+        new_name = Map.get(attrs, "name") || Map.get(attrs, :name)
+
+        if new_name != plot.name do
+          [%{field: "name", old_value: plot.name, new_value: new_name} | changes]
+        else
+          changes
+        end
+      else
+        changes
+      end
+
+    # Check description change
+    changes =
+      if Map.has_key?(attrs, "description") || Map.has_key?(attrs, :description) do
+        new_description = Map.get(attrs, "description") || Map.get(attrs, :description)
+
+        if new_description != plot.description do
+          [
+            %{field: "description", old_value: plot.description, new_value: new_description}
+            | changes
+          ]
+        else
+          changes
+        end
+      else
+        changes
+      end
+
+    # Check polygon change (for future when polygon editing is supported)
+    changes =
+      if Map.has_key?(attrs, "polygon") || Map.has_key?(attrs, :polygon) do
+        new_polygon = Map.get(attrs, "polygon") || Map.get(attrs, :polygon)
+
+        if new_polygon != plot.polygon do
+          old_pixel_count = Plot.Repo.get_size(plot.polygon)
+          new_pixel_count = Plot.Repo.get_size(new_polygon)
+
+          [
+            %{
+              field: "polygon",
+              old_pixel_count: old_pixel_count,
+              new_pixel_count: new_pixel_count
+            }
+            | changes
+          ]
+        else
+          changes
+        end
+      else
+        changes
+      end
+
+    # Check deleted_at change (for soft deletion)
+    changes =
+      if Map.has_key?(attrs, "deleted_at") || Map.has_key?(attrs, :deleted_at) do
+        new_deleted_at = Map.get(attrs, "deleted_at") || Map.get(attrs, :deleted_at)
+
+        if new_deleted_at != plot.deleted_at do
+          [
+            %{
+              field: "deleted_at",
+              old_value: plot.deleted_at,
+              new_value: new_deleted_at
+            }
+            | changes
+          ]
+        else
+          changes
+        end
+      else
+        changes
+      end
+
+    Enum.reverse(changes)
+  end
 
   # Private function to check for overlapping plots
   defp check_for_overlaps(polygon, exclude_plot_id) do

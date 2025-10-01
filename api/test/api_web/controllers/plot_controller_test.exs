@@ -12,6 +12,8 @@ defmodule ApiWeb.PlotControllerTest do
 
   setup %{conn: conn} do
     user = user_fixture()
+    # Give user sufficient balance for plot operations (10000 pixels worth)
+    user = Api.Repo.update!(Ecto.Changeset.change(user, balance: 10000))
     conn = log_in_user(conn, user)
     {:ok, conn: conn, user: user}
   end

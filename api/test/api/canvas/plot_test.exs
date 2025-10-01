@@ -422,4 +422,91 @@ defmodule Api.PlotTest do
       refute plot.id in Enum.map(results_after, & &1.id)
     end
   end
+
+  describe "get_size/1" do
+    test "calculates size of a simple square polygon" do
+      # 10x10 square = 100 pixels
+      polygon = %Geo.Polygon{
+        coordinates: [[{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}]],
+        srid: 4326
+      }
+
+      assert Plot.Repo.get_size(polygon) == 100
+    end
+
+    test "calculates size of a rectangle polygon" do
+      # 5x20 rectangle = 100 pixels
+      polygon = %Geo.Polygon{
+        coordinates: [[{0, 0}, {0, 5}, {20, 5}, {20, 0}, {0, 0}]],
+        srid: 4326
+      }
+
+      assert Plot.Repo.get_size(polygon) == 100
+    end
+
+    test "calculates size of a triangle polygon" do
+      # Triangle with base 10 and height 10 = 50 pixels
+      polygon = %Geo.Polygon{
+        coordinates: [[{0, 0}, {10, 0}, {5, 10}, {0, 0}]],
+        srid: 4326
+      }
+
+      assert Plot.Repo.get_size(polygon) == 50
+    end
+
+    test "calculates size of complex L-shaped polygon" do
+      # L-shape: 10x10 square minus 5x5 square = 100 - 25 = 75 pixels
+      polygon = %Geo.Polygon{
+        coordinates: [[{0, 0}, {0, 10}, {5, 10}, {5, 5}, {10, 5}, {10, 0}, {0, 0}]],
+        srid: 4326
+      }
+
+      assert Plot.Repo.get_size(polygon) == 75
+    end
+
+    test "handles very small polygons" do
+      # 0.1 x 0.1 square = 0.01 pixels, should round to 0
+      polygon = %Geo.Polygon{
+        coordinates: [[{0.0, 0.0}, {0.0, 0.1}, {0.1, 0.1}, {0.1, 0.0}, {0.0, 0.0}]],
+        srid: 4326
+      }
+
+      assert Plot.Repo.get_size(polygon) == 0
+    end
+
+    test "handles fractional areas that round up" do
+      # 1.6 x 1.6 square = 2.56 pixels, should round to 3
+      polygon = %Geo.Polygon{
+        coordinates: [[{0.0, 0.0}, {0.0, 1.6}, {1.6, 1.6}, {1.6, 0.0}, {0.0, 0.0}]],
+        srid: 4326
+      }
+
+      assert Plot.Repo.get_size(polygon) == 3
+    end
+
+    test "returns 0 for nil polygon" do
+      assert Plot.Repo.get_size(nil) == 0
+    end
+
+    test "returns 0 for invalid input" do
+      assert Plot.Repo.get_size("not a polygon") == 0
+      assert Plot.Repo.get_size(%{}) == 0
+      assert Plot.Repo.get_size(123) == 0
+    end
+
+    test "handles polygon with holes (donut shape)" do
+      # 10x10 square with 4x4 hole in center = 100 - 16 = 84 pixels
+      polygon = %Geo.Polygon{
+        coordinates: [
+          # Outer ring
+          [{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}],
+          # Inner ring (hole) - note reverse winding
+          [{3, 3}, {7, 3}, {7, 7}, {3, 7}, {3, 3}]
+        ],
+        srid: 4326
+      }
+
+      assert Plot.Repo.get_size(polygon) == 84
+    end
+  end
 end

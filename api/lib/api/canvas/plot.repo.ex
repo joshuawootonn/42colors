@@ -235,4 +235,40 @@ defmodule Api.Canvas.Plot.Repo do
   end
 
   def list_plots_within_polygon(_), do: {:error, :invalid_polygon}
+
+  @doc """
+  Calculates the size (pixel count) of a polygon.
+
+  Uses PostGIS ST_Area to calculate the area of the polygon,
+  which represents the number of pixels within the polygon.
+
+  ## Parameters
+  - `polygon`: A %Geo.Polygon{} struct
+
+  ## Returns
+  - Integer representing the number of pixels (area) in the polygon
+  - 0 if polygon is nil or invalid
+
+  ## Examples
+
+      iex> polygon = %Geo.Polygon{coordinates: [[{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}]], srid: 4326}
+      iex> Plot.Repo.get_size(polygon)
+      100
+  """
+  def get_size(%Geo.Polygon{} = polygon) do
+    # Use PostGIS ST_Area to calculate the area of the polygon
+    # Since our coordinate system represents pixels directly, the area equals pixel count
+    sql = "SELECT ST_Area($1::geometry) as area"
+
+    case Repo.query(sql, [polygon]) do
+      {:ok, %{rows: [[area]]}} when is_number(area) ->
+        # Round to nearest integer since we're dealing with pixel counts
+        round(area)
+
+      _ ->
+        0
+    end
+  end
+
+  def get_size(_), do: 0
 end

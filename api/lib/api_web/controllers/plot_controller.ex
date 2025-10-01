@@ -105,6 +105,17 @@ defmodule ApiWeb.PlotController do
               }
             })
 
+          {:error, :insufficient_balance} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> json(%{
+              status: "error",
+              message: "Insufficient balance to create plot",
+              errors: %{
+                general: ["You don't have enough pixels to create a plot of this size"]
+              }
+            })
+
           {:error, %Ecto.Changeset{} = changeset} ->
             conn
             |> put_status(:unprocessable_entity)
@@ -181,6 +192,17 @@ defmodule ApiWeb.PlotController do
                 polygon: [
                   "Polygon overlaps with existing plots: #{format_overlapping_plots_names(overlapping_plots)}"
                 ]
+              }
+            })
+
+          {:error, :insufficient_balance} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> json(%{
+              status: "error",
+              message: "Insufficient balance to update plot",
+              errors: %{
+                general: ["You don't have enough pixels to resize to this size"]
               }
             })
 
