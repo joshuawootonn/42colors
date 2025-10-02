@@ -2,7 +2,7 @@ defmodule Api.Logs.Log do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @log_types ~w(initial_grant plot_created plot_updated plot_deleted)
+  @log_types ~w(initial_grant bailout_grant plot_created plot_updated plot_deleted)
 
   schema "logs" do
     field :old_balance, :integer
