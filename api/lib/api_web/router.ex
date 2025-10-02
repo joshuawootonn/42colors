@@ -53,6 +53,7 @@ defmodule ApiWeb.Router do
 
     get "/users/me", UserSessionController, :read
     get "/plots/me", PlotController, :me_plots
+    get "/logs/me", LogController, :me_logs
   end
 
   scope "/api", ApiWeb do

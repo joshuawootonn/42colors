@@ -14,6 +14,7 @@ import { store } from '@/lib/store';
 import { useSelector } from '@xstate/store/react';
 
 import { Link } from './link';
+import { LogsPopover } from './logs-popover';
 import { PlotsPopover } from './plots-popover';
 import { PopoverTrigger } from './ui/popover';
 
@@ -55,6 +56,19 @@ export function Footer() {
                         )}
                     />
                 </PlotsPopover>
+                <div>/</div>
+                <LogsPopover>
+                    <PopoverTrigger
+                        render={(props) => (
+                            <button
+                                {...props}
+                                className="svg-outline relative no-underline"
+                            >
+                                logs
+                            </button>
+                        )}
+                    />
+                </LogsPopover>
                 <div>/</div>
                 <DropdownMenu>
                     <DropdownMenuTrigger
