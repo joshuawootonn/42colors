@@ -75,9 +75,47 @@ defmodule Api.Accounts do
 
   """
   def register_user(attrs) do
-    %User{}
-    |> User.registration_changeset(attrs)
-    |> Repo.insert()
+    alias Api.Logs.Log.Service, as: LogService
+    alias Ecto.Multi
+
+    # First, create the user
+    case Multi.new()
+         |> Multi.insert(:user, fn _changes ->
+           %User{}
+           |> User.registration_changeset(attrs)
+         end)
+         |> Repo.transaction() do
+      {:ok, %{user: user}} ->
+        # Get the user's current balance outside of the transaction
+        current_user = Repo.get!(User, user.id)
+
+        # Calculate balance diff using the public function
+        balance_diff = LogService.get_balance_diff(current_user.balance, 2000)
+
+        # Create the initial grant log
+        case LogService.create_log(%{
+               user_id: user.id,
+               amount: 2000,
+               log_type: "initial_grant",
+               metadata: %{
+                 reason: "Initial grant for new user",
+                 grant_amount: 2000,
+                 balance_diff: balance_diff
+               }
+             }) do
+          {:ok, {_log, updated_user}} ->
+            {:ok, updated_user}
+
+          {:error, reason} ->
+            {:error, reason}
+        end
+
+      {:error, :user, changeset, _changes} ->
+        {:error, changeset}
+
+      {:error, _failed_operation, reason, _changes} ->
+        {:error, reason}
+    end
   end
 
   @doc """

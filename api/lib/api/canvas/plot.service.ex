@@ -101,35 +101,52 @@ defmodule Api.Canvas.Plot.Service do
             empty_plot = %Plot{}
             changes = get_plot_diff(empty_plot, attrs)
 
-            Multi.new()
-            |> Multi.insert(:plot, Plot.changeset(%Plot{}, attrs))
-            |> Multi.run(:log, fn _repo, %{plot: plot} ->
-              LogService.create_log(%{
-                user_id: user_id,
-                amount: cost,
-                log_type: "plot_created",
-                plot_id: plot.id,
-                metadata: %{
-                  name: plot.name,
-                  description: plot.description,
-                  size: pixel_count,
-                  diffs: changes
-                }
-              })
-            end)
-            |> Repo.transaction()
-            |> case do
-              {:ok, %{plot: plot, log: {_log, _user}}} ->
-                {:ok, plot}
+            # Check if user_id is provided before fetching user
+            if is_nil(user_id) do
+              # If no user_id provided, proceed with normal validation (will fail in changeset)
+              Plot.Repo.create_plot(attrs)
+            else
+              # Get user outside of the transaction
+              case Repo.get(Api.Accounts.User, user_id) do
+                nil ->
+                  {:error, :user_not_found}
 
-              {:error, :plot, changeset, _changes} ->
-                {:error, changeset}
+                user ->
+                  # Calculate balance diff using the public function
+                  balance_diff = LogService.get_balance_diff(user.balance, cost)
 
-              {:error, :log, reason, _changes} ->
-                {:error, reason}
+                  Multi.new()
+                  |> Multi.insert(:plot, Plot.changeset(%Plot{}, attrs))
+                  |> Multi.run(:log, fn _repo, %{plot: plot} ->
+                    LogService.create_log(%{
+                      user_id: user_id,
+                      amount: cost,
+                      log_type: "plot_created",
+                      plot_id: plot.id,
+                      metadata: %{
+                        name: plot.name,
+                        description: plot.description,
+                        size: pixel_count,
+                        diffs: changes,
+                        balance_diff: balance_diff
+                      }
+                    })
+                  end)
+                  |> Repo.transaction()
+                  |> case do
+                    {:ok, %{plot: plot, log: {_log, _user}}} ->
+                      {:ok, plot}
 
-              {:error, _failed_operation, reason, _changes} ->
-                {:error, reason}
+                    {:error, :plot, changeset, _changes} ->
+                      {:error, changeset}
+
+                    {:error, :log, reason, _changes} ->
+                      {:error, reason}
+
+                    {:error, _failed_operation, reason, _changes} ->
+                      {:error, reason}
+                  end
+              end
             end
 
           overlapping_plots ->
@@ -156,22 +173,33 @@ defmodule Api.Canvas.Plot.Service do
 
       # Use actual cost (can be zero for metadata-only changes)
 
-      Multi.new()
-      |> Multi.update(:plot, Plot.changeset(plot, attrs))
-      |> Multi.run(:log, fn _repo, %{plot: updated_plot} ->
-        LogService.create_log(%{
-          user_id: plot.user_id,
-          amount: cost,
-          log_type: "plot_updated",
-          plot_id: plot.id,
-          metadata: %{
-            name: updated_plot.name,
-            description: updated_plot.description,
-            size: new_pixel_count,
-            diffs: changes
-          }
-        })
-      end)
+      # Get user outside of the transaction
+      case Repo.get(Api.Accounts.User, plot.user_id) do
+        nil ->
+          {:error, :user_not_found}
+
+        user ->
+          # Calculate balance diff using the public function
+          balance_diff = LogService.get_balance_diff(user.balance, cost)
+
+          Multi.new()
+          |> Multi.update(:plot, Plot.changeset(plot, attrs))
+          |> Multi.run(:log, fn _repo, %{plot: updated_plot} ->
+            LogService.create_log(%{
+              user_id: plot.user_id,
+              amount: cost,
+              log_type: "plot_updated",
+              plot_id: plot.id,
+              metadata: %{
+                name: updated_plot.name,
+                description: updated_plot.description,
+                size: new_pixel_count,
+                diffs: changes,
+                balance_diff: balance_diff
+              }
+            })
+          end)
+      end
       |> Repo.transaction()
       |> case do
         {:ok, %{plot: plot, log: {_log, _user}}} ->
@@ -248,22 +276,33 @@ defmodule Api.Canvas.Plot.Service do
     deletion_attrs = %{deleted_at: DateTime.utc_now()}
     diffs = get_plot_diff(plot, deletion_attrs)
 
-    Multi.new()
-    |> Multi.update(:plot, Plot.changeset(plot, deletion_attrs))
-    |> Multi.run(:log, fn _repo, %{plot: _updated_plot} ->
-      LogService.create_log(%{
-        user_id: plot.user_id,
-        amount: refund_amount,
-        log_type: "plot_deleted",
-        plot_id: plot.id,
-        metadata: %{
-          name: plot.name,
-          description: plot.description,
-          size: pixel_count,
-          diffs: diffs
-        }
-      })
-    end)
+    # Get user outside of the transaction
+    case Repo.get(Api.Accounts.User, plot.user_id) do
+      nil ->
+        {:error, :user_not_found}
+
+      user ->
+        # Calculate balance diff using the public function
+        balance_diff = LogService.get_balance_diff(user.balance, refund_amount)
+
+        Multi.new()
+        |> Multi.update(:plot, Plot.changeset(plot, deletion_attrs))
+        |> Multi.run(:log, fn _repo, %{plot: _updated_plot} ->
+          LogService.create_log(%{
+            user_id: plot.user_id,
+            amount: refund_amount,
+            log_type: "plot_deleted",
+            plot_id: plot.id,
+            metadata: %{
+              name: plot.name,
+              description: plot.description,
+              size: pixel_count,
+              diffs: diffs,
+              balance_diff: balance_diff
+            }
+          })
+        end)
+    end
     |> Repo.transaction()
     |> case do
       {:ok, %{plot: plot, log: {_log, _user}}} ->

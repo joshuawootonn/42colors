@@ -51,6 +51,13 @@ defmodule Api.Canvas.PlotLoggingIntegrationTest do
       assert name_change["old_value"] == nil
       assert name_change["new_value"] == "Test Plot"
 
+      # Verify balance_diff metadata is included
+      balance_diff = log.metadata["balance_diff"]
+      assert balance_diff != nil
+      assert balance_diff["old_value"] == 1000
+      assert balance_diff["new_value"] == 900
+      assert balance_diff["diff"] == -100
+
       # Verify user balance was updated
       updated_user = Api.Repo.get!(User, user.id)
       assert updated_user.balance == 900
@@ -95,6 +102,15 @@ defmodule Api.Canvas.PlotLoggingIntegrationTest do
       assert hd(diffs)["field"] == "name"
       assert hd(diffs)["old_value"] == "Original Plot"
       assert hd(diffs)["new_value"] == "Updated Plot"
+
+      # Verify balance_diff metadata shows zero change (metadata-only update)
+      balance_diff = update_log.metadata["balance_diff"]
+      assert balance_diff != nil
+      # Balance after plot creation
+      assert balance_diff["old_value"] == 900
+      # No change for metadata update
+      assert balance_diff["new_value"] == 900
+      assert balance_diff["diff"] == 0
     end
 
     test "creates log entry when plot is deleted" do
@@ -140,6 +156,15 @@ defmodule Api.Canvas.PlotLoggingIntegrationTest do
       assert deleted_at_change["old_value"] == nil
       # Should have a timestamp
       assert deleted_at_change["new_value"] != nil
+
+      # Verify balance_diff metadata shows refund
+      balance_diff = delete_log.metadata["balance_diff"]
+      assert balance_diff != nil
+      # Balance after plot creation
+      assert balance_diff["old_value"] == 900
+      # Balance after refund
+      assert balance_diff["new_value"] == 1000
+      assert balance_diff["diff"] == 100
 
       # Verify user balance was updated (spent 100, got 100 back = 1000 total)
       updated_user = Api.Repo.get!(User, user.id)

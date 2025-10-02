@@ -68,6 +68,35 @@ defmodule Api.Logs.Log.ServiceTest do
       assert log.metadata["note"] == "test" || log.metadata[:note] == "test"
     end
 
+    test "creates log with balance_diff metadata when provided" do
+      user = insert_user(balance: 500)
+
+      balance_diff = %{
+        old_value: 500,
+        new_value: 400,
+        diff: -100
+      }
+
+      attrs = %{
+        user_id: user.id,
+        amount: -100,
+        log_type: "plot_created",
+        metadata: %{
+          pixel_count: 100,
+          balance_diff: balance_diff
+        }
+      }
+
+      assert {:ok, {log, updated_user}} = LogService.create_log(attrs)
+      assert updated_user.balance == 400
+
+      # Verify balance_diff metadata is stored correctly
+      stored_balance_diff = log.metadata["balance_diff"] || log.metadata[:balance_diff]
+      assert stored_balance_diff["old_value"] == 500 || stored_balance_diff[:old_value] == 500
+      assert stored_balance_diff["new_value"] == 400 || stored_balance_diff[:new_value] == 400
+      assert stored_balance_diff["diff"] == -100 || stored_balance_diff[:diff] == -100
+    end
+
     test "returns error when user doesn't exist" do
       attrs = %{
         user_id: 99999,
@@ -241,6 +270,13 @@ defmodule Api.Logs.Log.ServiceTest do
       assert log.metadata[:pixel_count] == 100 ||
                log.metadata["pixel_count"] == 100
 
+      # Verify balance_diff is included in metadata
+      balance_diff = log.metadata["balance_diff"] || log.metadata[:balance_diff]
+      assert balance_diff != nil
+      assert balance_diff["old_value"] == 500 || balance_diff[:old_value] == 500
+      assert balance_diff["new_value"] == 400 || balance_diff[:new_value] == 400
+      assert balance_diff["diff"] == -100 || balance_diff[:diff] == -100
+
       assert updated_user.balance == 400
     end
 
@@ -250,6 +286,40 @@ defmodule Api.Logs.Log.ServiceTest do
 
       assert {:error, :insufficient_balance} =
                LogService.create_create_plot_log(user.id, plot.id, 100)
+    end
+  end
+
+  describe "get_balance_diff/2" do
+    test "calculates balance diff for negative amount" do
+      result = LogService.get_balance_diff(1500, -100)
+
+      assert result.old_value == 1500
+      assert result.new_value == 1400
+      assert result.diff == -100
+    end
+
+    test "calculates balance diff for positive amount" do
+      result = LogService.get_balance_diff(1000, 200)
+
+      assert result.old_value == 1000
+      assert result.new_value == 1200
+      assert result.diff == 200
+    end
+
+    test "calculates balance diff for zero amount" do
+      result = LogService.get_balance_diff(500, 0)
+
+      assert result.old_value == 500
+      assert result.new_value == 500
+      assert result.diff == 0
+    end
+
+    test "handles edge cases with zero balance" do
+      result = LogService.get_balance_diff(0, 100)
+
+      assert result.old_value == 0
+      assert result.new_value == 100
+      assert result.diff == 100
     end
   end
 

@@ -119,6 +119,37 @@ defmodule Api.Logs.Log.Service do
   end
 
   @doc """
+  Calculates balance changes for logging.
+
+  ## Parameters
+
+    * `old_balance` - The user's current balance before the transaction
+    * `amount` - The amount being added/subtracted (positive or negative)
+
+  ## Returns
+
+    * Map with `old_value`, `new_value`, and `diff` keys
+
+  ## Examples
+
+      iex> get_balance_diff(1500, -100)
+      %{old_value: 1500, new_value: 1400, diff: -100}
+
+      iex> get_balance_diff(1000, 200)
+      %{old_value: 1000, new_value: 1200, diff: 200}
+
+  """
+  def get_balance_diff(old_balance, amount) do
+    new_balance = old_balance + amount
+
+    %{
+      old_value: old_balance,
+      new_value: new_balance,
+      diff: amount
+    }
+  end
+
+  @doc """
   Creates a log for creating a plot.
 
   Convenience wrapper that calculates the cost and creates the appropriate log.
@@ -141,13 +172,25 @@ defmodule Api.Logs.Log.Service do
 
   """
   def create_create_plot_log(user_id, plot_id, pixel_count) do
-    create_log(%{
-      user_id: user_id,
-      amount: -pixel_count,
-      log_type: "plot_created",
-      plot_id: plot_id,
-      metadata: %{pixel_count: pixel_count}
-    })
+    case Repo.get(User, user_id) do
+      nil ->
+        {:error, :user_not_found}
+
+      user ->
+        amount = -pixel_count
+        balance_diff = get_balance_diff(user.balance, amount)
+
+        create_log(%{
+          user_id: user_id,
+          amount: amount,
+          log_type: "plot_created",
+          plot_id: plot_id,
+          metadata: %{
+            pixel_count: pixel_count,
+            balance_diff: balance_diff
+          }
+        })
+    end
   end
 
   @doc """
