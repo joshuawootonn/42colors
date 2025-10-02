@@ -151,50 +151,6 @@ defmodule Api.Logs.Log.Service do
   end
 
   @doc """
-  Creates a log for creating a plot.
-
-  Convenience wrapper that calculates the cost and creates the appropriate log.
-
-  ## Parameters
-
-    * `user_id` - ID of the user creating the plot
-    * `plot_id` - ID of the plot being created
-    * `pixel_count` - Number of pixels in the plot
-
-  ## Returns
-
-    * `{:ok, {log, user}}` - Success
-    * `{:error, reason}` - Error
-
-  ## Examples
-
-      iex> create_create_plot_log(1, 5, 100)
-      {:ok, {%Log{old_balance: 500, new_balance: 400}, %User{balance: 400}}}
-
-  """
-  def create_create_plot_log(user_id, plot_id, pixel_count) do
-    case Repo.get(User, user_id) do
-      nil ->
-        {:error, :user_not_found}
-
-      user ->
-        amount = -pixel_count
-        balance_change = calculate_balance_change(user.balance, amount)
-
-        create_log(%{
-          user_id: user_id,
-          old_balance: balance_change.old_balance,
-          new_balance: balance_change.new_balance,
-          log_type: "plot_created",
-          plot_id: plot_id,
-          diffs: %{
-            "pixel_count" => %{"old" => 0, "new" => pixel_count}
-          }
-        })
-    end
-  end
-
-  @doc """
   Gets the current balance for a user.
 
   ## Examples

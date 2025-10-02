@@ -280,36 +280,6 @@ defmodule Api.Logs.Log.ServiceTest do
     end
   end
 
-  describe "create_create_plot_log/3" do
-    test "creates create log with balance decrease" do
-      user = insert_user(balance: 500)
-      plot = insert_plot(user_id: user.id)
-
-      assert {:ok, {log, updated_user}} =
-               LogService.create_create_plot_log(user.id, plot.id, 100)
-
-      assert log.old_balance == 500
-      assert log.new_balance == 400
-      balance_diff = log.new_balance - log.old_balance
-      assert balance_diff == -100
-      assert log.log_type == "plot_created"
-      assert log.plot_id == plot.id
-
-      assert log.diffs["pixel_count"]["old"] == 0
-      assert log.diffs["pixel_count"]["new"] == 100
-
-      assert updated_user.balance == 400
-    end
-
-    test "returns error when insufficient balance" do
-      user = insert_user(balance: 50)
-      plot = insert_plot(user_id: user.id)
-
-      assert {:error, :insufficient_balance} =
-               LogService.create_create_plot_log(user.id, plot.id, 100)
-    end
-  end
-
   describe "calculate_balance_change/2" do
     test "calculates balance change for negative change" do
       result = LogService.calculate_balance_change(1500, -100)
