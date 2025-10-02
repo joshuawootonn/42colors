@@ -11,40 +11,47 @@ defmodule Api.Logs.Log.ServiceTest do
 
       attrs = %{
         user_id: user.id,
-        amount: -100,
+        old_balance: 500,
+        new_balance: 400,
         log_type: "plot_created",
-        metadata: %{pixel_count: 100}
+        diffs: %{"pixel_count" => 100}
       }
 
       assert {:ok, {log, updated_user}} = LogService.create_log(attrs)
       assert log.user_id == user.id
-      assert log.amount == -100
+      assert log.old_balance == 500
+      assert log.new_balance == 400
       assert log.log_type == "plot_created"
       assert updated_user.balance == 400
     end
 
-    test "creates log with positive amount (refund)" do
+    test "creates log with positive balance change (refund)" do
       user = insert_user(balance: 400)
 
       attrs = %{
         user_id: user.id,
-        amount: 100,
+        old_balance: 400,
+        new_balance: 500,
         log_type: "plot_deleted",
-        metadata: %{pixel_count: 100}
+        diffs: %{pixel_count: %{old: 100, new: 0}}
       }
 
       assert {:ok, {log, updated_user}} = LogService.create_log(attrs)
-      assert log.amount == 100
+      assert log.old_balance == 400
+      assert log.new_balance == 500
+      balance_diff = log.new_balance - log.old_balance
+      assert balance_diff == 100
       assert updated_user.balance == 500
     end
 
     test "creates log with plot_id" do
-      user = insert_user()
+      user = insert_user(balance: 500)
       plot = insert_plot(user_id: user.id)
 
       attrs = %{
         user_id: user.id,
-        amount: -100,
+        old_balance: 500,
+        new_balance: 400,
         log_type: "plot_created",
         plot_id: plot.id
       }
@@ -53,54 +60,56 @@ defmodule Api.Logs.Log.ServiceTest do
       assert log.plot_id == plot.id
     end
 
-    test "creates log with metadata" do
-      user = insert_user()
+    test "creates log with diffs" do
+      user = insert_user(balance: 500)
 
       attrs = %{
         user_id: user.id,
-        amount: -50,
+        old_balance: 500,
+        new_balance: 450,
         log_type: "plot_created",
-        metadata: %{pixel_count: 50, note: "test"}
+        diffs: %{pixel_count: %{old: 0, new: 50}, note: %{old: nil, new: "test"}}
       }
 
       assert {:ok, {log, _user}} = LogService.create_log(attrs)
-      assert log.metadata["pixel_count"] == 50 || log.metadata[:pixel_count] == 50
-      assert log.metadata["note"] == "test" || log.metadata[:note] == "test"
+      assert log.diffs[:pixel_count][:old] == 0
+      assert log.diffs[:pixel_count][:new] == 50
+      assert log.diffs[:note][:old] == nil
+      assert log.diffs[:note][:new] == "test"
     end
 
-    test "creates log with balance_diff metadata when provided" do
+    test "creates log with diffs when provided" do
       user = insert_user(balance: 500)
-
-      balance_diff = %{
-        old_value: 500,
-        new_value: 400,
-        diff: -100
-      }
 
       attrs = %{
         user_id: user.id,
-        amount: -100,
+        old_balance: 500,
+        new_balance: 400,
         log_type: "plot_created",
-        metadata: %{
-          pixel_count: 100,
-          balance_diff: balance_diff
+        diffs: %{
+          pixel_count: %{old: 0, new: 100}
         }
       }
 
       assert {:ok, {log, updated_user}} = LogService.create_log(attrs)
       assert updated_user.balance == 400
 
-      # Verify balance_diff metadata is stored correctly
-      stored_balance_diff = log.metadata["balance_diff"] || log.metadata[:balance_diff]
-      assert stored_balance_diff["old_value"] == 500 || stored_balance_diff[:old_value] == 500
-      assert stored_balance_diff["new_value"] == 400 || stored_balance_diff[:new_value] == 400
-      assert stored_balance_diff["diff"] == -100 || stored_balance_diff[:diff] == -100
+      # Verify balance tracking
+      assert log.old_balance == 500
+      assert log.new_balance == 400
+      balance_diff = log.new_balance - log.old_balance
+      assert balance_diff == -100
+
+      # Verify diffs are stored correctly
+      assert log.diffs[:pixel_count][:old] == 0
+      assert log.diffs[:pixel_count][:new] == 100
     end
 
     test "returns error when user doesn't exist" do
       attrs = %{
         user_id: 99999,
-        amount: -100,
+        old_balance: 500,
+        new_balance: 400,
         log_type: "plot_created"
       }
 
@@ -112,7 +121,9 @@ defmodule Api.Logs.Log.ServiceTest do
 
       attrs = %{
         user_id: user.id,
-        amount: -100,
+        old_balance: 50,
+        # This would make balance negative
+        new_balance: -50,
         log_type: "plot_created"
       }
 
@@ -123,19 +134,21 @@ defmodule Api.Logs.Log.ServiceTest do
       assert reloaded_user.balance == 50
     end
 
-    test "returns error for zero amount" do
-      user = insert_user()
+    test "returns error for zero balance change" do
+      user = insert_user(balance: 500)
 
       attrs = %{
         user_id: user.id,
-        amount: 0,
+        old_balance: 500,
+        # No change
+        new_balance: 500,
         log_type: "plot_created"
       }
 
       assert {:error, %Ecto.Changeset{} = changeset} =
                LogService.create_log(attrs)
 
-      assert changeset.errors[:amount]
+      assert changeset.errors[:new_balance]
     end
 
     test "returns error for invalid log type" do
@@ -143,7 +156,8 @@ defmodule Api.Logs.Log.ServiceTest do
 
       attrs = %{
         user_id: user.id,
-        amount: -100,
+        old_balance: 500,
+        new_balance: 400,
         log_type: "invalid_type"
       }
 
@@ -154,7 +168,7 @@ defmodule Api.Logs.Log.ServiceTest do
     end
 
     test "returns error when required fields are missing" do
-      attrs = %{amount: -100}
+      attrs = %{old_balance: 500, new_balance: 400}
 
       # When user_id is missing, we get a specific error
       assert {:error, :user_id_required} = LogService.create_log(attrs)
@@ -165,7 +179,8 @@ defmodule Api.Logs.Log.ServiceTest do
 
       attrs = %{
         user_id: user.id,
-        amount: -100,
+        old_balance: 100,
+        new_balance: 0,
         log_type: "plot_created"
       }
 
@@ -178,7 +193,9 @@ defmodule Api.Logs.Log.ServiceTest do
 
       attrs = %{
         user_id: user.id,
-        amount: -51,
+        old_balance: 50,
+        # This would make balance negative
+        new_balance: -1,
         log_type: "plot_created"
       }
 
@@ -192,7 +209,8 @@ defmodule Api.Logs.Log.ServiceTest do
       # Try to create log with invalid data that will fail at insert
       attrs = %{
         user_id: user.id,
-        amount: -100,
+        old_balance: 500,
+        new_balance: 400,
         log_type: "invalid_type"
       }
 
@@ -211,12 +229,16 @@ defmodule Api.Logs.Log.ServiceTest do
 
       attrs = %{
         "user_id" => user.id,
-        "amount" => -100,
+        "old_balance" => 500,
+        "new_balance" => 400,
         "log_type" => "plot_created"
       }
 
       assert {:ok, {log, updated_user}} = LogService.create_log(attrs)
-      assert log.amount == -100
+      assert log.old_balance == 500
+      assert log.new_balance == 400
+      balance_diff = log.new_balance - log.old_balance
+      assert balance_diff == -100
       assert updated_user.balance == 400
     end
 
@@ -226,7 +248,8 @@ defmodule Api.Logs.Log.ServiceTest do
       # First log: spend 100
       attrs1 = %{
         user_id: user.id,
-        amount: -100,
+        old_balance: 500,
+        new_balance: 400,
         log_type: "plot_created"
       }
 
@@ -236,7 +259,8 @@ defmodule Api.Logs.Log.ServiceTest do
       # Second log: refund 50
       attrs2 = %{
         user_id: user.id,
-        amount: 50,
+        old_balance: 400,
+        new_balance: 450,
         log_type: "plot_deleted"
       }
 
@@ -246,7 +270,8 @@ defmodule Api.Logs.Log.ServiceTest do
       # Third log: spend 200
       attrs3 = %{
         user_id: user.id,
-        amount: -200,
+        old_balance: 450,
+        new_balance: 250,
         log_type: "plot_created"
       }
 
@@ -256,26 +281,22 @@ defmodule Api.Logs.Log.ServiceTest do
   end
 
   describe "create_create_plot_log/3" do
-    test "creates create log with negative amount" do
+    test "creates create log with balance decrease" do
       user = insert_user(balance: 500)
       plot = insert_plot(user_id: user.id)
 
       assert {:ok, {log, updated_user}} =
                LogService.create_create_plot_log(user.id, plot.id, 100)
 
-      assert log.amount == -100
+      assert log.old_balance == 500
+      assert log.new_balance == 400
+      balance_diff = log.new_balance - log.old_balance
+      assert balance_diff == -100
       assert log.log_type == "plot_created"
       assert log.plot_id == plot.id
 
-      assert log.metadata[:pixel_count] == 100 ||
-               log.metadata["pixel_count"] == 100
-
-      # Verify balance_diff is included in metadata
-      balance_diff = log.metadata["balance_diff"] || log.metadata[:balance_diff]
-      assert balance_diff != nil
-      assert balance_diff["old_value"] == 500 || balance_diff[:old_value] == 500
-      assert balance_diff["new_value"] == 400 || balance_diff[:new_value] == 400
-      assert balance_diff["diff"] == -100 || balance_diff[:diff] == -100
+      assert log.diffs["pixel_count"]["old"] == 0
+      assert log.diffs["pixel_count"]["new"] == 100
 
       assert updated_user.balance == 400
     end
@@ -289,37 +310,33 @@ defmodule Api.Logs.Log.ServiceTest do
     end
   end
 
-  describe "get_balance_diff/2" do
-    test "calculates balance diff for negative amount" do
-      result = LogService.get_balance_diff(1500, -100)
+  describe "calculate_balance_change/2" do
+    test "calculates balance change for negative change" do
+      result = LogService.calculate_balance_change(1500, -100)
 
-      assert result.old_value == 1500
-      assert result.new_value == 1400
-      assert result.diff == -100
+      assert result.old_balance == 1500
+      assert result.new_balance == 1400
     end
 
-    test "calculates balance diff for positive amount" do
-      result = LogService.get_balance_diff(1000, 200)
+    test "calculates balance change for positive change" do
+      result = LogService.calculate_balance_change(1000, 200)
 
-      assert result.old_value == 1000
-      assert result.new_value == 1200
-      assert result.diff == 200
+      assert result.old_balance == 1000
+      assert result.new_balance == 1200
     end
 
-    test "calculates balance diff for zero amount" do
-      result = LogService.get_balance_diff(500, 0)
+    test "calculates balance change for zero change" do
+      result = LogService.calculate_balance_change(500, 0)
 
-      assert result.old_value == 500
-      assert result.new_value == 500
-      assert result.diff == 0
+      assert result.old_balance == 500
+      assert result.new_balance == 500
     end
 
     test "handles edge cases with zero balance" do
-      result = LogService.get_balance_diff(0, 100)
+      result = LogService.calculate_balance_change(0, 100)
 
-      assert result.old_value == 0
-      assert result.new_value == 100
-      assert result.diff == 100
+      assert result.old_balance == 0
+      assert result.new_balance == 100
     end
   end
 
@@ -339,7 +356,8 @@ defmodule Api.Logs.Log.ServiceTest do
 
       LogService.create_log(%{
         user_id: user.id,
-        amount: -100,
+        old_balance: 500,
+        new_balance: 400,
         log_type: "plot_created"
       })
 

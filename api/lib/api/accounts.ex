@@ -89,18 +89,18 @@ defmodule Api.Accounts do
         # Get the user's current balance outside of the transaction
         current_user = Repo.get!(User, user.id)
 
-        # Calculate balance diff using the public function
-        balance_diff = LogService.get_balance_diff(current_user.balance, 2000)
+        # Calculate balance change using the public function
+        balance_change = LogService.calculate_balance_change(current_user.balance, 2000)
 
         # Create the initial grant log
         case LogService.create_log(%{
                user_id: user.id,
-               amount: 2000,
+               old_balance: balance_change.old_balance,
+               new_balance: balance_change.new_balance,
                log_type: "initial_grant",
-               metadata: %{
-                 reason: "Initial grant for new user",
-                 grant_amount: 2000,
-                 balance_diff: balance_diff
+               diffs: %{
+                 "reason" => "Initial grant for new user",
+                 "grant_amount" => 2000
                }
              }) do
           {:ok, {_log, updated_user}} ->

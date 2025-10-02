@@ -113,23 +113,18 @@ defmodule Api.Canvas.Plot.Service do
 
                 user ->
                   # Calculate balance diff using the public function
-                  balance_diff = LogService.get_balance_diff(user.balance, cost)
+                  balance_change = LogService.calculate_balance_change(user.balance, cost)
 
                   Multi.new()
                   |> Multi.insert(:plot, Plot.changeset(%Plot{}, attrs))
                   |> Multi.run(:log, fn _repo, %{plot: plot} ->
                     LogService.create_log(%{
                       user_id: user_id,
-                      amount: cost,
+                      old_balance: balance_change.old_balance,
+                      new_balance: balance_change.new_balance,
                       log_type: "plot_created",
                       plot_id: plot.id,
-                      metadata: %{
-                        name: plot.name,
-                        description: plot.description,
-                        size: pixel_count,
-                        diffs: changes,
-                        balance_diff: balance_diff
-                      }
+                      diffs: changes
                     })
                   end)
                   |> Repo.transaction()
@@ -180,23 +175,18 @@ defmodule Api.Canvas.Plot.Service do
 
         user ->
           # Calculate balance diff using the public function
-          balance_diff = LogService.get_balance_diff(user.balance, cost)
+          balance_change = LogService.calculate_balance_change(user.balance, cost)
 
           Multi.new()
           |> Multi.update(:plot, Plot.changeset(plot, attrs))
-          |> Multi.run(:log, fn _repo, %{plot: updated_plot} ->
+          |> Multi.run(:log, fn _repo, %{plot: _updated_plot} ->
             LogService.create_log(%{
               user_id: plot.user_id,
-              amount: cost,
+              old_balance: balance_change.old_balance,
+              new_balance: balance_change.new_balance,
               log_type: "plot_updated",
               plot_id: plot.id,
-              metadata: %{
-                name: updated_plot.name,
-                description: updated_plot.description,
-                size: new_pixel_count,
-                diffs: changes,
-                balance_diff: balance_diff
-              }
+              diffs: changes
             })
           end)
       end
@@ -282,24 +272,19 @@ defmodule Api.Canvas.Plot.Service do
         {:error, :user_not_found}
 
       user ->
-        # Calculate balance diff using the public function
-        balance_diff = LogService.get_balance_diff(user.balance, refund_amount)
+        # Calculate balance change using the public function
+        balance_change = LogService.calculate_balance_change(user.balance, refund_amount)
 
         Multi.new()
         |> Multi.update(:plot, Plot.changeset(plot, deletion_attrs))
         |> Multi.run(:log, fn _repo, %{plot: _updated_plot} ->
           LogService.create_log(%{
             user_id: plot.user_id,
-            amount: refund_amount,
+            old_balance: balance_change.old_balance,
+            new_balance: balance_change.new_balance,
             log_type: "plot_deleted",
             plot_id: plot.id,
-            metadata: %{
-              name: plot.name,
-              description: plot.description,
-              size: pixel_count,
-              diffs: diffs,
-              balance_diff: balance_diff
-            }
+            diffs: diffs
           })
         end)
     end
@@ -353,7 +338,7 @@ defmodule Api.Canvas.Plot.Service do
 
   # Private helper function to calculate what changed in a plot update
   defp get_plot_diff(%Plot{} = plot, attrs) do
-    changes = []
+    changes = %{}
 
     # Check name change
     changes =
@@ -361,7 +346,7 @@ defmodule Api.Canvas.Plot.Service do
         new_name = Map.get(attrs, "name") || Map.get(attrs, :name)
 
         if new_name != plot.name do
-          [%{field: "name", old_value: plot.name, new_value: new_name} | changes]
+          Map.put(changes, "name", %{"old" => plot.name, "new" => new_name})
         else
           changes
         end
@@ -375,10 +360,7 @@ defmodule Api.Canvas.Plot.Service do
         new_description = Map.get(attrs, "description") || Map.get(attrs, :description)
 
         if new_description != plot.description do
-          [
-            %{field: "description", old_value: plot.description, new_value: new_description}
-            | changes
-          ]
+          Map.put(changes, "description", %{"old" => plot.description, "new" => new_description})
         else
           changes
         end
@@ -395,14 +377,10 @@ defmodule Api.Canvas.Plot.Service do
           old_pixel_count = Plot.Repo.get_size(plot.polygon)
           new_pixel_count = Plot.Repo.get_size(new_polygon)
 
-          [
-            %{
-              field: "polygon",
-              old_pixel_count: old_pixel_count,
-              new_pixel_count: new_pixel_count
-            }
-            | changes
-          ]
+          Map.put(changes, "polygon", %{
+            "old_pixel_count" => old_pixel_count,
+            "new_pixel_count" => new_pixel_count
+          })
         else
           changes
         end
@@ -416,14 +394,7 @@ defmodule Api.Canvas.Plot.Service do
         new_deleted_at = Map.get(attrs, "deleted_at") || Map.get(attrs, :deleted_at)
 
         if new_deleted_at != plot.deleted_at do
-          [
-            %{
-              field: "deleted_at",
-              old_value: plot.deleted_at,
-              new_value: new_deleted_at
-            }
-            | changes
-          ]
+          Map.put(changes, "deleted_at", %{"old" => plot.deleted_at, "new" => new_deleted_at})
         else
           changes
         end
@@ -431,7 +402,7 @@ defmodule Api.Canvas.Plot.Service do
         changes
       end
 
-    Enum.reverse(changes)
+    changes
   end
 
   # Private function to check for overlapping plots

@@ -123,10 +123,10 @@ defmodule Api.Logs.Log.Repo do
 
   ## Examples
 
-      iex> create(%{user_id: 1, amount: 100, log_type: "plot_created"})
+      iex> create(%{user_id: 1, old_balance: 1000, new_balance: 900, log_type: "plot_created"})
       {:ok, %Log{}}
 
-      iex> create(%{amount: 100})
+      iex> create(%{old_balance: 1000})
       {:error, %Ecto.Changeset{}}
 
   """
@@ -141,10 +141,10 @@ defmodule Api.Logs.Log.Repo do
 
   ## Examples
 
-      iex> create!(%{user_id: 1, amount: 100, log_type: "plot_created"})
+      iex> create!(%{user_id: 1, old_balance: 1000, new_balance: 900, log_type: "plot_created"})
       %Log{}
 
-      iex> create!(%{amount: 100})
+      iex> create!(%{old_balance: 1000})
       ** (Ecto.InvalidChangesetError)
 
   """
@@ -165,7 +165,7 @@ defmodule Api.Logs.Log.Repo do
       iex> update(log, %{metadata: %{updated: true}})
       {:ok, %Log{}}
 
-      iex> update(log, %{amount: nil})
+      iex> update(log, %{new_balance: nil})
       {:error, %Ecto.Changeset{}}
 
   """
@@ -195,7 +195,7 @@ defmodule Api.Logs.Log.Repo do
   end
 
   @doc """
-  Calculates the sum of log amounts for a user.
+  Calculates the sum of balance diffs for a user.
 
   ## Examples
 
@@ -209,7 +209,7 @@ defmodule Api.Logs.Log.Repo do
   def sum_by_user(user_id) do
     Log
     |> where([t], t.user_id == ^user_id)
-    |> select([t], sum(t.amount))
+    |> select([t], sum(t.new_balance - t.old_balance))
     |> Repo.one()
     |> case do
       nil -> 0

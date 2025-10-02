@@ -12,7 +12,8 @@ defmodule Api.Logs.Log.RepoTest do
 
       assert %Log{} = found = LogRepo.get(log.id)
       assert found.id == log.id
-      assert found.amount == log.amount
+      assert found.old_balance == log.old_balance
+      assert found.new_balance == log.new_balance
     end
 
     test "returns nil when log does not exist" do
@@ -39,8 +40,8 @@ defmodule Api.Logs.Log.RepoTest do
   describe "list/1" do
     test "returns all logs with default options" do
       user = insert_user()
-      log1 = insert_log(user_id: user.id, amount: 100)
-      log2 = insert_log(user_id: user.id, amount: -50)
+      log1 = insert_log(user_id: user.id, old_balance: 500, new_balance: 600)
+      log2 = insert_log(user_id: user.id, old_balance: 600, new_balance: 550)
 
       logs = LogRepo.list()
 
@@ -51,8 +52,8 @@ defmodule Api.Logs.Log.RepoTest do
 
     test "returns logs ordered by inserted_at desc by default" do
       user = insert_user()
-      log1 = insert_log(user_id: user.id, amount: 100)
-      log2 = insert_log(user_id: user.id, amount: -50)
+      log1 = insert_log(user_id: user.id, old_balance: 500, new_balance: 600)
+      log2 = insert_log(user_id: user.id, old_balance: 600, new_balance: 550)
 
       logs = LogRepo.list()
 
@@ -99,7 +100,7 @@ defmodule Api.Logs.Log.RepoTest do
       log1 = insert_log(user_id: user.id, log_type: "plot_created")
       _log2 = insert_log(user_id: user.id, log_type: "plot_deleted")
 
-      logs = LogRepo.list(log_type: "plot_created")
+      logs = LogRepo.list(user_id: user.id, log_type: "plot_created")
 
       assert length(logs) == 1
       assert hd(logs).id == log1.id
@@ -118,9 +119,9 @@ defmodule Api.Logs.Log.RepoTest do
 
     test "respects offset option" do
       user = insert_user()
-      insert_log(user_id: user.id, amount: 100)
-      insert_log(user_id: user.id, amount: 200)
-      insert_log(user_id: user.id, amount: 300)
+      insert_log(user_id: user.id, old_balance: 500, new_balance: 600)
+      insert_log(user_id: user.id, old_balance: 600, new_balance: 800)
+      insert_log(user_id: user.id, old_balance: 800, new_balance: 1100)
 
       # Get all logs for this user
       all_logs = LogRepo.list_by_user(user.id)
@@ -137,11 +138,14 @@ defmodule Api.Logs.Log.RepoTest do
 
     test "supports custom ordering" do
       user = insert_user()
-      _log1 = insert_log(user_id: user.id, amount: 100)
-      log2 = insert_log(user_id: user.id, amount: -50)
+      # +100
+      _log1 = insert_log(user_id: user.id, old_balance: 500, new_balance: 600)
+      # -50
+      log2 = insert_log(user_id: user.id, old_balance: 600, new_balance: 550)
 
-      logs = LogRepo.list(order_by: :amount, order_dir: :asc)
+      logs = LogRepo.list(order_by: :new_balance, order_dir: :asc)
 
+      # log2 has lower new_balance (550 vs 600)
       assert hd(logs).id == log2.id
     end
 
@@ -218,32 +222,32 @@ defmodule Api.Logs.Log.RepoTest do
 
       attrs = %{
         user_id: user.id,
-        amount: 100,
+        old_balance: 500,
+        new_balance: 600,
         log_type: "plot_created"
       }
 
       assert {:ok, %Log{} = log} = LogRepo.create(attrs)
       assert log.user_id == user.id
-      assert log.amount == 100
+      assert log.new_balance - log.old_balance == 100
       assert log.log_type == "plot_created"
     end
 
-    test "creates log with metadata" do
+    test "creates log with diffs" do
       user = insert_user()
 
       attrs = %{
         user_id: user.id,
-        amount: 100,
+        old_balance: 500,
+        new_balance: 600,
         log_type: "plot_created",
-        metadata: %{pixel_count: 100, note: "test"}
+        diffs: %{"pixel_count" => 100, "note" => "test"}
       }
 
       assert {:ok, %Log{} = log} = LogRepo.create(attrs)
 
-      assert log.metadata[:pixel_count] == 100 ||
-               log.metadata["pixel_count"] == 100
-
-      assert log.metadata[:note] == "test" || log.metadata["note"] == "test"
+      assert log.diffs["pixel_count"] == 100
+      assert log.diffs["note"] == "test"
     end
 
     test "creates log with plot_id" do
@@ -252,7 +256,8 @@ defmodule Api.Logs.Log.RepoTest do
 
       attrs = %{
         user_id: user.id,
-        amount: -100,
+        old_balance: 500,
+        new_balance: 400,
         log_type: "plot_created",
         plot_id: plot.id
       }
@@ -262,24 +267,26 @@ defmodule Api.Logs.Log.RepoTest do
     end
 
     test "returns error changeset with invalid attributes" do
-      attrs = %{amount: 100}
+      attrs = %{old_balance: 500, new_balance: 600}
 
       assert {:error, %Ecto.Changeset{} = changeset} = LogRepo.create(attrs)
       assert changeset.errors[:user_id]
       assert changeset.errors[:log_type]
     end
 
-    test "returns error when amount is zero" do
+    test "returns error when balance change is zero" do
       user = insert_user()
 
       attrs = %{
         user_id: user.id,
-        amount: 0,
+        old_balance: 500,
+        # No change
+        new_balance: 500,
         log_type: "plot_created"
       }
 
       assert {:error, %Ecto.Changeset{} = changeset} = LogRepo.create(attrs)
-      assert changeset.errors[:amount]
+      assert changeset.errors[:new_balance]
     end
 
     test "returns error with invalid log_type" do
@@ -287,7 +294,8 @@ defmodule Api.Logs.Log.RepoTest do
 
       attrs = %{
         user_id: user.id,
-        amount: 100,
+        old_balance: 500,
+        new_balance: 600,
         log_type: "invalid_type"
       }
 
@@ -295,17 +303,18 @@ defmodule Api.Logs.Log.RepoTest do
       assert changeset.errors[:log_type]
     end
 
-    test "creates log with negative amount" do
+    test "creates log with negative balance change" do
       user = insert_user()
 
       attrs = %{
         user_id: user.id,
-        amount: -100,
+        old_balance: 500,
+        new_balance: 400,
         log_type: "plot_created"
       }
 
       assert {:ok, %Log{} = log} = LogRepo.create(attrs)
-      assert log.amount == -100
+      assert log.new_balance - log.old_balance == -100
     end
   end
 
@@ -315,17 +324,18 @@ defmodule Api.Logs.Log.RepoTest do
 
       attrs = %{
         user_id: user.id,
-        amount: 100,
+        old_balance: 500,
+        new_balance: 600,
         log_type: "plot_created"
       }
 
       assert %Log{} = log = LogRepo.create!(attrs)
       assert log.user_id == user.id
-      assert log.amount == 100
+      assert log.new_balance - log.old_balance == 100
     end
 
     test "raises error with invalid attributes" do
-      attrs = %{amount: 100}
+      attrs = %{old_balance: 500, new_balance: 600}
 
       assert_raise Ecto.InvalidChangesetError, fn ->
         LogRepo.create!(attrs)
@@ -334,21 +344,22 @@ defmodule Api.Logs.Log.RepoTest do
   end
 
   describe "update/2" do
-    test "updates log metadata" do
+    test "updates log diffs" do
       user = insert_user()
       log = insert_log(user_id: user.id)
 
-      attrs = %{metadata: %{updated: true}}
+      attrs = %{diffs: %{updated: true}}
 
       assert {:ok, %Log{} = updated} = LogRepo.update(log, attrs)
-      assert updated.metadata[:updated] == true || updated.metadata["updated"] == true
+      assert updated.diffs[:updated] == true || updated.diffs["updated"] == true
     end
 
     test "returns error with invalid update" do
       user = insert_user()
       log = insert_log(user_id: user.id)
 
-      attrs = %{amount: 0}
+      # Try to update with invalid log_type
+      attrs = %{log_type: "invalid_type"}
 
       assert {:error, %Ecto.Changeset{}} = LogRepo.update(log, attrs)
     end
@@ -365,11 +376,14 @@ defmodule Api.Logs.Log.RepoTest do
   end
 
   describe "sum_by_user/1" do
-    test "returns sum of log amounts for user" do
+    test "returns sum of log balance diffs for user" do
       user = insert_user()
-      insert_log(user_id: user.id, amount: 100)
-      insert_log(user_id: user.id, amount: -50)
-      insert_log(user_id: user.id, amount: 25)
+      # +100
+      insert_log(user_id: user.id, old_balance: 500, new_balance: 600)
+      # -50
+      insert_log(user_id: user.id, old_balance: 600, new_balance: 550)
+      # +25
+      insert_log(user_id: user.id, old_balance: 550, new_balance: 575)
 
       assert LogRepo.sum_by_user(user.id) == 75
     end
@@ -410,7 +424,7 @@ defmodule Api.Logs.Log.RepoTest do
       insert_log(user_id: user.id, log_type: "plot_deleted")
       insert_log(user_id: user.id, log_type: "plot_created")
 
-      assert LogRepo.count(log_type: "plot_created") == 2
+      assert LogRepo.count(user_id: user.id, log_type: "plot_created") == 2
     end
 
     test "returns 0 when no logs match filters" do
@@ -456,15 +470,18 @@ defmodule Api.Logs.Log.RepoTest do
 
   defp insert_log(attrs) do
     default_attrs = %{
-      amount: 100,
+      old_balance: 500,
+      new_balance: 400,
       log_type: "plot_created",
-      metadata: %{}
+      diffs: %{}
     }
 
-    attrs = Map.merge(default_attrs, Map.new(attrs))
+    # Convert keyword list to map if needed
+    attrs_map = if is_list(attrs), do: Enum.into(attrs, %{}), else: attrs
+    final_attrs = Map.merge(default_attrs, attrs_map)
 
     %Log{}
-    |> Log.changeset(attrs)
+    |> Log.changeset(final_attrs)
     |> Api.Repo.insert!()
   end
 end

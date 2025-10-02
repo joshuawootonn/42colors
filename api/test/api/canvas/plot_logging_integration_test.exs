@@ -31,32 +31,20 @@ defmodule Api.Canvas.PlotLoggingIntegrationTest do
       log = Api.Repo.get_by(Log, plot_id: plot.id, log_type: "plot_created")
       assert log != nil
       assert log.user_id == user.id
-      # Negative because user spent currency
-      assert log.amount == -100
+      # Verify balance tracking
+      assert log.old_balance == 1000
+      assert log.new_balance == 900
+      # Negative because user spent currency (new_balance - old_balance)
+      balance_diff = log.new_balance - log.old_balance
+      assert balance_diff == -100
 
-      # Verify standardized metadata format
-      assert log.metadata["name"] == "Test Plot"
-      assert log.metadata["description"] == "Test Description"
-      assert log.metadata["size"] == 100
-
-      # Verify diffs array tracks what was created
-      diffs = log.metadata["diffs"]
-      assert is_list(diffs)
-      # At least name and polygon should be set
-      assert length(diffs) >= 2
-
-      # Check that name field was tracked
-      name_change = Enum.find(diffs, fn change -> change["field"] == "name" end)
-      assert name_change != nil
-      assert name_change["old_value"] == nil
-      assert name_change["new_value"] == "Test Plot"
-
-      # Verify balance_diff metadata is included
-      balance_diff = log.metadata["balance_diff"]
-      assert balance_diff != nil
-      assert balance_diff["old_value"] == 1000
-      assert balance_diff["new_value"] == 900
-      assert balance_diff["diff"] == -100
+      # Verify diffs map tracks what was created
+      assert log.diffs["name"]["old"] == nil
+      assert log.diffs["name"]["new"] == "Test Plot"
+      assert log.diffs["description"]["old"] == nil
+      assert log.diffs["description"]["new"] == "Test Description"
+      assert log.diffs["polygon"]["old_pixel_count"] == 0
+      assert log.diffs["polygon"]["new_pixel_count"] == 100
 
       # Verify user balance was updated
       updated_user = Api.Repo.get!(User, user.id)
@@ -88,29 +76,15 @@ defmodule Api.Canvas.PlotLoggingIntegrationTest do
       assert update_log != nil
       assert update_log.user_id == user.id
       # No pixel change, so no cost
-      assert update_log.amount == 0
+      # Verify balance tracking (no change for metadata-only update)
+      assert update_log.old_balance == 900
+      assert update_log.new_balance == 900
+      balance_diff = update_log.new_balance - update_log.old_balance
+      assert balance_diff == 0
 
-      # Verify standardized metadata format
-      assert update_log.metadata["name"] == "Updated Plot"
-      # No description was set
-      assert update_log.metadata["description"] == nil
-      assert update_log.metadata["size"] == 100
-
-      # Verify diffs array
-      diffs = update_log.metadata["diffs"]
-      assert length(diffs) == 1
-      assert hd(diffs)["field"] == "name"
-      assert hd(diffs)["old_value"] == "Original Plot"
-      assert hd(diffs)["new_value"] == "Updated Plot"
-
-      # Verify balance_diff metadata shows zero change (metadata-only update)
-      balance_diff = update_log.metadata["balance_diff"]
-      assert balance_diff != nil
-      # Balance after plot creation
-      assert balance_diff["old_value"] == 900
-      # No change for metadata update
-      assert balance_diff["new_value"] == 900
-      assert balance_diff["diff"] == 0
+      # Verify diffs map tracks what was updated
+      assert update_log.diffs["name"]["old"] == "Original Plot"
+      assert update_log.diffs["name"]["new"] == "Updated Plot"
     end
 
     test "creates log entry when plot is deleted" do
@@ -137,34 +111,16 @@ defmodule Api.Canvas.PlotLoggingIntegrationTest do
       delete_log = Api.Repo.get_by(Log, plot_id: plot.id, log_type: "plot_deleted")
       assert delete_log != nil
       assert delete_log.user_id == user.id
-      # Positive because user got refund
-      assert delete_log.amount == 100
+      # Verify balance tracking (positive because user got refund)
+      assert delete_log.old_balance == 900
+      assert delete_log.new_balance == 1000
+      balance_diff = delete_log.new_balance - delete_log.old_balance
+      assert balance_diff == 100
 
-      # Verify standardized metadata format
-      assert delete_log.metadata["name"] == "Plot to Delete"
-      assert delete_log.metadata["description"] == nil
-      assert delete_log.metadata["size"] == 100
-
-      # Verify diffs array shows deletion
-      diffs = delete_log.metadata["diffs"]
-      assert is_list(diffs)
-      assert length(diffs) == 1
-
-      # Check that deleted_at field was tracked
-      deleted_at_change = Enum.find(diffs, fn change -> change["field"] == "deleted_at" end)
-      assert deleted_at_change != nil
-      assert deleted_at_change["old_value"] == nil
+      # Verify diffs map shows deletion
+      assert delete_log.diffs["deleted_at"]["old"] == nil
       # Should have a timestamp
-      assert deleted_at_change["new_value"] != nil
-
-      # Verify balance_diff metadata shows refund
-      balance_diff = delete_log.metadata["balance_diff"]
-      assert balance_diff != nil
-      # Balance after plot creation
-      assert balance_diff["old_value"] == 900
-      # Balance after refund
-      assert balance_diff["new_value"] == 1000
-      assert balance_diff["diff"] == 100
+      assert delete_log.diffs["deleted_at"]["new"] != nil
 
       # Verify user balance was updated (spent 100, got 100 back = 1000 total)
       updated_user = Api.Repo.get!(User, user.id)

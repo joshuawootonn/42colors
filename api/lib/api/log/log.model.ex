@@ -5,9 +5,10 @@ defmodule Api.Logs.Log do
   @log_types ~w(initial_grant plot_created plot_updated plot_deleted)
 
   schema "logs" do
-    field :amount, :integer
+    field :old_balance, :integer
+    field :new_balance, :integer
     field :log_type, :string
-    field :metadata, :map
+    field :diffs, :map
 
     belongs_to :user, Api.Accounts.User
     belongs_to :plot, Api.Canvas.Plot
@@ -17,30 +18,31 @@ defmodule Api.Logs.Log do
 
   def changeset(log, attrs) do
     log
-    |> cast(attrs, [:user_id, :amount, :log_type, :plot_id, :metadata])
-    |> validate_required([:user_id, :amount, :log_type])
+    |> cast(attrs, [:user_id, :old_balance, :new_balance, :log_type, :plot_id, :diffs])
+    |> validate_required([:user_id, :old_balance, :new_balance, :log_type])
     |> validate_inclusion(:log_type, @log_types)
-    |> validate_amount_not_zero()
+    |> validate_balance_change()
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:plot_id)
   end
 
-  # Custom validation that allows zero amounts for plot_updated logs
-  defp validate_amount_not_zero(changeset) do
+  # Custom validation that allows zero balance changes for plot_updated logs
+  defp validate_balance_change(changeset) do
     log_type = get_field(changeset, :log_type)
-    amount = get_field(changeset, :amount)
+    old_balance = get_field(changeset, :old_balance)
+    new_balance = get_field(changeset, :new_balance)
 
-    case {log_type, amount} do
-      {"plot_updated", 0} ->
-        # Allow zero amounts for plot updates (metadata-only changes)
+    case {log_type, old_balance, new_balance} do
+      {"plot_updated", old_bal, new_bal} when old_bal == new_bal ->
+        # Allow zero balance changes for plot updates (metadata-only changes)
         changeset
 
-      {_log_type, 0} ->
-        # Disallow zero amounts for other log types
-        add_error(changeset, :amount, "Amount cannot be zero")
+      {_log_type, old_bal, new_bal} when old_bal == new_bal ->
+        # Disallow zero balance changes for other log types
+        add_error(changeset, :new_balance, "Balance must change for this log type")
 
       _ ->
-        # Non-zero amounts are always valid
+        # Balance changes are valid
         changeset
     end
   end

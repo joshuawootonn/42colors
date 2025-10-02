@@ -4,14 +4,12 @@ defmodule Api.Canvas.PixelServiceTest do
   alias Api.Canvas.{PixelService, Plot}
   alias Api.Accounts.User
   alias Api.Repo
+  import Api.AccountsFixtures
 
   describe "create_many/2" do
     setup do
-      # Create a test user
-      {:ok, user} =
-        %User{}
-        |> User.registration_changeset(%{email: "test@example.com", password: "password123456!"})
-        |> Repo.insert()
+      # Create a test user with unique email
+      user = user_fixture()
 
       # Create a test plot (square from 0,0 to 10,10)
       plot_attrs = %{

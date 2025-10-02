@@ -21,10 +21,11 @@ defmodule Api.Logs.Log.Service do
 
     * `attrs` - Map with log attributes:
       * `:user_id` - Required. The user receiving/spending currency
-      * `:amount` - Required. Log amount (positive or negative, but not zero)
+      * `:old_balance` - Required. User's balance before the transaction
+      * `:new_balance` - Required. User's balance after the transaction
       * `:log_type` - Required. One of: "initial_grant", "plot_created", "plot_deleted"
       * `:plot_id` - Optional. Associated plot ID
-      * `:metadata` - Optional. Additional context data
+      * `:diffs` - Optional. JSON diff data
 
   ## Returns
 
@@ -38,27 +39,30 @@ defmodule Api.Logs.Log.Service do
       # Creating a plot (spending currency)
       iex> create_log(%{
       ...>   user_id: 1,
-      ...>   amount: -100,
+      ...>   old_balance: 500,
+      ...>   new_balance: 400,
       ...>   log_type: "plot_created",
       ...>   plot_id: 5,
-      ...>   metadata: %{pixel_count: 100}
+      ...>   diffs: %{"pixel_count" => %{"old" => 0, "new" => 100}}
       ...> })
       {:ok, {%Log{}, %User{balance: 400}}}
 
       # Unclaiming a plot (refunding currency)
       iex> create_log(%{
       ...>   user_id: 1,
-      ...>   amount: 100,
+      ...>   old_balance: 400,
+      ...>   new_balance: 500,
       ...>   log_type: "plot_deleted",
       ...>   plot_id: 5,
-      ...>   metadata: %{pixel_count: 100}
+      ...>   diffs: %{"pixel_count" => %{"old" => 100, "new" => 0}}
       ...> })
       {:ok, {%Log{}, %User{balance: 500}}}
 
       # Insufficient balance
       iex> create_log(%{
       ...>   user_id: 1,
-      ...>   amount: -1000,
+      ...>   old_balance: 100,
+      ...>   new_balance: -900,
       ...>   log_type: "plot_created"
       ...> })
       {:error, :insufficient_balance}
@@ -66,7 +70,7 @@ defmodule Api.Logs.Log.Service do
   """
   def create_log(attrs) do
     user_id = Map.get(attrs, :user_id) || Map.get(attrs, "user_id")
-    amount = Map.get(attrs, :amount) || Map.get(attrs, "amount")
+    new_balance = Map.get(attrs, :new_balance) || Map.get(attrs, "new_balance")
 
     Multi.new()
     |> Multi.run(:user, fn _repo, _changes ->
@@ -79,9 +83,7 @@ defmodule Api.Logs.Log.Service do
         end
       end
     end)
-    |> Multi.run(:check_balance, fn _repo, %{user: user} ->
-      new_balance = user.balance + amount
-
+    |> Multi.run(:check_balance, fn _repo, %{user: _user} ->
       if new_balance < 0 do
         {:error, :insufficient_balance}
       else
@@ -128,24 +130,23 @@ defmodule Api.Logs.Log.Service do
 
   ## Returns
 
-    * Map with `old_value`, `new_value`, and `diff` keys
+    * Map with `old_balance` and `new_balance` keys
 
   ## Examples
 
-      iex> get_balance_diff(1500, -100)
-      %{old_value: 1500, new_value: 1400, diff: -100}
+      iex> calculate_balance_change(1500, -100)
+      %{old_balance: 1500, new_balance: 1400}
 
-      iex> get_balance_diff(1000, 200)
-      %{old_value: 1000, new_value: 1200, diff: 200}
+      iex> calculate_balance_change(1000, 200)
+      %{old_balance: 1000, new_balance: 1200}
 
   """
-  def get_balance_diff(old_balance, amount) do
+  def calculate_balance_change(old_balance, amount) do
     new_balance = old_balance + amount
 
     %{
-      old_value: old_balance,
-      new_value: new_balance,
-      diff: amount
+      old_balance: old_balance,
+      new_balance: new_balance
     }
   end
 
@@ -168,7 +169,7 @@ defmodule Api.Logs.Log.Service do
   ## Examples
 
       iex> create_create_plot_log(1, 5, 100)
-      {:ok, {%Log{amount: -100}, %User{balance: 400}}}
+      {:ok, {%Log{old_balance: 500, new_balance: 400}, %User{balance: 400}}}
 
   """
   def create_create_plot_log(user_id, plot_id, pixel_count) do
@@ -178,16 +179,16 @@ defmodule Api.Logs.Log.Service do
 
       user ->
         amount = -pixel_count
-        balance_diff = get_balance_diff(user.balance, amount)
+        balance_change = calculate_balance_change(user.balance, amount)
 
         create_log(%{
           user_id: user_id,
-          amount: amount,
+          old_balance: balance_change.old_balance,
+          new_balance: balance_change.new_balance,
           log_type: "plot_created",
           plot_id: plot_id,
-          metadata: %{
-            pixel_count: pixel_count,
-            balance_diff: balance_diff
+          diffs: %{
+            "pixel_count" => %{"old" => 0, "new" => pixel_count}
           }
         })
     end
