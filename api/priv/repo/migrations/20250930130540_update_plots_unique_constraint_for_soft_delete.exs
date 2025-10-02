@@ -5,6 +5,11 @@ defmodule Api.Repo.Migrations.UpdatePlotsUniqueConstraintForSoftDelete do
     # Drop the existing unique index
     drop_if_exists index(:plots, [:name, :user_id], name: :plots_name_user_id_index)
 
+    # Drop the partial index if it already exists (in case this migration is re-run)
+    drop_if_exists index(:plots, [:name, :user_id],
+                     name: :plots_name_user_id_deleted_at_null_index
+                   )
+
     # Create a partial unique index that only applies when deleted_at is NULL
     # This allows reusing plot names after soft deletion
     create unique_index(:plots, [:name, :user_id],
