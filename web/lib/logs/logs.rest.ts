@@ -134,7 +134,7 @@ export function useLogs(
     queryOptions?: Omit<UseQueryOptions<Log[], Error>, 'queryKey' | 'queryFn'>,
 ) {
     const { data, isLoading, error } = useQuery({
-        queryKey: ['logs', 'user'],
+        queryKey: ['user', 'logs'],
         queryFn: () => getUserLogs(limit),
         ...queryOptions,
     });
