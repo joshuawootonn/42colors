@@ -5,7 +5,7 @@ import {
     getCompositePolygons,
     rectToPolygonSchema,
 } from '../../geometry/polygon';
-import { Rect, rectSchema } from '../../geometry/rect';
+import { Rect, getRectSize, rectSchema } from '../../geometry/rect';
 import { InitializedStore } from '../../store';
 import { CLAIMER_YELLOW } from '../../webgpu/colors';
 import { EnqueueObject } from '../../xstate-internal-types';
@@ -86,6 +86,18 @@ export function newRectAction(
 export function completeRectAction(
     activeBrushAction: ClaimerActive,
 ): ClaimerActive {
+    const size = activeBrushAction.nextRect
+        ? getRectSize(activeBrushAction.nextRect)
+        : 0;
+
+    if (size === 0) {
+        return {
+            type: 'claimer-active',
+            rects: activeBrushAction.rects,
+            nextRect: null,
+        };
+    }
+
     return {
         type: 'claimer-active',
         rects: activeBrushAction.nextRect
@@ -199,10 +211,18 @@ function onPointerOut(
     if (context.activeAction?.type !== 'claimer-active') {
         return context;
     }
+    const completedRectAction = completeRectAction(context.activeAction);
+
+    if (completedRectAction.rects.length === 0) {
+        return {
+            ...context,
+            activeAction: null,
+        };
+    }
 
     return {
         ...context,
-        activeAction: completeRectAction(context.activeAction),
+        activeAction: completedRectAction,
     };
 }
 
@@ -215,9 +235,18 @@ function onPointerUp(
         return context;
     }
 
+    const completedRectAction = completeRectAction(context.activeAction);
+
+    if (completedRectAction.rects.length === 0) {
+        return {
+            ...context,
+            activeAction: null,
+        };
+    }
+
     return {
         ...context,
-        activeAction: completeRectAction(context.activeAction),
+        activeAction: completedRectAction,
     };
 }
 
