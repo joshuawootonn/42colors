@@ -55,8 +55,6 @@ const Popover = function ({
 
 const PopoverTrigger = PopoverPrimitive.Trigger;
 
-const PopoverAnchor = PopoverPrimitive.Root;
-
 const PopoverHeading = React.forwardRef<
     React.ElementRef<'h3'>,
     React.ComponentPropsWithoutRef<'h3'>
@@ -191,7 +189,6 @@ export {
     Popover,
     PopoverTrigger,
     PopoverContent,
-    PopoverAnchor,
     PopoverArrow,
     PopoverHeading,
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, RefObject, useMemo, useState } from 'react';
 
 import {
     Popover,
@@ -78,6 +78,7 @@ export function LogsPopoverMarkup({
     isLoading,
     error,
     logs,
+    anchor,
 }: {
     children: ReactNode;
     isOpen: boolean;
@@ -85,7 +86,16 @@ export function LogsPopoverMarkup({
     isLoading: boolean;
     error: Error | null;
     logs: Log[] | undefined;
+    anchor: RefObject<HTMLElement | null>;
 }) {
+    const positionerProps = useMemo(() => {
+        return {
+            anchor,
+            side: 'top' as const,
+            align: 'center' as const,
+        };
+    }, [anchor]);
+
     return (
         <Popover
             type="persistent"
@@ -94,13 +104,7 @@ export function LogsPopoverMarkup({
             onOpenChange={setIsOpen}
         >
             {children}
-            <PopoverContent
-                className="w-96"
-                positionerProps={{
-                    side: 'top',
-                    align: 'center',
-                }}
-            >
+            <PopoverContent className="w-96" positionerProps={positionerProps}>
                 <PopoverHeading>The log book </PopoverHeading>
                 <div className="max-h-96 overflow-auto outline-none">
                     {isLoading ? (
@@ -174,7 +178,13 @@ export function LogsPopoverMarkup({
     );
 }
 
-export function LogsPopover({ children }: { children: ReactNode }) {
+export function LogsPopover({
+    children,
+    anchor,
+}: {
+    children: ReactNode;
+    anchor: RefObject<HTMLElement | null>;
+}) {
     const [isOpen, setIsOpen] = useState(false);
 
     const {
@@ -192,6 +202,7 @@ export function LogsPopover({ children }: { children: ReactNode }) {
             isLoading={isLoading}
             error={error}
             logs={logs}
+            anchor={anchor}
         >
             {children}
         </LogsPopoverMarkup>

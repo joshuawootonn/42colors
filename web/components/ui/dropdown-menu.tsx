@@ -7,26 +7,40 @@ import { Menu as DropdownMenuPrimitive } from '@base-ui-components/react/menu';
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 
-const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
+const DropdownMenuTrigger = React.forwardRef<
+    React.ElementRef<typeof DropdownMenuPrimitive.Trigger>,
+    React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Trigger>
+>(({ className, ...props }, ref) => (
+    <DropdownMenuPrimitive.Trigger
+        ref={ref}
+        className={cn(className, 'svg-outline-sm relative select-none py-0')}
+        {...props}
+    />
+));
+DropdownMenuTrigger.displayName = DropdownMenuPrimitive.Trigger.displayName;
 
 const DropdownMenuGroup = DropdownMenuPrimitive.Group;
 
 const DropdownMenuPortal = DropdownMenuPrimitive.Portal;
 
-const DropdownMenuSub = DropdownMenuPrimitive.Root;
+const DropdownMenuSubRoot = DropdownMenuPrimitive.SubmenuRoot;
 
 const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 
 const DropdownMenuSubTrigger = React.forwardRef<
-    React.ElementRef<typeof DropdownMenuPrimitive.Trigger>,
-    React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Trigger> & {
+    React.ElementRef<typeof DropdownMenuPrimitive.SubmenuTrigger>,
+    React.ComponentPropsWithoutRef<
+        typeof DropdownMenuPrimitive.SubmenuTrigger
+    > & {
         inset?: boolean;
     }
 >(({ className, inset, children, ...props }, ref) => (
-    <DropdownMenuPrimitive.Trigger
+    <DropdownMenuPrimitive.SubmenuTrigger
         ref={ref}
         className={cn(
-            'flex cursor-default select-none items-center gap-2 px-2 py-1.5 text-sm outline-none focus:bg-accent data-[state=open]:bg-accent [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+            'flex cursor-default select-none items-center gap-2',
+            'relative flex cursor-pointer select-none items-center gap-2 px-2 py-1 text-sm no-underline outline-none focus:bg-primary focus:text-secondary',
+            '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
             inset && 'pl-8',
             className,
         )}
@@ -40,42 +54,54 @@ const DropdownMenuSubTrigger = React.forwardRef<
             viewBox="-4 -4 32 32"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            strokeWidth="2.5"
             className="ml-auto"
         >
             <path d="m9 18 6-6-6-6" />
         </svg>
-    </DropdownMenuPrimitive.Trigger>
+    </DropdownMenuPrimitive.SubmenuTrigger>
 ));
 DropdownMenuSubTrigger.displayName = DropdownMenuPrimitive.Trigger.displayName;
 
 const DropdownMenuSubContent = React.forwardRef<
     React.ElementRef<typeof DropdownMenuPrimitive.Popup>,
-    React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Popup>
->(({ className, ...props }, ref) => (
-    <DropdownMenuPrimitive.Popup
-        ref={ref}
-        className={cn(
-            'z-50 min-w-[8rem] overflow-hidden border bg-popover p-1 text-popover-foreground shadow-lg',
-            className,
-        )}
-        {...props}
-    />
+    React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Popup> & {
+        positionerProps?: React.ComponentPropsWithoutRef<
+            typeof DropdownMenuPrimitive.Positioner
+        >;
+    }
+>(({ className, positionerProps, ...props }, ref) => (
+    <DropdownMenuPrimitive.Portal>
+        <DropdownMenuPrimitive.Positioner {...positionerProps}>
+            <DropdownMenuPrimitive.Popup
+                ref={ref}
+                className={cn(
+                    'z-50 flex min-w-[8rem] flex-col overflow-hidden border-1.5 border-primary bg-popover text-popover-foreground shadow-md',
+                    'svg-outline-border relative',
+                    className,
+                )}
+                {...props}
+            />
+        </DropdownMenuPrimitive.Positioner>
+    </DropdownMenuPrimitive.Portal>
 ));
 DropdownMenuSubContent.displayName = DropdownMenuPrimitive.Popup.displayName;
 
 const DropdownMenuContent = React.forwardRef<
     React.ElementRef<typeof DropdownMenuPrimitive.Popup>,
-    React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Popup>
->(({ className, ...props }, ref) => (
+    React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Popup> & {
+        positionerProps?: React.ComponentPropsWithoutRef<
+            typeof DropdownMenuPrimitive.Positioner
+        >;
+    }
+>(({ className, positionerProps, ...props }, ref) => (
     <DropdownMenuPrimitive.Portal>
-        <DropdownMenuPrimitive.Positioner>
+        <DropdownMenuPrimitive.Positioner {...positionerProps}>
             <DropdownMenuPrimitive.Popup
                 ref={ref}
                 className={cn(
-                    'z-50 min-w-[8rem] overflow-hidden border bg-popover text-popover-foreground shadow-md',
+                    'z-50 flex min-w-[8rem] flex-col overflow-hidden border-1.5 border-primary bg-popover text-popover-foreground shadow-md',
+                    'svg-outline-border relative',
                     className,
                 )}
                 {...props}
@@ -94,7 +120,7 @@ const DropdownMenuItem = React.forwardRef<
     <DropdownMenuPrimitive.Item
         ref={ref}
         className={cn(
-            'relative flex cursor-default select-none items-center gap-2 px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground',
+            'relative flex cursor-pointer select-none items-center gap-2 px-2 py-1 text-sm no-underline outline-none focus:bg-primary focus:text-secondary',
             inset && 'pl-8',
             className,
         )}
@@ -232,7 +258,7 @@ export {
     DropdownMenuShortcut,
     DropdownMenuGroup,
     DropdownMenuPortal,
-    DropdownMenuSub,
+    DropdownMenuSubRoot,
     DropdownMenuSubContent,
     DropdownMenuSubTrigger,
     DropdownMenuRadioGroup,
