@@ -40,30 +40,33 @@ export function DeletePlotButton({ plot }: DeletePlotButtonProps) {
     return (
         <>
             <Tooltip.Root>
-                <Tooltip.Trigger>
-                    <IconButton
-                        className="-translate-x-[2px] text-black"
-                        onClick={() => setIsConfirmOpen(true)}
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="32"
-                            height="32"
-                            viewBox="-4 -4 32 32"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                <Tooltip.Trigger
+                    render={(props) => (
+                        <IconButton
+                            {...props}
+                            className="-translate-x-[2px] text-black"
+                            onClick={() => setIsConfirmOpen(true)}
                         >
-                            <path d="M3 6h18" />
-                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                            <line x1="10" x2="10" y1="11" y2="17" />
-                            <line x1="14" x2="14" y1="11" y2="17" />
-                        </svg>
-                    </IconButton>
-                </Tooltip.Trigger>
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="32"
+                                height="32"
+                                viewBox="-4 -4 32 32"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M3 6h18" />
+                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                <line x1="10" x2="10" y1="11" y2="17" />
+                                <line x1="14" x2="14" y1="11" y2="17" />
+                            </svg>
+                        </IconButton>
+                    )}
+                />
 
                 <Tooltip.Portal>
                     <Tooltip.Positioner>
