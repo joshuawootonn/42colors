@@ -1,5 +1,6 @@
 'use client';
 
+import { LogsPopoverMarkup } from '@/components/logs-popover';
 import { PlotsPopoverMarkup } from '@/components/plots-popover';
 import { Button } from '@/components/ui/button';
 import { PopoverTrigger } from '@/components/ui/popover';
@@ -105,7 +106,7 @@ export function DesignPage() {
                 />
             </div>
             <h2>Plots Popover</h2>
-            <div className="not-prose wrap mt-80 flex w-full items-center justify-between gap-4">
+            <div className="not-prose wrap mt-120 flex w-full items-center justify-between gap-4">
                 <PlotsPopoverMarkup
                     isOpen={true}
                     setIsOpen={() => {}}
@@ -187,6 +188,104 @@ export function DesignPage() {
                 >
                     <PopoverTrigger>Plots Empty</PopoverTrigger>
                 </PlotsPopoverMarkup>
+            </div>
+            <h2>Logs Popover</h2>
+            <div className="not-prose wrap mt-120 flex w-full items-center justify-between gap-4">
+                <LogsPopoverMarkup
+                    isOpen={true}
+                    setIsOpen={() => {}}
+                    isLoading={false}
+                    error={null}
+                    logs={[
+                        {
+                            id: 1,
+                            logType: 'initial_grant',
+                            oldBalance: 0,
+                            newBalance: 100,
+                            insertedAt: '2024-01-01T10:00:00Z',
+                            plot: null,
+                            diffs: null,
+                            updatedAt: '2024-01-01T10:00:00Z',
+                            plotId: null,
+                            userId: 1,
+                        },
+                        {
+                            id: 2,
+                            logType: 'plot_created',
+                            oldBalance: 100,
+                            newBalance: 95,
+                            insertedAt: '2024-01-01T11:00:00Z',
+                            plot: {
+                                id: 1,
+                                name: 'My First Plot',
+                                description: 'A beautiful plot',
+                            },
+                            diffs: null,
+                            updatedAt: '2024-01-01T11:00:00Z',
+                            plotId: 1,
+                            userId: 1,
+                        },
+                        {
+                            id: 3,
+                            logType: 'bailout_grant',
+                            oldBalance: 5,
+                            newBalance: 50,
+                            insertedAt: '2024-01-01T12:00:00Z',
+                            plot: null,
+                            diffs: null,
+                            updatedAt: '2024-01-01T12:00:00Z',
+                            plotId: null,
+                            userId: 1,
+                        },
+                        {
+                            id: 4,
+                            logType: 'plot_deleted',
+                            oldBalance: 50,
+                            newBalance: 55,
+                            insertedAt: '2024-01-01T13:00:00Z',
+                            plot: null,
+                            diffs: {
+                                plotName: 'Deleted Plot',
+                            },
+                            updatedAt: '2024-01-01T13:00:00Z',
+                            plotId: null,
+                            userId: 1,
+                        },
+                    ]}
+                    anchor={{ current: null }}
+                >
+                    <PopoverTrigger>Logs</PopoverTrigger>
+                </LogsPopoverMarkup>
+                <LogsPopoverMarkup
+                    isOpen={true}
+                    setIsOpen={() => {}}
+                    isLoading={true}
+                    error={null}
+                    logs={undefined}
+                    anchor={{ current: null }}
+                >
+                    <PopoverTrigger>Logs Loading</PopoverTrigger>
+                </LogsPopoverMarkup>
+                <LogsPopoverMarkup
+                    isOpen={true}
+                    setIsOpen={() => {}}
+                    isLoading={false}
+                    error={new Error('Logs Error')}
+                    logs={undefined}
+                    anchor={{ current: null }}
+                >
+                    <PopoverTrigger>Logs Error</PopoverTrigger>
+                </LogsPopoverMarkup>
+                <LogsPopoverMarkup
+                    isOpen={true}
+                    setIsOpen={() => {}}
+                    isLoading={false}
+                    error={null}
+                    logs={[]}
+                    anchor={{ current: null }}
+                >
+                    <PopoverTrigger>Logs Empty</PopoverTrigger>
+                </LogsPopoverMarkup>
             </div>
         </div>
     );

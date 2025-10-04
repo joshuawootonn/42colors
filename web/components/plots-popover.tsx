@@ -56,22 +56,22 @@ export function PlotsPopoverMarkup({
                     align: 'center',
                 }}
             >
-                <PopoverHeading>Recent Plots</PopoverHeading>
-                <div className="max-h-96 overflow-auto">
+                <PopoverHeading>recent plots</PopoverHeading>
+                <div className="flex h-80 overflow-auto">
                     {isLoading ? (
-                        <div className="py-20 text-center text-sm text-muted-foreground">
+                        <div className="flex-1 pt-20 text-center text-sm text-muted-foreground">
                             Loading plots...
                         </div>
                     ) : error ? (
-                        <div className="py-20 text-center text-sm text-red-600">
+                        <div className="flex-1 pt-20 text-center text-sm text-red-600">
                             Failed to load plots
                         </div>
                     ) : plots == null || plots.length === 0 ? (
-                        <div className="py-20 text-center text-sm text-muted-foreground">
+                        <div className="flex-1 pt-20 text-center text-sm text-muted-foreground">
                             No plots found
                         </div>
                     ) : (
-                        <div className="flex flex-col space-y-1">
+                        <div className="flex w-full flex-col space-y-1">
                             {plots.map((plot) => (
                                 <button
                                     key={plot.id}

@@ -104,23 +104,23 @@ export function LogsPopoverMarkup({
             onOpenChange={setIsOpen}
         >
             {children}
-            <PopoverContent className="w-96" positionerProps={positionerProps}>
+            <PopoverContent className="w-80" positionerProps={positionerProps}>
                 <PopoverHeading>The log book </PopoverHeading>
-                <div className="max-h-96 overflow-auto outline-none">
+                <div className="flex h-80 overflow-auto">
                     {isLoading ? (
-                        <div className="py-20 text-center text-sm text-muted-foreground">
+                        <div className="flex-1 pt-20 text-center text-sm text-muted-foreground">
                             Loading logs...
                         </div>
                     ) : error ? (
-                        <div className="py-20 text-center text-sm text-red-600">
+                        <div className="flex-1 pt-20 text-center text-sm text-red-600">
                             Failed to load logs
                         </div>
                     ) : logs == null || logs.length === 0 ? (
-                        <div className="py-20 text-center text-sm text-muted-foreground">
+                        <div className="flex-1 pt-20 text-center text-sm text-muted-foreground">
                             No logs found
                         </div>
                     ) : (
-                        <div className="flex flex-col space-y-1">
+                        <div className="flex w-full flex-col space-y-1">
                             {logs.map((log) => {
                                 const balanceChange = getBalanceChangeDisplay(
                                     log.oldBalance,
