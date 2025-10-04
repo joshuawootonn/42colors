@@ -55,6 +55,9 @@ export function CreatePlotForm() {
             context.queryClient?.invalidateQueries({
                 queryKey: ['user', 'plots'],
             });
+            context.queryClient?.invalidateQueries({
+                queryKey: ['user', 'me'],
+            });
             store.trigger.completeClaim();
             store.trigger.selectPlot({ plotId: plot.id });
             setIsOpen(false);

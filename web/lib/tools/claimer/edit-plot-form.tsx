@@ -67,6 +67,9 @@ export function EditPlotForm({ plot }: EditPlotFormProps) {
             context.queryClient?.invalidateQueries({
                 queryKey: ['user', 'plots'],
             });
+            context.queryClient?.invalidateQueries({
+                queryKey: ['user', 'me'],
+            });
             setIsOpen(false);
         },
         onError: (error) => {

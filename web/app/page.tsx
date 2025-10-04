@@ -7,6 +7,7 @@ import { Navigation } from '@/components/navigation';
 import { Palette } from '@/components/palette';
 import { Toolbar } from '@/components/toolbar';
 import { WebGPUWarning } from '@/components/webgpu-warning';
+import authService from '@/lib/auth';
 import {
     createBackgroundCanvas,
     drawBackgroundCanvas,
@@ -29,7 +30,7 @@ import {
     stringToNumberOr100,
 } from '@/lib/utils/stringToNumberOrDefault';
 import { createWebGPUManager } from '@/lib/webgpu/web-gpu-manager';
-import { useQueryClient } from '@tanstack/react-query';
+import { QueryObserver, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from '@xstate/store/react';
 
 export default function Page() {
@@ -74,6 +75,13 @@ export default function Page() {
             const telegraphCanvas = createFullsizeCanvas();
             const uiCanvas = createFullsizeCanvas();
 
+            const apiOrigin =
+                process.env.NEXT_PUBLIC_API_ORIGIN ??
+                'https://api.42colors.com';
+            const apiWebsocketOrigin =
+                process.env.NEXT_PUBLIC_API_WEBSOCKET_ORIGIN ??
+                'https://api.42colors.com';
+
             Promise.all([
                 createWebGPUManager(uiCanvas),
                 createWebGPUManager(telegraphCanvas),
@@ -96,13 +104,8 @@ export default function Page() {
                                 body,
                                 canvas: element,
                                 // todo(josh): make a config module that checks env vars
-                                apiOrigin:
-                                    process.env.NEXT_PUBLIC_API_ORIGIN ??
-                                    'https://api.42colors.com',
-                                apiWebsocketOrigin:
-                                    process.env
-                                        .NEXT_PUBLIC_API_WEBSOCKET_ORIGIN ??
-                                    'https://api.42colors.com',
+                                apiOrigin,
+                                apiWebsocketOrigin,
                                 cameraOptions: { x, y, zoom },
                                 queryClient,
                                 toolSettings:
@@ -128,8 +131,7 @@ export default function Page() {
                     console.error('WebGPU initialization failed:', error);
                     setIsWebGPUAvailable(false);
                 });
-
-            const unsubscribe = queryClient
+            const unsubscribePlotCacheChanges = queryClient
                 .getQueryCache()
                 .subscribe((event) => {
                     const key = ['user', 'plots'];
@@ -141,13 +143,29 @@ export default function Page() {
                     }
                 });
 
+            const observer = new QueryObserver(queryClient, {
+                queryKey: ['user', 'me'],
+                queryFn: () => authService.getCurrentUser(apiOrigin),
+            });
+            const unsubscribeUserSubscription = observer.subscribe((result) => {
+                if (result.data != null) {
+                    store.trigger.setUser({
+                        user: result.data ? result.data.user : null,
+                    });
+                    store.trigger.reconnectToSocket({
+                        channel_token: result.data?.user.channel_token,
+                    });
+                }
+            });
+
             const rafId = requestAnimationFrame(draw);
             store.trigger.listen({ element, body });
 
             return () => {
                 cancelAnimationFrame(rafId);
                 store.trigger.unlisten({ element, body });
-                unsubscribe();
+                unsubscribePlotCacheChanges();
+                unsubscribeUserSubscription();
             };
 
             function draw() {
