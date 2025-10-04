@@ -18,6 +18,7 @@ import authService from '@/lib/auth';
 import { store } from '@/lib/store';
 import { useSelector } from '@xstate/store/react';
 
+import { BalanceDiff } from './balance-diff';
 import { Link } from './link';
 import { LogsPopover } from './logs-popover';
 import { PlotsPopover } from './plots-popover';
@@ -120,7 +121,7 @@ export function Footer() {
                             <DropdownMenu>
                                 <DropdownMenuTrigger ref={ref}>
                                     <span className="whitespace-nowrap">
-                                        {user.email} ({user.balance})
+                                        {user.email} (<BalanceDiff />)
                                     </span>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
