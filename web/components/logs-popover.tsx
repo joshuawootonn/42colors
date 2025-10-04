@@ -55,9 +55,9 @@ function getBalanceChangeDisplay(
 function getLogDescription(log: Log): string {
     switch (log.logType) {
         case 'initial_grant':
-            return 'Welcome bonus received';
+            return 'A small loan of 1 million dollars';
         case 'bailout_grant':
-            return 'Emergency funds granted';
+            return 'Funds to bail you out of debt';
         case 'plot_created':
             return log.plot ? `Created "${log.plot.name}"` : 'Plot created';
         case 'plot_updated':
