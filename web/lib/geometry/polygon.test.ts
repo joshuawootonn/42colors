@@ -5,6 +5,7 @@ import { bunchOfTuplePointsSchema } from '../utils/testing';
 import {
     getCanvasPolygon,
     getCenterPoint,
+    getPolygonSize,
     inside,
     isEligiblePolygon,
     isIneligiblePolygon,
@@ -528,5 +529,328 @@ describe('getCanvasPolygon', () => {
             [6.5, 4.7],
             [5.5, 4.7],
         ]);
+    });
+});
+
+describe('getPolygonSize', () => {
+    test('unit square - should return area 1', () => {
+        const square = polygonSchema.parse({
+            vertices: [
+                [0, 0],
+                [1, 0],
+                [1, 1],
+                [0, 1],
+            ],
+        });
+
+        const area = getPolygonSize(square);
+        expect(area).toBe(1);
+    });
+
+    test('10x10 square - should return area 100', () => {
+        const square = polygonSchema.parse({
+            vertices: [
+                [0, 0],
+                [10, 0],
+                [10, 10],
+                [0, 10],
+            ],
+        });
+
+        const area = getPolygonSize(square);
+        expect(area).toBe(100);
+    });
+
+    test('rectangle 5x3 - should return area 15', () => {
+        const rectangle = polygonSchema.parse({
+            vertices: [
+                [0, 0],
+                [5, 0],
+                [5, 3],
+                [0, 3],
+            ],
+        });
+
+        const area = getPolygonSize(rectangle);
+        expect(area).toBe(15);
+    });
+
+    test('right triangle - should return correct area', () => {
+        const triangle = polygonSchema.parse({
+            vertices: [
+                [0, 0],
+                [4, 0],
+                [0, 3],
+            ],
+        });
+
+        // Area of right triangle = (base * height) / 2 = (4 * 3) / 2 = 6
+        const area = getPolygonSize(triangle);
+        expect(area).toBe(6);
+    });
+
+    test('equilateral triangle - should return correct area', () => {
+        const triangle = polygonSchema.parse({
+            vertices: [
+                [0, 0],
+                [2, 0],
+                [1, Math.sqrt(3)],
+            ],
+        });
+
+        // Area of equilateral triangle with side 2 = (sqrt(3)/4) * side^2 = sqrt(3)
+        const area = getPolygonSize(triangle);
+        expect(area).toBeCloseTo(Math.sqrt(3), 10);
+    });
+
+    test('irregular quadrilateral - should return correct area', () => {
+        const quad = polygonSchema.parse({
+            vertices: [
+                [0, 0],
+                [3, 0],
+                [4, 2],
+                [1, 3],
+            ],
+        });
+
+        // Using shoelace formula manually:
+        // Area = |((0*0 - 3*0) + (3*2 - 4*0) + (4*3 - 1*2) + (1*0 - 0*3))| / 2
+        // Area = |(0 + 6 + 10 + 0)| / 2 = 8
+        const area = getPolygonSize(quad);
+        expect(area).toBe(8);
+    });
+
+    test('polygon with negative coordinates', () => {
+        const polygon = polygonSchema.parse({
+            vertices: [
+                [-2, -2],
+                [2, -2],
+                [2, 2],
+                [-2, 2],
+            ],
+        });
+
+        const area = getPolygonSize(polygon);
+        expect(area).toBe(16); // 4x4 square
+    });
+
+    test('polygon with decimal coordinates', () => {
+        const polygon = polygonSchema.parse({
+            vertices: [
+                [0.5, 0.5],
+                [2.5, 0.5],
+                [2.5, 1.5],
+                [0.5, 1.5],
+            ],
+        });
+
+        // 2x1 rectangle
+        const area = getPolygonSize(polygon);
+        expect(area).toBe(2);
+    });
+
+    test('counterclockwise vertices - should return same area', () => {
+        const clockwise = polygonSchema.parse({
+            vertices: [
+                [0, 0],
+                [3, 0],
+                [3, 2],
+                [0, 2],
+            ],
+        });
+
+        const counterclockwise = polygonSchema.parse({
+            vertices: [
+                [0, 0],
+                [0, 2],
+                [3, 2],
+                [3, 0],
+            ],
+        });
+
+        const area1 = getPolygonSize(clockwise);
+        const area2 = getPolygonSize(counterclockwise);
+        expect(area1).toBe(area2);
+        expect(area1).toBe(6);
+    });
+
+    test('complex polygon - should return correct area', () => {
+        // L-shaped polygon
+        const lShape = polygonSchema.parse({
+            vertices: [
+                [0, 0],
+                [3, 0],
+                [3, 1],
+                [1, 1],
+                [1, 3],
+                [0, 3],
+            ],
+        });
+
+        // L-shape can be calculated as: 3x1 rectangle + 1x2 rectangle = 3 + 2 = 5
+        const area = getPolygonSize(lShape);
+        expect(area).toBe(5);
+    });
+
+    test('polygon from rect1 - should match expected area', () => {
+        const polygon = rectToPolygonSchema.parse(rect1);
+        const area = getPolygonSize(polygon);
+
+        // rect1 is from (0,0) to (10,10), so area should be 100
+        expect(area).toBe(100);
+    });
+
+    test('polygon from rect2 - should match expected area', () => {
+        const polygon = rectToPolygonSchema.parse(rect2);
+        const area = getPolygonSize(polygon);
+
+        // rect2 is from (10,0) to (20,10), so area should be 100
+        expect(area).toBe(100);
+    });
+
+    test('polygon from rect5 - should match expected area', () => {
+        const polygon = rectToPolygonSchema.parse(rect5);
+        const area = getPolygonSize(polygon);
+
+        // rect5 is from (5,5) to (15,15), so area should be 100
+        expect(area).toBe(100);
+    });
+
+    test('canvas polygon size 1 - should return area 1', () => {
+        const polygon = getCanvasPolygon(5, 5, 1);
+        const area = getPolygonSize(polygon);
+        expect(area).toBe(1);
+    });
+
+    test('canvas polygon size 2 - should return area 4', () => {
+        const polygon = getCanvasPolygon(5, 5, 2);
+        const area = getPolygonSize(polygon);
+        expect(area).toBe(4); // 2x2 square
+    });
+
+    test('canvas polygon size 3 - should return correct area', () => {
+        const polygon = getCanvasPolygon(5, 5, 3);
+        const area = getPolygonSize(polygon);
+        // Cross shape: center 1x1 + 4 arms of 1x1 each = 5
+        expect(area).toBe(5);
+    });
+
+    test('large coordinates polygon', () => {
+        const polygon = polygonSchema.parse({
+            vertices: [
+                [1000, 2000],
+                [3000, 2000],
+                [3000, 4000],
+                [1000, 4000],
+            ],
+        });
+
+        const area = getPolygonSize(polygon);
+        expect(area).toBe(4000000); // 2000x2000 rectangle
+    });
+
+    test('very small polygon with precise decimals', () => {
+        const polygon = polygonSchema.parse({
+            vertices: [
+                [0.1, 0.1],
+                [0.2, 0.1],
+                [0.2, 0.2],
+                [0.1, 0.2],
+            ],
+        });
+
+        const area = getPolygonSize(polygon);
+        expect(area).toBeCloseTo(0.01, 10); // 0.1x0.1 square
+    });
+
+    test('triangle with vertices in different order', () => {
+        const triangle1 = polygonSchema.parse({
+            vertices: [
+                [0, 0],
+                [2, 0],
+                [1, 2],
+            ],
+        });
+
+        const triangle2 = polygonSchema.parse({
+            vertices: [
+                [1, 2],
+                [0, 0],
+                [2, 0],
+            ],
+        });
+
+        const area1 = getPolygonSize(triangle1);
+        const area2 = getPolygonSize(triangle2);
+        expect(area1).toBe(area2);
+        expect(area1).toBe(2); // base=2, height=2, area=2
+    });
+
+    test('polygon with fewer than 3 vertices - should throw error', () => {
+        const twoVertices = polygonSchema.parse({
+            vertices: [
+                [0, 0],
+                [1, 1],
+            ],
+        });
+
+        expect(() => getPolygonSize(twoVertices)).toThrow(
+            'Cannot calculate area of polygon with fewer than 3 vertices',
+        );
+    });
+
+    test('polygon with single vertex - should throw error', () => {
+        const singleVertex = polygonSchema.parse({
+            vertices: [[5, 3]],
+        });
+
+        expect(() => getPolygonSize(singleVertex)).toThrow(
+            'Cannot calculate area of polygon with fewer than 3 vertices',
+        );
+    });
+
+    test('empty polygon - should throw error', () => {
+        const emptyPolygon = polygonSchema.parse({
+            vertices: [],
+        });
+
+        expect(() => getPolygonSize(emptyPolygon)).toThrow(
+            'Cannot calculate area of polygon with fewer than 3 vertices',
+        );
+    });
+
+    test('pentagon - should return correct area', () => {
+        // Regular pentagon inscribed in unit circle
+        const pentagon = polygonSchema.parse({
+            vertices: [
+                [1, 0],
+                [0.309, 0.951],
+                [-0.809, 0.588],
+                [-0.809, -0.588],
+                [0.309, -0.951],
+            ],
+        });
+
+        const area = getPolygonSize(pentagon);
+        // Area of regular pentagon with circumradius 1 ≈ 2.378
+        expect(area).toBeCloseTo(2.378, 2);
+    });
+
+    test('hexagon - should return correct area', () => {
+        // Regular hexagon with vertices at distance 1 from center
+        const hexagon = polygonSchema.parse({
+            vertices: [
+                [1, 0],
+                [0.5, Math.sqrt(3) / 2],
+                [-0.5, Math.sqrt(3) / 2],
+                [-1, 0],
+                [-0.5, -Math.sqrt(3) / 2],
+                [0.5, -Math.sqrt(3) / 2],
+            ],
+        });
+
+        const area = getPolygonSize(hexagon);
+        // Area of regular hexagon with circumradius 1 = 3*sqrt(3)/2 ≈ 2.598
+        expect(area).toBeCloseTo(2.598, 2);
     });
 });

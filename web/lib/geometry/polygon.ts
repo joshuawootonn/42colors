@@ -36,6 +36,36 @@ export function getCenterPoint(polygon: Polygon): AbsolutePointTuple {
     return absolutePointTupleSchema.parse([centerX, centerY]);
 }
 
+/**
+ * Calculates the area (size) of a polygon using the shoelace formula.
+ * The shoelace formula works for any simple polygon (non-self-intersecting).
+ *
+ * @param polygon - The polygon to calculate the area of
+ * @returns The area of the polygon as a positive number
+ * @throws Error if the polygon has fewer than 3 vertices
+ */
+export function getPolygonSize(polygon: Polygon): number {
+    if (polygon.vertices.length < 3) {
+        throw new Error(
+            'Cannot calculate area of polygon with fewer than 3 vertices',
+        );
+    }
+
+    let area = 0;
+    const vertices = polygon.vertices;
+    const n = vertices.length;
+
+    // Apply the shoelace formula
+    for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n;
+        area += vertices[i][0] * vertices[j][1];
+        area -= vertices[j][0] * vertices[i][1];
+    }
+
+    // Return the absolute value to ensure positive area
+    return Math.abs(area) / 2;
+}
+
 export function sortIntoClockwiseOrder(points: AbsolutePointTuple[]) {
     const centerX = points.reduce((p, c) => p + c[0], 0) / points.length;
     const centerY = points.reduce((p, c) => p + c[1], 0) / points.length;
