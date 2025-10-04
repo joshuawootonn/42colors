@@ -34,10 +34,10 @@ lint-check:
   bun run lint
 
 format:
-  bun run format
+  bun run format --write
 
 format-check:
-  bun run format --check
+  bun run format 
 
 type-check:
   bun run tsc --noEmit
