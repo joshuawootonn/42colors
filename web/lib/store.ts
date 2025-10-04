@@ -132,6 +132,7 @@ export type InitializedStore = {
     user?: {
         email: string;
         id: number;
+        balance: number;
         channel_token: string;
     } | null;
     queryClient: QueryClient;
@@ -455,6 +456,7 @@ export const store = createStore({
                 user: {
                     email: string;
                     id: number;
+                    balance: number;
                     channel_token: string;
                 } | null;
             },

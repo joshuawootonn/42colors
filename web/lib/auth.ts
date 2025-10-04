@@ -30,6 +30,7 @@ export interface AuthUser {
 export interface User {
     id: number;
     email: string;
+    balance: number;
     channel_token: string;
 }
 

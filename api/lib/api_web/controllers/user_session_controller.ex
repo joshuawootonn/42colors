@@ -71,6 +71,7 @@ defmodule ApiWeb.UserSessionController do
       user: %{
         email: user.email,
         id: user.id,
+        balance: user.balance,
         channel_token: channel_token
       }
     })

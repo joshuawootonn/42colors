@@ -119,7 +119,9 @@ export function Footer() {
                         <LogsPopover anchor={ref}>
                             <DropdownMenu>
                                 <DropdownMenuTrigger ref={ref}>
-                                    {user.email}
+                                    <span className="whitespace-nowrap">
+                                        {user.email} ({user.balance})
+                                    </span>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
                                     <PopoverTrigger
