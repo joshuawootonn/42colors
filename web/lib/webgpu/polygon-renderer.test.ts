@@ -101,10 +101,10 @@ describe('getCoveringPolygon', () => {
 
         const covering = getCoveringPolygon(polygon);
 
-        console.log(
-            'Complex polygon:',
-            JSON.stringify({ polygon, covering }, null, 2),
-        );
+        // console.log(
+        //     'Complex polygon:',
+        //     JSON.stringify({ polygon, covering }, null, 2),
+        // );
 
         expect(covering.vertices[0]).toEqual([0, 1]);
 
@@ -173,10 +173,10 @@ describe('getCoveringPolygon', () => {
             containsMatchingEndpoints: true,
         });
 
-        console.log(
-            'Specific coordinates test:',
-            JSON.stringify({ polygon, covering }, null, 2),
-        );
+        // console.log(
+        //     'Specific coordinates test:',
+        //     JSON.stringify({ polygon, covering }, null, 2),
+        // );
 
         // Let's see what the actual output is first, then we can set expectations
         // For now, just log the results to see what the algorithm produces

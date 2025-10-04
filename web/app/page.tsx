@@ -47,7 +47,6 @@ export default function Page() {
         }
 
         const element = canvasRef.current;
-        console.log('element', element);
         if (element instanceof HTMLCanvasElement) {
             const context = element.getContext('2d');
             if (context == null) {

@@ -798,7 +798,6 @@ export const store = createStore({
             { chunkKey, plotIds }: { chunkKey: string; plotIds: number[] },
             enqueue,
         ) => {
-            console.log('removePlots', chunkKey, plotIds);
             if (isInitialStore(context)) return;
 
             const prev = context.canvas.chunkCanvases[chunkKey];
@@ -815,13 +814,13 @@ export const store = createStore({
                 (plot) => !plotIdSet.has(plot.id),
             );
 
-            console.log({
-                remainingPlots,
-                prevPlots: prev.plots,
-                chunkCanvases: context.canvas.chunkCanvases,
-                plotIdSet,
-                chunkKey,
-            });
+            // console.log({
+            //     remainingPlots,
+            //     prevPlots: prev.plots,
+            //     chunkCanvases: context.canvas.chunkCanvases,
+            //     plotIdSet,
+            //     chunkKey,
+            // });
 
             context.canvas.chunkCanvases[chunkKey] = {
                 ...prev,

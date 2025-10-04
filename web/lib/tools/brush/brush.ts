@@ -192,7 +192,6 @@ export function getBrushPoints(
                 break;
 
             case 10:
-                console.log('10');
                 for (let i = -5; i <= 4; i++) {
                     for (let j = -5; j <= 4; j++) {
                         if (i === -5 && j === -5) continue;
