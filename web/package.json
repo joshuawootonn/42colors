@@ -30,6 +30,7 @@
         "date-fns": "^4.1.0",
         "earcut": "^3.0.2",
         "fathom-client": "^3.7.2",
+        "framer-motion": "^12.23.22",
         "is-hotkey": "^0.2.0",
         "motion": "^12.10.0",
         "next": "15.3.4",
