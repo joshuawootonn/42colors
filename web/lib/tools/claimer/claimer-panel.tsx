@@ -85,6 +85,9 @@ export function ClaimerPanel() {
                                     store.trigger.selectPlot({
                                         plotId: plot.id,
                                     });
+                                    store.trigger.moveToPlot({
+                                        plotId: plot.id,
+                                    });
                                 }}
                                 key={plot.id}
                             >

@@ -1,31 +1,18 @@
-import { z } from 'zod';
-
 import {
     derivePixelsFromActions,
     deriveUnsetPixelsFromActions,
 } from '../actions';
-import { Camera, ZoomMultiplier, getZoomMultiplier } from '../camera';
-import { CANVAS_PIXEL_RATIO } from '../constants';
+import { Camera, getZoomMultiplier } from '../camera';
 import { InitializedStore } from '../store';
 import { dedupeCoords } from '../utils/dedupe-coords';
 import { isInitialStore } from '../utils/is-initial-store';
+import { getPixelSize, getSizeInPixelsPlusBleed } from './canvas';
 import { clearChunkPixels, unsetChunkPixels } from './chunk';
 
 export function createRealtimeCanvas(camera: Camera) {
     const canvas = document.createElement('canvas');
     resizeRealtimeCanvas(canvas, camera);
     return canvas;
-}
-
-const pixelSizeSchema = z.number().brand<'PixelSize'>();
-export type PixelSize = z.infer<typeof pixelSizeSchema>;
-
-export function getPixelSize(zoomMultiplier: ZoomMultiplier): PixelSize {
-    return pixelSizeSchema.parse(CANVAS_PIXEL_RATIO * zoomMultiplier);
-}
-
-export function getSizeInPixelsPlusBleed(length: number, pixelSize: PixelSize) {
-    return Math.ceil(length / pixelSize) + 1;
 }
 
 export function resizeRealtimeCanvas(

@@ -1,5 +1,5 @@
 import { getZoomMultiplier } from '../../camera';
-import { getPixelSize } from '../../canvas/realtime';
+import { getPixelSize } from '../../canvas/canvas';
 import {
     Polygon,
     getCompositePolygons,

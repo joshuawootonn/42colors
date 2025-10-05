@@ -1,5 +1,5 @@
 import { getZoomMultiplier } from '../../camera';
-import { getPixelSize } from '../../canvas/realtime';
+import { getPixelSize } from '../../canvas/canvas';
 import { AbsolutePoint } from '../../geometry/coord';
 import { getCanvasPolygon } from '../../geometry/polygon';
 import { BLACK_REF, COLOR_TABLE, TRANSPARENT_REF } from '../../palette';

@@ -6,13 +6,10 @@ import {
 } from '../constants';
 import { InitializedStore } from '../store';
 import { canvasToClient } from '../utils/clientToCanvasConversion';
+import { getPixelSize, getSizeInPixelsPlusBleed } from './canvas';
 import { clearChunk, renderPlotsToChunk } from './chunk';
 import { FULLSIZE_CANVAS_BLEED } from './fullsize';
-import {
-    getPixelSize,
-    getSizeInPixelsPlusBleed,
-    renderRealtime,
-} from './realtime';
+import { renderRealtime } from './realtime';
 import { renderTelegraph } from './telegraph';
 import { renderUI } from './ui';
 
@@ -93,20 +90,19 @@ export function draw(context: InitializedStore) {
         canvasHeightPlusBleed,
     );
 
-    renderTelegraph(context);
+    renderUI(context);
 
     context.canvas.rootCanvasContext.drawImage(
-        context.canvas.telegraphCanvas,
+        context.canvas.uiCanvas,
         x,
         y,
         window.innerWidth + FULLSIZE_CANVAS_BLEED,
         window.innerHeight + FULLSIZE_CANVAS_BLEED,
     );
 
-    renderUI(context);
-
+    renderTelegraph(context);
     context.canvas.rootCanvasContext.drawImage(
-        context.canvas.uiCanvas,
+        context.canvas.telegraphCanvas,
         x,
         y,
         window.innerWidth + FULLSIZE_CANVAS_BLEED,

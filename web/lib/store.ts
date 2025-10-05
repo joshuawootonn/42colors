@@ -18,6 +18,7 @@ import {
     drawBackgroundCanvas,
     resizeBackgroundCanvas,
 } from './canvas/background';
+import { getCameraCenterPoint } from './canvas/canvas';
 import {
     ChunkCanvases,
     cleanupChunkWebGPU,
@@ -32,6 +33,7 @@ import {
 import { draw } from './canvas/draw';
 import { resizeFullsizeCanvas } from './canvas/fullsize';
 import { resizeRealtimeCanvas } from './canvas/realtime';
+import { showCrosshair } from './canvas/ui';
 import { CHUNK_LENGTH } from './constants';
 import {
     onContextMenu,
@@ -56,6 +58,7 @@ import {
 } from './geometry/polygon';
 import { KeyboardCode } from './keyboard-codes';
 import { TRANSPARENT_REF, getNextColor, getPreviousColor } from './palette';
+import { findPlotAtPoint } from './plots/plots.rest';
 import { newPixels, setupChannel, setupSocketConnection } from './sockets';
 import {
     DEFAULT_TOOL_SETTINGS,
@@ -873,24 +876,51 @@ export const store = createStore({
             context,
             event: {
                 camera: Partial<Camera>;
-                options?: { deselectPlot: boolean };
+                options?: { deselectPlot: boolean; autoSelectPlot?: boolean };
             },
             enqueue,
         ) => {
             if (isInitialStore(context)) return;
 
-            const options = { deselectPlot: true, ...event.options };
+            const options = {
+                deselectPlot: true,
+                autoSelectPlot: true,
+                ...event.options,
+            };
+
+            const newCamera = { ...context.camera, ...event.camera };
 
             enqueue.effect(() => {
                 store.trigger.resizeRealtimeAndTelegraphCanvases();
-                if (options.deselectPlot) {
+
+                // Show crosshair at center when camera moves
+                showCrosshair();
+
+                if (options.autoSelectPlot) {
+                    // Get the center point of the new camera position
+                    const centerPoint = getCameraCenterPoint(newCamera);
+
+                    // Find plot at center point
+                    const plotAtCenter = findPlotAtPoint(centerPoint, {
+                        ...context,
+                        camera: newCamera,
+                    });
+
+                    if (plotAtCenter) {
+                        // Select the plot found at center
+                        store.trigger.selectPlot({ plotId: plotAtCenter.id });
+                    } else if (options.deselectPlot) {
+                        // Only deselect if no plot found and deselectPlot is true
+                        store.trigger.deselectPlot();
+                    }
+                } else if (options.deselectPlot) {
                     store.trigger.deselectPlot();
                 }
             });
 
             return {
                 ...context,
-                camera: { ...context.camera, ...event.camera },
+                camera: newCamera,
             };
         },
 
@@ -1053,9 +1083,8 @@ export const store = createStore({
             };
         },
 
-        selectPlot: (context, { plotId }: { plotId: number }, enqueue) => {
+        moveToPlot: (context, { plotId }: { plotId: number }, enqueue) => {
             if (isInitialStore(context)) return;
-
             const userPlots = (context.queryClient.getQueryData([
                 'user',
                 'plots',
@@ -1069,7 +1098,6 @@ export const store = createStore({
             const polygon =
                 userPlots.find((plot) => plot.id === plotId)?.polygon ??
                 recentPlots.find((plot) => plot.id === plotId)?.polygon;
-
             enqueue.effect(() => {
                 if (polygon != null) {
                     store.trigger.moveCamera({
@@ -1077,7 +1105,7 @@ export const store = createStore({
                             getCenterPoint(polygon),
                             store.getSnapshot().context.camera,
                         ),
-                        options: { deselectPlot: false },
+                        options: { deselectPlot: false, autoSelectPlot: false },
                     });
                 } else {
                     console.log('userPlots', userPlots);
@@ -1088,6 +1116,10 @@ export const store = createStore({
                     );
                 }
             });
+        },
+
+        selectPlot: (context, { plotId }: { plotId: number }) => {
+            if (isInitialStore(context)) return;
 
             return {
                 ...context,

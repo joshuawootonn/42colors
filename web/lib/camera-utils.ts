@@ -1,5 +1,5 @@
 import { Camera, getZoomMultiplier } from './camera';
-import { getPixelSize, getSizeInPixelsPlusBleed } from './canvas/realtime';
+import { getPixelSize, getSizeInPixelsPlusBleed } from './canvas/canvas';
 import { AbsolutePointTuple } from './line';
 
 export function centerCameraOnPoint(point: AbsolutePointTuple, camera: Camera) {

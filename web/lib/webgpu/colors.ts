@@ -2,6 +2,8 @@ export type Color = [number, number, number, number];
 
 export const BLUE: Color = [0, 0, 1, 1];
 export const BLACK: Color = [0, 0, 0, 1];
+export const WHITE: Color = [1, 1, 1, 1];
+export const LIGHT_GRAY: Color = [0.9, 0.9, 0.9, 1];
 export const DARK_RED: Color = [0.8, 0, 0, 1]; // Darker red for outline
 export const CLAIMER_YELLOW: Color = [246 / 255, 240 / 255, 74 / 255, 1];
 
