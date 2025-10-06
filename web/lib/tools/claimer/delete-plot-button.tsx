@@ -99,18 +99,18 @@ export function DeletePlotButton({ plot }: DeletePlotButtonProps) {
                         </p>
                         <div className="flex justify-end space-x-2">
                             <Button
-                                variant="outline"
-                                onClick={() => setIsConfirmOpen(false)}
-                                disabled={isPending}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
                                 variant="destructive"
                                 onClick={handleDelete}
                                 disabled={isPending}
                             >
                                 {isPending ? 'Deleting...' : 'Delete'}
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => setIsConfirmOpen(false)}
+                                disabled={isPending}
+                            >
+                                Cancel
                             </Button>
                         </div>
                     </div>
