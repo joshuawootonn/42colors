@@ -43,6 +43,8 @@ export function redrawUserPlots(context: InitializedStore) {
         },
     }));
 
+    console.log('polygonRenderData', polygonRenderData);
+
     webgpuManager.redrawPolygons(polygonRenderData);
 }
 
