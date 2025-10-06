@@ -143,6 +143,7 @@ export function PlotsPopover({ children }: { children: ReactNode }) {
             selectedPlotId={selectedPlotId ?? undefined}
             selectPlot={(plotId) => {
                 store.trigger.selectPlot({ plotId });
+                store.trigger.moveToPlot({ plotId });
                 store.trigger.fetchPixels();
             }}
         >
