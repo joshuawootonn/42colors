@@ -5,28 +5,31 @@ import { InitializedStore } from '../store';
 import { getCameraOffset } from '../tools/brush/brush';
 import { Plot } from '../tools/claimer/claimer.rest';
 import { isInitialStore } from '../utils/is-initial-store';
-import { BLACK, BLUE, DARK_RED, LIGHT_GRAY } from '../webgpu/colors';
+import { BLUE, DARK_RED, LIGHT_GRAY } from '../webgpu/colors';
 import { LineItem, RedrawPolygonsItem } from '../webgpu/web-gpu-manager';
 import { getPixelSize } from './canvas';
 
-export function redrawUserPlots(context: InitializedStore) {
+export function redrawSelectedPlot(context: InitializedStore) {
     const webgpuManager = context.canvas.uiWebGPUManager;
     if (!webgpuManager) return;
 
-    const userPlotData: Plot[] | undefined = context.queryClient.getQueryData([
-        'user',
-        'plots',
-    ]);
+    const cachedPlots = context.queryClient
+        .getQueriesData({ queryKey: ['plots'] })
+        .flatMap(([_, data]) => (data as Plot[]) || []);
 
-    if (userPlotData == null) {
-        return;
-    }
+    if (cachedPlots == null) return;
+
+    // Prepare all polygons for batch rendering
+    const selectedPlots = cachedPlots.filter(
+        (plot) => plot.id === context.toolSettings.claimer.selectedPlotId,
+    );
+
+    if (selectedPlots.length === 0) return;
 
     const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
     const { xOffset, yOffset } = getCameraOffset(context.camera);
 
-    // Prepare all polygons for batch rendering
-    const polygonRenderData = userPlotData.map((plot) => ({
+    const polygonRenderData = selectedPlots.map((plot) => ({
         polygon: plot.polygon,
         options: {
             containsMatchingEndpoints: true,
@@ -35,15 +38,10 @@ export function redrawUserPlots(context: InitializedStore) {
             xCamera: context.camera.x,
             yCamera: context.camera.y,
             pixelSize,
-            lineWidth: 0.25, // 3px thick lines
-            color:
-                plot.id === context.toolSettings.claimer.selectedPlotId
-                    ? BLUE
-                    : BLACK,
+            lineWidth: 0.37,
+            color: BLUE,
         },
     }));
-
-    console.log('polygonRenderData', polygonRenderData);
 
     webgpuManager.redrawPolygons(polygonRenderData);
 }
@@ -201,7 +199,7 @@ export function redrawCrosshair(context: InitializedStore) {
 export function renderUI(context: InitializedStore) {
     if (isInitialStore(context)) return;
 
-    redrawUserPlots(context);
+    redrawSelectedPlot(context);
     redrawRejectedPlots(context);
     redrawCrosshair(context);
 }
