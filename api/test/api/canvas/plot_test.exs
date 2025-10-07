@@ -147,7 +147,7 @@ defmodule Api.PlotTest do
     end
   end
 
-  describe "list_plots_within_polygon/1" do
+  describe "list_plots_intersecting_polygon/1" do
     setup do
       user1 = user_fixture()
       user2 = user_fixture()
@@ -234,7 +234,7 @@ defmodule Api.PlotTest do
       plot4: plot4,
       search_polygon: search_polygon
     } do
-      results = Plot.Repo.list_plots_within_polygon(search_polygon)
+      results = Plot.Repo.list_plots_intersecting_polygon(search_polygon)
       result_ids = Enum.map(results, & &1.id)
 
       # Should include plots that intersect (plot1, plot2, plot4)
@@ -250,7 +250,7 @@ defmodule Api.PlotTest do
       plot3: plot3,
       search_polygon: search_polygon
     } do
-      results = Plot.Repo.list_plots_within_polygon(search_polygon)
+      results = Plot.Repo.list_plots_intersecting_polygon(search_polygon)
       result_ids = Enum.map(results, & &1.id)
 
       # Should not include plot3 (remote plot)
@@ -261,7 +261,7 @@ defmodule Api.PlotTest do
       plot5: plot5,
       search_polygon: search_polygon
     } do
-      results = Plot.Repo.list_plots_within_polygon(search_polygon)
+      results = Plot.Repo.list_plots_intersecting_polygon(search_polygon)
       result_ids = Enum.map(results, & &1.id)
 
       # Should not include plot5 (no polygon)
@@ -275,7 +275,7 @@ defmodule Api.PlotTest do
         srid: 4326
       }
 
-      results = Plot.Repo.list_plots_within_polygon(remote_polygon)
+      results = Plot.Repo.list_plots_intersecting_polygon(remote_polygon)
       assert results == []
     end
 
@@ -288,7 +288,7 @@ defmodule Api.PlotTest do
         srid: 4326
       }
 
-      results = Plot.Repo.list_plots_within_polygon(touching_polygon)
+      results = Plot.Repo.list_plots_intersecting_polygon(touching_polygon)
       result_ids = Enum.map(results, & &1.id)
 
       # Should include plot4 since boundaries touch (ST_Intersects includes touching)
@@ -316,16 +316,16 @@ defmodule Api.PlotTest do
         srid: 4326
       }
 
-      results = Plot.Repo.list_plots_within_polygon(search_polygon)
+      results = Plot.Repo.list_plots_intersecting_polygon(search_polygon)
       result_ids = Enum.map(results, & &1.id)
 
       assert l_shaped_plot.id in result_ids
     end
 
     test "returns error for invalid polygon input" do
-      assert {:error, :invalid_polygon} = Plot.Repo.list_plots_within_polygon("not a polygon")
-      assert {:error, :invalid_polygon} = Plot.Repo.list_plots_within_polygon(nil)
-      assert {:error, :invalid_polygon} = Plot.Repo.list_plots_within_polygon(%{})
+      assert {:error, :invalid_polygon} = Plot.Repo.list_plots_intersecting_polygon("not a polygon")
+      assert {:error, :invalid_polygon} = Plot.Repo.list_plots_intersecting_polygon(nil)
+      assert {:error, :invalid_polygon} = Plot.Repo.list_plots_intersecting_polygon(%{})
     end
 
     test "handles very small polygons" do
@@ -349,7 +349,7 @@ defmodule Api.PlotTest do
         srid: 4326
       }
 
-      results = Plot.Repo.list_plots_within_polygon(search_polygon)
+      results = Plot.Repo.list_plots_intersecting_polygon(search_polygon)
       result_ids = Enum.map(results, & &1.id)
 
       assert tiny_plot.id in result_ids
@@ -387,7 +387,7 @@ defmodule Api.PlotTest do
         srid: 4326
       }
 
-      results = Plot.Repo.list_plots_within_polygon(search_polygon)
+      results = Plot.Repo.list_plots_intersecting_polygon(search_polygon)
       result_ids = Enum.map(results, & &1.id)
 
       assert plot_a.id in result_ids
@@ -411,14 +411,14 @@ defmodule Api.PlotTest do
         })
 
       # Verify plot is found before deletion
-      results_before = Plot.Repo.list_plots_within_polygon(search_polygon)
+      results_before = Plot.Repo.list_plots_intersecting_polygon(search_polygon)
       assert plot.id in Enum.map(results_before, & &1.id)
 
       # Soft delete the plot
       {:ok, _deleted_plot} = Plot.Repo.delete_plot(plot)
 
       # Verify plot is not found after soft deletion
-      results_after = Plot.Repo.list_plots_within_polygon(search_polygon)
+      results_after = Plot.Repo.list_plots_intersecting_polygon(search_polygon)
       refute plot.id in Enum.map(results_after, & &1.id)
     end
   end

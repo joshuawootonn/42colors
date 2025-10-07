@@ -222,11 +222,11 @@ defmodule Api.Canvas.Plot.Repo do
   ## Examples
 
       iex> polygon = %Geo.Polygon{coordinates: [[{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}]], srid: 4326}
-      iex> list_plots_within_polygon(polygon)
+      iex> list_plots_intersecting_polygon(polygon)
       [%Plot{}, ...]
 
   """
-  def list_plots_within_polygon(%Geo.Polygon{} = polygon) do
+  def list_plots_intersecting_polygon(%Geo.Polygon{} = polygon) do
     Plot
     |> where([p], not is_nil(p.polygon))
     |> where([p], is_nil(p.deleted_at))
@@ -234,7 +234,7 @@ defmodule Api.Canvas.Plot.Repo do
     |> Repo.all()
   end
 
-  def list_plots_within_polygon(_), do: {:error, :invalid_polygon}
+  def list_plots_intersecting_polygon(_), do: {:error, :invalid_polygon}
 
   @doc """
   Calculates the size (pixel count) of a polygon.
