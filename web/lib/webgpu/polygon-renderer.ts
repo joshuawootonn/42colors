@@ -1,7 +1,6 @@
 import earcut from 'earcut';
 
 import { Polygon } from '../geometry/polygon';
-import { absolutePointTupleSchema } from '../line';
 import { WebGPUBufferPool } from './buffer-pool';
 import { Color } from './colors';
 
@@ -56,9 +55,6 @@ export interface RenderOptions {
 
     /** Whether to render the polygon as a filled shape or just the outline */
     filled?: boolean;
-
-    /** Whether the polygon should be rendered with covering/adjustment logic. This is helpful for covering plots, but not helpful for creating exact shapes for telegraphs. */
-    covered?: boolean;
 }
 
 export async function createWebGPUPolygonRenderer(
@@ -372,86 +368,6 @@ function generateFilledPolygonTriangles(
     return new Float32Array(triangleVertices);
 }
 
-export function getCoveringPolygon(
-    polygon: Polygon,
-    options: Partial<RenderOptions> = {},
-): Polygon {
-    const { containsMatchingEndpoints = false } = options;
-
-    const baseOffset = 1;
-
-    if (polygon.vertices.length < 3) {
-        return polygon;
-    }
-
-    const points = containsMatchingEndpoints
-        ? polygon.vertices.slice(0, -1)
-        : polygon.vertices;
-
-    // We need to adjust each vertex based on the turn from previous edge to current edge
-    const coveringVertices = points.map((vertex, i) => {
-        // Get previous, current, and next vertices (wrapping around)
-        const prevVertex = points[(i - 1 + points.length) % points.length];
-        const currentVertex = vertex;
-        const nextVertex = points[(i + 1) % points.length];
-
-        // Calculate previous edge direction (to current vertex)
-        const prevDx = currentVertex[0] - prevVertex[0];
-        const prevDy = currentVertex[1] - prevVertex[1];
-
-        // Calculate current edge direction (from current vertex)
-        const currDx = nextVertex[0] - currentVertex[0];
-        const currDy = nextVertex[1] - currentVertex[1];
-
-        // Determine offset based on the turn from previous edge to current edge
-        let xOffset = 0;
-        let yOffset = 0;
-
-        // Normalize directions to -1, 0, 1 for cleaner logic
-        const prevDirX = prevDx > 0 ? 1 : prevDx < 0 ? -1 : 0;
-        const prevDirY = prevDy > 0 ? 1 : prevDy < 0 ? -1 : 0;
-        const currDirX = currDx > 0 ? 1 : currDx < 0 ? -1 : 0;
-        const currDirY = currDy > 0 ? 1 : currDy < 0 ? -1 : 0;
-
-        // Based on your expected pattern, handle all the turn combinations:
-
-        if (prevDirY === -1 && currDirX === 1) {
-            // Previous: UP, Current: RIGHT → no offset
-            // Do nothing
-        } else if (prevDirX === 1 && currDirY === 1) {
-            // Previous: RIGHT, Current: DOWN → +X offset
-            xOffset = baseOffset;
-        } else if (prevDirY === 1 && currDirX === -1) {
-            // Previous: DOWN, Current: LEFT → +X, +Y offset
-            xOffset = baseOffset;
-            yOffset = baseOffset;
-        } else if (prevDirX === -1 && currDirY === -1) {
-            // Previous: LEFT, Current: UP → +Y offset
-            yOffset = baseOffset;
-        } else if (prevDirY === 1 && currDirX === 1) {
-            // Previous: DOWN, Current: RIGHT → +X offset (new case from complex polygon)
-            xOffset = baseOffset;
-        } else if (prevDirY === -1 && currDirX === -1) {
-            // Previous: UP, Current: LEFT → +Y offset (new case from complex polygon)
-            yOffset = baseOffset;
-        } else if (prevDirX === -1 && currDirY === 1) {
-            // Previous: LEFT, Current: DOWN → +X, +Y offset (new case!)
-            xOffset = baseOffset;
-            yOffset = baseOffset;
-        }
-
-        return absolutePointTupleSchema.parse([
-            vertex[0] + xOffset,
-            vertex[1] + yOffset,
-        ]);
-    });
-
-    return {
-        ...polygon,
-        vertices: [...coveringVertices, coveringVertices.at(0)!],
-    };
-}
-
 export function renderPolygon(
     renderer: WebGPUPolygonRenderer,
     polygon: Polygon,
@@ -468,7 +384,6 @@ export function renderPolygon(
         canvasWidth,
         canvasHeight,
         filled = false,
-        covered = true,
     } = options;
 
     // Update transform uniform buffer
@@ -492,13 +407,9 @@ export function renderPolygon(
     const colorData = new Float32Array(color);
     renderer.device.queue.writeBuffer(renderer.colorBuffer, 0, colorData);
 
-    const coveringPolygon = covered
-        ? getCoveringPolygon(polygon, options)
-        : polygon;
-
     const vertexData = filled
-        ? generateFilledPolygonTriangles(coveringPolygon, options)
-        : generatePolygonLineSegments(coveringPolygon, options);
+        ? generateFilledPolygonTriangles(polygon, options)
+        : generatePolygonLineSegments(polygon, options);
 
     if (vertexData.length === 0) {
         return;

@@ -260,7 +260,6 @@ function redrawTelegraph(context: InitializedStore) {
                 pixelSize,
                 color,
                 filled: true,
-                covered: false,
             },
         },
     ];
