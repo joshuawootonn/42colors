@@ -7,7 +7,8 @@ import { Plot } from '../tools/claimer/claimer.rest';
 import { isInitialStore } from '../utils/is-initial-store';
 import { BLUE, DARK_RED, LIGHT_GRAY } from '../webgpu/colors';
 import { LineItem, RedrawPolygonsItem } from '../webgpu/web-gpu-manager';
-import { getPixelSize } from './canvas';
+import { getPixelSize, getSizeInPixels } from './canvas';
+import { getFullsizeHeight, getFullsizeWidth } from './fullsize';
 
 export function redrawSelectedPlot(context: InitializedStore) {
     const webgpuManager = context.canvas.uiWebGPUManager;
@@ -150,18 +151,16 @@ export function redrawCrosshair(context: InitializedStore) {
     if (!crosshairState.visible) return;
 
     const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
+
+    const canvasWidth = getFullsizeWidth();
+    const canvasHeight = getFullsizeHeight();
+
+    const canvasPixelWidth = getSizeInPixels(canvasWidth, pixelSize);
+    const canvasPixelHeight = getSizeInPixels(canvasHeight, pixelSize);
     const { xOffset, yOffset } = getCameraOffset(context.camera);
 
-    const canvasWidth = window.innerWidth;
-    const canvasHeight = window.innerHeight;
-
-    // Center position in screen pixels
-    const centerScreenX = canvasWidth / 2;
-    const centerScreenY = canvasHeight / 2;
-
-    // Convert screen pixels to world coordinates (accounting for camera offset)
-    const centerWorldX = Math.floor((centerScreenX - xOffset) / pixelSize);
-    const centerWorldY = Math.floor((centerScreenY - yOffset) / pixelSize);
+    const centerX = Math.floor(canvasPixelWidth / 2 - 2);
+    const centerY = Math.floor(canvasPixelHeight / 2 - 2);
 
     const crosshairSize = 0.5; // Size of crosshair arms in world units
     const lineThickness = 0.25; // Thickness in world units
@@ -169,19 +168,19 @@ export function redrawCrosshair(context: InitializedStore) {
     const lines: LineItem[] = [
         // Horizontal line
         {
-            startX: centerWorldX - crosshairSize,
-            startY: centerWorldY,
-            endX: centerWorldX + crosshairSize,
-            endY: centerWorldY,
+            startX: centerX - crosshairSize,
+            startY: centerY,
+            endX: centerX + crosshairSize,
+            endY: centerY,
             color: LIGHT_GRAY,
             thickness: lineThickness,
         },
         // Vertical line
         {
-            startX: centerWorldX,
-            startY: centerWorldY - crosshairSize,
-            endX: centerWorldX,
-            endY: centerWorldY + crosshairSize,
+            startX: centerX,
+            startY: centerY - crosshairSize,
+            endX: centerX,
+            endY: centerY + crosshairSize,
             color: LIGHT_GRAY,
             thickness: lineThickness,
         },
