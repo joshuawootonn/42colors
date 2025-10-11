@@ -147,6 +147,263 @@ defmodule Api.PlotTest do
     end
   end
 
+  describe "plots_covering_points/1 – non-rectangular semantics" do
+    test "axis-aligned rectangle: interior, corners, and edge midpoints (half-open)" do
+      user = user_fixture()
+
+      plot =
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{0, 0}, {0, 4}, {6, 4}, {6, 0}, {0, 0}]],
+            srid: 4326
+          }
+        })
+
+      points = [
+        # interior
+        %Geo.Point{coordinates: {1, 1}, srid: 4326},
+        %Geo.Point{coordinates: {5, 3}, srid: 4326},
+
+        # corners
+        # include
+        %Geo.Point{coordinates: {0, 0}, srid: 4326},
+        # exclude
+        %Geo.Point{coordinates: {6, 4}, srid: 4326},
+        # exclude (right edge)
+        %Geo.Point{coordinates: {6, 0}, srid: 4326},
+        # exclude (bottom edge)
+        %Geo.Point{coordinates: {0, 4}, srid: 4326},
+
+        # edge midpoints
+        # top include
+        %Geo.Point{coordinates: {3, 0}, srid: 4326},
+        # left include
+        %Geo.Point{coordinates: {0, 2}, srid: 4326},
+        # bottom exclude
+        %Geo.Point{coordinates: {3, 4}, srid: 4326},
+        # right exclude
+        %Geo.Point{coordinates: {6, 2}, srid: 4326}
+      ]
+
+      result = Plot.Repo.plots_covering_points(points)
+
+      expected = %{
+        {1, 1} => %{plot_id: plot.id, user_id: user.id},
+        {5, 3} => %{plot_id: plot.id, user_id: user.id},
+        {0, 0} => %{plot_id: plot.id, user_id: user.id},
+        {3, 0} => %{plot_id: plot.id, user_id: user.id},
+        {0, 2} => %{plot_id: plot.id, user_id: user.id}
+      }
+
+      # Excluded
+      refute Map.has_key?(result, {6, 4})
+      refute Map.has_key?(result, {6, 0})
+      refute Map.has_key?(result, {0, 4})
+      refute Map.has_key?(result, {6, 2})
+
+      assert Map.take(result, Map.keys(expected)) == expected
+    end
+
+    test "top edge points should be included (debug case)" do
+      user = user_fixture()
+
+      # Based on debug output: POLYGON((15 22,15 12,37 12,37 22,15 22))
+      plot =
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{15, 22}, {15, 12}, {37, 12}, {37, 22}, {15, 22}]],
+            srid: 4326
+          }
+        })
+
+      # Points that were failing: (17,12) through (23,12) - all on top edge
+      points = [
+        %Geo.Point{coordinates: {17, 12}, srid: 4326},
+        %Geo.Point{coordinates: {18, 12}, srid: 4326},
+        %Geo.Point{coordinates: {19, 12}, srid: 4326},
+        %Geo.Point{coordinates: {20, 12}, srid: 4326},
+        %Geo.Point{coordinates: {21, 12}, srid: 4326},
+        %Geo.Point{coordinates: {22, 12}, srid: 4326},
+        %Geo.Point{coordinates: {23, 12}, srid: 4326},
+        # Add an interior point for comparison
+        %Geo.Point{coordinates: {20, 15}, srid: 4326}
+      ]
+
+      result = Plot.Repo.plots_covering_points(points)
+
+      # All top edge points should be included (half-open: include top)
+      expected = %{
+        {17, 12} => %{plot_id: plot.id, user_id: user.id},
+        {18, 12} => %{plot_id: plot.id, user_id: user.id},
+        {19, 12} => %{plot_id: plot.id, user_id: user.id},
+        {20, 12} => %{plot_id: plot.id, user_id: user.id},
+        {21, 12} => %{plot_id: plot.id, user_id: user.id},
+        {22, 12} => %{plot_id: plot.id, user_id: user.id},
+        {23, 12} => %{plot_id: plot.id, user_id: user.id},
+        {20, 15} => %{plot_id: plot.id, user_id: user.id}
+      }
+
+      assert result == expected
+    end
+
+    test "show returned correct points for u shaped polygon" do
+      user = user_fixture()
+
+      # U-shaped polygon: Start simple and trace the outer boundary
+      # Go: (0,0) -> (0,8) -> (10,8) -> (10,0) -> (7,0) -> (7,5) -> (3,5) -> (3,0) -> back to (0,0)
+      _plot =
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [
+              [{0, 0}, {0, 10}, {10, 10}, {10, 0}, {8, 0}, {8, 10}, {2, 10}, {2, 0}, {0, 0}]
+            ],
+            srid: 4326
+          }
+        })
+
+      points = [
+        # Four outer corners
+        # bottom-left outer corner
+        %Geo.Point{coordinates: {0, 0}, srid: 4326},
+        # top-left outer corner
+        %Geo.Point{coordinates: {0, 10}, srid: 4326},
+        # top-right outer corner
+        %Geo.Point{coordinates: {10, 10}, srid: 4326},
+        # bottom-right outer corner
+        %Geo.Point{coordinates: {10, 0}, srid: 4326},
+
+        # Four interior corners (U opening)
+        # inner bottom-left corner
+        %Geo.Point{coordinates: {2, 0}, srid: 4326},
+        # inner bottom-right corner
+        %Geo.Point{coordinates: {8, 0}, srid: 4326},
+        # inner top-left corner
+        %Geo.Point{coordinates: {2, 10}, srid: 4326},
+        # inner top-right corner
+        %Geo.Point{coordinates: {8, 10}, srid: 4326},
+
+        # Points clearly inside the U arms
+        # left arm interior
+        %Geo.Point{coordinates: {1, 1}, srid: 4326},
+        # left arm middle
+        %Geo.Point{coordinates: {1, 5}, srid: 4326},
+        # left arm top
+        %Geo.Point{coordinates: {1, 9}, srid: 4326},
+        # right arm interior
+        %Geo.Point{coordinates: {9, 1}, srid: 4326},
+        # right arm middle
+        %Geo.Point{coordinates: {9, 5}, srid: 4326},
+        # right arm top
+        %Geo.Point{coordinates: {9, 9}, srid: 4326},
+        %Geo.Point{coordinates: {8, 8}, srid: 4326},
+
+        # Points inside the U opening (should be excluded)
+        # opening bottom-left
+        %Geo.Point{coordinates: {3, 1}, srid: 4326},
+        # opening bottom-center
+        %Geo.Point{coordinates: {5, 1}, srid: 4326},
+        # opening bottom-right
+        %Geo.Point{coordinates: {7, 1}, srid: 4326},
+        # opening middle-left
+        %Geo.Point{coordinates: {3, 5}, srid: 4326},
+        # opening center
+        %Geo.Point{coordinates: {5, 5}, srid: 4326},
+        # opening middle-right
+        %Geo.Point{coordinates: {7, 5}, srid: 4326},
+        # opening top-left
+        %Geo.Point{coordinates: {3, 9}, srid: 4326},
+        # opening top-center
+        %Geo.Point{coordinates: {5, 9}, srid: 4326},
+        # opening top-right
+        %Geo.Point{coordinates: {7, 9}, srid: 4326},
+
+        # Edge points for boundary testing
+        # left outer edge
+        %Geo.Point{coordinates: {0, 5}, srid: 4326},
+        # right outer edge
+        %Geo.Point{coordinates: {10, 5}, srid: 4326},
+        # bottom outer edge
+        %Geo.Point{coordinates: {5, 0}, srid: 4326},
+        # top outer edge
+        %Geo.Point{coordinates: {5, 10}, srid: 4326}
+      ]
+
+      result = Plot.Repo.plots_covering_points(points)
+
+      # Debug output to see what we get
+      IO.inspect(result, label: "U-shaped polygon results")
+      IO.puts("Total points found: #{map_size(result)}")
+
+      # Points that should definitely be included (interior of U arms)
+      interior_points = [
+        # left arm
+        {1, 1},
+        {1, 5},
+        {1, 9},
+        # right arm (including {8,8} on interior edge)
+        {9, 1},
+        {9, 5},
+        {9, 9},
+        {8, 8}
+      ]
+
+      Enum.each(interior_points, fn point ->
+        assert Map.has_key?(result, point),
+               "Point #{inspect(point)} should be included (interior)"
+      end)
+
+      # Points that should definitely be excluded (inside U opening)
+      opening_points = [
+        # bottom row of opening
+        {3, 1},
+        {5, 1},
+        {7, 1},
+        # middle row of opening
+        {3, 5},
+        {5, 5},
+        {7, 5},
+        # top row of opening
+        {3, 9},
+        {5, 9},
+        {7, 9}
+      ]
+
+      Enum.each(opening_points, fn point ->
+        refute Map.has_key?(result, point),
+               "Point #{inspect(point)} should be excluded (inside opening)"
+      end)
+
+      # Test corners and edges (results may vary based on boundary rules)
+      corner_and_edge_points = [
+        # outer corners
+        {0, 0},
+        {0, 10},
+        {10, 10},
+        {10, 0},
+        # inner corners
+        {2, 0},
+        {8, 0},
+        {2, 10},
+        {8, 10},
+        # edge midpoints
+        {0, 5},
+        {10, 5},
+        {5, 0},
+        {5, 10}
+      ]
+
+      IO.puts("Corner and edge results:")
+
+      Enum.each(corner_and_edge_points, fn point ->
+        included = Map.has_key?(result, point)
+        IO.puts("  #{inspect(point)}: #{if included, do: "INCLUDED", else: "excluded"}")
+      end)
+    end
+  end
+
   describe "list_plots_intersecting_polygon/1" do
     setup do
       user1 = user_fixture()
@@ -323,7 +580,9 @@ defmodule Api.PlotTest do
     end
 
     test "returns error for invalid polygon input" do
-      assert {:error, :invalid_polygon} = Plot.Repo.list_plots_intersecting_polygon("not a polygon")
+      assert {:error, :invalid_polygon} =
+               Plot.Repo.list_plots_intersecting_polygon("not a polygon")
+
       assert {:error, :invalid_polygon} = Plot.Repo.list_plots_intersecting_polygon(nil)
       assert {:error, :invalid_polygon} = Plot.Repo.list_plots_intersecting_polygon(%{})
     end
