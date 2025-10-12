@@ -57,10 +57,10 @@ const PopoverTrigger = PopoverPrimitive.Trigger;
 
 const PopoverHeading = React.forwardRef<
     React.ElementRef<'h3'>,
-    React.ComponentPropsWithoutRef<'h3'>
->(({ className, ...props }, ref) => (
+    React.ComponentPropsWithoutRef<'h3'> & { spacerClassName?: string }
+>(({ className, spacerClassName, ...props }, ref) => (
     <>
-        <div className="mb-8.5" />
+        <div className={cn('mb-8.5', spacerClassName)} />
 
         <h3
             ref={ref}

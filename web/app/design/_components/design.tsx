@@ -5,7 +5,6 @@ import { PlotsPopoverMarkup } from '@/components/plots-popover';
 import { Button } from '@/components/ui/button';
 import { PopoverTrigger } from '@/components/ui/popover';
 import { Toast, toast } from '@/components/ui/toast';
-import { polygonSchema } from '@/lib/geometry/polygon';
 import { cn } from '@/lib/utils';
 
 function ColorBlock({ variable }: { variable: string }) {
@@ -110,46 +109,6 @@ export function DesignPage() {
                 <PlotsPopoverMarkup
                     isOpen={true}
                     setIsOpen={() => {}}
-                    isLoading={false}
-                    error={null}
-                    plots={[
-                        {
-                            id: 2,
-                            name: 'Plot No Polygon',
-                            description: 'Plot 2 Description',
-                            // @ts-expect-error - polygon is null
-                            polygon: null,
-                            insertedAt: '2021-01-01',
-                            updatedAt: '2021-01-01',
-                        },
-                        {
-                            id: 3,
-                            name: 'Plot 3',
-                            description: 'Plot 3 Description',
-                            polygon: polygonSchema.parse({
-                                vertices: [
-                                    [0, 0],
-                                    [0, 1],
-                                    [1, 1],
-                                    [1, 0],
-                                    [0, 0],
-                                ],
-                            }),
-                            insertedAt: '2021-01-01',
-                            updatedAt: '2021-01-01',
-                        },
-
-                        {
-                            id: 4,
-                            name: 'Plot 4 With Long Description',
-                            description:
-                                'Plot 4 Description Officia officia aliqua incididunt reprehenderit ea quis irure laboris. Officia officia aliqua incididunt reprehenderit ea quis irure laboris.',
-                            // @ts-expect-error - polygon is null
-                            polygon: null,
-                            insertedAt: '2021-01-01',
-                            updatedAt: '2021-01-01',
-                        },
-                    ]}
                     selectedPlotId={2}
                     selectPlot={() => {}}
                 >
@@ -158,9 +117,6 @@ export function DesignPage() {
                 <PlotsPopoverMarkup
                     isOpen={true}
                     setIsOpen={() => {}}
-                    isLoading={true}
-                    error={null}
-                    plots={[]}
                     selectedPlotId={undefined}
                     selectPlot={() => {}}
                 >
@@ -169,9 +125,6 @@ export function DesignPage() {
                 <PlotsPopoverMarkup
                     isOpen={true}
                     setIsOpen={() => {}}
-                    isLoading={false}
-                    error={new Error('Plots Error')}
-                    plots={[]}
                     selectedPlotId={undefined}
                     selectPlot={() => {}}
                 >
@@ -180,9 +133,6 @@ export function DesignPage() {
                 <PlotsPopoverMarkup
                     isOpen={true}
                     setIsOpen={() => {}}
-                    isLoading={false}
-                    error={null}
-                    plots={[]}
                     selectedPlotId={undefined}
                     selectPlot={() => {}}
                 >
