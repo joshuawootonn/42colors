@@ -21,6 +21,7 @@ defmodule Api.Canvas.Plot.Repo do
     Plot
     |> where([p], p.user_id == ^user_id)
     |> where([p], is_nil(p.deleted_at))
+    |> order_by([p], desc: p.inserted_at)
     |> Repo.all()
   end
 
