@@ -1,10 +1,12 @@
 'use client';
 
 import { LogsPopoverMarkup } from '@/components/logs-popover';
+import { PlotsList } from '@/components/plots-list';
 import { PlotsPopoverMarkup } from '@/components/plots-popover';
 import { Button } from '@/components/ui/button';
 import { PopoverTrigger } from '@/components/ui/popover';
 import { Toast, toast } from '@/components/ui/toast';
+import { polygonSchema } from '@/lib/geometry/polygon';
 import { cn } from '@/lib/utils';
 
 function ColorBlock({ variable }: { variable: string }) {
@@ -111,32 +113,122 @@ export function DesignPage() {
                     setIsOpen={() => {}}
                     selectedPlotId={2}
                     selectPlot={() => {}}
+                    trigger={<PopoverTrigger>Plots</PopoverTrigger>}
                 >
-                    <PopoverTrigger>Plots</PopoverTrigger>
+                    <PlotsList
+                        plots={[
+                            {
+                                id: 1,
+                                name: 'Plot 1',
+                                description: 'Plot 1 description',
+                                polygon: polygonSchema.parse({
+                                    vertices: [
+                                        [0, 0],
+                                        [1, 0],
+                                        [1, 1],
+                                        [0, 1],
+                                    ],
+                                }),
+                                insertedAt: '2024-01-01T10:00:00Z',
+                                updatedAt: '2024-01-01T10:00:00Z',
+                            },
+                            {
+                                id: 2,
+                                name: 'Plot 2',
+                                description: 'Plot 2 description',
+                                polygon: polygonSchema.parse({
+                                    vertices: [
+                                        [0, 0],
+                                        [1, 0],
+                                        [1, 1],
+                                        [0, 1],
+                                    ],
+                                }),
+                                insertedAt: '2024-01-01T10:00:00Z',
+                                updatedAt: '2024-01-01T10:00:00Z',
+                            },
+                            {
+                                id: 3,
+                                name: 'Plot 3',
+                                description:
+                                    'Plot 2 description with really long description. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+                                polygon: polygonSchema.parse({
+                                    vertices: [
+                                        [0, 0],
+                                        [1, 0],
+                                        [1, 1],
+                                        [0, 1],
+                                    ],
+                                }),
+                                insertedAt: '2024-01-01T10:00:00Z',
+                                updatedAt: '2024-01-01T10:00:00Z',
+                            },
+                            {
+                                id: 4,
+                                name: 'Plot 4',
+                                description: 'Plot 4 description',
+                                polygon: polygonSchema.parse({
+                                    vertices: [
+                                        [0, 0],
+                                        [1, 0],
+                                        [1, 1],
+                                        [0, 1],
+                                    ],
+                                }),
+                                insertedAt: '2024-01-01T10:00:00Z',
+                                updatedAt: '2024-01-01T10:00:00Z',
+                            },
+                        ]}
+                        isLoading={false}
+                        error={null}
+                        selectedPlotId={undefined}
+                        selectPlot={() => {}}
+                    />
                 </PlotsPopoverMarkup>
                 <PlotsPopoverMarkup
                     isOpen={true}
                     setIsOpen={() => {}}
                     selectedPlotId={undefined}
                     selectPlot={() => {}}
+                    trigger={<PopoverTrigger>Plots Loading</PopoverTrigger>}
                 >
-                    <PopoverTrigger>Plots Loading</PopoverTrigger>
+                    <PlotsList
+                        plots={undefined}
+                        isLoading={true}
+                        error={null}
+                        selectedPlotId={undefined}
+                        selectPlot={() => {}}
+                    />
                 </PlotsPopoverMarkup>
                 <PlotsPopoverMarkup
                     isOpen={true}
                     setIsOpen={() => {}}
                     selectedPlotId={undefined}
                     selectPlot={() => {}}
+                    trigger={<PopoverTrigger>Plots Error</PopoverTrigger>}
                 >
-                    <PopoverTrigger>Plots Error</PopoverTrigger>
+                    <PlotsList
+                        plots={undefined}
+                        isLoading={false}
+                        error={new Error('Plots Error')}
+                        selectedPlotId={undefined}
+                        selectPlot={() => {}}
+                    />
                 </PlotsPopoverMarkup>
                 <PlotsPopoverMarkup
                     isOpen={true}
                     setIsOpen={() => {}}
                     selectedPlotId={undefined}
                     selectPlot={() => {}}
+                    trigger={<PopoverTrigger>Plots Empty</PopoverTrigger>}
                 >
-                    <PopoverTrigger>Plots Empty</PopoverTrigger>
+                    <PlotsList
+                        plots={[]}
+                        isLoading={false}
+                        error={null}
+                        selectedPlotId={undefined}
+                        selectPlot={() => {}}
+                    />
                 </PlotsPopoverMarkup>
             </div>
             <h2>Logs Popover</h2>

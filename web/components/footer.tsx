@@ -83,18 +83,20 @@ export function Footer() {
 
                 <div>/</div>
 
-                <PlotsPopover>
-                    <PopoverTrigger
-                        render={(props) => (
-                            <button
-                                {...props}
-                                className="svg-outline-sm relative no-underline"
-                            >
-                                plots
-                            </button>
-                        )}
-                    />
-                </PlotsPopover>
+                <PlotsPopover
+                    trigger={
+                        <PopoverTrigger
+                            render={(props) => (
+                                <button
+                                    {...props}
+                                    className="svg-outline-sm relative no-underline"
+                                >
+                                    plots
+                                </button>
+                            )}
+                        />
+                    }
+                ></PlotsPopover>
                 <div>/</div>
 
                 <DropdownMenu>

@@ -77,7 +77,7 @@ export function PlotsList({
                         disabled={!plot.polygon}
                     >
                         <div>{plot.name}</div>
-                        <div className="text-xs">
+                        <div className="text-left text-xs">
                             {plot.description && (
                                 <div className="mt-0.5 line-clamp-2 text-muted-foreground group-hover:text-muted">
                                     {plot.description}
