@@ -30,7 +30,6 @@ export function RecentPlots({
             error={error}
             selectedPlotId={selectedPlotId}
             selectPlot={selectPlot}
-            showEditActions={false}
             emptyMessage="No plots found"
             loadingMessage="Loading plots..."
         />

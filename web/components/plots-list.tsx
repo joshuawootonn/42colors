@@ -1,9 +1,11 @@
 'use client';
 
+import { store } from '@/lib/store';
 import { Plot } from '@/lib/tools/claimer/claimer.rest';
 import { DeletePlotButton } from '@/lib/tools/claimer/delete-plot-button';
 import { EditPlotForm } from '@/lib/tools/claimer/edit-plot-form';
 import { cn } from '@/lib/utils';
+import { useSelector } from '@xstate/store/react';
 
 function formatDate(dateString: string) {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -20,7 +22,6 @@ interface PlotsListProps {
     error: Error | null;
     selectedPlotId: number | undefined;
     selectPlot: (plotId: number) => void;
-    showEditActions?: boolean;
     emptyMessage?: string;
     loadingMessage?: string;
 }
@@ -31,10 +32,11 @@ export function PlotsList({
     error,
     selectedPlotId,
     selectPlot,
-    showEditActions = false,
     emptyMessage = 'No plots found',
     loadingMessage = 'Loading plots...',
 }: PlotsListProps) {
+    const user = useSelector(store, (state) => state.context?.user);
+
     if (isLoading) {
         return (
             <div className="flex-1 pt-20 text-center text-sm text-muted-foreground">
@@ -89,8 +91,8 @@ export function PlotsList({
                         </div>
                     </button>
 
-                    {/* Edit and Delete buttons - only show for user plots */}
-                    {showEditActions && (
+                    {/* Edit and Delete buttons - show for user plots */}
+                    {user?.id === plot.userId && (
                         <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100">
                             <EditPlotForm plot={plot} />
                             <DeletePlotButton plot={plot} />

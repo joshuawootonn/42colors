@@ -131,6 +131,7 @@ export function DesignPage() {
                                 }),
                                 insertedAt: '2024-01-01T10:00:00Z',
                                 updatedAt: '2024-01-01T10:00:00Z',
+                                userId: 1,
                             },
                             {
                                 id: 2,
@@ -146,6 +147,7 @@ export function DesignPage() {
                                 }),
                                 insertedAt: '2024-01-01T10:00:00Z',
                                 updatedAt: '2024-01-01T10:00:00Z',
+                                userId: 1,
                             },
                             {
                                 id: 3,
@@ -162,6 +164,7 @@ export function DesignPage() {
                                 }),
                                 insertedAt: '2024-01-01T10:00:00Z',
                                 updatedAt: '2024-01-01T10:00:00Z',
+                                userId: 1,
                             },
                             {
                                 id: 4,
@@ -177,6 +180,7 @@ export function DesignPage() {
                                 }),
                                 insertedAt: '2024-01-01T10:00:00Z',
                                 updatedAt: '2024-01-01T10:00:00Z',
+                                userId: 1,
                             },
                         ]}
                         isLoading={false}

@@ -46,7 +46,6 @@ export function UserPlots({
             error={error}
             selectedPlotId={selectedPlotId}
             selectPlot={selectPlot}
-            showEditActions={true}
             emptyMessage="No user plots found"
             loadingMessage="Loading user plots..."
         />

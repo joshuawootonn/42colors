@@ -17,6 +17,7 @@ const plotSchema = z.object({
     polygon: polygonSchema,
     insertedAt: z.string(),
     updatedAt: z.string(),
+    userId: z.number(),
 });
 
 export const arrayPlotResponseSchema = z.object({ data: z.array(plotSchema) });
