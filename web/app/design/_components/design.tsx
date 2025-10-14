@@ -1,8 +1,8 @@
 'use client';
 
 import { LogsPopoverMarkup } from '@/components/logs-popover';
-import { PlotsList } from '@/components/plots-list';
-import { PlotsPopoverMarkup } from '@/components/plots-popover';
+import { PlotsList } from '@/components/plots-popover/plots-list';
+import { PlotsPopoverMarkup } from '@/components/plots-popover/plots-popover';
 import { Button } from '@/components/ui/button';
 import { PopoverTrigger } from '@/components/ui/popover';
 import { Toast, toast } from '@/components/ui/toast';

@@ -21,7 +21,7 @@ import { useSelector } from '@xstate/store/react';
 import { BalanceDiff } from './balance-diff';
 import { Link } from './link';
 import { LogsPopover } from './logs-popover';
-import { PlotsPopover } from './plots-popover';
+import { PlotsPopover } from './plots-popover/plots-popover';
 import { PopoverTrigger } from './ui/popover';
 
 export function Footer() {
