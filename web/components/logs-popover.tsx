@@ -9,7 +9,9 @@ import {
 } from '@/components/ui/popover';
 import { useLogs } from '@/lib/logs/logs.rest';
 import type { Log } from '@/lib/logs/logs.rest';
+import { store } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import { useSelector } from '@xstate/store/react';
 
 function formatDate(dateString: string) {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -63,9 +65,7 @@ function getLogDescription(log: Log): string {
         case 'plot_updated':
             return log.plot ? `Updated "${log.plot.name}"` : 'Plot updated';
         case 'plot_deleted':
-            return log.diffs?.plotName
-                ? `Deleted "${log.diffs.plotName}"`
-                : 'Plot deleted';
+            return log.plot ? `Deleted "${log.plot.name}"` : 'Plot deleted';
         default:
             return 'Transaction';
     }
@@ -79,6 +79,8 @@ export function LogsPopoverMarkup({
     error,
     logs,
     anchor,
+    selectedPlotId,
+    selectPlot,
 }: {
     children: ReactNode;
     isOpen: boolean;
@@ -87,6 +89,8 @@ export function LogsPopoverMarkup({
     error: Error | null;
     logs: Log[] | undefined;
     anchor: RefObject<HTMLElement | null>;
+    selectedPlotId?: number;
+    selectPlot: (plotId: number) => void;
 }) {
     const positionerProps = useMemo(() => {
         return {
@@ -120,20 +124,30 @@ export function LogsPopoverMarkup({
                             No logs found
                         </div>
                     ) : (
-                        <div className="flex w-full flex-col space-y-1">
+                        <div className="flex w-full flex-col">
                             {logs.map((log) => {
                                 const balanceChange = getBalanceChangeDisplay(
                                     log.oldBalance,
                                     log.newBalance,
                                 );
+                                const isSelected =
+                                    selectedPlotId === log.plotId;
 
                                 return (
                                     <div
                                         key={log.id}
                                         className={cn(
-                                            'relative',
-                                            'border-1.5 border-transparent bg-transparent p-3 text-left text-foreground',
+                                            'svg-outline-inset group relative z-0 block border-transparent bg-transparent p-2 text-left text-foreground outline-none',
+                                            'hover:bg-black hover:text-background',
+                                            isSelected && 'bg-secondary',
                                         )}
+                                        tabIndex={0}
+                                        onClick={() => {
+                                            if (log.plotId == null) return;
+
+                                            selectPlot(log.plotId);
+                                        }}
+                                        aria-disabled={!log.plotId}
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0 flex-1">
@@ -143,28 +157,33 @@ export function LogsPopoverMarkup({
                                                             log.logType,
                                                         )}
                                                     </div>
-                                                    <div
-                                                        className={cn(
-                                                            'font-mono text-sm',
-                                                            balanceChange.isPositive
-                                                                ? 'text-green-600'
-                                                                : 'text-red-600',
-                                                        )}
-                                                    >
-                                                        {balanceChange.display}
-                                                    </div>
+                                                    {balanceChange.display !==
+                                                        '0' && (
+                                                        <div
+                                                            className={cn(
+                                                                'font-mono text-sm',
+                                                                balanceChange.isPositive
+                                                                    ? 'text-green-600'
+                                                                    : 'text-red-600',
+                                                            )}
+                                                        >
+                                                            {
+                                                                balanceChange.display
+                                                            }
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <div className="mt-0.5 text-xs text-muted-foreground">
+                                                <div className="mt-0.5 text-xs text-muted-foreground group-hover:text-muted">
                                                     {getLogDescription(log)}
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <div className="font-mono text-xs text-muted-foreground">
+                                                <div className="font-mono text-xs text-muted-foreground group-hover:text-muted">
                                                     Balance: {log.newBalance}
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="mt-2 text-xs text-muted-foreground">
+                                        <div className="mt-2 text-xs text-muted-foreground group-hover:text-muted">
                                             {formatDate(log.insertedAt)}
                                         </div>
                                     </div>
@@ -187,6 +206,17 @@ export function LogsPopover({
 }) {
     const [isOpen, setIsOpen] = useState(false);
 
+    const selectedPlotId = useSelector(
+        store,
+        (state) => state.context.toolSettings?.claimer.selectedPlotId,
+    );
+
+    const selectPlot = (plotId: number) => {
+        store.trigger.selectPlot({ plotId });
+        store.trigger.moveToPlot({ plotId });
+        store.trigger.fetchPixels();
+    };
+
     const {
         data: logs,
         isLoading,
@@ -203,6 +233,8 @@ export function LogsPopover({
             error={error}
             logs={logs}
             anchor={anchor}
+            selectedPlotId={selectedPlotId ?? undefined}
+            selectPlot={selectPlot}
         >
             {children}
         </LogsPopoverMarkup>

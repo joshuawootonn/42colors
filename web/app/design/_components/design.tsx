@@ -262,6 +262,8 @@ export function DesignPage() {
                     setIsOpen={() => {}}
                     isLoading={false}
                     error={null}
+                    selectedPlotId={1}
+                    selectPlot={() => {}}
                     logs={[
                         {
                             id: 1,
@@ -329,6 +331,8 @@ export function DesignPage() {
                     error={null}
                     logs={undefined}
                     anchor={{ current: null }}
+                    selectedPlotId={1}
+                    selectPlot={() => {}}
                 >
                     <PopoverTrigger>Logs Loading</PopoverTrigger>
                 </LogsPopoverMarkup>
@@ -339,6 +343,8 @@ export function DesignPage() {
                     error={new Error('Logs Error')}
                     logs={undefined}
                     anchor={{ current: null }}
+                    selectedPlotId={1}
+                    selectPlot={() => {}}
                 >
                     <PopoverTrigger>Logs Error</PopoverTrigger>
                 </LogsPopoverMarkup>
@@ -349,6 +355,8 @@ export function DesignPage() {
                     error={null}
                     logs={[]}
                     anchor={{ current: null }}
+                    selectedPlotId={1}
+                    selectPlot={() => {}}
                 >
                     <PopoverTrigger>Logs Empty</PopoverTrigger>
                 </LogsPopoverMarkup>
