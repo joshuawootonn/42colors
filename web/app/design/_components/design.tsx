@@ -151,7 +151,7 @@ export function DesignPage() {
                             },
                             {
                                 id: 3,
-                                name: 'Plot 3',
+                                name: 'Other User Plot 3',
                                 description:
                                     'Plot 2 description with really long description. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                                 polygon: polygonSchema.parse({
@@ -164,12 +164,28 @@ export function DesignPage() {
                                 }),
                                 insertedAt: '2024-01-01T10:00:00Z',
                                 updatedAt: '2024-01-01T10:00:00Z',
-                                userId: 1,
+                                userId: 3,
                             },
                             {
                                 id: 4,
-                                name: 'Plot 4',
+                                name: 'Other User Plot 4',
                                 description: 'Plot 4 description',
+                                polygon: polygonSchema.parse({
+                                    vertices: [
+                                        [0, 0],
+                                        [1, 0],
+                                        [1, 1],
+                                        [0, 1],
+                                    ],
+                                }),
+                                insertedAt: '2024-01-01T10:00:00Z',
+                                updatedAt: '2024-01-01T10:00:00Z',
+                                userId: 2,
+                            },
+                            {
+                                id: 5,
+                                name: 'Plot 5',
+                                description: 'Plot 5 description',
                                 polygon: polygonSchema.parse({
                                     vertices: [
                                         [0, 0],
@@ -185,8 +201,9 @@ export function DesignPage() {
                         ]}
                         isLoading={false}
                         error={null}
-                        selectedPlotId={undefined}
+                        selectedPlotId={1}
                         selectPlot={() => {}}
+                        userId={1}
                     />
                 </PlotsPopoverMarkup>
                 <PlotsPopoverMarkup
@@ -202,6 +219,7 @@ export function DesignPage() {
                         error={null}
                         selectedPlotId={undefined}
                         selectPlot={() => {}}
+                        userId={1}
                     />
                 </PlotsPopoverMarkup>
                 <PlotsPopoverMarkup
@@ -217,6 +235,7 @@ export function DesignPage() {
                         error={new Error('Plots Error')}
                         selectedPlotId={undefined}
                         selectPlot={() => {}}
+                        userId={1}
                     />
                 </PlotsPopoverMarkup>
                 <PlotsPopoverMarkup
@@ -232,6 +251,7 @@ export function DesignPage() {
                         error={null}
                         selectedPlotId={undefined}
                         selectPlot={() => {}}
+                        userId={1}
                     />
                 </PlotsPopoverMarkup>
             </div>

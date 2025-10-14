@@ -133,7 +133,6 @@ const PopoverContent = React.forwardRef<
                     className={cn(
                         positionerClassName,
                         'z-50',
-                        className,
                         hasDragged && 'fixed left-0 top-0',
                     )}
                     sideOffset={sideOffset}
@@ -164,10 +163,10 @@ const PopoverContent = React.forwardRef<
 
                         {!hideCloseButton && (
                             <PopoverPrimitive.Close
-                                render={(props) => (
+                                render={(renderProps) => (
                                     <button
                                         className="svg-outline absolute right-0 top-0 border-1.5 border-primary bg-white text-primary"
-                                        {...props}
+                                        {...renderProps}
                                     >
                                         <X />
                                         <span className="sr-only">Close</span>

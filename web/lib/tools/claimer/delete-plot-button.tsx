@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ComponentPropsWithoutRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { IconButton } from '@/components/ui/icon-button';
 import * as Tooltip from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import { useMutation } from '@tanstack/react-query';
 
 import { store } from '../../store';
@@ -16,9 +17,13 @@ import { type Plot, deletePlot } from './claimer.rest';
 
 interface DeletePlotButtonProps {
     plot: Plot;
+    triggerProps?: ComponentPropsWithoutRef<'button'>;
 }
 
-export function DeletePlotButton({ plot }: DeletePlotButtonProps) {
+export function DeletePlotButton({
+    plot,
+    triggerProps,
+}: DeletePlotButtonProps) {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
     const { mutate: deleteSelectedPlot, isPending } = useMutation({
@@ -49,8 +54,12 @@ export function DeletePlotButton({ plot }: DeletePlotButtonProps) {
                 <Tooltip.Trigger
                     render={(props) => (
                         <IconButton
+                            className={cn(
+                                '-translate-x-[2px] text-black',
+                                triggerProps?.className,
+                            )}
                             {...props}
-                            className="-translate-x-[2px] text-black"
+                            {...triggerProps}
                             onClick={() => setIsConfirmOpen(true)}
                         >
                             <svg

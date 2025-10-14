@@ -21,6 +21,7 @@ export function PlotsPopoverMarkup({
     setIsOpen,
     selectedPlotId,
     selectPlot,
+    userId,
 }: {
     children?: ReactNode;
     trigger: ReactNode;
@@ -28,6 +29,7 @@ export function PlotsPopoverMarkup({
     setIsOpen: (isOpen: boolean) => void;
     selectedPlotId: number | undefined;
     selectPlot: (plotId: number) => void;
+    userId?: number;
 }) {
     return (
         <Popover
@@ -51,28 +53,34 @@ export function PlotsPopoverMarkup({
                         <TabsTab value="user">user</TabsTab>
                     </TabsList>
 
-                    <TabsPanel value="recent" className="flex-1 overflow-auto">
-                        {children ? (
-                            children
-                        ) : (
-                            <RecentPlots
-                                selectedPlotId={selectedPlotId}
-                                selectPlot={selectPlot}
-                                enabled={isOpen}
-                            />
-                        )}
+                    <TabsPanel value="recent">
+                        <div className="h-72 overflow-auto">
+                            {children ? (
+                                children
+                            ) : (
+                                <RecentPlots
+                                    selectedPlotId={selectedPlotId}
+                                    selectPlot={selectPlot}
+                                    enabled={isOpen}
+                                    userId={userId}
+                                />
+                            )}
+                        </div>
                     </TabsPanel>
 
-                    <TabsPanel value="user" className="flex-1 overflow-auto">
-                        {children ? (
-                            children
-                        ) : (
-                            <UserPlots
-                                selectedPlotId={selectedPlotId}
-                                selectPlot={selectPlot}
-                                enabled={isOpen}
-                            />
-                        )}
+                    <TabsPanel value="user">
+                        <div className="h-72 overflow-auto">
+                            {children ? (
+                                children
+                            ) : (
+                                <UserPlots
+                                    selectedPlotId={selectedPlotId}
+                                    selectPlot={selectPlot}
+                                    enabled={isOpen}
+                                    userId={userId}
+                                />
+                            )}
+                        </div>
                     </TabsPanel>
                 </Tabs>
             </PopoverContent>
@@ -94,6 +102,9 @@ export function PlotsPopover({
         (state) => state.context.toolSettings?.claimer.selectedPlotId,
     );
 
+    const user = useSelector(store, (state) => state.context?.user);
+    const userId = user?.id;
+
     const selectPlot = (plotId: number) => {
         store.trigger.selectPlot({ plotId });
         store.trigger.moveToPlot({ plotId });
@@ -107,6 +118,7 @@ export function PlotsPopover({
             selectedPlotId={selectedPlotId ?? undefined}
             selectPlot={selectPlot}
             trigger={trigger}
+            userId={userId}
         >
             {children}
         </PlotsPopoverMarkup>

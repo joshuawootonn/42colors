@@ -75,6 +75,7 @@
 .svg-outline:focus,
 .svg-outline-sm:focus,
 .svg-outline-border:focus,
+.svg-outline-inset:focus,
 .svg-outline-within:focus-within *,
 .svg-outline-within-sm:focus-within * {
     @apply outline-none;
@@ -95,6 +96,7 @@
 .svg-outline-sm:focus:before,
 .svg-outline-xs:focus:before,
 .svg-outline-border:focus:before,
+.svg-outline-inset:focus:before,
 .svg-outline-stubby:focus:before {
     @apply -inset-2;
     content: ' ';
@@ -114,6 +116,10 @@
 
 .svg-outline-border:focus:before {
     inset: -0.09375rem;
+}
+
+.svg-outline-inset:focus:before {
+    @apply inset-0.5;
 }
 
 .svg-outline-stubby:focus:before {

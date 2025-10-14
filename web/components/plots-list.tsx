@@ -1,11 +1,9 @@
 'use client';
 
-import { store } from '@/lib/store';
 import { Plot } from '@/lib/tools/claimer/claimer.rest';
 import { DeletePlotButton } from '@/lib/tools/claimer/delete-plot-button';
 import { EditPlotForm } from '@/lib/tools/claimer/edit-plot-form';
 import { cn } from '@/lib/utils';
-import { useSelector } from '@xstate/store/react';
 
 function formatDate(dateString: string) {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -24,6 +22,7 @@ interface PlotsListProps {
     selectPlot: (plotId: number) => void;
     emptyMessage?: string;
     loadingMessage?: string;
+    userId?: number;
 }
 
 export function PlotsList({
@@ -34,9 +33,8 @@ export function PlotsList({
     selectPlot,
     emptyMessage = 'No plots found',
     loadingMessage = 'Loading plots...',
+    userId,
 }: PlotsListProps) {
-    const user = useSelector(store, (state) => state.context?.user);
-
     if (isLoading) {
         return (
             <div className="flex-1 pt-20 text-center text-sm text-muted-foreground">
@@ -62,40 +60,46 @@ export function PlotsList({
     }
 
     return (
-        <div className="flex w-full flex-col space-y-1">
+        <div className="flex w-full flex-col">
             {plots.map((plot) => (
                 <div
                     key={plot.id}
                     className={cn(
-                        'svg-outline-border group relative border-1.5 border-transparent bg-transparent p-2 text-left text-foreground',
+                        'svg-outline-inset group relative z-0 block border-transparent bg-transparent p-2 text-left text-foreground outline-none',
                         'hover:bg-black hover:text-background',
-                        selectedPlotId === plot.id &&
-                            'border-border bg-secondary/50',
+                        selectedPlotId === plot.id && 'bg-secondary',
                     )}
+                    tabIndex={0}
+                    onClick={() => selectPlot(plot.id)}
+                    aria-disabled={!plot.polygon}
                 >
-                    <button
-                        onClick={() => selectPlot(plot.id)}
-                        className="flex w-full flex-col items-start justify-start gap-2 text-xs"
-                        disabled={!plot.polygon}
-                    >
-                        <div>{plot.name}</div>
-                        <div className="text-left text-xs">
-                            {plot.description && (
-                                <div className="mt-0.5 line-clamp-2 text-muted-foreground group-hover:text-muted">
-                                    {plot.description}
-                                </div>
-                            )}
-                            <div className="mt-1 text-muted-foreground group-hover:text-muted">
-                                {formatDate(plot.insertedAt)}
+                    <div>{plot.name}</div>
+                    <div className="text-left text-xs">
+                        {plot.description && (
+                            <div className="mt-0.5 line-clamp-2 text-muted-foreground group-hover:text-muted">
+                                {plot.description}
                             </div>
+                        )}
+                        <div className="mt-1 text-muted-foreground group-hover:text-muted">
+                            {formatDate(plot.insertedAt)}
                         </div>
-                    </button>
-
-                    {/* Edit and Delete buttons - show for user plots */}
-                    {user?.id === plot.userId && (
-                        <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100">
-                            <EditPlotForm plot={plot} />
-                            <DeletePlotButton plot={plot} />
+                    </div>
+                    {userId === plot.userId && selectedPlotId === plot.id && (
+                        <div className="absolute right-1 top-1 flex">
+                            <EditPlotForm
+                                plot={plot}
+                                triggerProps={{
+                                    className:
+                                        ' border-transparent bg-transparent text-black group-hover:text-background',
+                                }}
+                            />
+                            <DeletePlotButton
+                                plot={plot}
+                                triggerProps={{
+                                    className:
+                                        ' border-transparent bg-transparent text-black group-hover:text-background',
+                                }}
+                            />
                         </div>
                     )}
                 </div>

@@ -1,9 +1,7 @@
 'use client';
 
-import { store } from '@/lib/store';
 import { getUserPlots } from '@/lib/tools/claimer/claimer.rest';
 import { useQuery } from '@tanstack/react-query';
-import { useSelector } from '@xstate/store/react';
 
 import { PlotsList } from './plots-list';
 
@@ -11,15 +9,15 @@ interface UserPlotsProps {
     selectedPlotId: number | undefined;
     selectPlot: (plotId: number) => void;
     enabled?: boolean;
+    userId?: number;
 }
 
 export function UserPlots({
     selectedPlotId,
     selectPlot,
     enabled = true,
+    userId,
 }: UserPlotsProps) {
-    const user = useSelector(store, (state) => state.context?.user);
-
     const {
         data: userPlots,
         isLoading,
@@ -27,11 +25,11 @@ export function UserPlots({
     } = useQuery({
         queryKey: ['user', 'plots'],
         queryFn: getUserPlots,
-        enabled: enabled && user != null,
+        enabled: enabled && userId != null,
     });
 
     // If user is not authenticated, show a message encouraging them to create an account
-    if (user == null) {
+    if (userId == null) {
         return (
             <div className="flex-1 text-pretty pt-20 text-center text-sm text-muted-foreground">
                 Create an account to claim a plot

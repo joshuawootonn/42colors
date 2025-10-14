@@ -8,12 +8,14 @@ interface RecentPlotsProps {
     selectedPlotId: number | undefined;
     selectPlot: (plotId: number) => void;
     enabled?: boolean;
+    userId?: number;
 }
 
 export function RecentPlots({
     selectedPlotId,
     selectPlot,
     enabled = true,
+    userId,
 }: RecentPlotsProps) {
     const {
         data: plots,
@@ -32,6 +34,7 @@ export function RecentPlots({
             selectPlot={selectPlot}
             emptyMessage="No plots found"
             loadingMessage="Loading plots..."
+            userId={userId}
         />
     );
 }

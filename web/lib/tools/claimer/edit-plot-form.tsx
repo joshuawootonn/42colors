@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { useState } from 'react';
+import { ComponentPropsWithoutRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
     PopoverTrigger,
 } from '@/components/ui/popover';
 import * as Tooltip from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 
@@ -35,9 +36,10 @@ type PlotUpdateForm = z.infer<typeof plotUpdateSchema>;
 
 interface EditPlotFormProps {
     plot: Plot;
+    triggerProps?: ComponentPropsWithoutRef<'button'>;
 }
 
-export function EditPlotForm({ plot }: EditPlotFormProps) {
+export function EditPlotForm({ plot, triggerProps }: EditPlotFormProps) {
     const [isOpen, setIsOpen] = useState(false);
 
     const {
@@ -127,8 +129,12 @@ export function EditPlotForm({ plot }: EditPlotFormProps) {
                         <PopoverTrigger
                             render={(props) => (
                                 <IconButton
-                                    className="-translate-x-[1px] text-black"
+                                    className={cn(
+                                        '-translate-x-[1px] text-black',
+                                        triggerProps?.className,
+                                    )}
                                     {...props}
+                                    {...triggerProps}
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -164,7 +170,7 @@ export function EditPlotForm({ plot }: EditPlotFormProps) {
                 </Tooltip.Portal>
             </Tooltip.Root>
 
-            <PopoverContent className="w-80">
+            <PopoverContent className="w-80 p-2">
                 <PopoverHeading>Edit Plot</PopoverHeading>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
                     {errors.polygon && (

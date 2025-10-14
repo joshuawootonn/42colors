@@ -113,7 +113,7 @@ export function CreatePlotForm() {
                 render={(props) => <Button {...props}>Claim</Button>}
             />
 
-            <PopoverContent className="w-80">
+            <PopoverContent className="w-80 p-2">
                 <PopoverHeading>Create Plot</PopoverHeading>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
                     {errors.polygon && (

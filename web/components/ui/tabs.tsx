@@ -32,7 +32,7 @@ const TabsTab = React.forwardRef<
     <TabsPrimitive.Tab
         ref={ref}
         className={cn(
-            'px-2 py-1 aria-selected:bg-foreground aria-selected:text-background',
+            'svg-outline-sm relative px-2 py-1 aria-selected:bg-foreground aria-selected:text-background',
             className,
         )}
         {...props}
@@ -43,8 +43,14 @@ TabsTab.displayName = TabsPrimitive.Tab.displayName;
 const TabsPanel = React.forwardRef<
     React.ElementRef<typeof TabsPrimitive.Panel>,
     React.ComponentPropsWithoutRef<typeof TabsPrimitive.Panel>
->(({ className, ...props }, ref) => (
-    <TabsPrimitive.Panel ref={ref} className={cn('', className)} {...props} />
+>(({ className, children, ...props }, ref) => (
+    <TabsPrimitive.Panel
+        ref={ref}
+        className={cn('svg-outline relative', className)}
+        {...props}
+    >
+        {children}
+    </TabsPrimitive.Panel>
 ));
 TabsPanel.displayName = TabsPrimitive.Panel.displayName;
 
