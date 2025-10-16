@@ -38,16 +38,39 @@ export function onPointerMove(e: PointerEvent) {
 
 export function onPointerUp(e: PointerEvent) {
     // console.log("onPointerUp");
+
+    // Release pointer capture when interaction ends
+    if (e.target instanceof HTMLCanvasElement) {
+        e.target.releasePointerCapture(e.pointerId);
+    }
+
     store.trigger.onPointerUp({ e });
 }
 
 export function onPointerOut(e: PointerEvent) {
     // console.log("onPointerOut");
+
+    // Release pointer capture if pointer goes out of canvas bounds
+    if (e.target instanceof HTMLCanvasElement) {
+        try {
+            e.target.releasePointerCapture(e.pointerId);
+        } catch {
+            // Ignore errors if capture wasn't set
+        }
+    }
+
     store.trigger.onPointerOut({ e });
 }
 
 export function onPointerDown(e: PointerEvent) {
     // console.log("onPointerDown");
+
+    // Capture pointer events to ensure they continue to be received
+    // even when the pointer moves over popovers or other UI elements
+    if (e.target instanceof HTMLCanvasElement) {
+        e.target.setPointerCapture(e.pointerId);
+    }
+
     store.trigger.onPointerDown({ e });
 }
 
