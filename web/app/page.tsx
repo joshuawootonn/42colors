@@ -21,7 +21,7 @@ import {
     getToolSettings,
 } from '@/lib/tool-settings';
 import { BrushPanel } from '@/lib/tools/brush/brush-panel';
-import { ClaimerPanel } from '@/lib/tools/claimer/claimer-panel';
+import { NewPlotPopover } from '@/lib/tools/claimer/new-plot-popover';
 import { ErasurePanel } from '@/lib/tools/erasure/erasure-panel';
 import { cn } from '@/lib/utils';
 import { keyEquals } from '@/lib/utils/query-key';
@@ -216,9 +216,7 @@ export default function Page() {
                 )}
             </div>
 
-            <div className="fixed left-60 top-3 flex flex-row space-x-3">
-                {currentTool === Tool.Claimer && <ClaimerPanel />}
-            </div>
+            <NewPlotPopover />
 
             <div className="fixed right-3 top-3 flex">
                 <Toolbar />
