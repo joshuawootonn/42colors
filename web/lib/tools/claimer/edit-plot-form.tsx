@@ -4,7 +4,6 @@ import { ComponentPropsWithoutRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
-import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import {
     Popover,
@@ -13,7 +12,6 @@ import {
     PopoverTrigger,
 } from '@/components/ui/popover';
 import * as Tooltip from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 
@@ -128,34 +126,14 @@ export function EditPlotForm({ plot, triggerProps }: EditPlotFormProps) {
                     render={
                         <PopoverTrigger
                             render={(props) => (
-                                <IconButton
-                                    className={cn(
-                                        '-translate-x-[1px] text-black',
-                                        triggerProps?.className,
-                                    )}
+                                <Button
+                                    size="sm"
+                                    variant={'link'}
                                     {...props}
                                     {...triggerProps}
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="32"
-                                        height="32"
-                                        viewBox="-4 -4 32 32"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="1.5"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
-                                        <circle
-                                            cx="7.5"
-                                            cy="7.5"
-                                            r=".5"
-                                            fill="currentColor"
-                                        />
-                                    </svg>
-                                </IconButton>
+                                    edit
+                                </Button>
                             )}
                         />
                     }

@@ -7,9 +7,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { IconButton } from '@/components/ui/icon-button';
 import * as Tooltip from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 import { useMutation } from '@tanstack/react-query';
 
 import { store } from '../../store';
@@ -53,33 +51,15 @@ export function DeletePlotButton({
             <Tooltip.Root>
                 <Tooltip.Trigger
                     render={(props) => (
-                        <IconButton
-                            className={cn(
-                                '-translate-x-[2px] text-black',
-                                triggerProps?.className,
-                            )}
+                        <Button
+                            size="sm"
+                            variant={'link'}
                             {...props}
                             {...triggerProps}
                             onClick={() => setIsConfirmOpen(true)}
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="32"
-                                height="32"
-                                viewBox="-4 -4 32 32"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M3 6h18" />
-                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                <line x1="10" x2="10" y1="11" y2="17" />
-                                <line x1="14" x2="14" y1="11" y2="17" />
-                            </svg>
-                        </IconButton>
+                            delete
+                        </Button>
                     )}
                 />
 

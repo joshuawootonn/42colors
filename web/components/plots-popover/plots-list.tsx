@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
+
 import { Plot } from '@/lib/tools/claimer/claimer.rest';
 import { DeletePlotButton } from '@/lib/tools/claimer/delete-plot-button';
 import { EditPlotForm } from '@/lib/tools/claimer/edit-plot-form';
@@ -35,6 +37,19 @@ export function PlotsList({
     loadingMessage = 'Loading plots...',
     userId,
 }: PlotsListProps) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const selectedPlotRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (selectedPlotId && containerRef.current && selectedPlotRef.current) {
+            const selectedElement = selectedPlotRef.current;
+
+            selectedElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+            });
+        }
+    }, [selectedPlotId]);
+
     if (isLoading) {
         return (
             <div className="flex-1 pt-20 text-center text-sm text-muted-foreground">
@@ -60,13 +75,16 @@ export function PlotsList({
     }
 
     return (
-        <div className="flex w-full flex-col">
+        <div ref={containerRef} className="flex w-full flex-col">
             {plots.map((plot) => (
-                <div key={plot.id} className="relative">
+                <div
+                    key={plot.id}
+                    className="relative"
+                    ref={selectedPlotId === plot.id ? selectedPlotRef : null}
+                >
                     <button
                         className={cn(
                             'svg-outline-inset group peer relative z-0 block w-full border-transparent bg-transparent p-2 text-left text-foreground outline-none',
-                            'hover:bg-black hover:text-background',
                             selectedPlotId === plot.id && 'bg-secondary',
                         )}
                         onClick={() => selectPlot(plot.id)}
@@ -75,30 +93,24 @@ export function PlotsList({
                         <div>{plot.name}</div>
                         <div className="text-left text-xs">
                             {plot.description && (
-                                <div className="mt-0.5 line-clamp-2 text-muted-foreground group-hover:text-muted">
+                                <div className="mt-0.5 line-clamp-2 text-muted-foreground">
                                     {plot.description}
                                 </div>
                             )}
-                            <div className="mt-1 text-muted-foreground group-hover:text-muted">
+                            <div className="mt-1 text-muted-foreground">
                                 {formatDate(plot.insertedAt)}
                             </div>
                         </div>
                     </button>
                     {userId === plot.userId && selectedPlotId === plot.id && (
-                        <div className="absolute right-1 top-1 flex text-black peer-hover:text-background">
+                        <div className="absolute right-1 top-1 flex text-black">
                             <EditPlotForm
                                 plot={plot}
-                                triggerProps={{
-                                    className:
-                                        'border-transparent bg-transparent',
-                                }}
+                                triggerProps={{ className: 'px-1.5' }}
                             />
                             <DeletePlotButton
                                 plot={plot}
-                                triggerProps={{
-                                    className:
-                                        'border-transparent bg-transparent',
-                                }}
+                                triggerProps={{ className: 'px-1.5' }}
                             />
                         </div>
                     )}
