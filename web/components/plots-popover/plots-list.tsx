@@ -62,42 +62,42 @@ export function PlotsList({
     return (
         <div className="flex w-full flex-col">
             {plots.map((plot) => (
-                <div
-                    key={plot.id}
-                    className={cn(
-                        'svg-outline-inset group relative z-0 block border-transparent bg-transparent p-2 text-left text-foreground outline-none',
-                        'hover:bg-black hover:text-background',
-                        selectedPlotId === plot.id && 'bg-secondary',
-                    )}
-                    tabIndex={0}
-                    onClick={() => selectPlot(plot.id)}
-                    aria-disabled={!plot.polygon}
-                >
-                    <div>{plot.name}</div>
-                    <div className="text-left text-xs">
-                        {plot.description && (
-                            <div className="mt-0.5 line-clamp-2 text-muted-foreground group-hover:text-muted">
-                                {plot.description}
-                            </div>
+                <div key={plot.id} className="relative">
+                    <button
+                        className={cn(
+                            'svg-outline-inset group peer relative z-0 block w-full border-transparent bg-transparent p-2 text-left text-foreground outline-none',
+                            'hover:bg-black hover:text-background',
+                            selectedPlotId === plot.id && 'bg-secondary',
                         )}
-                        <div className="mt-1 text-muted-foreground group-hover:text-muted">
-                            {formatDate(plot.insertedAt)}
+                        onClick={() => selectPlot(plot.id)}
+                        disabled={!plot.polygon}
+                    >
+                        <div>{plot.name}</div>
+                        <div className="text-left text-xs">
+                            {plot.description && (
+                                <div className="mt-0.5 line-clamp-2 text-muted-foreground group-hover:text-muted">
+                                    {plot.description}
+                                </div>
+                            )}
+                            <div className="mt-1 text-muted-foreground group-hover:text-muted">
+                                {formatDate(plot.insertedAt)}
+                            </div>
                         </div>
-                    </div>
+                    </button>
                     {userId === plot.userId && selectedPlotId === plot.id && (
-                        <div className="absolute right-1 top-1 flex">
+                        <div className="absolute right-1 top-1 flex text-black peer-hover:text-background">
                             <EditPlotForm
                                 plot={plot}
                                 triggerProps={{
                                     className:
-                                        ' border-transparent bg-transparent text-black group-hover:text-background',
+                                        'border-transparent bg-transparent',
                                 }}
                             />
                             <DeletePlotButton
                                 plot={plot}
                                 triggerProps={{
                                     className:
-                                        ' border-transparent bg-transparent text-black group-hover:text-background',
+                                        'border-transparent bg-transparent',
                                 }}
                             />
                         </div>
