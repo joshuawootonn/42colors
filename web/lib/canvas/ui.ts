@@ -198,6 +198,8 @@ export function redrawCrosshair(context: InitializedStore) {
 export function renderUI(context: InitializedStore) {
     if (isInitialStore(context)) return;
 
+    context.canvas.uiWebGPUManager.clear();
+
     redrawSelectedPlot(context);
     redrawRejectedPlots(context);
     redrawCrosshair(context);

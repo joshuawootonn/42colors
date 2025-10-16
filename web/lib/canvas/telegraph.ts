@@ -8,6 +8,7 @@ import { isInitialStore } from '../utils/is-initial-store';
 export function renderTelegraph(context: InitializedStore) {
     if (isInitialStore(context)) return;
 
+    context.canvas.telegraphWebGPUManager?.clear();
     const tool = context.toolSettings.currentTool;
 
     switch (tool) {
