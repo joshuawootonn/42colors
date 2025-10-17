@@ -5,11 +5,7 @@ import {
 import { canvasToClient } from '../../utils/clientToCanvasConversion';
 import { ClaimerActive } from './claimer';
 
-/**
- * Calculates the bottom center position of claimer polygons in screen coordinates
- * for positioning UI elements like popovers just outside the polygon bounds.
- */
-export function getClaimerPolygonScreenCenter(
+export function getPlotOverlayPosition(
     activeAction: ClaimerActive,
     camera: { x: number; y: number; zoom: number },
 ): { x: number; y: number } {
@@ -49,7 +45,7 @@ export function getClaimerPolygonScreenCenter(
 
     // Calculate bottom center position
     const centerX = (minX + maxX) / 2;
-    const bottomY = maxY + 1;
+    const bottomY = maxY;
 
     // Convert from canvas coordinates to screen coordinates
     const screenX = canvasToClient(centerX - camera.x, camera.zoom);

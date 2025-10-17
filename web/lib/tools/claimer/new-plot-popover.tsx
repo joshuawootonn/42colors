@@ -1,15 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { X } from '@/components/icons/x';
 import { IconButton } from '@/components/ui/icon-button';
 import { Popover, PopoverContent } from '@/components/ui/popover';
+import { canvasToClient } from '@/lib/utils/clientToCanvasConversion';
 import { useSelector } from '@xstate/store/react';
 
 import { store } from '../../store';
 import { CreatePlotForm } from './create-plot-form';
-import { getClaimerPolygonScreenCenter } from './utils';
+import { getPlotOverlayPosition } from './get-plot-overlay-position';
 
 export function NewPlotPopover() {
     const activeAction = useSelector(
@@ -18,6 +19,11 @@ export function NewPlotPopover() {
     );
     const camera = useSelector(store, (state) => state.context.camera);
     const user = useSelector(store, (state) => state.context?.user);
+
+    const transform = useMemo(
+        () => `translate(-50%, ${canvasToClient(0.2, camera.zoom)}px)`,
+        [camera.zoom],
+    );
 
     const [isOpen, setIsOpen] = useState(false);
     const [triggerPosition, setTriggerPosition] = useState({ x: 0, y: 0 });
@@ -29,7 +35,7 @@ export function NewPlotPopover() {
             camera &&
             typeof window !== 'undefined'
         ) {
-            const center = getClaimerPolygonScreenCenter(activeAction, camera);
+            const center = getPlotOverlayPosition(activeAction, camera);
             setTriggerPosition(center);
             setIsOpen(true);
         } else {
@@ -70,7 +76,7 @@ export function NewPlotPopover() {
                     style: {
                         left: triggerPosition.x,
                         top: triggerPosition.y,
-                        transform: 'translate(-50%, -50%)',
+                        transform,
                     },
                 }}
                 hideCloseButton={false}
