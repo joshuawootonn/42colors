@@ -3,8 +3,6 @@
 import { useEffect, useRef } from 'react';
 
 import { Plot } from '@/lib/tools/claimer/claimer.rest';
-import { DeletePlotButton } from '@/lib/tools/claimer/delete-plot-button';
-import { EditPlotForm } from '@/lib/tools/claimer/edit-plot-form';
 import { cn } from '@/lib/utils';
 
 function formatDate(dateString: string) {
@@ -24,7 +22,6 @@ interface PlotsListProps {
     selectPlot: (plotId: number) => void;
     emptyMessage?: string;
     loadingMessage?: string;
-    userId?: number;
 }
 
 export function PlotsList({
@@ -35,7 +32,6 @@ export function PlotsList({
     selectPlot,
     emptyMessage = 'No plots found',
     loadingMessage = 'Loading plots...',
-    userId,
 }: PlotsListProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const selectedPlotRef = useRef<HTMLDivElement>(null);
@@ -102,18 +98,6 @@ export function PlotsList({
                             </div>
                         </div>
                     </button>
-                    {userId === plot.userId && selectedPlotId === plot.id && (
-                        <div className="absolute right-1 top-1 flex text-black">
-                            <EditPlotForm
-                                plot={plot}
-                                triggerProps={{ className: 'px-1.5' }}
-                            />
-                            <DeletePlotButton
-                                plot={plot}
-                                triggerProps={{ className: 'px-1.5' }}
-                            />
-                        </div>
-                    )}
                 </div>
             ))}
         </div>

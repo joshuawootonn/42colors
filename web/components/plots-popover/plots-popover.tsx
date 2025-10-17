@@ -62,7 +62,6 @@ export function PlotsPopoverMarkup({
                                     selectedPlotId={selectedPlotId}
                                     selectPlot={selectPlot}
                                     enabled={isOpen}
-                                    userId={userId}
                                 />
                             )}
                         </div>

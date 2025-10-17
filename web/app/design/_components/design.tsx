@@ -203,7 +203,6 @@ export function DesignPage() {
                         error={null}
                         selectedPlotId={1}
                         selectPlot={() => {}}
-                        userId={1}
                     />
                 </PlotsPopoverMarkup>
                 <PlotsPopoverMarkup
@@ -219,7 +218,6 @@ export function DesignPage() {
                         error={null}
                         selectedPlotId={undefined}
                         selectPlot={() => {}}
-                        userId={1}
                     />
                 </PlotsPopoverMarkup>
                 <PlotsPopoverMarkup
@@ -235,7 +233,6 @@ export function DesignPage() {
                         error={new Error('Plots Error')}
                         selectedPlotId={undefined}
                         selectPlot={() => {}}
-                        userId={1}
                     />
                 </PlotsPopoverMarkup>
                 <PlotsPopoverMarkup
@@ -251,7 +248,6 @@ export function DesignPage() {
                         error={null}
                         selectedPlotId={undefined}
                         selectPlot={() => {}}
-                        userId={1}
                     />
                 </PlotsPopoverMarkup>
             </div>
