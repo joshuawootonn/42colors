@@ -22,6 +22,7 @@ import {
 } from '@/lib/tool-settings';
 import { BrushPanel } from '@/lib/tools/brush/brush-panel';
 import { NewPlotPopover } from '@/lib/tools/claimer/new-plot-popover';
+import { SelectedPlotPopover } from '@/lib/tools/claimer/selected-plot-popover';
 import { ErasurePanel } from '@/lib/tools/erasure/erasure-panel';
 import { cn } from '@/lib/utils';
 import { keyEquals } from '@/lib/utils/query-key';
@@ -217,6 +218,7 @@ export default function Page() {
             </div>
 
             <NewPlotPopover />
+            <SelectedPlotPopover />
 
             <div className="fixed right-3 top-3 flex">
                 <Toolbar />

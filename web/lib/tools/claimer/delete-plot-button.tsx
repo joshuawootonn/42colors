@@ -7,7 +7,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import * as Tooltip from '@/components/ui/tooltip';
 import { useMutation } from '@tanstack/react-query';
 
 import { store } from '../../store';
@@ -48,30 +47,9 @@ export function DeletePlotButton({
 
     return (
         <>
-            <Tooltip.Root>
-                <Tooltip.Trigger
-                    render={(props) => (
-                        <Button
-                            size="sm"
-                            variant={'link'}
-                            {...props}
-                            {...triggerProps}
-                            onClick={() => setIsConfirmOpen(true)}
-                        >
-                            delete
-                        </Button>
-                    )}
-                />
-
-                <Tooltip.Portal>
-                    <Tooltip.Positioner>
-                        <Tooltip.Popup>
-                            <Tooltip.Arrow />
-                            Delete
-                        </Tooltip.Popup>
-                    </Tooltip.Positioner>
-                </Tooltip.Portal>
-            </Tooltip.Root>
+            <Button {...triggerProps} onClick={() => setIsConfirmOpen(true)}>
+                delete
+            </Button>
 
             <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
                 <DialogContent className="max-w-md">

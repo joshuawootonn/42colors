@@ -11,7 +11,6 @@ import {
     PopoverHeading,
     PopoverTrigger,
 } from '@/components/ui/popover';
-import * as Tooltip from '@/components/ui/tooltip';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 
@@ -121,34 +120,14 @@ export function EditPlotForm({ plot, triggerProps }: EditPlotFormProps) {
 
     return (
         <Popover type="temporary" open={isOpen} onOpenChange={handleOpenChange}>
-            <Tooltip.Root>
-                <Tooltip.Trigger
-                    render={
-                        <PopoverTrigger
-                            render={(props) => (
-                                <Button
-                                    size="sm"
-                                    variant={'link'}
-                                    {...props}
-                                    {...triggerProps}
-                                >
-                                    edit
-                                </Button>
-                            )}
-                        />
-                    }
-                />
-                <Tooltip.Portal>
-                    <Tooltip.Positioner>
-                        <Tooltip.Popup>
-                            <Tooltip.Arrow />
-                            Edit
-                        </Tooltip.Popup>
-                    </Tooltip.Positioner>
-                </Tooltip.Portal>
-            </Tooltip.Root>
-
-            <PopoverContent className="w-80 p-2">
+            <PopoverTrigger
+                render={(props) => (
+                    <Button {...props} {...triggerProps}>
+                        edit
+                    </Button>
+                )}
+            />
+            <PopoverContent className="w-80 p-2" hideCloseButton={true}>
                 <PopoverHeading>Edit Plot</PopoverHeading>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
                     {errors.polygon && (

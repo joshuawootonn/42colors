@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { X } from '@/components/icons/x';
 import { IconButton } from '@/components/ui/icon-button';
@@ -10,7 +10,7 @@ import { useSelector } from '@xstate/store/react';
 
 import { store } from '../../store';
 import { CreatePlotForm } from './create-plot-form';
-import { getPlotOverlayPosition } from './get-plot-overlay-position';
+import { getPlotOverlayPositionForActiveAction } from './get-plot-overlay-position';
 
 export function NewPlotPopover() {
     const activeAction = useSelector(
@@ -27,7 +27,6 @@ export function NewPlotPopover() {
 
     const [isOpen, setIsOpen] = useState(false);
     const [triggerPosition, setTriggerPosition] = useState({ x: 0, y: 0 });
-    const triggerRef = useRef<HTMLButtonElement>(null);
 
     useEffect(() => {
         if (
@@ -35,20 +34,16 @@ export function NewPlotPopover() {
             camera &&
             typeof window !== 'undefined'
         ) {
-            const center = getPlotOverlayPosition(activeAction, camera);
+            const center = getPlotOverlayPositionForActiveAction(
+                activeAction,
+                camera,
+            );
             setTriggerPosition(center);
             setIsOpen(true);
         } else {
             setIsOpen(false);
         }
     }, [activeAction, camera]);
-
-    useEffect(() => {
-        if (triggerRef.current) {
-            triggerRef.current.style.left = `${triggerPosition.x}px`;
-            triggerRef.current.style.top = `${triggerPosition.y}px`;
-        }
-    }, [triggerPosition]);
 
     if (user == null || activeAction?.type !== 'claimer-active') {
         return null;
@@ -67,7 +62,7 @@ export function NewPlotPopover() {
             }}
         >
             <PopoverContent
-                className="w-auto"
+                className="w-auto border-none"
                 isDraggable={false}
                 positionerProps={{
                     side: 'top',
@@ -79,12 +74,11 @@ export function NewPlotPopover() {
                         transform,
                     },
                 }}
-                hideCloseButton={false}
+                hideCloseButton={true}
             >
                 <div className="flex items-start">
                     <CreatePlotForm />
                     <IconButton
-                        className="text-black"
                         onClick={() => {
                             store.trigger.clearClaim();
                         }}
