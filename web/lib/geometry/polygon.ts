@@ -27,11 +27,23 @@ export function getCenterPoint(polygon: Polygon): AbsolutePointTuple {
         );
     }
 
-    const sumX = polygon.vertices.reduce((sum, vertex) => sum + vertex[0], 0);
-    const sumY = polygon.vertices.reduce((sum, vertex) => sum + vertex[1], 0);
+    // Find the bounding box of the polygon
+    let minX = polygon.vertices[0][0];
+    let maxX = polygon.vertices[0][0];
+    let minY = polygon.vertices[0][1];
+    let maxY = polygon.vertices[0][1];
 
-    const centerX = sumX / polygon.vertices.length;
-    const centerY = sumY / polygon.vertices.length;
+    for (const vertex of polygon.vertices) {
+        const [x, y] = vertex;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+    }
+
+    // Calculate the center of the bounding box
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
 
     return absolutePointTupleSchema.parse([centerX, centerY]);
 }

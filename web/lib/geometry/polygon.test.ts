@@ -162,7 +162,7 @@ describe('getCenterPoint', () => {
         expect(center).toEqual([5, 5]);
     });
 
-    test('triangle polygon - should return centroid', () => {
+    test('triangle polygon - should return bounding box center', () => {
         const triangle = polygonSchema.parse({
             vertices: [
                 [0, 0],
@@ -171,8 +171,10 @@ describe('getCenterPoint', () => {
             ],
         });
 
+        // Bounding box: minX=0, maxX=6, minY=0, maxY=6
+        // Center: (0+6)/2 = 3, (0+6)/2 = 3
         const center = getCenterPoint(triangle);
-        expect(center).toEqual([3, 2]);
+        expect(center).toEqual([3, 3]);
     });
 
     test('rectangle polygon - should return center', () => {
@@ -210,7 +212,7 @@ describe('getCenterPoint', () => {
         expect(center).toEqual([5, 3]);
     });
 
-    test('irregular polygon - should return average of vertices', () => {
+    test('irregular polygon - should return bounding box center', () => {
         const irregular = polygonSchema.parse({
             vertices: [
                 [1, 1],
@@ -221,10 +223,10 @@ describe('getCenterPoint', () => {
             ],
         });
 
-        // Sum: x = 1+4+5+3+0 = 13, y = 1+1+3+5+4 = 14
-        // Average: x = 13/5 = 2.6, y = 14/5 = 2.8
+        // Bounding box: minX=0, maxX=5, minY=1, maxY=5
+        // Center: (0+5)/2 = 2.5, (1+5)/2 = 3
         const center = getCenterPoint(irregular);
-        expect(center).toEqual([2.6, 2.8]);
+        expect(center).toEqual([2.5, 3]);
     });
 
     test('polygon with negative coordinates', () => {
@@ -250,11 +252,11 @@ describe('getCenterPoint', () => {
             ],
         });
 
-        // Sum: x = 1.5+3.7+2.8 = 8.0, y = 2.5+1.2+4.9 = 8.6
-        // Average: x = 8.0/3 ≈ 2.6667, y = 8.6/3 ≈ 2.8667
+        // Bounding box: minX=1.5, maxX=3.7, minY=1.2, maxY=4.9
+        // Center: (1.5+3.7)/2 = 2.6, (1.2+4.9)/2 = 3.05
         const center = getCenterPoint(decimalCoords);
-        expect(center[0]).toBeCloseTo(2.6667, 4);
-        expect(center[1]).toBeCloseTo(2.8667, 4);
+        expect(center[0]).toBeCloseTo(2.6, 4);
+        expect(center[1]).toBeCloseTo(3.05, 4);
     });
 
     test('empty polygon - should throw error', () => {
