@@ -33,8 +33,8 @@ export function getCameraCenterPoint(camera: Camera): AbsolutePointTuple {
     const canvasPixelWidth = getSizeInPixels(canvasWidth, pixelSize);
     const canvasPixelHeight = getSizeInPixels(canvasHeight, pixelSize);
 
-    const centerX = camera.x + Math.floor(canvasPixelWidth / 2 - 2);
-    const centerY = camera.y + Math.floor(canvasPixelHeight / 2 - 2);
+    const centerX = camera.x + Math.floor(canvasPixelWidth / 2);
+    const centerY = camera.y + Math.floor(canvasPixelHeight / 2);
 
     return absolutePointTupleSchema.parse([centerX, centerY]);
 }

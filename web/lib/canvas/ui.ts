@@ -7,7 +7,7 @@ import { Plot } from '../tools/claimer/claimer.rest';
 import { isInitialStore } from '../utils/is-initial-store';
 import { BLUE, DARK_RED, LIGHT_GRAY } from '../webgpu/colors';
 import { LineItem, RedrawPolygonsItem } from '../webgpu/web-gpu-manager';
-import { getPixelSize, getSizeInPixels } from './canvas';
+import { getPixelSize, getSizeInPixelsPlusBleed } from './canvas';
 import { getFullsizeHeight, getFullsizeWidth } from './fullsize';
 
 export function redrawSelectedPlot(context: InitializedStore) {
@@ -155,12 +155,12 @@ export function redrawCrosshair(context: InitializedStore) {
     const canvasWidth = getFullsizeWidth();
     const canvasHeight = getFullsizeHeight();
 
-    const canvasPixelWidth = getSizeInPixels(canvasWidth, pixelSize);
-    const canvasPixelHeight = getSizeInPixels(canvasHeight, pixelSize);
+    const canvasPixelWidth = getSizeInPixelsPlusBleed(canvasWidth, pixelSize);
+    const canvasPixelHeight = getSizeInPixelsPlusBleed(canvasHeight, pixelSize);
     const { xOffset, yOffset } = getCameraOffset(context.camera);
 
-    const centerX = Math.floor(canvasPixelWidth / 2 - 2);
-    const centerY = Math.floor(canvasPixelHeight / 2 - 2);
+    const centerX = Math.floor(canvasPixelWidth / 2);
+    const centerY = Math.floor(canvasPixelHeight / 2);
 
     const crosshairSize = 0.5; // Size of crosshair arms in world units
     const lineThickness = 0.25; // Thickness in world units
