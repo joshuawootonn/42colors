@@ -19,7 +19,7 @@ export function RecentPlots({
         data: plots,
         isLoading,
         error,
-    } = usePlots(10, {
+    } = usePlots(100, {
         enabled,
     });
 
