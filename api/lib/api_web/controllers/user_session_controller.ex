@@ -65,6 +65,7 @@ defmodule ApiWeb.UserSessionController do
   def read(conn, _params) do
     user = conn.assigns.current_user
     channel_token = conn.assigns.channel_token
+    can_claim_daily_bonus = Accounts.can_claim_daily_visit_grant?(user)
 
     json(conn, %{
       status: "success",
@@ -72,8 +73,43 @@ defmodule ApiWeb.UserSessionController do
         email: user.email,
         id: user.id,
         balance: user.balance,
-        channel_token: channel_token
+        channel_token: channel_token,
+        can_claim_daily_bonus: can_claim_daily_bonus
       }
     })
+  end
+
+  def claim_daily_bonus(conn, _params) do
+    user = conn.assigns.current_user
+
+    case Accounts.grant_daily_visit_grant(user) do
+      {:ok, {_log, updated_user}} ->
+        json(conn, %{
+          status: "success",
+          message: "You've received your daily 1000 pixel grant!",
+          user: %{
+            email: updated_user.email,
+            id: updated_user.id,
+            balance: updated_user.balance
+          }
+        })
+
+      {:ok, :already_claimed_today} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{
+          status: "error",
+          message: "You've already claimed your daily bonus today"
+        })
+
+      {:error, reason} ->
+        conn
+        |> put_status(:internal_server_error)
+        |> json(%{
+          status: "error",
+          message: "Failed to grant daily bonus",
+          reason: inspect(reason)
+        })
+    end
   end
 end

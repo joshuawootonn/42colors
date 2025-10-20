@@ -28,6 +28,8 @@ function getLogTypeDisplay(logType: Log['logType']): string {
             return 'Initial Grant';
         case 'bailout_grant':
             return 'Bailout Grant';
+        case 'daily_visit_grant':
+            return 'Daily Visit Grant';
         case 'plot_created':
             return 'Plot Created';
         case 'plot_updated':

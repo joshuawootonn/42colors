@@ -2,7 +2,7 @@ defmodule Api.Logs.Log do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @log_types ~w(initial_grant bailout_grant plot_created plot_updated plot_deleted)
+  @log_types ~w(initial_grant bailout_grant daily_visit_grant plot_created plot_updated plot_deleted)
 
   schema "logs" do
     field :old_balance, :integer
@@ -36,6 +36,14 @@ defmodule Api.Logs.Log do
       {"plot_updated", old_bal, new_bal} when old_bal == new_bal ->
         # Allow zero balance changes for plot updates (metadata-only changes)
         changeset
+
+      {"daily_visit_grant", _old_bal, _new_bal} ->
+        # Daily visit grant should always increase balance
+        if new_balance > old_balance do
+          changeset
+        else
+          add_error(changeset, :new_balance, "Daily visit grant must increase balance")
+        end
 
       {_log_type, old_bal, new_bal} when old_bal == new_bal ->
         # Disallow zero balance changes for other log types

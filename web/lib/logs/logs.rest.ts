@@ -13,6 +13,7 @@ const baseLogSchema = z.object({
     logType: z.enum([
         'initial_grant',
         'bailout_grant',
+        'daily_visit_grant',
         'plot_created',
         'plot_updated',
         'plot_deleted',
@@ -45,6 +46,17 @@ const bailoutGrantLogSchema = baseLogSchema.extend({
         .object({
             reason: z.string().optional(),
             amount: z.number().optional(),
+        })
+        .nullable(),
+});
+
+const dailyVisitGrantLogSchema = baseLogSchema.extend({
+    logType: z.literal('daily_visit_grant'),
+    diffs: z
+        .object({
+            reason: z.string().optional(),
+            grant_amount: z.number().optional(),
+            date: z.string().optional(),
         })
         .nullable(),
 });
@@ -87,6 +99,7 @@ const plotDeletedLogSchema = baseLogSchema.extend({
 export const logSchema = z.discriminatedUnion('logType', [
     initialGrantLogSchema,
     bailoutGrantLogSchema,
+    dailyVisitGrantLogSchema,
     plotCreatedLogSchema,
     plotUpdatedLogSchema,
     plotDeletedLogSchema,

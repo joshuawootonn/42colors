@@ -388,4 +388,101 @@ defmodule Api.Accounts do
       {:error, :user, changeset, _} -> {:error, changeset}
     end
   end
+
+  @doc """
+  Checks if a user is eligible for a daily visit grant (without granting it).
+
+  Returns true if the user can claim their daily grant, false otherwise.
+
+  ## Examples
+
+      iex> can_claim_daily_visit_grant?(user)
+      true
+
+      iex> can_claim_daily_visit_grant?(user)
+      false
+
+  """
+  def can_claim_daily_visit_grant?(%User{} = user) do
+    today = DateTime.utc_now() |> DateTime.to_date()
+    account_creation_date = user.inserted_at |> DateTime.to_date()
+
+    case user.last_visit_grant_at do
+      nil ->
+        # Never claimed before - but don't allow on account creation day
+        Date.compare(account_creation_date, today) == :lt
+
+      last_grant_time ->
+        # Check if last grant was on a different day
+        last_grant_date = last_grant_time |> DateTime.to_date()
+        Date.compare(last_grant_date, today) == :lt
+    end
+  end
+
+  @doc """
+  Grants a daily visit grant to the user if they are eligible.
+
+  A user is eligible if:
+  - They have never received a grant (last_visit_grant_at is nil) AND it's not their account creation day, OR
+  - Their last grant was on a different UTC day than today
+
+  The grant amount is 1000 pixels.
+
+  ## Returns
+
+    * `{:ok, {log, user}}` - Grant granted successfully
+    * `{:ok, :already_claimed_today}` - User already claimed grant today
+    * `{:error, reason}` - Error occurred
+
+  ## Examples
+
+      iex> grant_daily_visit_grant(user)
+      {:ok, {%Log{}, %User{balance: 2100}}}
+
+      iex> grant_daily_visit_grant(user)
+      {:ok, :already_claimed_today}
+
+  """
+  def grant_daily_visit_grant(%User{} = user) do
+    alias Api.Logs.Log.Service, as: LogService
+
+    today = DateTime.utc_now() |> DateTime.to_date()
+
+    if can_claim_daily_visit_grant?(user) do
+      # Grant the grant
+      grant_amount = 1000
+      current_user = Repo.get!(User, user.id)
+      balance_change = LogService.calculate_balance_change(current_user.balance, grant_amount)
+
+      # Create the daily visit grant log
+      case LogService.create_log(%{
+             user_id: user.id,
+             old_balance: balance_change.old_balance,
+             new_balance: balance_change.new_balance,
+             log_type: "daily_visit_grant",
+             diffs: %{
+               "reason" => "Daily visit grant",
+               "grant_amount" => grant_amount,
+               "date" => Date.to_string(today)
+             }
+           }) do
+        {:ok, {log, updated_user}} ->
+          # Update the last_visit_grant_at timestamp
+          updated_user
+          |> Ecto.Changeset.change(
+            last_visit_grant_at: DateTime.utc_now() |> DateTime.truncate(:second)
+          )
+          |> Repo.update()
+          |> case do
+            {:ok, final_user} -> {:ok, {log, final_user}}
+            {:error, reason} -> {:error, reason}
+          end
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+    else
+      {:ok, :already_claimed_today}
+    end
+  end
 end

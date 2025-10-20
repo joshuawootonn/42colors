@@ -52,6 +52,7 @@ defmodule ApiWeb.Router do
     pipe_through [:api, :require_authenticated_user, :put_channel_token]
 
     get "/users/me", UserSessionController, :read
+    post "/users/me/claim_daily_bonus", UserSessionController, :claim_daily_bonus
     get "/plots/me", PlotController, :me_plots
     get "/logs/me", LogController, :me_logs
   end

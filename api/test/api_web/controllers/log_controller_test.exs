@@ -19,7 +19,7 @@ defmodule ApiWeb.LogControllerTest do
       conn = get(conn, ~p"/api/logs/me")
       response = json_response(conn, 200)["data"]
 
-      # New users automatically get an initial grant log
+      # New users automatically get an initial grant log (no daily bonus on creation day)
       assert length(response) == 1
       initial_log = List.first(response)
       assert initial_log["logType"] == "initial_grant"
@@ -54,7 +54,7 @@ defmodule ApiWeb.LogControllerTest do
       conn = get(conn, ~p"/api/logs/me")
       response = json_response(conn, 200)["data"]
 
-      # Should have initial grant + 2 manually created logs = 3 total
+      # Should have initial grant + 2 manually created logs = 3 total (no daily bonus on creation day)
       assert length(response) == 3
 
       # Check that logs are returned with correct structure
@@ -110,7 +110,7 @@ defmodule ApiWeb.LogControllerTest do
       conn = get(conn, ~p"/api/logs/me")
       response = json_response(conn, 200)["data"]
 
-      # Should have initial grant + 1 manual log = 2 total for current user
+      # Should have initial grant + 1 manual log = 2 total for current user (no daily bonus on creation day)
       assert length(response) == 2
 
       # All logs should belong to current user
@@ -156,7 +156,8 @@ defmodule ApiWeb.LogControllerTest do
 
       conn = get(conn, ~p"/api/logs/me?limit=invalid")
       response = json_response(conn, 200)["data"]
-      # Should use default limit and return results (initial grant + manual log = 2)
+
+      # Should use default limit and return results (initial grant + manual log = 2, no daily bonus on creation day)
       assert is_list(response)
       assert length(response) == 2
     end
@@ -176,7 +177,7 @@ defmodule ApiWeb.LogControllerTest do
       conn = get(conn, ~p"/api/logs/me")
       response = json_response(conn, 200)["data"]
 
-      # Should have initial grant + plot creation log = 2 total
+      # Should have initial grant + plot creation log = 2 total (no daily bonus on creation day)
       assert length(response) == 2
 
       # Find the plot creation log
@@ -216,7 +217,7 @@ defmodule ApiWeb.LogControllerTest do
       conn = get(conn, ~p"/api/logs/me")
       response = json_response(conn, 200)["data"]
 
-      # Should have initial grant + 4 manual logs = 5 total
+      # Should have initial grant + 4 manual logs = 5 total (no daily bonus on creation day)
       assert length(response) == 5
 
       # Verify all log types are present (including automatic initial_grant)
