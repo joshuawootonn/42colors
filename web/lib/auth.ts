@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import analytics from './analytics';
 import { store } from './store';
+import userService from './user';
 
 const API_URL =
     process.env.NEXT_PUBLIC_API_ORIGIN ?? 'https://api.42colors.com';
@@ -32,6 +33,7 @@ export interface User {
     email: string;
     balance: number;
     channel_token: string;
+    can_claim_daily_bonus?: boolean;
 }
 
 export interface AuthResponse {
@@ -94,6 +96,17 @@ const updatePasswordResponseSchema = z.union([
     successResponseSchema,
     errorResponseSchema,
 ]);
+
+const userResponseSchema = z.object({
+    status: z.literal('success'),
+    user: z.object({
+        id: z.number(),
+        email: z.string().email(),
+        balance: z.number(),
+        channel_token: z.string(),
+        can_claim_daily_bonus: z.boolean().optional(),
+    }),
+});
 
 export class AuthError extends Error {
     public readonly errors: Record<string, string[]>;
@@ -284,15 +297,36 @@ const authService = {
                 return null;
             }
 
-            const result = await response.json();
+            const rawResult = await response.json();
+
+            const parseResult = userResponseSchema.safeParse(rawResult);
+
+            if (!parseResult.success) {
+                console.error(
+                    'Invalid user response format:',
+                    parseResult.error,
+                );
+                return null;
+            }
+
+            const result = parseResult.data;
 
             analytics.identifyUser({
                 email: result.user.email,
                 id: result.user.id,
             });
 
+            // Automatically claim daily grant if available
+            if (result.user.can_claim_daily_bonus) {
+                // Fire and forget - claim in background
+                userService.claimDailyGrant(origin).catch((error) => {
+                    console.error('Failed to claim daily grant:', error);
+                });
+            }
+
             return result;
-        } catch {
+        } catch (error) {
+            console.error('Error fetching current user:', error);
             return null;
         }
     },
