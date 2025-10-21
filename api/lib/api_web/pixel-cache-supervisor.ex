@@ -29,6 +29,8 @@ defmodule ApiWeb.PixelCacheSupervisor do
 
     TelemetryHelper.instrument(:initialize_file, fn -> PixelCache.initialize_file() end)
 
+    IO.puts("Writing #{pixels |> length} pixels to file")
+
     TelemetryHelper.instrument(:write_matrix_to_file, fn ->
       PixelCache.write_coordinates_to_file(pixels)
     end)
