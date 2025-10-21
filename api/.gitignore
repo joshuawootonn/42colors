@@ -38,7 +38,7 @@ npm-debug.log
 .env.local
 .env.*
 !.env.example
-/.exlixir_ls/
+/.elixir_ls/
 
 pixel_cache.bin
 *.bin
