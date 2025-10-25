@@ -18,7 +18,9 @@ defmodule Api.Canvas.Pixel.Repo do
 
   """
   def list_pixels do
-    Repo.all(Pixel)
+    Pixel
+    |> order_by([p], asc: p.inserted_at)
+    |> Repo.all()
   end
 
   @doc """
