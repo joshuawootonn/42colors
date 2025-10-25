@@ -407,7 +407,7 @@ defmodule Api.Canvas.Plot.Service do
 
   # Private function to check for overlapping plots
   defp check_for_overlaps(polygon, exclude_plot_id) do
-    overlapping_plots = Plot.Repo.list_plots_intersecting_polygon(polygon)
+    overlapping_plots = Plot.Repo.list_plots_overlapping_polygon(polygon)
 
     case exclude_plot_id do
       nil ->

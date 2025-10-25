@@ -682,6 +682,161 @@ defmodule Api.PlotTest do
     end
   end
 
+  describe "list_plots_overlapping_polygon/1" do
+    setup do
+      user1 = user_fixture()
+      user2 = user_fixture()
+
+      # Plot 1: Small square at (0,0) to (5,5)
+      {:ok, plot1} =
+        Plot.Repo.create_plot(%{
+          name: "Small Plot",
+          description: "Small plot",
+          user_id: user1.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{0, 0}, {0, 5}, {5, 5}, {5, 0}, {0, 0}]],
+            srid: 4326
+          }
+        })
+
+      # Plot 2: Overlapping plot at (3,3) to (8,8)
+      {:ok, plot2} =
+        Plot.Repo.create_plot(%{
+          name: "Overlapping Plot",
+          description: "Plot that overlaps with search area",
+          user_id: user1.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{3, 3}, {3, 8}, {8, 8}, {8, 3}, {3, 3}]],
+            srid: 4326
+          }
+        })
+
+      # Plot 3: Adjacent plot that only touches at boundary (5,0) to (10,5)
+      {:ok, plot3} =
+        Plot.Repo.create_plot(%{
+          name: "Adjacent Plot",
+          description: "Plot that shares edge with search area",
+          user_id: user2.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{5, 0}, {5, 5}, {10, 5}, {10, 0}, {5, 0}]],
+            srid: 4326
+          }
+        })
+
+      # Plot 4: Completely contained plot at (1,1) to (2,2)
+      {:ok, plot4} =
+        Plot.Repo.create_plot(%{
+          name: "Contained Plot",
+          description: "Plot completely inside search area",
+          user_id: user1.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{1, 1}, {1, 2}, {2, 2}, {2, 1}, {1, 1}]],
+            srid: 4326
+          }
+        })
+
+      # Search polygon: (0,0) to (5,5)
+      search_polygon = %Geo.Polygon{
+        coordinates: [[{0, 0}, {0, 5}, {5, 5}, {5, 0}, {0, 0}]],
+        srid: 4326
+      }
+
+      %{
+        user1: user1,
+        user2: user2,
+        plot1: plot1,
+        plot2: plot2,
+        plot3: plot3,
+        plot4: plot4,
+        search_polygon: search_polygon
+      }
+    end
+
+    test "returns plots that overlap with the search polygon", %{
+      plot2: plot2,
+      search_polygon: search_polygon
+    } do
+      results = Plot.Repo.list_plots_overlapping_polygon(search_polygon)
+      result_ids = Enum.map(results, & &1.id)
+
+      # Should include plot2 which overlaps
+      assert plot2.id in result_ids
+    end
+
+    test "excludes plots that only touch at boundaries", %{
+      plot3: plot3,
+      search_polygon: search_polygon
+    } do
+      results = Plot.Repo.list_plots_overlapping_polygon(search_polygon)
+      result_ids = Enum.map(results, & &1.id)
+
+      # Should not include plot3 (only touches at edge)
+      refute plot3.id in result_ids
+    end
+
+    test "excludes plots that are completely contained", %{
+      plot4: plot4,
+      search_polygon: search_polygon
+    } do
+      results = Plot.Repo.list_plots_overlapping_polygon(search_polygon)
+      result_ids = Enum.map(results, & &1.id)
+
+      # ST_Overlaps excludes plots completely contained within the search polygon
+      refute plot4.id in result_ids
+    end
+
+    test "excludes the search polygon itself if it exists as a plot", %{
+      plot1: plot1,
+      search_polygon: search_polygon
+    } do
+      results = Plot.Repo.list_plots_overlapping_polygon(search_polygon)
+      result_ids = Enum.map(results, & &1.id)
+
+      # plot1 has the same boundary as search_polygon, so ST_Overlaps returns false
+      refute plot1.id in result_ids
+    end
+
+    test "returns error for invalid polygon input" do
+      assert {:error, :invalid_polygon} =
+               Plot.Repo.list_plots_overlapping_polygon("not a polygon")
+
+      assert {:error, :invalid_polygon} = Plot.Repo.list_plots_overlapping_polygon(nil)
+      assert {:error, :invalid_polygon} = Plot.Repo.list_plots_overlapping_polygon(%{})
+    end
+
+    test "excludes soft-deleted plots from spatial queries" do
+      user = user_fixture()
+
+      # Create a plot that overlaps with search area
+      {:ok, plot} =
+        Plot.Repo.create_plot(%{
+          name: "To Be Deleted",
+          description: "Plot that will be soft deleted",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{2, 2}, {2, 8}, {8, 8}, {8, 2}, {2, 2}]],
+            srid: 4326
+          }
+        })
+
+      search_polygon = %Geo.Polygon{
+        coordinates: [[{0, 0}, {0, 5}, {5, 5}, {5, 0}, {0, 0}]],
+        srid: 4326
+      }
+
+      # Verify plot is found before deletion
+      results_before = Plot.Repo.list_plots_overlapping_polygon(search_polygon)
+      assert plot.id in Enum.map(results_before, & &1.id)
+
+      # Soft delete the plot
+      {:ok, _deleted_plot} = Plot.Repo.delete_plot(plot)
+
+      # Verify plot is not found after soft deletion
+      results_after = Plot.Repo.list_plots_overlapping_polygon(search_polygon)
+      refute plot.id in Enum.map(results_after, & &1.id)
+    end
+  end
+
   describe "get_size/1" do
     test "calculates size of a simple square polygon" do
       # 10x10 square = 100 pixels

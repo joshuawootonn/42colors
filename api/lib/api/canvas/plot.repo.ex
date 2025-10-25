@@ -243,13 +243,15 @@ defmodule Api.Canvas.Plot.Repo do
   end
 
   @doc """
-  Returns all plots that are within or intersect with the given polygon.
+  Returns all plots that intersect with the given polygon.
+  Uses ST_Intersects which includes plots that share any portion of space,
+  including boundaries that touch.
 
   ## Parameters
   - `polygon`: A %Geo.Polygon{} struct representing the search area
 
   ## Returns
-  - List of %Plot{} structs that are within or intersect with the polygon
+  - List of %Plot{} structs that intersect with the polygon
 
   ## Examples
 
@@ -267,6 +269,35 @@ defmodule Api.Canvas.Plot.Repo do
   end
 
   def list_plots_intersecting_polygon(_), do: {:error, :invalid_polygon}
+
+  @doc """
+  Returns all plots that overlap with the given polygon.
+  Uses ST_Overlaps which returns true if the geometries share space,
+  are of the same dimension, but are not completely contained by each other.
+  This excludes plots that just touch at boundaries.
+
+  ## Parameters
+  - `polygon`: A %Geo.Polygon{} struct representing the search area
+
+  ## Returns
+  - List of %Plot{} structs that overlap with the polygon
+
+  ## Examples
+
+      iex> polygon = %Geo.Polygon{coordinates: [[{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}]], srid: 4326}
+      iex> list_plots_overlapping_polygon(polygon)
+      [%Plot{}, ...]
+
+  """
+  def list_plots_overlapping_polygon(%Geo.Polygon{} = polygon) do
+    Plot
+    |> where([p], not is_nil(p.polygon))
+    |> where([p], is_nil(p.deleted_at))
+    |> where([p], fragment("ST_Overlaps(?, ?)", p.polygon, ^polygon))
+    |> Repo.all()
+  end
+
+  def list_plots_overlapping_polygon(_), do: {:error, :invalid_polygon}
 
   # ==== Integer-lattice winding predicate (half-open boundaries) ====
   # Choose a covering candidate for a point using winding number classification.
