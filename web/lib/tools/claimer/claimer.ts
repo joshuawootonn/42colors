@@ -1,3 +1,5 @@
+import { toast } from '@/components/ui/toast';
+
 import { getZoomMultiplier } from '../../camera';
 import { getPixelSize } from '../../canvas/canvas';
 import {
@@ -131,6 +133,14 @@ function onPointerDown(
     context: InitializedStore,
     _: EnqueueObject<{ type: string }>,
 ): InitializedStore {
+    if (!context.user) {
+        toast({
+            title: 'Sign in required',
+            description: 'You need to be signed in to claim land',
+        });
+        return context;
+    }
+
     const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     const rect = rectSchema.parse({
