@@ -1,7 +1,7 @@
 import { Channel, Socket } from 'phoenix';
 import { z } from 'zod';
 
-import { toast } from '@/components/ui/toast';
+import { toasts } from '@/components/ui/toast';
 
 import { getUniqueChunksFromPixels } from './canvas/chunk';
 import { startRejectedPlotsAnimation } from './canvas/ui';
@@ -69,17 +69,12 @@ export function newPixels(
             if (!response.success) return;
 
             if (response.data === ErrorCode.UNAUTHED_USER) {
-                toast({
-                    title: 'Login (when you are ready)',
-                    description: 'to save and share your pixels.',
-                    button: authURL
-                        ? {
-                              label: 'login',
-                              onClick: () => {
-                                  window.location.href = authURL;
-                              },
-                          }
-                        : undefined,
+                if (!authURL) return;
+                toasts.loginToSavePixels({
+                    label: 'login',
+                    onClick: () => {
+                        window.location.href = authURL;
+                    },
                 });
                 return;
             }
@@ -98,11 +93,7 @@ export function newPixels(
                     });
                 });
 
-                toast({
-                    title: "You can't draw here!",
-                    description:
-                        "It's someone else's plot. Either draw in the open area or claim a plot for yourself.",
-                });
+                toasts.cannotDrawOnPlot();
                 return;
             }
         });

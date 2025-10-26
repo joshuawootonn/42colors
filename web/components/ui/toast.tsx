@@ -15,7 +15,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         <Sonner
             theme={theme as ToasterProps['theme']}
             className="toaster group"
-            duration={5000}
+            duration={500000}
             style={{ '--width': '420px' } as React.CSSProperties}
             offset={12}
             gap={12}
@@ -58,11 +58,53 @@ export function throttleByKey<T extends Omit<ToastProps, 'id'>>(
 
 const toast = throttleByKey(_toast);
 
+export const TOASTS = {
+    loginToClaimLand: (buttonOptions: {
+        label: string;
+        onClick: () => void;
+    }) => ({
+        title: 'Login (when you are ready)',
+        description: 'to claim land and protect your art',
+        button: buttonOptions,
+    }),
+    loginToSavePixels: (buttonOptions: {
+        label: string;
+        onClick: () => void;
+    }) => ({
+        title: 'Login (when you are ready)',
+        description: 'to save and share your pixels',
+        button: buttonOptions,
+    }),
+    dailyGrantClaimed: {
+        title: 'Daily Grant Claimed',
+        description: '1,000 pixels for visiting today',
+    },
+    cannotDrawOnPlot: {
+        title: "You can't draw here",
+        description:
+            "It's someone else's claim. Either draw in the open area or claim a plot for yourself.",
+    },
+} as const;
+
+export type ToastKey = keyof typeof TOASTS;
+
+// Export individual toast functions for better type inference
+export const toasts = {
+    loginToClaimLand: (buttonOptions: { label: string; onClick: () => void }) =>
+        toast(TOASTS.loginToClaimLand(buttonOptions)),
+    dailyGrantClaimed: () => toast(TOASTS.dailyGrantClaimed),
+    loginToSavePixels: (buttonOptions: {
+        label: string;
+        onClick: () => void;
+    }) => toast(TOASTS.loginToSavePixels(buttonOptions)),
+    cannotDrawOnPlot: () => toast(TOASTS.cannotDrawOnPlot),
+} as const;
+
 export function Toast(props: ToastProps) {
     const { title, description, button, id } = props;
 
     return (
-        <div className="flex w-full items-center border-1.5 border-primary bg-secondary p-4 font-sans shadow-lg md:max-w-120">
+        <div className="flex w-105 max-w-full items-center text-pretty border-1.5 border-primary bg-secondary p-4 font-sans shadow-lg md:max-w-120">
             <div className="flex flex-1 items-center">
                 <div className="w-full">
                     <p className="text-sm text-primary">{title}</p>

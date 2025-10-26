@@ -1,4 +1,4 @@
-import { toast } from '@/components/ui/toast';
+import { toasts } from '@/components/ui/toast';
 
 import { getZoomMultiplier } from '../../camera';
 import { getPixelSize } from '../../canvas/canvas';
@@ -134,9 +134,11 @@ function onPointerDown(
     _: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     if (!context.user) {
-        toast({
-            title: 'Sign in required',
-            description: 'You need to be signed in to claim land',
+        toasts.loginToClaimLand({
+            label: 'login',
+            onClick: () => {
+                window.location.href = '/login';
+            },
         });
         return context;
     }

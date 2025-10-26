@@ -5,7 +5,7 @@ import { PlotsList } from '@/components/plots-popover/plots-list';
 import { PlotsPopoverMarkup } from '@/components/plots-popover/plots-popover';
 import { Button } from '@/components/ui/button';
 import { PopoverTrigger } from '@/components/ui/popover';
-import { Toast, toast } from '@/components/ui/toast';
+import { TOASTS, Toast } from '@/components/ui/toast';
 import { polygonSchema } from '@/lib/geometry/polygon';
 import { cn } from '@/lib/utils';
 
@@ -81,30 +81,49 @@ export function DesignPage() {
                 </div>
             </div>
             <h2>Toast</h2>
-            <div className="not-prose wrap flex w-full items-center gap-4">
-                <Button
-                    onClick={() =>
-                        toast({
-                            title: 'Login (when you are ready)',
-                            description: 'to save and share your pixels',
-                            button: {
-                                label: 'login',
-                                onClick: () => {},
-                            },
-                        })
-                    }
-                >
-                    spawn
-                </Button>
-                <Toast
-                    id={'1'}
-                    title="Login (when you are ready)"
-                    description="to save and share your pixels"
-                    button={{
-                        label: 'login',
-                        onClick: () => {},
-                    }}
-                />
+            <p className="text-sm text-muted-foreground">
+                All toast messages in the application. These are the only
+                allowed toast configurations.
+            </p>
+            <div className="not-prose flex w-full flex-col gap-4">
+                <div className="space-y-2">
+                    <h3 className="text-sm font-medium">Login to Claim Land</h3>
+                    <Toast
+                        id="toast-login-to-claim-land"
+                        {...TOASTS.loginToClaimLand({
+                            label: 'login',
+                            onClick: () => {},
+                        })}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <h3 className="text-sm font-medium">
+                        Login to Save Pixels
+                    </h3>
+                    <Toast
+                        id="toast-login-to-save-pixels"
+                        {...TOASTS.loginToSavePixels({
+                            label: 'login',
+                            onClick: () => {},
+                        })}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <h3 className="text-sm font-medium">Daily Grant Claimed</h3>
+                    <Toast
+                        id="toast-daily-grant"
+                        title={TOASTS.dailyGrantClaimed.title}
+                        description={TOASTS.dailyGrantClaimed.description}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <h3 className="text-sm font-medium">Cannot Draw on Plot</h3>
+                    <Toast
+                        id="toast-cannot-draw"
+                        title={TOASTS.cannotDrawOnPlot.title}
+                        description={TOASTS.cannotDrawOnPlot.description}
+                    />
+                </div>
             </div>
             <h2>Plots Popover</h2>
             <div className="not-prose wrap mt-120 flex w-full items-center justify-between gap-4">

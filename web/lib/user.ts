@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { toast } from '@/components/ui/toast';
+import { toasts } from '@/components/ui/toast';
 
 import analytics from './analytics';
 import { store } from './store';
@@ -66,10 +66,7 @@ const userService = {
             });
 
             // Show success notification
-            toast({
-                title: '🎉 Daily Grant Claimed!',
-                description: 'You received 1,000 pixels for visiting today',
-            });
+            toasts.dailyGrantClaimed();
 
             // Refetch user to update balance and can_claim_daily_bonus flag
             store.trigger.fetchUser();
