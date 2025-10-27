@@ -47,6 +47,51 @@ export function redrawSelectedPlot(context: InitializedStore) {
     webgpuManager.redrawPolygons(polygonRenderData);
 }
 
+export function redrawSelectedPlotHandles(context: InitializedStore) {
+    const webgpuManager = context.canvas.uiWebGPUManager;
+    if (!webgpuManager) return;
+
+    const cachedPlots = context.queryClient
+        .getQueriesData({ queryKey: ['plots'] })
+        .flatMap(([_, data]) => (data as Plot[]) || []);
+
+    if (cachedPlots == null) return;
+
+    const selectedPlot = cachedPlots.find(
+        (plot) => plot.id === context.toolSettings.claimer.selectedPlotId,
+    );
+
+    if (!selectedPlot) return;
+
+    // Only show handles if this plot belongs to the current user
+    if (context.user?.id !== selectedPlot.userId) return;
+
+    const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
+    const { xOffset, yOffset } = getCameraOffset(context.camera);
+
+    const lines: LineItem[] = (selectedPlot.polygon?.vertices || []).map(
+        ([x, y]) => ({
+            startX: x,
+            startY: y,
+            endX: x,
+            endY: y,
+            color: LIGHT_GRAY,
+            thickness: 0.45,
+        }),
+    );
+
+    if (lines.length === 0) return;
+
+    webgpuManager.redrawLines(lines, {
+        xOffset,
+        yOffset,
+        xCamera: context.camera.x,
+        yCamera: context.camera.y,
+        pixelSize,
+        cameraMode: 'relative',
+    });
+}
+
 type PlotFlickerState = {
     rejected_plot_ids: Map<number, NodeJS.Timeout>;
 };
@@ -192,6 +237,7 @@ export function redrawCrosshair(context: InitializedStore) {
         xCamera: context.camera.x,
         yCamera: context.camera.y,
         pixelSize,
+        cameraMode: 'absolute',
     });
 }
 
@@ -202,5 +248,6 @@ export function renderUI(context: InitializedStore) {
 
     redrawSelectedPlot(context);
     redrawRejectedPlots(context);
+    redrawSelectedPlotHandles(context);
     redrawCrosshair(context);
 }
