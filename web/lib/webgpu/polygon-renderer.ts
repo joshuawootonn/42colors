@@ -19,7 +19,7 @@ export interface WebGPUPolygonRenderer {
 /**
  * Configuration options for rendering polygons with WebGPU
  */
-export interface RenderOptions {
+export interface PolygonRenderOptions {
     /** The number of pixels between the viewport edge and your first full pixel on the X-axis */
     xOffset?: number;
 
@@ -275,7 +275,7 @@ function generateThickLineQuad(
 
 function generatePolygonLineSegments(
     polygon: Polygon,
-    options: Partial<RenderOptions> = {},
+    options: Partial<PolygonRenderOptions> = {},
 ): Float32Array {
     const {
         xOffset = 0,
@@ -314,7 +314,7 @@ function generatePolygonLineSegments(
 
 function generateFilledPolygonTriangles(
     polygon: Polygon,
-    options: Partial<RenderOptions> = {},
+    options: Partial<PolygonRenderOptions> = {},
 ): Float32Array {
     const {
         xOffset = 0,
@@ -368,10 +368,14 @@ function generateFilledPolygonTriangles(
     return new Float32Array(triangleVertices);
 }
 
-export function renderPolygon(
+export type PolygonRenderItem = {
+    polygon: Polygon;
+};
+
+export function renderPolygons(
     renderer: WebGPUPolygonRenderer,
-    polygon: Polygon,
-    options: RenderOptions,
+    items: PolygonRenderItem[],
+    options: PolygonRenderOptions,
     renderPass: GPURenderPassEncoder,
 ): void {
     const {
@@ -380,13 +384,13 @@ export function renderPolygon(
         xCamera = 0,
         yCamera = 0,
         pixelSize = 5,
-        color = [1, 1, 0, 1], // Default yellow
+        color = [1, 1, 0, 1],
         canvasWidth,
         canvasHeight,
         filled = false,
     } = options;
 
-    // Update transform uniform buffer
+    // Update transform uniform buffer once for all polygons
     const transformData = new Float32Array([
         xCamera,
         yCamera,
@@ -403,33 +407,36 @@ export function renderPolygon(
         transformData,
     );
 
-    // Update color uniform buffer
-    const colorData = new Float32Array(color);
-    renderer.device.queue.writeBuffer(renderer.colorBuffer, 0, colorData);
+    // Render each polygon
+    for (const { polygon } of items) {
+        // Update color uniform buffer for this polygon
+        const colorData = new Float32Array(color);
+        renderer.device.queue.writeBuffer(renderer.colorBuffer, 0, colorData);
 
-    const vertexData = filled
-        ? generateFilledPolygonTriangles(polygon, options)
-        : generatePolygonLineSegments(polygon, options);
+        const vertexData = filled
+            ? generateFilledPolygonTriangles(polygon, options)
+            : generatePolygonLineSegments(polygon, options);
 
-    if (vertexData.length === 0) {
-        return;
+        if (vertexData.length === 0) {
+            continue;
+        }
+
+        // Get a buffer from the pool
+        const vertexBuffer = renderer.bufferPool.getBuffer(
+            vertexData.length * 4,
+        );
+        renderer.device.queue.writeBuffer(vertexBuffer, 0, vertexData);
+
+        // Set up render pass
+        renderPass.setPipeline(renderer.renderPipeline);
+        renderPass.setBindGroup(0, renderer.transformBindGroup);
+        renderPass.setBindGroup(1, renderer.colorBindGroup);
+        renderPass.setVertexBuffer(0, vertexBuffer);
+        renderPass.draw(vertexData.length / 2); // 2 vertices per triangle vertex
+
+        // Schedule buffer to be returned after GPU work completes
+        renderer.bufferPool.returnBufferAfterFrame(vertexBuffer);
     }
-
-    // console.log('renderPolygon', vertexData);
-
-    // Get a buffer from the pool
-    const vertexBuffer = renderer.bufferPool.getBuffer(vertexData.length * 4);
-    renderer.device.queue.writeBuffer(vertexBuffer, 0, vertexData);
-
-    // Set up render pass
-    renderPass.setPipeline(renderer.renderPipeline);
-    renderPass.setBindGroup(0, renderer.transformBindGroup);
-    renderPass.setBindGroup(1, renderer.colorBindGroup);
-    renderPass.setVertexBuffer(0, vertexBuffer);
-    renderPass.draw(vertexData.length / 2); // 2 vertices per triangle vertex
-
-    // Schedule buffer to be returned after GPU work completes
-    renderer.bufferPool.returnBufferAfterFrame(vertexBuffer);
 }
 
 export function destroyWebGPUPolygonRenderer(

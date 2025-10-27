@@ -6,7 +6,7 @@ import { getCameraOffset } from '../tools/brush/brush';
 import { Plot } from '../tools/claimer/claimer.rest';
 import { isInitialStore } from '../utils/is-initial-store';
 import { BLUE, DARK_RED, LIGHT_GRAY } from '../webgpu/colors';
-import { LineItem, RedrawPolygonsItem } from '../webgpu/web-gpu-manager';
+import { LineItem } from '../webgpu/web-gpu-manager';
 import { getPixelSize, getSizeInPixelsPlusBleed } from './canvas';
 import { getFullsizeHeight, getFullsizeWidth } from './fullsize';
 
@@ -20,7 +20,6 @@ export function redrawSelectedPlot(context: InitializedStore) {
 
     if (cachedPlots == null) return;
 
-    // Prepare all polygons for batch rendering
     const selectedPlots = cachedPlots.filter(
         (plot) => plot.id === context.toolSettings.claimer.selectedPlotId,
     );
@@ -30,21 +29,20 @@ export function redrawSelectedPlot(context: InitializedStore) {
     const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
     const { xOffset, yOffset } = getCameraOffset(context.camera);
 
-    const polygonRenderData = selectedPlots.map((plot) => ({
+    const polygonItems = selectedPlots.map((plot) => ({
         polygon: plot.polygon,
-        options: {
-            containsMatchingEndpoints: true,
-            xOffset,
-            yOffset,
-            xCamera: context.camera.x,
-            yCamera: context.camera.y,
-            pixelSize,
-            lineWidth: 0.37,
-            color: BLUE,
-        },
     }));
 
-    webgpuManager.redrawPolygons(polygonRenderData);
+    webgpuManager.redrawPolygons(polygonItems, {
+        xOffset,
+        yOffset,
+        xCamera: context.camera.x,
+        yCamera: context.camera.y,
+        pixelSize,
+        containsMatchingEndpoints: true,
+        lineWidth: 0.37,
+        color: BLUE,
+    });
 }
 
 export function redrawSelectedPlotHandles(context: InitializedStore) {
@@ -166,26 +164,21 @@ export function redrawRejectedPlots(context: InitializedStore) {
     const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
     const { xOffset, yOffset } = getCameraOffset(context.camera);
 
-    const polygonItems: RedrawPolygonsItem[] = [];
+    const polygonItems = rejectedPlots.map((plot) => ({
+        polygon: plot.polygon,
+    }));
 
-    rejectedPlots.forEach((plot) => {
-        polygonItems.push({
-            polygon: plot.polygon,
-            options: {
-                containsMatchingEndpoints: true,
-                xOffset,
-                yOffset,
-                xCamera: context.camera.x,
-                yCamera: context.camera.y,
-                pixelSize,
-                lineWidth: 0.5,
-                color: DARK_RED,
-                filled: false,
-            },
-        });
+    webgpuManager.redrawPolygons(polygonItems, {
+        xOffset,
+        yOffset,
+        xCamera: context.camera.x,
+        yCamera: context.camera.y,
+        pixelSize,
+        containsMatchingEndpoints: true,
+        lineWidth: 0.5,
+        color: DARK_RED,
+        filled: false,
     });
-
-    webgpuManager.redrawPolygons(polygonItems);
 }
 
 export function redrawCrosshair(context: InitializedStore) {

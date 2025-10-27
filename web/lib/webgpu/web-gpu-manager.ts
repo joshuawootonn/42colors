@@ -1,5 +1,4 @@
 import { Pixel } from '../geometry/coord';
-import { Polygon } from '../geometry/polygon';
 import { COLOR_TABLE } from '../palette';
 import { hexToRgbaColor } from './colors';
 import {
@@ -16,17 +15,13 @@ import {
     destroyWebGPUPixelRenderer,
 } from './pixel-renderer';
 import {
-    RenderOptions,
+    PolygonRenderItem,
+    PolygonRenderOptions,
     WebGPUPolygonRenderer,
     createWebGPUPolygonRenderer,
     destroyWebGPUPolygonRenderer,
-    renderPolygon,
+    renderPolygons,
 } from './polygon-renderer';
-
-export type RedrawPolygonsItem = {
-    polygon: Polygon;
-    options?: Partial<RenderOptions>;
-};
 
 export type { LineItem };
 
@@ -63,10 +58,10 @@ export class WebGPUManager {
         );
     }
 
-    /**
-     * Render multiple polygons in a single render pass for better performance
-     */
-    redrawPolygons(polygonItem: RedrawPolygonsItem[]): void {
+    redrawPolygons(
+        items: PolygonRenderItem[],
+        options: Partial<PolygonRenderOptions> = {},
+    ): void {
         if (!this.polygonRenderer) {
             throw new Error(
                 'WebGPU polygon renderer not initialized. Call initialize() first.',
@@ -75,7 +70,6 @@ export class WebGPUManager {
 
         const canvas = this.context.canvas as HTMLCanvasElement;
 
-        // Create command encoder and render pass
         const commandEncoder = this.device.createCommandEncoder();
         const renderPass = commandEncoder.beginRenderPass({
             colorAttachments: [
@@ -88,26 +82,17 @@ export class WebGPUManager {
             ],
         });
 
-        // Render all polygons
-        for (const { polygon, options = {} } of polygonItem) {
-            const renderOptions: RenderOptions = {
-                ...options,
-                canvasWidth: canvas.width,
-                canvasHeight: canvas.height,
-            };
+        const renderOptions: PolygonRenderOptions = {
+            ...options,
+            canvasWidth: canvas.width,
+            canvasHeight: canvas.height,
+        };
 
-            renderPolygon(
-                this.polygonRenderer,
-                polygon,
-                renderOptions,
-                renderPass,
-            );
-        }
+        renderPolygons(this.polygonRenderer, items, renderOptions, renderPass);
 
         renderPass.end();
         this.device.queue.submit([commandEncoder.finish()]);
 
-        // Process any pending buffer returns after submission
         this.polygonRenderer.bufferPool.processFrameCompletion();
     }
 

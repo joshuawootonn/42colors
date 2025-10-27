@@ -66,19 +66,18 @@ export function renderPlotsToChunk(chunk: Chunk): void {
 
     const polygonRenderData = chunk.plots.map((plot) => ({
         polygon: plot.polygon,
-        options: {
-            containsMatchingEndpoints: true,
-            xOffset: 0,
-            yOffset: 0,
-            xCamera: 0,
-            yCamera: 0,
-            pixelSize: 5,
-            lineWidth: 0.25,
-            color: BLACK,
-        },
     }));
 
-    chunk.webgpuManager.redrawPolygons(polygonRenderData);
+    chunk.webgpuManager.redrawPolygons(polygonRenderData, {
+        containsMatchingEndpoints: true,
+        xOffset: 0,
+        yOffset: 0,
+        xCamera: 0,
+        yCamera: 0,
+        pixelSize: 5,
+        lineWidth: 0.25,
+        color: BLACK,
+    });
 }
 
 export function clearChunk(chunk: Chunk): void {

@@ -42,18 +42,17 @@ function redrawTelegraph(context: InitializedStore) {
 
     const webGPUPolygons = aggregatedPolygons.map((polygon) => ({
         polygon,
-        options: {
-            xOffset,
-            yOffset,
-            xCamera: context.camera.x,
-            yCamera: context.camera.y,
-            pixelSize,
-            lineWidth: 0.4,
-            color: CLAIMER_YELLOW,
-        },
     }));
 
-    telegraphWebGPUManager.redrawPolygons(webGPUPolygons);
+    telegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
+        xOffset,
+        yOffset,
+        xCamera: context.camera.x,
+        yCamera: context.camera.y,
+        pixelSize,
+        lineWidth: 0.4,
+        color: CLAIMER_YELLOW,
+    });
 }
 
 export type ClaimerComplete = {

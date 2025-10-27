@@ -252,19 +252,18 @@ function redrawTelegraph(context: InitializedStore) {
     const webGPUPolygons = [
         {
             polygon: brushPolygon,
-            options: {
-                xOffset,
-                yOffset,
-                xCamera: context.camera.x,
-                yCamera: context.camera.y,
-                pixelSize,
-                color,
-                filled: true,
-            },
         },
     ];
 
-    telegraphWebGPUManager.redrawPolygons(webGPUPolygons);
+    telegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
+        xOffset,
+        yOffset,
+        xCamera: context.camera.x,
+        yCamera: context.camera.y,
+        pixelSize,
+        color,
+        filled: true,
+    });
 }
 
 export function bresenhamLine(
