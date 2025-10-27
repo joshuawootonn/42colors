@@ -2,7 +2,7 @@ import { Pixel } from '../geometry/coord';
 import { COLOR_TABLE } from '../palette';
 import { hexToRgbaColor } from './colors';
 import {
-    LineItem,
+    LineRenderItem,
     LineRenderOptions,
     WebGPULineRenderer,
     createWebGPULineRenderer,
@@ -23,7 +23,7 @@ import {
     renderPolygons,
 } from './polygon-renderer';
 
-export type { LineItem };
+export type { LineRenderItem as LineItem };
 
 export class WebGPUManager {
     private polygonRenderer: WebGPUPolygonRenderer | null = null;
@@ -97,7 +97,7 @@ export class WebGPUManager {
     }
 
     redrawLines(
-        lines: LineItem[],
+        lines: LineRenderItem[],
         options: Partial<LineRenderOptions> = {},
     ): void {
         if (!this.lineRenderer) {

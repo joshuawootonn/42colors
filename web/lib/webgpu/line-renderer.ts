@@ -1,7 +1,7 @@
 import { WebGPUBufferPool } from './buffer-pool';
 import { Color } from './colors';
 
-export type LineItem = {
+export type LineRenderItem = {
     startX: number;
     startY: number;
     endX: number;
@@ -212,7 +212,7 @@ export function destroyWebGPULineRenderer(renderer: WebGPULineRenderer): void {
 
 export function renderLines(
     renderer: WebGPULineRenderer,
-    lines: LineItem[],
+    lines: LineRenderItem[],
     options: LineRenderOptions,
     renderPass: GPURenderPassEncoder,
 ): void {
