@@ -1,3 +1,5 @@
+import { COLOR_TABLE } from '../palette';
+
 export type Color = [number, number, number, number];
 
 export const BLUE: Color = [0, 0, 1, 1];
@@ -22,4 +24,9 @@ export function hexToRgbaColor(hex: string): Color {
     const b = parseInt(hex.substring(4, 6), 16) / 255;
 
     return [r, g, b, 1];
+}
+
+export function getColorFromRef(colorRef: number): Color {
+    const colorHex = COLOR_TABLE[colorRef as keyof typeof COLOR_TABLE];
+    return hexToRgbaColor(colorHex);
 }

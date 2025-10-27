@@ -41,10 +41,10 @@ export function renderRealtime(context: InitializedStore) {
 
     const dedupedPixels = dedupeCoords(pixels);
 
-    context.canvas.realtimeWebGPUManager.redrawPixels(
-        dedupedPixels,
-        context.camera,
-    );
+    context.canvas.realtimeWebGPUManager.redrawPixels(dedupedPixels, {
+        xCamera: context.camera.x,
+        yCamera: context.camera.y,
+    });
 
     clearChunkPixels(context.canvas.chunkCanvases, dedupedPixels);
 }

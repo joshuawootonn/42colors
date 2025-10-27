@@ -1,20 +1,22 @@
+import { Pixel } from '../geometry/coord';
 import { WebGPUBufferPool } from './buffer-pool';
+import { getColorFromRef } from './colors';
 
-export interface WebGPUPixelRenderer {
+export type WebGPUPixelRenderer = {
     device: GPUDevice;
     renderPipeline: GPURenderPipeline;
     transformBuffer: GPUBuffer;
     transformBindGroup: GPUBindGroup;
     bufferPool: WebGPUBufferPool;
-}
+};
 
-export interface PixelRenderOptions {
+export type PixelRenderOptions = {
     xCamera?: number;
     yCamera?: number;
     pixelSize?: number;
     canvasWidth: number;
     canvasHeight: number;
-}
+};
 
 export async function createWebGPUPixelRenderer(
     device: GPUDevice,
@@ -160,9 +162,99 @@ export async function createWebGPUPixelRenderer(
     };
 }
 
-// generatePixelQuads function moved to RealtimeWebGPUManager
+function generatePixelQuads(pixels: Pixel[]): Float32Array {
+    const vertices: number[] = [];
 
-// This function is not used - rendering is handled by RealtimeWebGPUManager
+    for (const pixel of pixels) {
+        const color = getColorFromRef(pixel.color_ref);
+
+        // Create a 1x1 pixel quad
+        const x = pixel.x;
+        const y = pixel.y;
+        const x1 = x + 1;
+        const y1 = y + 1;
+
+        // Triangle 1: top-left, bottom-left, top-right
+        vertices.push(
+            x,
+            y,
+            ...color, // top-left
+            x,
+            y1,
+            ...color, // bottom-left
+            x1,
+            y,
+            ...color, // top-right
+        );
+
+        // Triangle 2: bottom-left, bottom-right, top-right
+        vertices.push(
+            x,
+            y1,
+            ...color, // bottom-left
+            x1,
+            y1,
+            ...color, // bottom-right
+            x1,
+            y,
+            ...color, // top-right
+        );
+    }
+
+    return new Float32Array(vertices);
+}
+
+export function renderPixels(
+    renderer: WebGPUPixelRenderer,
+    pixels: Pixel[],
+    options: PixelRenderOptions,
+    renderPass: GPURenderPassEncoder,
+): void {
+    const {
+        xCamera = 0,
+        yCamera = 0,
+        pixelSize = 1,
+        canvasWidth,
+        canvasHeight,
+    } = options;
+
+    // Update transform uniform buffer
+    const transformData = new Float32Array([
+        Math.floor(xCamera),
+        Math.floor(yCamera),
+        pixelSize,
+        canvasWidth,
+        canvasHeight,
+        0, // padding
+        0, // padding
+        0, // padding
+    ]);
+    renderer.device.queue.writeBuffer(
+        renderer.transformBuffer,
+        0,
+        transformData,
+    );
+
+    // Generate vertex data for all pixels
+    const vertexData = generatePixelQuads(pixels);
+
+    if (vertexData.length === 0) {
+        return;
+    }
+
+    // Get a buffer from the pool
+    const vertexBuffer = renderer.bufferPool.getBuffer(vertexData.byteLength);
+    renderer.device.queue.writeBuffer(vertexBuffer, 0, vertexData);
+
+    // Render pixels
+    renderPass.setPipeline(renderer.renderPipeline);
+    renderPass.setBindGroup(0, renderer.transformBindGroup);
+    renderPass.setVertexBuffer(0, vertexBuffer);
+    renderPass.draw(vertexData.length / 6); // 6 floats per vertex
+
+    // Schedule buffer to be returned after GPU work completes
+    renderer.bufferPool.returnBufferAfterFrame(vertexBuffer);
+}
 
 export function destroyWebGPUPixelRenderer(
     renderer: WebGPUPixelRenderer,
