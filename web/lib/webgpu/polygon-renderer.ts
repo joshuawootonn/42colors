@@ -35,6 +35,12 @@ export interface RenderOptions {
     /** Size of each pixel in the grid system */
     pixelSize?: number;
 
+    /** Width of the canvas in pixels */
+    canvasWidth: number;
+
+    /** Height of the canvas in pixels */
+    canvasHeight: number;
+
     /**
      * Whether the polygon vertices include a duplicate endpoint
      * (i.e., first vertex is repeated at the end)
@@ -43,12 +49,6 @@ export interface RenderOptions {
 
     /** RGBA color values for rendering the polygon */
     color?: Color;
-
-    /** Width of the canvas in pixels */
-    canvasWidth: number;
-
-    /** Height of the canvas in pixels */
-    canvasHeight: number;
 
     /** Width of the outline stroke when rendering polygon edges */
     lineWidth?: number;
