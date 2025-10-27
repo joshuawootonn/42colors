@@ -1,7 +1,15 @@
 import { Pixel } from '../geometry/coord';
 import { Polygon } from '../geometry/polygon';
 import { COLOR_TABLE } from '../palette';
-import { Color, hexToRgbaColor } from './colors';
+import { hexToRgbaColor } from './colors';
+import {
+    LineItem,
+    LineRenderOptions,
+    WebGPULineRenderer,
+    createWebGPULineRenderer,
+    destroyWebGPULineRenderer,
+    renderLines,
+} from './line-renderer';
 import {
     WebGPUPixelRenderer,
     createWebGPUPixelRenderer,
@@ -20,18 +28,12 @@ export type RedrawPolygonsItem = {
     options?: Partial<RenderOptions>;
 };
 
-export type LineItem = {
-    startX: number;
-    startY: number;
-    endX: number;
-    endY: number;
-    color: Color;
-    thickness?: number;
-};
+export type { LineItem };
 
 export class WebGPUManager {
     private polygonRenderer: WebGPUPolygonRenderer | null = null;
     private pixelRenderer: WebGPUPixelRenderer | null = null;
+    private lineRenderer: WebGPULineRenderer | null = null;
     private device: GPUDevice;
     private context: GPUCanvasContext;
     private canvasFormat: GPUTextureFormat;
@@ -52,6 +54,10 @@ export class WebGPUManager {
             this.canvasFormat,
         );
         this.pixelRenderer = await createWebGPUPixelRenderer(
+            this.device,
+            this.canvasFormat,
+        );
+        this.lineRenderer = await createWebGPULineRenderer(
             this.device,
             this.canvasFormat,
         );
@@ -105,22 +111,18 @@ export class WebGPUManager {
         this.polygonRenderer.bufferPool.processFrameCompletion();
     }
 
-    /**
-     * Render lines using WebGPU by converting them to thin polygons
-     */
     redrawLines(
         lines: LineItem[],
-        renderOptions: Partial<RenderOptions> = {},
+        options: Partial<LineRenderOptions> = {},
     ): void {
-        if (!this.polygonRenderer) {
+        if (!this.lineRenderer) {
             throw new Error(
-                'WebGPU polygon renderer not initialized. Call initialize() first.',
+                'WebGPU line renderer not initialized. Call initialize() first.',
             );
         }
 
         const canvas = this.context.canvas as HTMLCanvasElement;
 
-        // Create command encoder and render pass
         const commandEncoder = this.device.createCommandEncoder();
         const renderPass = commandEncoder.beginRenderPass({
             colorAttachments: [
@@ -133,113 +135,18 @@ export class WebGPUManager {
             ],
         });
 
-        // Set the render pipeline
-        renderPass.setPipeline(this.polygonRenderer.renderPipeline);
+        const renderOptions: LineRenderOptions = {
+            ...options,
+            canvasWidth: canvas.width,
+            canvasHeight: canvas.height,
+        };
 
-        // Update transform uniform buffer
-        const transformData = new Float32Array([
-            renderOptions.xCamera || 0,
-            renderOptions.yCamera || 0,
-            renderOptions.pixelSize || 1,
-            renderOptions.xOffset || 0,
-            renderOptions.yOffset || 0,
-            canvas.width,
-            canvas.height,
-            0, // padding
-        ]);
-        this.device.queue.writeBuffer(
-            this.polygonRenderer.transformBuffer,
-            0,
-            transformData,
-        );
-
-        // Set transform bind group
-        renderPass.setBindGroup(0, this.polygonRenderer.transformBindGroup);
-
-        // Render each line as a thin rectangle
-        for (const line of lines) {
-            const thickness = line.thickness || 1;
-            const halfThickness = thickness / 2;
-
-            // Calculate line direction and perpendicular vector for thickness
-            const dx = line.endX - line.startX;
-            const dy = line.endY - line.startY;
-            const length = Math.sqrt(dx * dx + dy * dy);
-
-            let vertices: Float32Array;
-
-            if (length === 0) {
-                // Point line - create a small square
-                vertices = new Float32Array([
-                    // Triangle 1
-                    line.startX - halfThickness,
-                    line.startY - halfThickness,
-                    line.startX + halfThickness,
-                    line.startY - halfThickness,
-                    line.startX + halfThickness,
-                    line.startY + halfThickness,
-                    // Triangle 2
-                    line.startX - halfThickness,
-                    line.startY - halfThickness,
-                    line.startX + halfThickness,
-                    line.startY + halfThickness,
-                    line.startX - halfThickness,
-                    line.startY + halfThickness,
-                ]);
-            } else {
-                // Normalize direction vector
-                const ndx = dx / length;
-                const ndy = dy / length;
-
-                // Perpendicular vector for thickness
-                const perpX = -ndy * halfThickness;
-                const perpY = ndx * halfThickness;
-
-                // Create rectangle vertices for the line
-                vertices = new Float32Array([
-                    // Triangle 1
-                    line.startX + perpX,
-                    line.startY + perpY,
-                    line.endX + perpX,
-                    line.endY + perpY,
-                    line.endX - perpX,
-                    line.endY - perpY,
-                    // Triangle 2
-                    line.startX + perpX,
-                    line.startY + perpY,
-                    line.endX - perpX,
-                    line.endY - perpY,
-                    line.startX - perpX,
-                    line.startY - perpY,
-                ]);
-            }
-
-            // Update color uniform buffer
-            this.device.queue.writeBuffer(
-                this.polygonRenderer.colorBuffer,
-                0,
-                new Float32Array(line.color),
-            );
-
-            // Set color bind group
-            renderPass.setBindGroup(1, this.polygonRenderer.colorBindGroup);
-
-            // Get a buffer from the pool and upload vertex data
-            const vertexBuffer = this.polygonRenderer.bufferPool.getBuffer(
-                vertices.byteLength,
-            );
-            this.device.queue.writeBuffer(vertexBuffer, 0, vertices);
-
-            // Set vertex buffer and draw
-            renderPass.setVertexBuffer(0, vertexBuffer);
-            renderPass.draw(6); // 2 triangles = 6 vertices
-        }
+        renderLines(this.lineRenderer, lines, renderOptions, renderPass);
 
         renderPass.end();
         this.device.queue.submit([commandEncoder.finish()]);
 
-        // Process any pending buffer returns after submission
-        this.polygonRenderer.bufferPool.processFrameCompletion();
+        this.lineRenderer.bufferPool.processFrameCompletion();
     }
 
     /**
@@ -413,6 +320,10 @@ export class WebGPUManager {
         if (this.pixelRenderer) {
             destroyWebGPUPixelRenderer(this.pixelRenderer);
             this.pixelRenderer = null;
+        }
+        if (this.lineRenderer) {
+            destroyWebGPULineRenderer(this.lineRenderer);
+            this.lineRenderer = null;
         }
     }
 }
