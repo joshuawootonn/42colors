@@ -17,14 +17,14 @@ start:
   kill $(lsof -t -i:4242) || true && bun run build && bun run start
 
 # Testing
-test:
-  bun run test
+test *ARGS:
+  bun run test {{ARGS}}
 
-test-watch:
-  bun run test --watch
+test-watch *ARGS:
+  bun run test --watch {{ARGS}}
 
-test-ui:
-  bun run test --ui
+test-ui *ARGS:
+  bun run test --ui {{ARGS}}
 
 # Code quality
 lint:
