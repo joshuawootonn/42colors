@@ -149,12 +149,17 @@ export async function deletePlot(plotId: number): Promise<void> {
 
 export async function updatePlot(
     plotId: number,
-    plot: Partial<Pick<Plot, 'name' | 'description'>>,
+    plot: Partial<Pick<Plot, 'name' | 'description' | 'polygon'>>,
 ): Promise<Plot> {
     const context = store.getSnapshot().context;
     if (isInitialStore(context)) {
         throw new Error('Server context is not initialized');
     }
+
+    // Complete the polygon ring if polygon is provided
+    const plotData = plot.polygon
+        ? { ...plot, polygon: completePolygonRing(plot.polygon) }
+        : plot;
 
     const response = await fetch(
         new URL(`/api/plots/${plotId}`, context.server.apiOrigin),
@@ -165,7 +170,7 @@ export async function updatePlot(
             },
             credentials: 'include',
             body: JSON.stringify({
-                plot: plot,
+                plot: plotData,
             }),
         },
     );

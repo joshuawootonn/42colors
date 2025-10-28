@@ -15,7 +15,7 @@ export function redrawSelectedPlot(context: InitializedStore) {
     if (!webgpuManager) return;
 
     const cachedPlots = context.queryClient
-        .getQueriesData({ queryKey: ['plots'] })
+        .getQueriesData({ queryKey: ['plots', 'list'] })
         .flatMap(([_, data]) => (data as Plot[]) || []);
 
     if (cachedPlots == null) return;
@@ -61,6 +61,13 @@ export function redrawSelectedPlotHandles(context: InitializedStore) {
 
     if (!selectedPlot) return;
 
+    if (
+        context.activeAction?.type !== 'claimer-resize' &&
+        context.activeAction?.type !== 'claimer-edit'
+    ) {
+        return;
+    }
+
     // Only show handles if this plot belongs to the current user
     if (context.user?.id !== selectedPlot.userId) return;
 
@@ -88,6 +95,32 @@ export function redrawSelectedPlotHandles(context: InitializedStore) {
         pixelSize,
         cameraMode: 'relative',
     });
+
+    // Update cursor when hovering near a handle
+    if (context.interaction?.cursorPosition) {
+        const canvas = context.canvas.rootCanvas;
+        const { clientX, clientY } = context.interaction.cursorPosition;
+
+        // If actively resizing, show grabbing cursor
+        if (context.activeAction?.type === 'claimer-resize') {
+            canvas.style.cursor = 'grabbing';
+            return;
+        }
+
+        // Convert screen coordinates to world coordinates
+        const worldX = (clientX - xOffset) / pixelSize + context.camera.x;
+        const worldY = (clientY - yOffset) / pixelSize + context.camera.y;
+
+        // Check if cursor is near any vertex (handle)
+        const handleProximity = 0.5; // world units
+        const isNearHandle = (selectedPlot.polygon?.vertices || []).some(
+            ([vx, vy]) =>
+                Math.abs(vx - worldX) <= handleProximity &&
+                Math.abs(vy - worldY) <= handleProximity,
+        );
+
+        canvas.style.cursor = isNearHandle ? 'grab' : '';
+    }
 }
 
 type PlotFlickerState = {

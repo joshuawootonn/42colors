@@ -5,11 +5,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { X } from '@/components/icons/x';
 import { IconButton } from '@/components/ui/icon-button';
 import { Popover, PopoverContent } from '@/components/ui/popover';
+import { usePlots } from '@/lib/plots/plots.rest';
 import { canvasToClient } from '@/lib/utils/clientToCanvasConversion';
+import { useQuery } from '@tanstack/react-query';
 import { useSelector } from '@xstate/store/react';
 
 import { store } from '../../store';
-import { type Plot } from './claimer.rest';
+import { getUserPlots } from './claimer.rest';
 import { DeletePlotButton } from './delete-plot-button';
 import { EditPlotForm } from './edit-plot-form';
 import { getPlotOverlayPositionForPolygons } from './get-plot-overlay-position';
@@ -25,6 +27,10 @@ export function SelectedPlotPopover() {
         store,
         (state) => state.context.queryClient,
     );
+    const activeAction = useSelector(
+        store,
+        (state) => state.context.activeAction,
+    );
 
     const transform = useMemo(
         () => `translate(-50%, ${canvasToClient(-0.2, camera.zoom)}px)`,
@@ -34,24 +40,35 @@ export function SelectedPlotPopover() {
     const [isOpen, setIsOpen] = useState(false);
     const [triggerPosition, setTriggerPosition] = useState({ x: 0, y: 0 });
 
+    // Derive hidden state from activeAction
+    const isHidden =
+        activeAction?.type === 'claimer-edit' ||
+        activeAction?.type === 'claimer-resize';
+
+    // Get user plots reactively
+    const { data: userPlots } = useQuery({
+        queryKey: ['user', 'plots'],
+        queryFn: getUserPlots,
+        enabled: !!selectedPlotId && !!queryClient,
+    });
+    const { data: recentPlots } = usePlots(100, {
+        enabled: !!selectedPlotId && !!queryClient,
+    });
+
     // Get the selected plot data
     const selectedPlot = useMemo(() => {
-        if (!selectedPlotId || !queryClient) return null;
+        if (!selectedPlotId) return null;
 
         // Try to find the plot in user plots first
-        const userPlots = (queryClient.getQueryData(['user', 'plots']) ??
-            []) as Plot[];
-        const userPlot = userPlots.find((plot) => plot.id === selectedPlotId);
+        const userPlot = userPlots?.find((plot) => plot.id === selectedPlotId);
         if (userPlot) return userPlot;
 
         // Try to find in recent plots
-        const recentPlots = (queryClient.getQueryData(['plots', 'list']) ??
-            []) as Plot[];
-        const recentPlot = recentPlots.find(
+        const recentPlot = recentPlots?.find(
             (plot) => plot.id === selectedPlotId,
         );
         return recentPlot || null;
-    }, [selectedPlotId, queryClient]);
+    }, [selectedPlotId, userPlots, recentPlots]);
 
     useEffect(() => {
         if (
@@ -61,8 +78,22 @@ export function SelectedPlotPopover() {
             typeof window !== 'undefined' &&
             user?.id === selectedPlot.userId
         ) {
+            // Use the simplified polygon from active action if resizing/editing
+            let polygonToUse = selectedPlot.polygon;
+            if (
+                activeAction?.type === 'claimer-resize' &&
+                activeAction.plotId === selectedPlot.id
+            ) {
+                polygonToUse = activeAction.simplifiedPolygon;
+            } else if (
+                activeAction?.type === 'claimer-edit' &&
+                activeAction.plotId === selectedPlot.id
+            ) {
+                polygonToUse = activeAction.polygon;
+            }
+
             const center = getPlotOverlayPositionForPolygons(
-                [selectedPlot.polygon],
+                [polygonToUse],
                 camera,
             );
             setTriggerPosition(center);
@@ -70,7 +101,7 @@ export function SelectedPlotPopover() {
         } else {
             setIsOpen(false);
         }
-    }, [selectedPlot, camera, user]);
+    }, [selectedPlot, camera, user, activeAction]);
 
     // Don't render if no user, no selected plot, or user doesn't own the plot
     if (!user || !selectedPlot || user.id !== selectedPlot.userId) {
@@ -100,6 +131,8 @@ export function SelectedPlotPopover() {
                         left: triggerPosition.x,
                         top: triggerPosition.y,
                         transform,
+                        opacity: isHidden ? 0 : 1,
+                        pointerEvents: isHidden ? 'none' : 'auto',
                     },
                 }}
                 hideCloseButton={true}

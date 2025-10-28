@@ -15,6 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 
 import { store } from '../../store';
+import { isInitialStore } from '../../utils/is-initial-store';
 import { type Plot, PlotError, updatePlot } from './claimer.rest';
 
 const plotUpdateSchema = z.object({
@@ -59,7 +60,7 @@ export function EditPlotForm({ plot, triggerProps }: EditPlotFormProps) {
             plot,
         }: {
             plotId: number;
-            plot: Partial<Pick<Plot, 'name' | 'description'>>;
+            plot: Partial<Pick<Plot, 'name' | 'description' | 'polygon'>>;
         }) => updatePlot(plotId, plot),
         onSuccess: () => {
             const context = store.getSnapshot().context;
@@ -72,6 +73,11 @@ export function EditPlotForm({ plot, triggerProps }: EditPlotFormProps) {
             context.queryClient?.invalidateQueries({
                 queryKey: ['user', 'logs'],
             });
+            context.queryClient?.invalidateQueries({
+                queryKey: ['plots'],
+            });
+            // Clear the active action after successful save
+            store.trigger.clearClaim();
             setIsOpen(false);
         },
         onError: (error) => {
@@ -102,9 +108,30 @@ export function EditPlotForm({ plot, triggerProps }: EditPlotFormProps) {
     });
 
     const onSubmit = (data: PlotUpdateForm) => {
+        const context = store.getSnapshot().context;
+        if (isInitialStore(context)) return;
+
+        // Get the modified polygon from the active action if it exists
+        let polygon = plot.polygon;
+        if (
+            context.activeAction?.type === 'claimer-edit' &&
+            context.activeAction.plotId === plot.id
+        ) {
+            polygon = context.activeAction.polygon;
+        } else if (
+            context.activeAction?.type === 'claimer-resize' &&
+            context.activeAction.plotId === plot.id
+        ) {
+            polygon = context.activeAction.simplifiedPolygon;
+        }
+
         updatePlotMutation({
             plotId: plot.id,
-            plot: data,
+            plot: {
+                name: data.name,
+                description: data.description,
+                polygon,
+            },
         });
     };
 
@@ -115,11 +142,19 @@ export function EditPlotForm({ plot, triggerProps }: EditPlotFormProps) {
                 name: plot.name,
                 description: plot.description,
             });
+            // Enter edit mode by starting a resize action
+            store.trigger.startEditPlot({ plotId: plot.id });
+        } else {
+            store.trigger.clearClaim();
         }
     };
 
     return (
-        <Popover type="temporary" open={isOpen} onOpenChange={handleOpenChange}>
+        <Popover
+            type="persistent"
+            open={isOpen}
+            onOpenChange={handleOpenChange}
+        >
             <PopoverTrigger
                 render={(props) => (
                     <Button {...props} {...triggerProps}>
@@ -127,7 +162,7 @@ export function EditPlotForm({ plot, triggerProps }: EditPlotFormProps) {
                     </Button>
                 )}
             />
-            <PopoverContent className="w-80 p-2" hideCloseButton={true}>
+            <PopoverContent className="w-80 p-2" hideCloseButton={false}>
                 <PopoverHeading>Edit Plot</PopoverHeading>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
                     {errors.polygon && (

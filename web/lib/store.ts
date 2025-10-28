@@ -71,6 +71,7 @@ import { clampBrushSize } from './tools/brush/brush-utils';
 import {
     ClaimerTool,
     completeRectangleClaimerAction,
+    startEditAction,
 } from './tools/claimer/claimer';
 import {
     Plot,
@@ -1127,6 +1128,29 @@ export const store = createStore({
                     ...context.toolSettings,
                     claimer: { selectedPlotId: plotId },
                 },
+            };
+        },
+
+        startEditPlot: (context, { plotId }: { plotId: number }) => {
+            if (isInitialStore(context)) return;
+
+            const userPlots = (context.queryClient.getQueryData([
+                'user',
+                'plots',
+            ]) ?? []) as Plot[];
+
+            const plot = userPlots.find((p) => p.id === plotId);
+
+            if (!plot?.polygon) {
+                console.error(
+                    'Cannot edit plot: plot not found or has no polygon',
+                );
+                return context;
+            }
+
+            return {
+                ...context,
+                activeAction: startEditAction(plotId, plot.polygon),
             };
         },
 
