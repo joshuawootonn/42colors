@@ -1,5 +1,6 @@
 defmodule Api.Canvas.PlotLoggingIntegrationTest do
   use Api.DataCase
+  import Ecto.Query
 
   alias Api.Canvas.Plot
   alias Api.Logs.Log
@@ -43,15 +44,16 @@ defmodule Api.Canvas.PlotLoggingIntegrationTest do
       assert log.diffs["name"]["new"] == "Test Plot"
       assert log.diffs["description"]["old"] == nil
       assert log.diffs["description"]["new"] == "Test Description"
-      assert log.diffs["polygon"]["old_pixel_count"] == 0
-      assert log.diffs["polygon"]["new_pixel_count"] == 100
+      assert log.diffs["polygonPixelCountChanged"] == true
+      assert log.diffs["oldPolygonPixelCount"] == 0
+      assert log.diffs["newPolygonPixelCount"] == 100
 
       # Verify user balance was updated
       updated_user = Api.Repo.get!(User, user.id)
       assert updated_user.balance == 900
     end
 
-    test "creates log entry when plot is updated" do
+    test "creates log entry when plot metadata is updated" do
       user = user_fixture()
       user = Api.Repo.update!(Ecto.Changeset.change(user, balance: 1000))
 
@@ -85,6 +87,62 @@ defmodule Api.Canvas.PlotLoggingIntegrationTest do
       # Verify diffs map tracks what was updated
       assert update_log.diffs["name"]["old"] == "Original Plot"
       assert update_log.diffs["name"]["new"] == "Updated Plot"
+    end
+
+    test "creates log entry when plot polygon is resized" do
+      user = user_fixture()
+      user = Api.Repo.update!(Ecto.Changeset.change(user, balance: 1000))
+
+      # Create plot first with 100 pixel polygon
+      original_polygon = %Geo.Polygon{
+        coordinates: [[{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}]],
+        srid: 4326
+      }
+
+      {:ok, plot} =
+        Plot.Service.create_plot(%{
+          name: "Resizable Plot",
+          user_id: user.id,
+          polygon: original_polygon
+        })
+
+      # User balance should be 900 after spending 100 pixels
+      assert Api.Repo.get!(User, user.id).balance == 900
+
+      # Resize polygon to 200 pixels (20x10)
+      new_polygon = %Geo.Polygon{
+        coordinates: [[{0, 0}, {0, 10}, {20, 10}, {20, 0}, {0, 0}]],
+        srid: 4326
+      }
+
+      assert {:ok, _updated_plot} = Plot.Service.update_plot(plot, %{polygon: new_polygon})
+
+      # Verify update log was created
+      update_logs =
+        Api.Repo.all(
+          from l in Log,
+            where: l.plot_id == ^plot.id and l.log_type == "plot_updated",
+            order_by: [desc: l.inserted_at]
+        )
+
+      update_log = List.first(update_logs)
+      assert update_log != nil
+      assert update_log.user_id == user.id
+
+      # Verify balance tracking (spent 100 more pixels)
+      assert update_log.old_balance == 900
+      assert update_log.new_balance == 800
+      balance_diff = update_log.new_balance - update_log.old_balance
+      assert balance_diff == -100
+
+      # Verify diffs map tracks polygon resize
+      assert update_log.diffs["polygonPixelCountChanged"] == true
+      assert update_log.diffs["oldPolygonPixelCount"] == 100
+      assert update_log.diffs["newPolygonPixelCount"] == 200
+
+      # Verify user balance was updated
+      updated_user = Api.Repo.get!(User, user.id)
+      assert updated_user.balance == 800
     end
 
     test "creates log entry when plot is deleted" do

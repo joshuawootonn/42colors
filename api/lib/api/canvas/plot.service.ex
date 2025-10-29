@@ -368,7 +368,7 @@ defmodule Api.Canvas.Plot.Service do
         changes
       end
 
-    # Check polygon change (for future when polygon editing is supported)
+    # Check polygon change
     changes =
       if Map.has_key?(attrs, "polygon") || Map.has_key?(attrs, :polygon) do
         new_polygon = Map.get(attrs, "polygon") || Map.get(attrs, :polygon)
@@ -377,10 +377,10 @@ defmodule Api.Canvas.Plot.Service do
           old_pixel_count = Plot.Repo.get_size(plot.polygon)
           new_pixel_count = Plot.Repo.get_size(new_polygon)
 
-          Map.put(changes, "polygon", %{
-            "old_pixel_count" => old_pixel_count,
-            "new_pixel_count" => new_pixel_count
-          })
+          changes
+          |> Map.put("polygonPixelCountChanged", true)
+          |> Map.put("oldPolygonPixelCount", old_pixel_count)
+          |> Map.put("newPolygonPixelCount", new_pixel_count)
         else
           changes
         end

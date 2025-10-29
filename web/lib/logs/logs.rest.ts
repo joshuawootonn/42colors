@@ -81,6 +81,9 @@ const plotUpdatedLogSchema = baseLogSchema.extend({
             newName: z.string().optional(),
             oldDescription: z.string().optional(),
             newDescription: z.string().optional(),
+            polygonPixelCountChanged: z.boolean().optional(),
+            oldPolygonPixelCount: z.number().optional(),
+            newPolygonPixelCount: z.number().optional(),
         })
         .nullable(),
 });
