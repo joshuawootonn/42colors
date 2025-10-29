@@ -1,5 +1,6 @@
 import { toasts } from '@/components/ui/toast';
 
+import { ACTION_TYPES } from '../../action-types';
 import { getZoomMultiplier } from '../../camera';
 import { getPixelSize } from '../../canvas/canvas';
 import {
@@ -30,8 +31,8 @@ function redrawTelegraph(context: InitializedStore) {
     const { xOffset, yOffset } = getCameraOffset(context.camera);
 
     if (
-        context.activeAction?.type === 'claimer-edit' ||
-        context.activeAction?.type === 'claimer-resize'
+        context.activeAction?.type === ACTION_TYPES.CLAIMER_EDIT ||
+        context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE
     ) {
         const webGPUPolygons = [
             {
@@ -56,7 +57,7 @@ function redrawTelegraph(context: InitializedStore) {
     }
 
     // Handle normal claiming telegraph
-    if (context.activeAction?.type !== 'claimer-active') {
+    if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE) {
         return context;
     }
 
@@ -85,24 +86,24 @@ function redrawTelegraph(context: InitializedStore) {
 }
 
 export type ClaimerComplete = {
-    type: 'claimer-complete';
+    type: typeof ACTION_TYPES.CLAIMER_COMPLETE;
     polygons: Polygon[];
 };
 
 export type ClaimerActive = {
-    type: 'claimer-active';
+    type: typeof ACTION_TYPES.CLAIMER_ACTIVE;
     rects: Rect[];
     nextRect: Rect | null;
 };
 
 export type ClaimerEdit = {
-    type: 'claimer-edit';
+    type: typeof ACTION_TYPES.CLAIMER_EDIT;
     plotId: number;
     polygon: Polygon;
 };
 
 export type ClaimerResize = {
-    type: 'claimer-resize';
+    type: typeof ACTION_TYPES.CLAIMER_RESIZE;
     plotId: number;
     vertexIndex: number;
     originalPolygon: Polygon;
@@ -112,7 +113,7 @@ export type ClaimerResize = {
 
 export function startClaimerAction(rect: Rect): ClaimerActive {
     return {
-        type: 'claimer-active',
+        type: ACTION_TYPES.CLAIMER_ACTIVE,
         rects: [],
         nextRect: rect,
     };
@@ -122,7 +123,7 @@ export function newRectAction(
     rect: Rect,
 ): ClaimerActive {
     return {
-        type: 'claimer-active',
+        type: ACTION_TYPES.CLAIMER_ACTIVE,
         rects: activeBrushAction.rects,
         nextRect: rect,
     };
@@ -137,14 +138,14 @@ export function completeRectAction(
 
     if (size === 0) {
         return {
-            type: 'claimer-active',
+            type: ACTION_TYPES.CLAIMER_ACTIVE,
             rects: activeBrushAction.rects,
             nextRect: null,
         };
     }
 
     return {
-        type: 'claimer-active',
+        type: ACTION_TYPES.CLAIMER_ACTIVE,
         rects: activeBrushAction.nextRect
             ? activeBrushAction.rects.concat(activeBrushAction.nextRect)
             : activeBrushAction.rects,
@@ -166,7 +167,7 @@ export function completeRectangleClaimerAction(
     polygons: Polygon[],
 ): ClaimerComplete {
     return {
-        type: 'claimer-complete',
+        type: ACTION_TYPES.CLAIMER_COMPLETE,
         polygons,
     };
 }
@@ -176,7 +177,7 @@ export function startEditAction(plotId: number, polygon: Polygon): ClaimerEdit {
         vertices: polygon.vertices.slice(0, -1),
     });
     return {
-        type: 'claimer-edit',
+        type: ACTION_TYPES.CLAIMER_EDIT,
         plotId,
         polygon: nonMatchingEndpointsPolygon,
     };
@@ -188,7 +189,7 @@ export function startResizeAction(
     polygon: Polygon,
 ): ClaimerResize {
     return {
-        type: 'claimer-resize',
+        type: ACTION_TYPES.CLAIMER_RESIZE,
         plotId,
         vertexIndex,
         originalPolygon: polygon,
@@ -288,7 +289,7 @@ function onPointerDown(
     const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     // If we're in edit mode, transition to resize mode when clicking a vertex
-    if (context.activeAction?.type === 'claimer-edit') {
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_EDIT) {
         const handleProximity = 2; // world units
         const clickedVertexIndex =
             context.activeAction.polygon.vertices.findIndex(
@@ -316,7 +317,7 @@ function onPointerDown(
     });
 
     const nextActiveAction =
-        context.activeAction?.type !== 'claimer-active'
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE
             ? startClaimerAction(rect)
             : newRectAction(context.activeAction, rect);
 
@@ -334,7 +335,7 @@ function onPointerMove(
     const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     // Handle resize action
-    if (context.activeAction?.type === 'claimer-resize') {
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE) {
         const updatedAction = updateResizeAction(
             context.activeAction,
             absolutePoint.x,
@@ -348,7 +349,7 @@ function onPointerMove(
     }
 
     if (
-        context.activeAction?.type !== 'claimer-active' ||
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE ||
         context.activeAction.nextRect == null
     ) {
         return context;
@@ -375,7 +376,7 @@ function onWheel(
     const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     // Handle resize action during wheel
-    if (context.activeAction?.type === 'claimer-resize') {
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE) {
         const updatedAction = updateResizeAction(
             context.activeAction,
             absolutePoint.x,
@@ -389,7 +390,7 @@ function onWheel(
     }
 
     if (
-        context.activeAction?.type !== 'claimer-active' ||
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE ||
         context.activeAction.nextRect == null
     ) {
         return context;
@@ -413,7 +414,7 @@ function onPointerOut(
     context: InitializedStore,
     __: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-    if (context.activeAction?.type !== 'claimer-active') {
+    if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE) {
         return context;
     }
     const completedRectAction = completeRectAction(context.activeAction);
@@ -436,18 +437,18 @@ function onPointerUp(
     context: InitializedStore,
     __: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-    if (context.activeAction?.type === 'claimer-resize') {
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE) {
         return {
             ...context,
             activeAction: {
-                type: 'claimer-edit',
+                type: ACTION_TYPES.CLAIMER_EDIT,
                 plotId: context.activeAction.plotId,
                 polygon: context.activeAction.simplifiedPolygon,
             },
         };
     }
 
-    if (context.activeAction?.type !== 'claimer-active') {
+    if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE) {
         return context;
     }
 

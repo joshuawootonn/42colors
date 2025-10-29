@@ -8,6 +8,7 @@ import { Popover, PopoverContent } from '@/components/ui/popover';
 import { canvasToClient } from '@/lib/utils/clientToCanvasConversion';
 import { useSelector } from '@xstate/store/react';
 
+import { ACTION_TYPES } from '../../action-types';
 import { store } from '../../store';
 import { CreatePlotForm } from './create-plot-form';
 import { getPlotOverlayPositionForActiveAction } from './get-plot-overlay-position';
@@ -30,7 +31,7 @@ export function NewPlotPopover() {
 
     useEffect(() => {
         if (
-            activeAction?.type === 'claimer-active' &&
+            activeAction?.type === ACTION_TYPES.CLAIMER_ACTIVE &&
             camera &&
             typeof window !== 'undefined'
         ) {
@@ -45,7 +46,7 @@ export function NewPlotPopover() {
         }
     }, [activeAction, camera]);
 
-    if (user == null || activeAction?.type !== 'claimer-active') {
+    if (user == null || activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE) {
         return null;
     }
 

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { ACTION_TYPES } from '@/lib/action-types';
 import {
     getCompositePolygons,
     getPolygonSize,
@@ -15,7 +16,7 @@ export function BalanceDiff() {
     const user = useSelector(store, (state) => state.context.user);
     const activeClaimAction = useSelector(store, (state) => {
         const activeAction = state.context.activeAction;
-        if (activeAction?.type !== 'claimer-active') return null;
+        if (activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE) return null;
         return activeAction;
     });
 

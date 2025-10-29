@@ -4,6 +4,7 @@ import { Channel, Socket } from 'phoenix';
 import { QueryClient } from '@tanstack/react-query';
 import { createStore } from '@xstate/store';
 
+import { ACTION_TYPES } from './action-types';
 import {
     Action,
     derivePixelsFromActions,
@@ -326,8 +327,8 @@ export const store = createStore({
 
             const next_actions = context.actions.map((action) => {
                 if (
-                    (action.type === 'brush-active' ||
-                        action.type === 'erasure-active') &&
+                    (action.type === ACTION_TYPES.BRUSH_ACTIVE ||
+                        action.type === ACTION_TYPES.ERASURE_ACTIVE) &&
                     action.action_id === event.action_id
                 ) {
                     // todo(josh): I think this could be much faster. Need to learn about perf.
@@ -370,7 +371,7 @@ export const store = createStore({
 
             const pixels = pointsToPixels(
                 actionToUndo.points,
-                actionToUndo.type === 'erasure-active'
+                actionToUndo.type === ACTION_TYPES.ERASURE_ACTIVE
                     ? TRANSPARENT_REF
                     : actionToUndo.color_ref,
             );
@@ -420,7 +421,7 @@ export const store = createStore({
 
             const pixels = pointsToPixels(
                 actionToRedo.points,
-                actionToRedo.type === 'erasure-active'
+                actionToRedo.type === ACTION_TYPES.ERASURE_ACTIVE
                     ? TRANSPARENT_REF
                     : actionToRedo.color_ref,
             );
@@ -1056,7 +1057,7 @@ export const store = createStore({
         completeClaim: (context) => {
             if (isInitialStore(context)) return;
 
-            if (context.activeAction?.type !== 'claimer-active') {
+            if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE) {
                 throw new Error(
                     "Attempted to complete a claim when there isn't on active",
                 );

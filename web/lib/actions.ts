@@ -1,3 +1,4 @@
+import { ACTION_TYPES } from './action-types';
 import { Camera } from './camera';
 import { AbsolutePoint, Pixel } from './geometry/coord';
 import { ColorRef, TRANSPARENT_REF } from './palette';
@@ -44,7 +45,7 @@ function create_brush_fixture(
 ): BrushActive {
     return {
         action_id: '00000000-0000-0000-0000-000000000000',
-        type: 'brush-active',
+        type: ACTION_TYPES.BRUSH_ACTIVE,
         color_ref,
         points,
         //todo(josh): these shouldn't be faked like this, update the function
@@ -54,7 +55,7 @@ function create_brush_fixture(
 function create_erase_fixture(points: AbsolutePoint[]): ErasureActive {
     return {
         action_id: '11111111-1111-1111-1111-111111111111',
-        type: 'erasure-active',
+        type: ACTION_TYPES.ERASURE_ACTIVE,
         points,
         //todo(josh): these shouldn't be faked like this, update the function
         anchorPoints: points,
@@ -106,9 +107,9 @@ export function derivePixelsFromActions(actions: Action[]): Pixel[] {
     for (let i = 0; i < completedActions.length; i++) {
         const action = completedActions[i];
 
-        if (action.type === 'brush-active') {
+        if (action.type === ACTION_TYPES.BRUSH_ACTIVE) {
             pixels.push(...pointsToPixels(action.points, action.color_ref));
-        } else if (action.type === 'erasure-active') {
+        } else if (action.type === ACTION_TYPES.ERASURE_ACTIVE) {
             pixels.push(...pointsToPixels(action.points, TRANSPARENT_REF));
         } else if (action.type === 'realtime-active') {
             pixels.push(...action.pixels);
@@ -135,7 +136,7 @@ export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
             if (undoAction != null) {
                 completedActions.push(undoAction);
 
-                if (undoAction.type === 'brush-active') {
+                if (undoAction.type === ACTION_TYPES.BRUSH_ACTIVE) {
                     const undonePixels = pointsToPixels(
                         undoAction.points,
                         undoAction.color_ref,
@@ -148,7 +149,7 @@ export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
                                     undonePixel.y === pixel.y,
                             ),
                     );
-                } else if (undoAction.type === 'erasure-active') {
+                } else if (undoAction.type === ACTION_TYPES.ERASURE_ACTIVE) {
                     const undonePixels = pointsToPixels(
                         undoAction.points,
                         TRANSPARENT_REF,
@@ -168,11 +169,11 @@ export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
 
             if (action != null) {
                 undoStack.push(action);
-                if (action.type === 'brush-active') {
+                if (action.type === ACTION_TYPES.BRUSH_ACTIVE) {
                     unsetPixels.push(
                         ...pointsToPixels(action.points, action.color_ref),
                     );
-                } else if (action.type === 'erasure-active') {
+                } else if (action.type === ACTION_TYPES.ERASURE_ACTIVE) {
                     unsetPixels.push(
                         ...pointsToPixels(action.points, TRANSPARENT_REF),
                     );
@@ -244,8 +245,8 @@ export function getActionToUndo(
             .reverse()
             .find(
                 (action) =>
-                    action.type === 'brush-active' ||
-                    action.type === 'erasure-active',
+                    action.type === ACTION_TYPES.BRUSH_ACTIVE ||
+                    action.type === ACTION_TYPES.ERASURE_ACTIVE,
             ) ?? null
     );
 }
@@ -263,8 +264,8 @@ export function getActionToRedo(
             .reverse()
             .find(
                 (action) =>
-                    action.type === 'brush-active' ||
-                    action.type === 'erasure-active',
+                    action.type === ACTION_TYPES.BRUSH_ACTIVE ||
+                    action.type === ACTION_TYPES.ERASURE_ACTIVE,
             ) ?? null
     );
 }

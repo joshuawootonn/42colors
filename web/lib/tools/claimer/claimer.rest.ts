@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { ACTION_TYPES } from '../../action-types';
 import {
     completePolygonRing,
     getCompositePolygons,
@@ -63,7 +64,7 @@ export async function createPlot(plotData: {
     const context = store.getSnapshot().context;
     if (
         isInitialStore(context) ||
-        context.activeAction?.type !== 'claimer-active'
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE
     ) {
         throw new Error(
             "Attempted to create a plot when there isn't an active action",

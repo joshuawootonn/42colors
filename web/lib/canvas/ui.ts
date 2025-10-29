@@ -1,5 +1,6 @@
 import { createAtom } from '@xstate/store';
 
+import { ACTION_TYPES } from '../action-types';
 import { getZoomMultiplier } from '../camera';
 import { InitializedStore } from '../store';
 import { getCameraOffset } from '../tools/brush/brush';
@@ -62,8 +63,8 @@ export function redrawSelectedPlotHandles(context: InitializedStore) {
     if (!selectedPlot) return;
 
     if (
-        context.activeAction?.type !== 'claimer-resize' &&
-        context.activeAction?.type !== 'claimer-edit'
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_RESIZE &&
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_EDIT
     ) {
         return;
     }
@@ -102,7 +103,7 @@ export function redrawSelectedPlotHandles(context: InitializedStore) {
         const { clientX, clientY } = context.interaction.cursorPosition;
 
         // If actively resizing, show grabbing cursor
-        if (context.activeAction?.type === 'claimer-resize') {
+        if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE) {
             canvas.style.cursor = 'grabbing';
             return;
         }

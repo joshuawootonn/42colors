@@ -1,3 +1,4 @@
+import { ACTION_TYPES } from '../../action-types';
 import { Camera, getZoomMultiplier } from '../../camera';
 import { getPixelSize } from '../../canvas/canvas';
 import {
@@ -318,7 +319,7 @@ export function pointsToPixels(
 }
 
 export type BrushActive = {
-    type: 'brush-active';
+    type: typeof ACTION_TYPES.BRUSH_ACTIVE;
     action_id: string;
     color_ref: ColorRef;
     points: AbsolutePoint[];
@@ -330,7 +331,7 @@ export function isDuplicatePoint(
     canvasY: number,
     context: InitializedStore,
 ) {
-    if (context.activeAction?.type !== 'brush-active') return false;
+    if (context.activeAction?.type !== ACTION_TYPES.BRUSH_ACTIVE) return false;
     const lastPoint = context.activeAction?.points.at(-1);
     return lastPoint?.x === canvasX && lastPoint?.x === canvasY;
 }
@@ -341,7 +342,7 @@ export function startBrushAction(
     color_ref: ColorRef,
 ): BrushActive {
     return {
-        type: 'brush-active',
+        type: ACTION_TYPES.BRUSH_ACTIVE,
         action_id: uuid(),
         color_ref,
         points: brushPoints,
@@ -409,7 +410,7 @@ function onPointerMove(
     const { x, y } = getAbsolutePoint(e.clientX, e.clientY, context);
 
     if (
-        context.activeAction?.type !== 'brush-active' ||
+        context.activeAction?.type !== ACTION_TYPES.BRUSH_ACTIVE ||
         isDuplicatePoint(x, y, context)
     ) {
         return context;
@@ -453,7 +454,7 @@ function onWheel(
     const { x, y } = getAbsolutePoint(e.clientX, e.clientY, context);
 
     if (
-        context.activeAction?.type !== 'brush-active' ||
+        context.activeAction?.type !== ACTION_TYPES.BRUSH_ACTIVE ||
         isDuplicatePoint(x, y, context)
     ) {
         return context;
@@ -494,7 +495,8 @@ function onPointerOut(
     context: InitializedStore,
     enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-    if (context.activeAction?.type !== 'brush-active') return context;
+    if (context.activeAction?.type !== ACTION_TYPES.BRUSH_ACTIVE)
+        return context;
 
     const color_ref = context.activeAction.color_ref;
     const points = context.activeAction.points;
@@ -517,7 +519,8 @@ function onPointerUp(
     context: InitializedStore,
     enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-    if (context.activeAction?.type !== 'brush-active') return context;
+    if (context.activeAction?.type !== ACTION_TYPES.BRUSH_ACTIVE)
+        return context;
 
     const color_ref = context.activeAction.color_ref;
     const points = context.activeAction.points;

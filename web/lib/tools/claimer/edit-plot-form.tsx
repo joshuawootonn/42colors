@@ -14,6 +14,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 
+import { ACTION_TYPES } from '../../action-types';
 import { store } from '../../store';
 import { isInitialStore } from '../../utils/is-initial-store';
 import { type Plot, PlotError, updatePlot } from './claimer.rest';
@@ -114,12 +115,12 @@ export function EditPlotForm({ plot, triggerProps }: EditPlotFormProps) {
         // Get the modified polygon from the active action if it exists
         let polygon = plot.polygon;
         if (
-            context.activeAction?.type === 'claimer-edit' &&
+            context.activeAction?.type === ACTION_TYPES.CLAIMER_EDIT &&
             context.activeAction.plotId === plot.id
         ) {
             polygon = context.activeAction.polygon;
         } else if (
-            context.activeAction?.type === 'claimer-resize' &&
+            context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE &&
             context.activeAction.plotId === plot.id
         ) {
             polygon = context.activeAction.simplifiedPolygon;

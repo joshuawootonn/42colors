@@ -1,3 +1,4 @@
+import { ACTION_TYPES } from '../../action-types';
 import { getZoomMultiplier } from '../../camera';
 import { getPixelSize } from '../../canvas/canvas';
 import { AbsolutePoint } from '../../geometry/coord';
@@ -72,7 +73,7 @@ function redrawTelegraph(context: InitializedStore) {
 }
 
 export type ErasureActive = {
-    type: 'erasure-active';
+    type: typeof ACTION_TYPES.ERASURE_ACTIVE;
     action_id: string;
     points: AbsolutePoint[];
     anchorPoints: AbsolutePoint[];
@@ -83,7 +84,7 @@ export function startErasureAction(
     erasurePoints: AbsolutePoint[],
 ): ErasureActive {
     return {
-        type: 'erasure-active',
+        type: ACTION_TYPES.ERASURE_ACTIVE,
         action_id: uuid(),
         points: erasurePoints,
         anchorPoints: [anchorPoint],
@@ -131,7 +132,7 @@ function onPointerMove(
     const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     if (
-        context.activeAction?.type !== 'erasure-active' ||
+        context.activeAction?.type !== ACTION_TYPES.ERASURE_ACTIVE ||
         isDuplicatePoint(anchorPoint.x, anchorPoint.y, context)
     ) {
         return context;
@@ -175,7 +176,7 @@ function onWheel(
     const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     if (
-        context.activeAction?.type !== 'erasure-active' ||
+        context.activeAction?.type !== ACTION_TYPES.ERASURE_ACTIVE ||
         isDuplicatePoint(anchorPoint.x, anchorPoint.y, context)
     ) {
         return context;
@@ -216,7 +217,8 @@ function onPointerOut(
     context: InitializedStore,
     enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-    if (context.activeAction?.type !== 'erasure-active') return context;
+    if (context.activeAction?.type !== ACTION_TYPES.ERASURE_ACTIVE)
+        return context;
 
     const points = context.activeAction.points;
     const action_id = context.activeAction.action_id;
@@ -239,7 +241,8 @@ function onPointerUp(
     context: InitializedStore,
     enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-    if (context.activeAction?.type !== 'erasure-active') return context;
+    if (context.activeAction?.type !== ACTION_TYPES.ERASURE_ACTIVE)
+        return context;
 
     const points = context.activeAction.points;
     const action_id = context.activeAction.action_id;
