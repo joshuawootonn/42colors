@@ -116,6 +116,17 @@ defmodule ApiWeb.PlotController do
               }
             })
 
+          {:error, :polygon_too_small} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> json(%{
+              status: "error",
+              message: "Polygon must have an area of at least 1 pixel",
+              errors: %{
+                polygon: ["Polygon must have an area of at least 1 pixel"]
+              }
+            })
+
           {:error, %Ecto.Changeset{} = changeset} ->
             conn
             |> put_status(:unprocessable_entity)
@@ -203,6 +214,17 @@ defmodule ApiWeb.PlotController do
               message: "Insufficient balance to update plot",
               errors: %{
                 general: ["You don't have enough pixels to resize to this size"]
+              }
+            })
+
+          {:error, :polygon_too_small} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> json(%{
+              status: "error",
+              message: "Polygon must have an area of at least 1 pixel",
+              errors: %{
+                polygon: ["Polygon must have an area of at least 1 pixel"]
               }
             })
 

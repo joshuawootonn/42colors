@@ -214,5 +214,68 @@ defmodule Api.Canvas.PlotLoggingIntegrationTest do
       updated_user = Api.Repo.get!(User, user.id)
       assert updated_user.balance == 50
     end
+
+    test "rejects polygon with area less than 1 pixel on create" do
+      user = user_fixture()
+      user = Api.Repo.update!(Ecto.Changeset.change(user, balance: 1000))
+
+      # Create a very small polygon (less than 1 pixel area)
+      tiny_polygon = %Geo.Polygon{
+        coordinates: [[{0.0, 0.0}, {0.0, 0.5}, {0.5, 0.5}, {0.5, 0.0}, {0.0, 0.0}]],
+        srid: 4326
+      }
+
+      attrs = %{
+        name: "Tiny Plot",
+        user_id: user.id,
+        polygon: tiny_polygon
+      }
+
+      # Should fail due to polygon being too small
+      assert {:error, :polygon_too_small} = Plot.Service.create_plot(attrs)
+
+      # Verify no plot was created
+      assert Api.Repo.get_by(Plot, name: "Tiny Plot") == nil
+
+      # Verify user balance unchanged
+      updated_user = Api.Repo.get!(User, user.id)
+      assert updated_user.balance == 1000
+    end
+
+    test "rejects polygon with area less than 1 pixel on update" do
+      user = user_fixture()
+      user = Api.Repo.update!(Ecto.Changeset.change(user, balance: 1000))
+
+      # Create plot with valid polygon first
+      polygon = %Geo.Polygon{
+        coordinates: [[{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}]],
+        srid: 4326
+      }
+
+      {:ok, plot} =
+        Plot.Service.create_plot(%{
+          name: "Normal Plot",
+          user_id: user.id,
+          polygon: polygon
+        })
+
+      # Try to update with a very small polygon
+      tiny_polygon = %Geo.Polygon{
+        coordinates: [[{0.0, 0.0}, {0.0, 0.5}, {0.5, 0.5}, {0.5, 0.0}, {0.0, 0.0}]],
+        srid: 4326
+      }
+
+      # Should fail due to polygon being too small
+      assert {:error, :polygon_too_small} =
+               Plot.Service.update_plot(plot, %{polygon: tiny_polygon})
+
+      # Verify plot polygon unchanged
+      unchanged_plot = Api.Repo.get!(Plot, plot.id)
+      assert unchanged_plot.polygon == polygon
+
+      # Verify user balance unchanged (spent 100 on original, should still be 900)
+      updated_user = Api.Repo.get!(User, user.id)
+      assert updated_user.balance == 900
+    end
   end
 end

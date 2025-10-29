@@ -89,64 +89,70 @@ defmodule Api.Canvas.Plot.Service do
         Plot.Repo.create_plot(attrs)
 
       polygon ->
-        case check_for_overlaps(polygon, nil) do
-          [] ->
-            # No overlaps, proceed with creation and logging
-            user_id = Map.get(attrs, "user_id") || Map.get(attrs, :user_id)
-            pixel_count = Plot.Repo.get_size(polygon)
-            # Negative because user is spending currency
-            cost = -pixel_count
+        # Validate polygon size
+        pixel_count = Plot.Repo.get_size(polygon)
 
-            # Calculate what fields are being set (for logging)
-            empty_plot = %Plot{}
-            changes = get_plot_diff(empty_plot, attrs)
+        if pixel_count < 1 do
+          {:error, :polygon_too_small}
+        else
+          case check_for_overlaps(polygon, nil) do
+            [] ->
+              # No overlaps, proceed with creation and logging
+              user_id = Map.get(attrs, "user_id") || Map.get(attrs, :user_id)
+              # Negative because user is spending currency
+              cost = -pixel_count
 
-            # Check if user_id is provided before fetching user
-            if is_nil(user_id) do
-              # If no user_id provided, proceed with normal validation (will fail in changeset)
-              Plot.Repo.create_plot(attrs)
-            else
-              # Get user outside of the transaction
-              case Repo.get(Api.Accounts.User, user_id) do
-                nil ->
-                  {:error, :user_not_found}
+              # Calculate what fields are being set (for logging)
+              empty_plot = %Plot{}
+              changes = get_plot_diff(empty_plot, attrs)
 
-                user ->
-                  # Calculate balance diff using the public function
-                  balance_change = LogService.calculate_balance_change(user.balance, cost)
+              # Check if user_id is provided before fetching user
+              if is_nil(user_id) do
+                # If no user_id provided, proceed with normal validation (will fail in changeset)
+                Plot.Repo.create_plot(attrs)
+              else
+                # Get user outside of the transaction
+                case Repo.get(Api.Accounts.User, user_id) do
+                  nil ->
+                    {:error, :user_not_found}
 
-                  Multi.new()
-                  |> Multi.insert(:plot, Plot.changeset(%Plot{}, attrs))
-                  |> Multi.run(:log, fn _repo, %{plot: plot} ->
-                    LogService.create_log(%{
-                      user_id: user_id,
-                      old_balance: balance_change.old_balance,
-                      new_balance: balance_change.new_balance,
-                      log_type: "plot_created",
-                      plot_id: plot.id,
-                      diffs: changes
-                    })
-                  end)
-                  |> Repo.transaction()
-                  |> case do
-                    {:ok, %{plot: plot, log: {_log, _user}}} ->
-                      {:ok, plot}
+                  user ->
+                    # Calculate balance diff using the public function
+                    balance_change = LogService.calculate_balance_change(user.balance, cost)
 
-                    {:error, :plot, changeset, _changes} ->
-                      {:error, changeset}
+                    Multi.new()
+                    |> Multi.insert(:plot, Plot.changeset(%Plot{}, attrs))
+                    |> Multi.run(:log, fn _repo, %{plot: plot} ->
+                      LogService.create_log(%{
+                        user_id: user_id,
+                        old_balance: balance_change.old_balance,
+                        new_balance: balance_change.new_balance,
+                        log_type: "plot_created",
+                        plot_id: plot.id,
+                        diffs: changes
+                      })
+                    end)
+                    |> Repo.transaction()
+                    |> case do
+                      {:ok, %{plot: plot, log: {_log, _user}}} ->
+                        {:ok, plot}
 
-                    {:error, :log, reason, _changes} ->
-                      {:error, reason}
+                      {:error, :plot, changeset, _changes} ->
+                        {:error, changeset}
 
-                    {:error, _failed_operation, reason, _changes} ->
-                      {:error, reason}
-                  end
+                      {:error, :log, reason, _changes} ->
+                        {:error, reason}
+
+                      {:error, _failed_operation, reason, _changes} ->
+                        {:error, reason}
+                    end
+                end
               end
-            end
 
-          overlapping_plots ->
-            # Found overlaps, return error with details
-            {:error, :overlapping_plots, overlapping_plots}
+            overlapping_plots ->
+              # Found overlaps, return error with details
+              {:error, :overlapping_plots, overlapping_plots}
+          end
         end
     end
   end
@@ -244,14 +250,21 @@ defmodule Api.Canvas.Plot.Service do
         _update_plot(plot, attrs, changes)
 
       polygon ->
-        case check_for_overlaps(polygon, plot.id) do
-          [] ->
-            # No overlaps, proceed with update and logging
-            _update_plot(plot, attrs, changes)
+        # Validate polygon size
+        pixel_count = Plot.Repo.get_size(polygon)
 
-          overlapping_plots ->
-            # Found overlaps, return error with details
-            {:error, :overlapping_plots, overlapping_plots}
+        if pixel_count < 1 do
+          {:error, :polygon_too_small}
+        else
+          case check_for_overlaps(polygon, plot.id) do
+            [] ->
+              # No overlaps, proceed with update and logging
+              _update_plot(plot, attrs, changes)
+
+            overlapping_plots ->
+              # Found overlaps, return error with details
+              {:error, :overlapping_plots, overlapping_plots}
+          end
         end
     end
   end
