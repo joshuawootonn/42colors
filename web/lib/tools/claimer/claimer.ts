@@ -5,6 +5,7 @@ import { getPixelSize } from '../../canvas/canvas';
 import {
     Polygon,
     getCompositePolygons,
+    getPolygonSize,
     polygonSchema,
     rectToPolygonSchema,
 } from '../../geometry/polygon';
@@ -254,10 +255,18 @@ export function updateResizeAction(
         vertices,
     };
 
+    const simplified = simplifyPolygon(modifiedPolygon);
+
+    // Prevent resizing to less than 1 pixel area
+    if (getPolygonSize(simplified) < 1) {
+        // Return the current state without applying the change
+        return resizeAction;
+    }
+
     return {
         ...resizeAction,
         modifiedPolygon,
-        simplifiedPolygon: simplifyPolygon(modifiedPolygon),
+        simplifiedPolygon: simplified,
     };
 }
 

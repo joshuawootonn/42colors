@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
     completePolygonRing,
     getCompositePolygons,
+    getPolygonSize,
     polygonSchema,
     rectToPolygonSchema,
 } from '../../geometry/polygon';
@@ -79,6 +80,13 @@ export async function createPlot(plotData: {
         ),
     ).polygons;
 
+    // Validate polygon size before sending to backend
+    if (polygons.length === 0 || getPolygonSize(polygons[0]) < 1) {
+        throw new PlotError('Polygon must have an area of at least 1 pixel', {
+            polygon: ['Polygon must have an area of at least 1 pixel'],
+        });
+    }
+
     const response = await fetch(
         new URL(`/api/plots`, context.server.apiOrigin),
         {
@@ -154,6 +162,13 @@ export async function updatePlot(
     const context = store.getSnapshot().context;
     if (isInitialStore(context)) {
         throw new Error('Server context is not initialized');
+    }
+
+    // Validate polygon size before sending to backend
+    if (plot.polygon && getPolygonSize(plot.polygon) < 1) {
+        throw new PlotError('Polygon must have an area of at least 1 pixel', {
+            polygon: ['Polygon must have an area of at least 1 pixel'],
+        });
     }
 
     // Complete the polygon ring if polygon is provided
