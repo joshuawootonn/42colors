@@ -15,7 +15,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         <Sonner
             theme={theme as ToasterProps['theme']}
             className="toaster group"
-            duration={500000}
+            duration={5000}
             style={{ '--width': '420px' } as React.CSSProperties}
             offset={12}
             gap={12}
