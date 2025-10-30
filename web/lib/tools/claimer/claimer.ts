@@ -13,10 +13,53 @@ import {
 import { Rect, getRectSize, rectSchema } from '../../geometry/rect';
 import { simplifyPolygon } from '../../geometry/simplify-polygon';
 import { InitializedStore } from '../../store';
-import { CLAIMER_YELLOW } from '../../webgpu/colors';
+import { CLAIMER_YELLOW, GRAY_800 } from '../../webgpu/colors';
 import { EnqueueObject } from '../../xstate-internal-types';
 import { getAbsolutePoint, getCameraOffset } from '../brush/brush';
 import { getUserPlots } from './claimer.rest';
+
+function updateCursor(context: InitializedStore): void {
+    // Only update cursor when in edit or resize mode
+    if (
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_RESIZE &&
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_EDIT
+    ) {
+        return;
+    }
+
+    const canvas = context.canvas.rootCanvas;
+    if (!context.interaction?.cursorPosition) {
+        canvas.style.cursor = '';
+        return;
+    }
+
+    // If actively resizing, show grabbing cursor
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE) {
+        canvas.style.cursor = 'grabbing';
+        return;
+    }
+
+    // In edit mode, show grab cursor when near a handle
+    const { clientX, clientY } = context.interaction.cursorPosition;
+    const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
+    const { xOffset, yOffset } = getCameraOffset(context.camera);
+
+    // Convert screen coordinates to world coordinates
+    const worldX = (clientX - xOffset) / pixelSize + context.camera.x;
+    const worldY = (clientY - yOffset) / pixelSize + context.camera.y;
+
+    const polygon = context.activeAction.polygon;
+
+    // Check if cursor is near any vertex (handle)
+    const handleProximity = 0.5; // world units
+    const isNearHandle = polygon.vertices.some(
+        ([vx, vy]) =>
+            Math.abs(vx - worldX) <= handleProximity &&
+            Math.abs(vy - worldY) <= handleProximity,
+    );
+
+    canvas.style.cursor = isNearHandle ? 'grab' : '';
+}
 
 function redrawTelegraph(context: InitializedStore) {
     const telegraphWebGPUManager = context.canvas.telegraphWebGPUManager;
@@ -34,14 +77,13 @@ function redrawTelegraph(context: InitializedStore) {
         context.activeAction?.type === ACTION_TYPES.CLAIMER_EDIT ||
         context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE
     ) {
-        const webGPUPolygons = [
-            {
-                polygon:
-                    'polygon' in context.activeAction
-                        ? context.activeAction.polygon
-                        : context.activeAction.simplifiedPolygon,
-            },
-        ];
+        const polygon =
+            context.activeAction.type === ACTION_TYPES.CLAIMER_RESIZE
+                ? context.activeAction.simplifiedPolygon
+                : context.activeAction.polygon;
+
+        // Draw the simplified polygon outline
+        const webGPUPolygons = [{ polygon }];
 
         telegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
             xOffset,
@@ -51,6 +93,24 @@ function redrawTelegraph(context: InitializedStore) {
             pixelSize,
             lineWidth: 0.4,
             color: CLAIMER_YELLOW,
+        });
+
+        const lines = polygon.vertices.map(([x, y]) => ({
+            startX: x,
+            startY: y,
+            endX: x,
+            endY: y,
+            color: GRAY_800,
+            thickness: 0.45,
+        }));
+
+        telegraphWebGPUManager.redrawLines(lines, {
+            xOffset,
+            yOffset,
+            xCamera: context.camera.x,
+            yCamera: context.camera.y,
+            pixelSize,
+            cameraMode: 'relative' as const,
         });
 
         return context;
@@ -299,7 +359,7 @@ function onPointerDown(
             );
 
         if (clickedVertexIndex !== -1) {
-            return {
+            const updatedContext = {
                 ...context,
                 activeAction: startResizeAction(
                     context.activeAction.plotId,
@@ -307,6 +367,8 @@ function onPointerDown(
                     context.activeAction.polygon,
                 ),
             };
+            updateCursor(updatedContext);
+            return updatedContext;
         }
         return context;
     }
@@ -342,10 +404,19 @@ function onPointerMove(
             absolutePoint.y,
         );
 
-        return {
+        const updatedContext = {
             ...context,
             activeAction: updatedAction,
         };
+
+        updateCursor(updatedContext);
+        return updatedContext;
+    }
+
+    // Handle edit mode cursor updates
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_EDIT) {
+        updateCursor(context);
+        return context;
     }
 
     if (
@@ -414,6 +485,19 @@ function onPointerOut(
     context: InitializedStore,
     __: EnqueueObject<{ type: string }>,
 ): InitializedStore {
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE) {
+        console.log('onPointerOut resize', context.activeAction);
+        const updatedContext = {
+            ...context,
+            activeAction: {
+                type: ACTION_TYPES.CLAIMER_EDIT,
+                plotId: context.activeAction.plotId,
+                polygon: context.activeAction.simplifiedPolygon,
+            },
+        };
+        updateCursor(updatedContext);
+        return updatedContext;
+    }
     if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE) {
         return context;
     }
@@ -438,7 +522,7 @@ function onPointerUp(
     __: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE) {
-        return {
+        const updatedContext = {
             ...context,
             activeAction: {
                 type: ACTION_TYPES.CLAIMER_EDIT,
@@ -446,6 +530,8 @@ function onPointerUp(
                 polygon: context.activeAction.simplifiedPolygon,
             },
         };
+        updateCursor(updatedContext);
+        return updatedContext;
     }
 
     if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE) {

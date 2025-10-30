@@ -1,6 +1,5 @@
 import { createAtom } from '@xstate/store';
 
-import { ACTION_TYPES } from '../action-types';
 import { getZoomMultiplier } from '../camera';
 import { InitializedStore } from '../store';
 import { getCameraOffset } from '../tools/brush/brush';
@@ -44,84 +43,6 @@ export function redrawSelectedPlot(context: InitializedStore) {
         lineWidth: 0.37,
         color: BLUE,
     });
-}
-
-export function redrawSelectedPlotHandles(context: InitializedStore) {
-    const webgpuManager = context.canvas.uiWebGPUManager;
-    if (!webgpuManager) return;
-
-    const cachedPlots = context.queryClient
-        .getQueriesData({ queryKey: ['plots'] })
-        .flatMap(([_, data]) => (data as Plot[]) || []);
-
-    if (cachedPlots == null) return;
-
-    const selectedPlot = cachedPlots.find(
-        (plot) => plot.id === context.toolSettings.claimer.selectedPlotId,
-    );
-
-    if (!selectedPlot) return;
-
-    if (
-        context.activeAction?.type !== ACTION_TYPES.CLAIMER_RESIZE &&
-        context.activeAction?.type !== ACTION_TYPES.CLAIMER_EDIT
-    ) {
-        return;
-    }
-
-    // Only show handles if this plot belongs to the current user
-    if (context.user?.id !== selectedPlot.userId) return;
-
-    const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
-    const { xOffset, yOffset } = getCameraOffset(context.camera);
-
-    const lines: LineItem[] = (selectedPlot.polygon?.vertices || []).map(
-        ([x, y]) => ({
-            startX: x,
-            startY: y,
-            endX: x,
-            endY: y,
-            color: LIGHT_GRAY,
-            thickness: 0.45,
-        }),
-    );
-
-    if (lines.length === 0) return;
-
-    webgpuManager.redrawLines(lines, {
-        xOffset,
-        yOffset,
-        xCamera: context.camera.x,
-        yCamera: context.camera.y,
-        pixelSize,
-        cameraMode: 'relative',
-    });
-
-    // Update cursor when hovering near a handle
-    if (context.interaction?.cursorPosition) {
-        const canvas = context.canvas.rootCanvas;
-        const { clientX, clientY } = context.interaction.cursorPosition;
-
-        // If actively resizing, show grabbing cursor
-        if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE) {
-            canvas.style.cursor = 'grabbing';
-            return;
-        }
-
-        // Convert screen coordinates to world coordinates
-        const worldX = (clientX - xOffset) / pixelSize + context.camera.x;
-        const worldY = (clientY - yOffset) / pixelSize + context.camera.y;
-
-        // Check if cursor is near any vertex (handle)
-        const handleProximity = 0.5; // world units
-        const isNearHandle = (selectedPlot.polygon?.vertices || []).some(
-            ([vx, vy]) =>
-                Math.abs(vx - worldX) <= handleProximity &&
-                Math.abs(vy - worldY) <= handleProximity,
-        );
-
-        canvas.style.cursor = isNearHandle ? 'grab' : '';
-    }
 }
 
 type PlotFlickerState = {
@@ -275,6 +196,5 @@ export function renderUI(context: InitializedStore) {
 
     redrawSelectedPlot(context);
     redrawRejectedPlots(context);
-    redrawSelectedPlotHandles(context);
     redrawCrosshair(context);
 }
