@@ -6,6 +6,7 @@ import { getPixelSize } from '../../canvas/canvas';
 import {
     Polygon,
     getCompositePolygons,
+    getMostComplexPolygon,
     getPolygonSize,
     polygonSchema,
     rectToPolygonSchema,
@@ -121,20 +122,20 @@ function redrawTelegraph(context: InitializedStore) {
         return context;
     }
 
-    const rects = [...context.activeAction.rects];
-    if (context.activeAction.nextRect != null) {
-        rects.push(context.activeAction.nextRect);
+    const polygonRenderItems: { polygon: Polygon }[] = [];
+    if (context.activeAction.polygon != null) {
+        polygonRenderItems.push({
+            polygon: context.activeAction.polygon,
+        });
     }
 
-    const polygons = rects.map((rect) => rectToPolygonSchema.parse(rect));
+    if (context.activeAction.nextRect != null) {
+        polygonRenderItems.push({
+            polygon: rectToPolygonSchema.parse(context.activeAction.nextRect),
+        });
+    }
 
-    const aggregatedPolygons = getCompositePolygons(polygons);
-
-    const webGPUPolygons = aggregatedPolygons.map((polygon) => ({
-        polygon,
-    }));
-
-    telegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
+    telegraphWebGPUManager.redrawPolygons(polygonRenderItems, {
         xOffset,
         yOffset,
         xCamera: context.camera.x,
@@ -150,9 +151,10 @@ export type ClaimerComplete = {
     polygons: Polygon[];
 };
 
-export type ClaimerActive = {
+export type ClaimerCreate = {
     type: typeof ACTION_TYPES.CLAIMER_CREATE;
     rects: Rect[];
+    polygon: Polygon | null;
     nextRect: Rect | null;
 };
 
@@ -171,52 +173,59 @@ export type ClaimerResize = {
     polygon: Polygon;
 };
 
-export function startClaimerAction(rect: Rect): ClaimerActive {
+export function startClaimerAction(rect: Rect): ClaimerCreate {
     return {
         type: ACTION_TYPES.CLAIMER_CREATE,
         rects: [],
-        nextRect: rect,
-    };
-}
-export function newRectAction(
-    activeBrushAction: ClaimerActive,
-    rect: Rect,
-): ClaimerActive {
-    return {
-        type: ACTION_TYPES.CLAIMER_CREATE,
-        rects: activeBrushAction.rects,
+        polygon: rectToPolygonSchema.parse(rect),
         nextRect: rect,
     };
 }
 
-export function completeRectAction(
-    activeBrushAction: ClaimerActive,
-): ClaimerActive {
-    const size = activeBrushAction.nextRect
-        ? getRectSize(activeBrushAction.nextRect)
-        : 0;
+export function newRectAction(curr: ClaimerCreate, rect: Rect): ClaimerCreate {
+    return {
+        type: ACTION_TYPES.CLAIMER_CREATE,
+        rects: curr.rects,
+        nextRect: rect,
+        polygon: curr.polygon,
+    };
+}
+
+export function completeRectAction(curr: ClaimerCreate): ClaimerCreate {
+    const size = curr.nextRect ? getRectSize(curr.nextRect) : 0;
 
     if (size === 0) {
         return {
             type: ACTION_TYPES.CLAIMER_CREATE,
-            rects: activeBrushAction.rects,
+            rects: curr.rects,
             nextRect: null,
+            polygon: curr.polygon,
         };
     }
 
+    const compositePolygons = getCompositePolygons(
+        [...curr.rects, curr.nextRect]
+            .filter(Boolean)
+            .map((rect) => rectToPolygonSchema.parse(rect)),
+    );
+
+    const polygon = getMostComplexPolygon(compositePolygons);
+
     return {
         type: ACTION_TYPES.CLAIMER_CREATE,
-        rects: activeBrushAction.nextRect
-            ? activeBrushAction.rects.concat(activeBrushAction.nextRect)
-            : activeBrushAction.rects,
+        rects:
+            compositePolygons.length > 1 || curr.nextRect == null
+                ? curr.rects
+                : curr.rects.concat(curr.nextRect),
         nextRect: null,
+        polygon,
     };
 }
 
 export function nextClaimerAction(
-    activeBrushAction: ClaimerActive,
+    activeBrushAction: ClaimerCreate,
     nextRect: Rect,
-): ClaimerActive {
+): ClaimerCreate {
     return {
         ...activeBrushAction,
         nextRect,

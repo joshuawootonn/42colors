@@ -236,6 +236,12 @@ export function getCompositePolygons(_polygons: Polygon[]): Polygon[] {
     return polygons;
 }
 
+export function getMostComplexPolygon(polygons: Polygon[]): Polygon {
+    return polygons.reduce((max, curr) => {
+        return curr.vertices.length > max.vertices.length ? curr : max;
+    }, polygons[0]);
+}
+
 export function isEligiblePolygon(p: Polygon): boolean {
     const firstX = p.vertices[0][0],
         firstY = p.vertices[0][1];

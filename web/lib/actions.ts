@@ -6,8 +6,8 @@ import { Tool } from './tool-settings';
 import { BrushActive } from './tools/brush/brush';
 import { pointsToPixels } from './tools/brush/brush';
 import {
-    ClaimerActive,
     ClaimerComplete,
+    ClaimerCreate,
     ClaimerEdit,
     ClaimerResize,
 } from './tools/claimer/claimer';
@@ -19,7 +19,7 @@ type Redo = { type: 'redo' };
 export type Action =
     | ErasureActive
     | BrushActive
-    | ClaimerActive
+    | ClaimerCreate
     | ClaimerComplete
     | ClaimerEdit
     | ClaimerResize

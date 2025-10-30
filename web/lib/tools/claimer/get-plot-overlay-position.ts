@@ -4,7 +4,7 @@ import {
     rectToPolygonSchema,
 } from '../../geometry/polygon';
 import { canvasToClient } from '../../utils/clientToCanvasConversion';
-import { ClaimerActive } from './claimer';
+import { ClaimerCreate } from './claimer';
 
 export function getPlotOverlayPositionForPolygons(
     polygons: Polygon[],
@@ -39,7 +39,7 @@ export function getPlotOverlayPositionForPolygons(
 }
 
 export function getPlotOverlayPositionForActiveAction(
-    activeAction: ClaimerActive,
+    activeAction: ClaimerCreate,
     camera: { x: number; y: number; zoom: number },
 ): { x: number; y: number } {
     const rects = [...activeAction.rects];
