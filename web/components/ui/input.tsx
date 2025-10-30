@@ -10,6 +10,9 @@ const PASSWORD_MANAGER_DISABLED_PROPS = {
     autoComplete: 'off' as const,
     'data-form-type': 'other',
     'data-lpignore': 'true',
+    'data-1p-ignore': 'true',
+    'data-fill-on-account': 'true',
+    'data-bwignore': 'true',
 };
 
 const PASSWORD_MANAGER_ENABLED_PROPS = {};
