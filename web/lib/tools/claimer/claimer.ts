@@ -21,7 +21,7 @@ import { getUserPlots } from './claimer.rest';
 function updateCursor(context: InitializedStore): void {
     // Only update cursor when in edit or resize mode
     if (
-        context.activeAction?.type !== ACTION_TYPES.CLAIMER_RESIZE &&
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_RESIZE_EDIT &&
         context.activeAction?.type !== ACTION_TYPES.CLAIMER_EDIT
     ) {
         return;
@@ -34,7 +34,7 @@ function updateCursor(context: InitializedStore): void {
     }
 
     // If actively resizing, show grabbing cursor
-    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE) {
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT) {
         canvas.style.cursor = 'grabbing';
         return;
     }
@@ -75,10 +75,10 @@ function redrawTelegraph(context: InitializedStore) {
 
     if (
         context.activeAction?.type === ACTION_TYPES.CLAIMER_EDIT ||
-        context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE
+        context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT
     ) {
         const polygon =
-            context.activeAction.type === ACTION_TYPES.CLAIMER_RESIZE
+            context.activeAction.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT
                 ? context.activeAction.polygon
                 : context.activeAction.polygon;
 
@@ -117,7 +117,7 @@ function redrawTelegraph(context: InitializedStore) {
     }
 
     // Handle normal claiming telegraph
-    if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE) {
+    if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE) {
         return context;
     }
 
@@ -151,7 +151,7 @@ export type ClaimerComplete = {
 };
 
 export type ClaimerActive = {
-    type: typeof ACTION_TYPES.CLAIMER_ACTIVE;
+    type: typeof ACTION_TYPES.CLAIMER_CREATE;
     rects: Rect[];
     nextRect: Rect | null;
 };
@@ -163,7 +163,7 @@ export type ClaimerEdit = {
 };
 
 export type ClaimerResize = {
-    type: typeof ACTION_TYPES.CLAIMER_RESIZE;
+    type: typeof ACTION_TYPES.CLAIMER_RESIZE_EDIT;
     plotId: number;
     vertexIndex: number;
     originalPolygon: Polygon;
@@ -173,7 +173,7 @@ export type ClaimerResize = {
 
 export function startClaimerAction(rect: Rect): ClaimerActive {
     return {
-        type: ACTION_TYPES.CLAIMER_ACTIVE,
+        type: ACTION_TYPES.CLAIMER_CREATE,
         rects: [],
         nextRect: rect,
     };
@@ -183,7 +183,7 @@ export function newRectAction(
     rect: Rect,
 ): ClaimerActive {
     return {
-        type: ACTION_TYPES.CLAIMER_ACTIVE,
+        type: ACTION_TYPES.CLAIMER_CREATE,
         rects: activeBrushAction.rects,
         nextRect: rect,
     };
@@ -198,14 +198,14 @@ export function completeRectAction(
 
     if (size === 0) {
         return {
-            type: ACTION_TYPES.CLAIMER_ACTIVE,
+            type: ACTION_TYPES.CLAIMER_CREATE,
             rects: activeBrushAction.rects,
             nextRect: null,
         };
     }
 
     return {
-        type: ACTION_TYPES.CLAIMER_ACTIVE,
+        type: ACTION_TYPES.CLAIMER_CREATE,
         rects: activeBrushAction.nextRect
             ? activeBrushAction.rects.concat(activeBrushAction.nextRect)
             : activeBrushAction.rects,
@@ -249,7 +249,7 @@ export function startResizeAction(
     polygon: Polygon,
 ): ClaimerResize {
     return {
-        type: ACTION_TYPES.CLAIMER_RESIZE,
+        type: ACTION_TYPES.CLAIMER_RESIZE_EDIT,
         plotId,
         vertexIndex,
         originalPolygon: polygon,
@@ -379,7 +379,7 @@ function onPointerDown(
     });
 
     const nextActiveAction =
-        context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE
             ? startClaimerAction(rect)
             : newRectAction(context.activeAction, rect);
 
@@ -397,7 +397,7 @@ function onPointerMove(
     const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     // Handle resize action
-    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE) {
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT) {
         const updatedAction = updateResizeAction(
             context.activeAction,
             absolutePoint.x,
@@ -420,7 +420,7 @@ function onPointerMove(
     }
 
     if (
-        context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE ||
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE ||
         context.activeAction.nextRect == null
     ) {
         return context;
@@ -447,7 +447,7 @@ function onWheel(
     const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     // Handle resize action during wheel
-    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE) {
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT) {
         const updatedAction = updateResizeAction(
             context.activeAction,
             absolutePoint.x,
@@ -461,7 +461,7 @@ function onWheel(
     }
 
     if (
-        context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE ||
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE ||
         context.activeAction.nextRect == null
     ) {
         return context;
@@ -485,7 +485,7 @@ function onPointerOut(
     context: InitializedStore,
     __: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE) {
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT) {
         console.log('onPointerOut resize', context.activeAction);
         const updatedContext = {
             ...context,
@@ -498,7 +498,7 @@ function onPointerOut(
         updateCursor(updatedContext);
         return updatedContext;
     }
-    if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE) {
+    if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE) {
         return context;
     }
     const completedRectAction = completeRectAction(context.activeAction);
@@ -521,7 +521,7 @@ function onPointerUp(
     context: InitializedStore,
     __: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE) {
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT) {
         const updatedContext = {
             ...context,
             activeAction: {
@@ -534,7 +534,7 @@ function onPointerUp(
         return updatedContext;
     }
 
-    if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE) {
+    if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE) {
         return context;
     }
 

@@ -1057,7 +1057,7 @@ export const store = createStore({
         completeClaim: (context) => {
             if (isInitialStore(context)) return;
 
-            if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE) {
+            if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE) {
                 throw new Error(
                     "Attempted to complete a claim when there isn't on active",
                 );

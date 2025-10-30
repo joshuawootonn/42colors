@@ -10,10 +10,10 @@ export const ACTION_TYPES = {
     ERASURE_ACTIVE: 'erasure-active',
 
     // Claimer tool actions
-    CLAIMER_ACTIVE: 'claimer-active',
     CLAIMER_COMPLETE: 'claimer-complete',
     CLAIMER_EDIT: 'claimer-edit',
-    CLAIMER_RESIZE: 'claimer-resize',
+    CLAIMER_RESIZE_EDIT: 'claimer-resize-edit',
+    CLAIMER_CREATE: 'claimer-create',
 
     // Other actions
     REALTIME_ACTIVE: 'realtime-active',

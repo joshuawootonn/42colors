@@ -44,7 +44,7 @@ export function SelectedPlotPopover() {
     // Derive hidden state from activeAction
     const isHidden =
         activeAction?.type === ACTION_TYPES.CLAIMER_EDIT ||
-        activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE;
+        activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT;
 
     // Get user plots reactively
     const { data: userPlots } = useQuery({
@@ -82,7 +82,7 @@ export function SelectedPlotPopover() {
             // Use the simplified polygon from active action if resizing/editing
             let polygonToUse = selectedPlot.polygon;
             if (
-                activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE &&
+                activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT &&
                 activeAction.plotId === selectedPlot.id
             ) {
                 polygonToUse = activeAction.polygon;

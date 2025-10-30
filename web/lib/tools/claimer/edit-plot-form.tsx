@@ -120,7 +120,7 @@ export function EditPlotForm({ plot, triggerProps }: EditPlotFormProps) {
         ) {
             polygon = context.activeAction.polygon;
         } else if (
-            context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE &&
+            context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT &&
             context.activeAction.plotId === plot.id
         ) {
             polygon = context.activeAction.polygon;

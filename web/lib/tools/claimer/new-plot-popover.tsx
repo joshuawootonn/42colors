@@ -31,7 +31,7 @@ export function NewPlotPopover() {
 
     useEffect(() => {
         if (
-            activeAction?.type === ACTION_TYPES.CLAIMER_ACTIVE &&
+            activeAction?.type === ACTION_TYPES.CLAIMER_CREATE &&
             camera &&
             typeof window !== 'undefined'
         ) {
@@ -46,7 +46,7 @@ export function NewPlotPopover() {
         }
     }, [activeAction, camera]);
 
-    if (user == null || activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE) {
+    if (user == null || activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE) {
         return null;
     }
 

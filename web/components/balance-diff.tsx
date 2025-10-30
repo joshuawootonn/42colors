@@ -16,7 +16,7 @@ export function BalanceDiff() {
     const user = useSelector(store, (state) => state.context.user);
     const activeClaimAction = useSelector(store, (state) => {
         const activeAction = state.context.activeAction;
-        if (activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE) return null;
+        if (activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE) return null;
         return activeAction;
     });
 

@@ -64,7 +64,7 @@ export async function createPlot(plotData: {
     const context = store.getSnapshot().context;
     if (
         isInitialStore(context) ||
-        context.activeAction?.type !== ACTION_TYPES.CLAIMER_ACTIVE
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE
     ) {
         throw new Error(
             "Attempted to create a plot when there isn't an active action",
