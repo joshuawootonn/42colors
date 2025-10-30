@@ -164,7 +164,7 @@ export type ClaimerEdit = {
     polygon: Polygon;
 };
 
-export type ClaimerResize = {
+export type ClaimerResizeEdit = {
     type: typeof ACTION_TYPES.CLAIMER_RESIZE_EDIT;
     plotId: number;
     vertexIndex: number;
@@ -256,7 +256,7 @@ export function startResizeAction(
     plotId: number,
     vertexIndex: number,
     polygon: Polygon,
-): ClaimerResize {
+): ClaimerResizeEdit {
     return {
         type: ACTION_TYPES.CLAIMER_RESIZE_EDIT,
         plotId,
@@ -268,10 +268,10 @@ export function startResizeAction(
 }
 
 export function updateResizeAction(
-    resizeAction: ClaimerResize,
+    resizeAction: ClaimerResizeEdit,
     newX: number,
     newY: number,
-): ClaimerResize {
+): ClaimerResizeEdit {
     const vertices = [...resizeAction.modifiedPolygon.vertices];
     const originalVertices = resizeAction.originalPolygon.vertices;
     const vertexCount = vertices.length;

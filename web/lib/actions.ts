@@ -9,7 +9,7 @@ import {
     ClaimerComplete,
     ClaimerCreate,
     ClaimerEdit,
-    ClaimerResize,
+    ClaimerResizeEdit,
 } from './tools/claimer/claimer';
 import { ErasureActive } from './tools/erasure/erasure';
 
@@ -22,7 +22,7 @@ export type Action =
     | ClaimerCreate
     | ClaimerComplete
     | ClaimerEdit
-    | ClaimerResize
+    | ClaimerResizeEdit
     | {
           type: 'realtime-active';
           pixels: Pixel[];
