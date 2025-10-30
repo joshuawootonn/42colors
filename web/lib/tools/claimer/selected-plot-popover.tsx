@@ -85,7 +85,7 @@ export function SelectedPlotPopover() {
                 activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE &&
                 activeAction.plotId === selectedPlot.id
             ) {
-                polygonToUse = activeAction.simplifiedPolygon;
+                polygonToUse = activeAction.polygon;
             } else if (
                 activeAction?.type === ACTION_TYPES.CLAIMER_EDIT &&
                 activeAction.plotId === selectedPlot.id

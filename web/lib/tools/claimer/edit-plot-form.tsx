@@ -123,7 +123,7 @@ export function EditPlotForm({ plot, triggerProps }: EditPlotFormProps) {
             context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE &&
             context.activeAction.plotId === plot.id
         ) {
-            polygon = context.activeAction.simplifiedPolygon;
+            polygon = context.activeAction.polygon;
         }
 
         updatePlotMutation({

@@ -79,7 +79,7 @@ function redrawTelegraph(context: InitializedStore) {
     ) {
         const polygon =
             context.activeAction.type === ACTION_TYPES.CLAIMER_RESIZE
-                ? context.activeAction.simplifiedPolygon
+                ? context.activeAction.polygon
                 : context.activeAction.polygon;
 
         // Draw the simplified polygon outline
@@ -168,7 +168,7 @@ export type ClaimerResize = {
     vertexIndex: number;
     originalPolygon: Polygon;
     modifiedPolygon: Polygon;
-    simplifiedPolygon: Polygon;
+    polygon: Polygon;
 };
 
 export function startClaimerAction(rect: Rect): ClaimerActive {
@@ -254,7 +254,7 @@ export function startResizeAction(
         vertexIndex,
         originalPolygon: polygon,
         modifiedPolygon: polygon,
-        simplifiedPolygon: polygon,
+        polygon: polygon,
     };
 }
 
@@ -327,7 +327,7 @@ export function updateResizeAction(
     return {
         ...resizeAction,
         modifiedPolygon,
-        simplifiedPolygon: simplified,
+        polygon: simplified,
     };
 }
 
@@ -492,7 +492,7 @@ function onPointerOut(
             activeAction: {
                 type: ACTION_TYPES.CLAIMER_EDIT,
                 plotId: context.activeAction.plotId,
-                polygon: context.activeAction.simplifiedPolygon,
+                polygon: context.activeAction.polygon,
             },
         };
         updateCursor(updatedContext);
@@ -527,7 +527,7 @@ function onPointerUp(
             activeAction: {
                 type: ACTION_TYPES.CLAIMER_EDIT,
                 plotId: context.activeAction.plotId,
-                polygon: context.activeAction.simplifiedPolygon,
+                polygon: context.activeAction.polygon,
             },
         };
         updateCursor(updatedContext);
