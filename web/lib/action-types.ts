@@ -13,6 +13,7 @@ export const ACTION_TYPES = {
     CLAIMER_COMPLETE: 'claimer-complete',
     CLAIMER_EDIT: 'claimer-edit',
     CLAIMER_RESIZE_EDIT: 'claimer-resize-edit',
+    CLAIMER_RESIZE_CREATE: 'claimer-resize-create',
     CLAIMER_CREATE: 'claimer-create',
 
     // Other actions
