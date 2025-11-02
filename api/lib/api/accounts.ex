@@ -60,6 +60,26 @@ defmodule Api.Accounts do
   """
   def get_user!(id), do: Repo.get!(User, id)
 
+  @doc """
+  Searches for users by email (case-insensitive partial match).
+
+  ## Examples
+
+      iex> search_users_by_email("john")
+      [%User{email: "john@example.com"}, ...]
+
+  """
+  def search_users_by_email(query) when is_binary(query) do
+    query_lower = String.downcase(query)
+
+    from(u in User,
+      where: ilike(fragment("lower(?)", u.email), ^"%#{query_lower}%"),
+      limit: 20,
+      order_by: [asc: u.email]
+    )
+    |> Repo.all()
+  end
+
   ## User registration
 
   @doc """

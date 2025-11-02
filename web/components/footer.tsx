@@ -18,6 +18,7 @@ import authService from '@/lib/auth';
 import { store } from '@/lib/store';
 import { useSelector } from '@xstate/store/react';
 
+import { AdminPopover } from './admin-popover';
 import { BalanceDiff } from './balance-diff';
 import { Link } from './link';
 import { LogsPopover } from './logs-popover';
@@ -97,6 +98,23 @@ export function Footer() {
                         />
                     }
                 ></PlotsPopover>
+                {user?.email === 'jose56wonton@gmail.com' && (
+                    <>
+                        <div>/</div>
+                        <AdminPopover>
+                            <PopoverTrigger
+                                render={(props) => (
+                                    <button
+                                        {...props}
+                                        className="svg-outline-sm relative no-underline"
+                                    >
+                                        admin
+                                    </button>
+                                )}
+                            />
+                        </AdminPopover>
+                    </>
+                )}
                 <div>/</div>
 
                 <DropdownMenu>

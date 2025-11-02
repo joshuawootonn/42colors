@@ -30,6 +30,8 @@ function getLogTypeDisplay(logType: Log['logType']): string {
             return 'Bailout Grant';
         case 'daily_visit_grant':
             return 'Daily Visit Grant';
+        case 'fun_money_grant':
+            return 'Fun Money Grant';
         case 'plot_created':
             return 'Plot Created';
         case 'plot_updated':
@@ -62,6 +64,8 @@ function getLogDescription(log: Log): string {
             return 'A small loan of 1 million dollars';
         case 'bailout_grant':
             return 'Funds to bail you out of debt';
+        case 'fun_money_grant':
+            return 'Fun money grant';
         case 'plot_created':
             return log.plot ? `Created "${log.plot.name}"` : 'Plot created';
         case 'plot_updated':

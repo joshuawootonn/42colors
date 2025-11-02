@@ -55,6 +55,8 @@ defmodule ApiWeb.Router do
     post "/users/me/claim_daily_bonus", UserSessionController, :claim_daily_bonus
     get "/plots/me", PlotController, :me_plots
     get "/logs/me", LogController, :me_logs
+    get "/users/search", AdminController, :search_users
+    post "/admin/grant_pixels", AdminController, :grant_pixels
   end
 
   scope "/api", ApiWeb do

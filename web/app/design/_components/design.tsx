@@ -1,5 +1,6 @@
 'use client';
 
+import { AdminPopover } from '@/components/admin-popover';
 import { LogsPopoverMarkup } from '@/components/logs-popover';
 import { PlotsList } from '@/components/plots-popover/plots-list';
 import { PlotsPopoverMarkup } from '@/components/plots-popover/plots-popover';
@@ -375,6 +376,14 @@ export function DesignPage() {
                 >
                     <PopoverTrigger>Logs Empty</PopoverTrigger>
                 </LogsPopoverMarkup>
+            </div>
+            <h2>Admin</h2>
+            <div className="not-prose wrap mt-120 flex w-full items-center justify-between gap-4">
+                <AdminPopover>
+                    <PopoverTrigger>
+                        <Button>Admin</Button>
+                    </PopoverTrigger>
+                </AdminPopover>
             </div>
         </div>
     );

@@ -4,6 +4,7 @@ import { toasts } from '@/components/ui/toast';
 
 import analytics from './analytics';
 import { store } from './store';
+import { isInitialStore } from './utils/is-initial-store';
 
 const claimDailyGrantSuccessSchema = z.object({
     status: z.literal('success'),
@@ -27,6 +28,32 @@ const claimDailyGrantResponseSchema = z.union([
 
 export type ClaimDailyGrantResponse = z.infer<
     typeof claimDailyGrantResponseSchema
+>;
+
+const userSearchResponseSchema = z.object({
+    status: z.literal('success'),
+    users: z.array(
+        z.object({
+            id: z.number(),
+            email: z.string(),
+            balance: z.number(),
+        }),
+    ),
+});
+
+const userSearchErrorSchema = z.object({
+    status: z.literal('error'),
+    message: z.string(),
+});
+
+const userSearchResponseUnionSchema = z.union([
+    userSearchResponseSchema,
+    userSearchErrorSchema,
+]);
+
+export type UserSearchResult = z.infer<typeof userSearchResponseSchema>;
+export type SearchedUser = z.infer<
+    typeof userSearchResponseSchema.shape.users.element
 >;
 
 const userService = {
@@ -73,6 +100,47 @@ const userService = {
         }
 
         return result;
+    },
+
+    async searchUsers(query: string): Promise<SearchedUser[]> {
+        const context = store.getSnapshot().context;
+        if (isInitialStore(context)) {
+            throw new Error('Server context is not initialized');
+        }
+
+        const search = new URLSearchParams();
+        search.set('query', query);
+
+        const response = await fetch(
+            new URL(`/api/users/search?${search}`, context.server.apiOrigin),
+            {
+                method: 'GET',
+                credentials: 'include',
+            },
+        );
+
+        if (!response.ok) {
+            throw new Error('Failed to search users');
+        }
+
+        const rawResult = await response.json();
+        const parseResult = userSearchResponseUnionSchema.safeParse(rawResult);
+
+        if (!parseResult.success) {
+            console.error(
+                'Invalid user search response format:',
+                parseResult.error,
+            );
+            throw new Error('Invalid response format from server');
+        }
+
+        const result = parseResult.data;
+
+        if (result.status === 'error') {
+            throw new Error(result.message);
+        }
+
+        return result.users;
     },
 };
 

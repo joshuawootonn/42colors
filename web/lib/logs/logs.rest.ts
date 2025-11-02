@@ -14,6 +14,7 @@ const baseLogSchema = z.object({
         'initial_grant',
         'bailout_grant',
         'daily_visit_grant',
+        'fun_money_grant',
         'plot_created',
         'plot_updated',
         'plot_deleted',
@@ -61,6 +62,18 @@ const dailyVisitGrantLogSchema = baseLogSchema.extend({
         .nullable(),
 });
 
+const funMoneyGrantLogSchema = baseLogSchema.extend({
+    logType: z.literal('fun_money_grant'),
+    diffs: z
+        .object({
+            reason: z.string().optional(),
+            grant_amount: z.number().optional(),
+            granted_by: z.string().optional(),
+            granted_at: z.string().optional(),
+        })
+        .nullable(),
+});
+
 const plotCreatedLogSchema = baseLogSchema.extend({
     logType: z.literal('plot_created'),
     diffs: z
@@ -103,6 +116,7 @@ export const logSchema = z.discriminatedUnion('logType', [
     initialGrantLogSchema,
     bailoutGrantLogSchema,
     dailyVisitGrantLogSchema,
+    funMoneyGrantLogSchema,
     plotCreatedLogSchema,
     plotUpdatedLogSchema,
     plotDeletedLogSchema,
