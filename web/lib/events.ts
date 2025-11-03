@@ -34,7 +34,7 @@ export function onWheel(e: WheelEvent) {
 
     scrollTimeoutRef = setTimeout(() => {
         isScrollingAtom.set(false);
-    }, 150);
+    }, 250);
 
     store.trigger.onWheel({ e });
 }
