@@ -5,8 +5,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { X } from '@/components/icons/x';
 import { IconButton } from '@/components/ui/icon-button';
 import { Popover, PopoverContent } from '@/components/ui/popover';
+import { isScrollingAtom } from '@/lib/events';
 import { canvasToClient } from '@/lib/utils/clientToCanvasConversion';
-import { useSelector } from '@xstate/store/react';
+import { useAtom, useSelector } from '@xstate/store/react';
 
 import { ACTION_TYPES } from '../../action-types';
 import { store } from '../../store';
@@ -28,6 +29,7 @@ export function NewPlotPopover() {
 
     const [isOpen, setIsOpen] = useState(false);
     const [triggerPosition, setTriggerPosition] = useState({ x: 0, y: 0 });
+    const isScrolling = useAtom(isScrollingAtom);
 
     useEffect(() => {
         if (
@@ -73,6 +75,7 @@ export function NewPlotPopover() {
                         left: triggerPosition.x,
                         top: triggerPosition.y,
                         transform,
+                        pointerEvents: isScrolling ? 'none' : 'auto',
                     },
                 }}
                 hideCloseButton={true}

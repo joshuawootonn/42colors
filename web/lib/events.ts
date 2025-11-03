@@ -1,4 +1,10 @@
+import { createAtom } from '@xstate/store';
+
 import { store } from './store';
+
+export const isScrollingAtom = createAtom<boolean>(false);
+
+let scrollTimeoutRef: NodeJS.Timeout | null = null;
 
 export function onGesture(e: Event) {
     // console.log("gesture", e);
@@ -18,6 +24,18 @@ export function onWheel(e: WheelEvent) {
     // `preventDefault` in the store is in the next tick and doesn't work.
     // I have to actually call preventDefault here.
     e.preventDefault();
+
+    // Set scrolling state
+    isScrollingAtom.set(true);
+
+    if (scrollTimeoutRef) {
+        clearTimeout(scrollTimeoutRef);
+    }
+
+    scrollTimeoutRef = setTimeout(() => {
+        isScrollingAtom.set(false);
+    }, 150);
+
     store.trigger.onWheel({ e });
 }
 

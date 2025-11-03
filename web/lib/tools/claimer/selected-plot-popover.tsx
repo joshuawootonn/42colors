@@ -5,10 +5,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { X } from '@/components/icons/x';
 import { IconButton } from '@/components/ui/icon-button';
 import { Popover, PopoverContent } from '@/components/ui/popover';
+import { isScrollingAtom } from '@/lib/events';
 import { usePlots } from '@/lib/plots/plots.rest';
 import { canvasToClient } from '@/lib/utils/clientToCanvasConversion';
 import { useQuery } from '@tanstack/react-query';
-import { useSelector } from '@xstate/store/react';
+import { useAtom, useSelector } from '@xstate/store/react';
 
 import { ACTION_TYPES } from '../../action-types';
 import { store } from '../../store';
@@ -40,6 +41,7 @@ export function SelectedPlotPopover() {
 
     const [isOpen, setIsOpen] = useState(false);
     const [triggerPosition, setTriggerPosition] = useState({ x: 0, y: 0 });
+    const isScrolling = useAtom(isScrollingAtom);
 
     // Derive hidden state from activeAction
     const isHidden =
@@ -133,7 +135,11 @@ export function SelectedPlotPopover() {
                         top: triggerPosition.y,
                         transform,
                         opacity: isHidden ? 0 : 1,
-                        pointerEvents: isHidden ? 'none' : 'auto',
+                        pointerEvents: isScrolling
+                            ? 'none'
+                            : isHidden
+                              ? 'none'
+                              : 'auto',
                     },
                 }}
                 hideCloseButton={true}
