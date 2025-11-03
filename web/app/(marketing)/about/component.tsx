@@ -1,41 +1,75 @@
+'use client';
+
+import { useSearchParams } from 'next/navigation';
+
 import { H1 } from '@/components/dialog-headings';
+import { EmailLink } from '@/components/email-link';
 import { Link } from '@/components/link';
 import { Logo } from '@/components/logo';
 
 export function About() {
+    const searchParams = useSearchParams();
+
     return (
         <>
             <H1 className="">
                 <i>Welcome</i> to{' '}
                 <Logo height={40} className="inline -translate-y-1" />
             </H1>
-            <p>a pixel art editor and game</p>
+            <p>— a pixel art editor and social game</p>
+
             <p>
-                <b>Vision: </b> You start with a grant for ten thousand pixels.
-                After surveying the canvas, your first goal will be to claim
-                some land. Next, it&apos;s time to draw (something dope of
-                course). When you are done, people can upvote or downvote your
-                art, which decides whether you get more pixels or not. Pixels
-                are currency.{' '}
+                You start with a grant for four thousand pixels. After surveying
+                the canvas, and finding a fitting spot, your first goal should
+                be to claim a plot of land.
             </p>
 
             <p>
-                <b>Status: </b> This project is a WIP. My energy has been going
-                to learning elixir, optimizing canvas, and optimizing data
-                caching and transfer. As of the end of March 2025 I&apos;ve
-                finally created a halfway decent brush and added relative zoom.
-                More improvements to the brush tool are on the way!
+                Next, it&apos;s time to draw (something dope of course). When
+                you are done, people can upvote or downvote your art, which
+                decides whether you get more pixels or not. Pixels are
+                currency.{' '}
             </p>
 
             <p>
-                I can&apos;t wait to see the art people create under the same
-                constraints. Follow along on{' '}
-                <Link href="https://x.com/JoshWootonn">twitter</Link> or{' '}
-                <Link href="https://github.com/joshuawootonn/42colors">
+                Your first claim will be small, as four thousand is only so
+                much. But as you come back and visit you&apos;ll you&apos;ll be
+                granted more pixels for more art. And when people upvote your
+                work (coming soon!!) you&apos;ll be awarded in full.
+            </p>
+
+            <p>I can&apos;t wait to see what you create. ✨</p>
+
+            <div className="flex items-center gap-2">
+                <EmailLink className="svg-outline-sm relative text-primary underline decoration-[1.5px] underline-offset-2 outline-none">
+                    email
+                </EmailLink>
+                —
+                <Link
+                    href="https://x.com/JoshWootonn"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    twitter
+                </Link>
+                —
+                <Link
+                    href="https://github.com/joshuawootonn/42colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
                     github
                 </Link>
-                .
-            </p>
+                —
+                <Link
+                    href={{
+                        pathname: '/changelog',
+                        query: searchParams.toString(),
+                    }}
+                >
+                    changelog
+                </Link>
+            </div>
         </>
     );
 }
