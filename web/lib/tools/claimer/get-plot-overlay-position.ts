@@ -39,9 +39,10 @@ export function getPlotOverlayPositionForPolygons(
 
     // If off-screen, use top position instead
     if (isOffScreen) {
-        const topY = minY - 1;
+        const topY = minY;
         const topScreenY = canvasToClient(topY - camera.y, camera.zoom);
-        return { x: screenX, y: topScreenY };
+        //height of the popover
+        return { x: screenX, y: topScreenY - 32 };
     }
 
     return { x: screenX, y: bottomScreenY };
