@@ -29,6 +29,31 @@ export default function Changelog() {
             <hr className="w-full border-t-2 border-border" />
             <ul>
                 <li>
+                    <DateComponent date={new Date('11/03/2025')} /> —
+                    42colors.com now auto-selects the plot in the middle of your
+                    screen and displays a menu for common ops.
+                    <video
+                        src="/changelog/25-11-03-overlay-popover.mp4"
+                        muted
+                        controls
+                        className="mt-4 border border-border"
+                    />
+                    This popover favors the bottom side, but will switch to the
+                    top position to prevent overflow, and while your scrolling,
+                    pointer events are ignored, so that your cursor doesn&apos;t
+                    get stuck.
+                    <video
+                        src="/changelog/25-11-03-overlay-popover-edge.mp4"
+                        muted
+                        controls
+                        className="mt-4 border border-border"
+                    />
+                </li>
+                <li>
+                    <DateComponent date={new Date('11/02/2025')} /> — MVP is in
+                    sight. Going to start posting on here now.
+                </li>
+                <li>
                     <DateComponent date={new Date('6/29/2025')} />
                     <ul>
                         <li>
