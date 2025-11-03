@@ -27,15 +27,24 @@ export function getPlotOverlayPositionForPolygons(
         }
     }
 
-    // Calculate bottom center position
     const centerX = (minX + maxX) / 2;
+
+    // Try bottom center position first
     const bottomY = maxY;
-
-    // Convert from canvas coordinates to screen coordinates
     const screenX = canvasToClient(centerX - camera.x, camera.zoom);
-    const screenY = canvasToClient(bottomY - camera.y, camera.zoom);
+    const bottomScreenY = canvasToClient(bottomY - camera.y, camera.zoom);
 
-    return { x: screenX, y: screenY };
+    // Check if bottom position is off-screen
+    const isOffScreen = bottomScreenY > window.innerHeight - 100;
+
+    // If off-screen, use top position instead
+    if (isOffScreen) {
+        const topY = minY - 1;
+        const topScreenY = canvasToClient(topY - camera.y, camera.zoom);
+        return { x: screenX, y: topScreenY };
+    }
+
+    return { x: screenX, y: bottomScreenY };
 }
 
 export function getPlotOverlayPositionForActiveAction(
