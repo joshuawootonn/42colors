@@ -24,6 +24,7 @@ import { BrushPanel } from '@/lib/tools/brush/brush-panel';
 import { NewPlotPopover } from '@/lib/tools/claimer/new-plot-popover';
 import { SelectedPlotPopover } from '@/lib/tools/claimer/selected-plot-popover';
 import { ErasurePanel } from '@/lib/tools/erasure/erasure-panel';
+import { LinePanel } from '@/lib/tools/line/line-panel';
 import { cn } from '@/lib/utils';
 import { keyEquals } from '@/lib/utils/query-key';
 import {
@@ -210,9 +211,11 @@ export default function Page() {
             <div className="fixed bottom-12 left-3 top-16 flex flex-col items-start space-y-3">
                 {isWebGPUAvailable && (
                     <>
-                        {currentTool === Tool.Brush && <Palette />}
+                        {(currentTool === Tool.Brush ||
+                            currentTool === Tool.Line) && <Palette />}
                         {currentTool === Tool.Brush && <BrushPanel />}
                         {currentTool === Tool.Erasure && <ErasurePanel />}
+                        {currentTool === Tool.Line && <LinePanel />}
                     </>
                 )}
             </div>

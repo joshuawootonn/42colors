@@ -50,6 +50,7 @@ import {
     onWheel,
 } from './events';
 import { fetchPixels } from './fetch-pixels';
+import { bresenhamLine } from './geometry/bresenham-line';
 import { Pixel, getLastPixelValue } from './geometry/coord';
 import {
     getCenterPoint,
@@ -57,6 +58,7 @@ import {
     polygonSchema,
     rectToPolygonSchema,
 } from './geometry/polygon';
+import { Vector } from './geometry/vector';
 import { KeyboardCode } from './keyboard-codes';
 import { TRANSPARENT_REF, getNextColor, getPreviousColor } from './palette';
 import { findPlotAtPoint } from './plots/plots.rest';
@@ -67,7 +69,12 @@ import {
     ToolSettings,
     updateToolSettings,
 } from './tool-settings';
-import { BrushSettings, BrushTool, pointsToPixels } from './tools/brush/brush';
+import {
+    BrushSettings,
+    BrushTool,
+    getBrushPoints,
+    pointsToPixels,
+} from './tools/brush/brush';
 import { clampBrushSize } from './tools/brush/brush-utils';
 import {
     ClaimerTool,
@@ -81,6 +88,8 @@ import {
 } from './tools/claimer/claimer.rest';
 import { ErasureSettings, ErasureTool } from './tools/erasure/erasure';
 import { clampErasureSize } from './tools/erasure/erasure-utils';
+import { LineSettings, LineTool } from './tools/line/line';
+import { clampLineSize } from './tools/line/line-utils';
 import { PaletteSettings } from './tools/palette';
 import { PanTool } from './tools/pan';
 import { WheelTool } from './tools/wheel';
@@ -325,29 +334,76 @@ export const store = createStore({
         ) => {
             if (isInitialStore(context)) return;
 
-            const next_actions = context.actions.map((action) => {
-                if (
-                    (action.type === ACTION_TYPES.BRUSH_ACTIVE ||
-                        action.type === ACTION_TYPES.ERASURE_ACTIVE) &&
-                    action.action_id === event.action_id
-                ) {
-                    // todo(josh): I think this could be much faster. Need to learn about perf.
-                    const rejected_coords = new Set(
-                        event.rejected_pixels.map((p) => `${p.x},${p.y}`),
-                    );
+            const next_actions = context.actions
+                .map((action) => {
+                    if (
+                        (action.type === ACTION_TYPES.BRUSH_ACTIVE ||
+                            action.type === ACTION_TYPES.ERASURE_ACTIVE ||
+                            action.type === ACTION_TYPES.LINE_COMPLETE) &&
+                        action.action_id === event.action_id
+                    ) {
+                        // For LINE_COMPLETE, we need to reconstruct the points
+                        if (action.type === ACTION_TYPES.LINE_COMPLETE) {
+                            const linePoints = bresenhamLine(
+                                action.vector.x,
+                                action.vector.y,
+                                action.vector.x + action.vector.magnitudeX,
+                                action.vector.y + action.vector.magnitudeY,
+                            );
+                            const brushPoints = getBrushPoints(
+                                linePoints,
+                                action.size,
+                                1,
+                            );
+                            const rejected_coords = new Set(
+                                event.rejected_pixels.map(
+                                    (p) => `${p.x},${p.y}`,
+                                ),
+                            );
+                            const filteredBrushPoints = brushPoints.filter(
+                                (point) =>
+                                    !rejected_coords.has(
+                                        `${point.x},${point.y}`,
+                                    ),
+                            );
+                            // Reconstruct vector from filtered points
+                            // This is a simplification - we'll use the first and last points
+                            if (filteredBrushPoints.length === 0) {
+                                return null; // Remove action if no points remain
+                            }
+                            const firstPoint = filteredBrushPoints[0];
+                            const lastPoint =
+                                filteredBrushPoints[
+                                    filteredBrushPoints.length - 1
+                                ];
+                            return {
+                                ...action,
+                                vector: new Vector(
+                                    firstPoint.x,
+                                    firstPoint.y,
+                                    lastPoint.x - firstPoint.x,
+                                    lastPoint.y - firstPoint.y,
+                                ),
+                            };
+                        }
+                        // For BRUSH_ACTIVE and ERASURE_ACTIVE
+                        const rejected_coords = new Set(
+                            event.rejected_pixels.map((p) => `${p.x},${p.y}`),
+                        );
 
-                    const points = action.points.filter(
-                        (point) =>
-                            !rejected_coords.has(`${point.x},${point.y}`),
-                    );
+                        const points = action.points.filter(
+                            (point) =>
+                                !rejected_coords.has(`${point.x},${point.y}`),
+                        );
 
-                    return {
-                        ...action,
-                        points,
-                    };
-                }
-                return action;
-            });
+                        return {
+                            ...action,
+                            points,
+                        };
+                    }
+                    return action;
+                })
+                .filter((action) => action !== null) as Action[];
 
             return {
                 ...context,
@@ -369,12 +425,28 @@ export const store = createStore({
                 };
             }
 
-            const pixels = pointsToPixels(
-                actionToUndo.points,
-                actionToUndo.type === ACTION_TYPES.ERASURE_ACTIVE
-                    ? TRANSPARENT_REF
-                    : actionToUndo.color_ref,
-            );
+            let pixels: Pixel[];
+            if (actionToUndo.type === ACTION_TYPES.LINE_COMPLETE) {
+                const linePoints = bresenhamLine(
+                    actionToUndo.vector.x,
+                    actionToUndo.vector.y,
+                    actionToUndo.vector.x + actionToUndo.vector.magnitudeX,
+                    actionToUndo.vector.y + actionToUndo.vector.magnitudeY,
+                );
+                const brushPoints = getBrushPoints(
+                    linePoints,
+                    actionToUndo.size,
+                    1,
+                );
+                pixels = pointsToPixels(brushPoints, actionToUndo.color_ref);
+            } else {
+                pixels = pointsToPixels(
+                    actionToUndo.points,
+                    actionToUndo.type === ACTION_TYPES.ERASURE_ACTIVE
+                        ? TRANSPARENT_REF
+                        : actionToUndo.color_ref,
+                );
+            }
 
             const resolvedActions = resolveActions(nextActions);
             const resolvedPixels = derivePixelsFromActions(resolvedActions);
@@ -419,12 +491,28 @@ export const store = createStore({
                 };
             }
 
-            const pixels = pointsToPixels(
-                actionToRedo.points,
-                actionToRedo.type === ACTION_TYPES.ERASURE_ACTIVE
-                    ? TRANSPARENT_REF
-                    : actionToRedo.color_ref,
-            );
+            let pixels: Pixel[];
+            if (actionToRedo.type === ACTION_TYPES.LINE_COMPLETE) {
+                const linePoints = bresenhamLine(
+                    actionToRedo.vector.x,
+                    actionToRedo.vector.y,
+                    actionToRedo.vector.x + actionToRedo.vector.magnitudeX,
+                    actionToRedo.vector.y + actionToRedo.vector.magnitudeY,
+                );
+                const brushPoints = getBrushPoints(
+                    linePoints,
+                    actionToRedo.size,
+                    1,
+                );
+                pixels = pointsToPixels(brushPoints, actionToRedo.color_ref);
+            } else {
+                pixels = pointsToPixels(
+                    actionToRedo.points,
+                    actionToRedo.type === ACTION_TYPES.ERASURE_ACTIVE
+                        ? TRANSPARENT_REF
+                        : actionToRedo.color_ref,
+                );
+            }
 
             const resolvedActions = resolveActions(nextActions);
             const resolvedPixels = derivePixelsFromActions(resolvedActions);
@@ -1003,6 +1091,24 @@ export const store = createStore({
             };
         },
 
+        updateLineSettings: (
+            context,
+            { line }: { line: Partial<LineSettings> },
+        ) => {
+            if (isInitialStore(context)) return;
+            const toolSettings = {
+                ...context.toolSettings,
+                line: { ...context.toolSettings.line, ...line },
+            };
+
+            updateToolSettings(toolSettings);
+
+            return {
+                ...context,
+                toolSettings,
+            };
+        },
+
         clearCursor: (context) => {
             if (isInitialStore(context)) return;
             return {
@@ -1190,6 +1296,10 @@ export const store = createStore({
                 return ErasureTool.onPointerDown(e, context, enqueue);
             }
 
+            if (tool === Tool.Line) {
+                return LineTool.onPointerDown(e, context, enqueue);
+            }
+
             if (tool === Tool.Claimer) {
                 return ClaimerTool.onPointerDown(e, context, enqueue);
             }
@@ -1211,6 +1321,10 @@ export const store = createStore({
 
             if (tool === Tool.Erasure) {
                 return ErasureTool.onPointerMove(e, context, enqueue);
+            }
+
+            if (tool === Tool.Line) {
+                return LineTool.onPointerMove(e, context, enqueue);
             }
 
             if (tool === Tool.Claimer) {
@@ -1236,6 +1350,10 @@ export const store = createStore({
                 return ErasureTool.onPointerUp(e, context, enqueue);
             }
 
+            if (tool === Tool.Line) {
+                return LineTool.onPointerUp(e, context, enqueue);
+            }
+
             if (tool === Tool.Claimer) {
                 return ClaimerTool.onPointerUp(e, context, enqueue);
             }
@@ -1258,6 +1376,10 @@ export const store = createStore({
 
             if (tool === Tool.Erasure) {
                 return ErasureTool.onPointerOut(e, context, enqueue);
+            }
+
+            if (tool === Tool.Line) {
+                return LineTool.onPointerOut(e, context, enqueue);
             }
 
             if (tool === Tool.Claimer) {
@@ -1312,6 +1434,14 @@ export const store = createStore({
                     e.preventDefault();
                     enqueue.effect(() =>
                         store.trigger.changeTool({ tool: Tool.Claimer }),
+                    );
+                    return context;
+                }
+
+                if (isHotkey('l', e)) {
+                    e.preventDefault();
+                    enqueue.effect(() =>
+                        store.trigger.changeTool({ tool: Tool.Line }),
                     );
                     return context;
                 }
@@ -1397,7 +1527,7 @@ export const store = createStore({
                 }
             }
 
-            // Eraser size shortcuts (Shift + plus/minus)
+            // Tool size shortcuts (plus/minus)
             if (isHotkey('+', e) || isHotkey('=', e)) {
                 e.preventDefault();
 
@@ -1417,6 +1547,15 @@ export const store = createStore({
                             erasure: {
                                 size: clampErasureSize(currentSize + 1),
                             },
+                        }),
+                    );
+                }
+
+                if (context.toolSettings.currentTool === Tool.Line) {
+                    const currentSize = context.toolSettings.line.size;
+                    enqueue.effect(() =>
+                        store.trigger.updateLineSettings({
+                            line: { size: clampLineSize(currentSize + 1) },
                         }),
                     );
                 }
@@ -1445,6 +1584,16 @@ export const store = createStore({
                         }),
                     );
                 }
+
+                if (context.toolSettings.currentTool === Tool.Line) {
+                    const currentSize = context.toolSettings.line.size;
+                    enqueue.effect(() =>
+                        store.trigger.updateLineSettings({
+                            line: { size: clampLineSize(currentSize - 1) },
+                        }),
+                    );
+                }
+
                 return context;
             }
 
@@ -1524,6 +1673,10 @@ export const store = createStore({
 
             if (tool === Tool.Erasure) {
                 return ErasureTool.onWheel(e, context, enqueue);
+            }
+
+            if (tool === Tool.Line) {
+                return LineTool.onWheel(e, context, enqueue);
             }
 
             if (tool === Tool.Claimer) {

@@ -9,6 +9,10 @@ export const ACTION_TYPES = {
     // Erasure tool actions
     ERASURE_ACTIVE: 'erasure-active',
 
+    // Line tool actions
+    LINE_ACTIVE: 'line-active',
+    LINE_COMPLETE: 'line-complete',
+
     // Claimer tool actions
     CLAIMER_COMPLETE: 'claimer-complete',
     CLAIMER_EDIT: 'claimer-edit',

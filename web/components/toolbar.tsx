@@ -91,11 +91,32 @@ export function Toolbar() {
                     </svg>
                 </ToolIconButton>
                 <ToolIconButton
+                    active={tool === Tool.Line}
+                    onClick={() =>
+                        store.trigger.changeTool({ tool: Tool.Line })
+                    }
+                    className="-translate-y-[1px]"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="32"
+                        height="32"
+                        viewBox="0 0 32 32"
+                        fill="none"
+                        className="stroke-primary"
+                        strokeWidth="1.75"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    >
+                        <path d="M6 26L26 6" />
+                    </svg>
+                </ToolIconButton>
+                <ToolIconButton
                     active={tool === Tool.Claimer}
                     onClick={() =>
                         store.trigger.changeTool({ tool: Tool.Claimer })
                     }
-                    className="-translate-y-[1px]"
+                    className="-translate-x-[1px] -translate-y-[1px]"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"

@@ -1,10 +1,14 @@
 import { ACTION_TYPES } from './action-types';
 import { Camera } from './camera';
+import { bresenhamLine } from './geometry/bresenham-line';
 import { AbsolutePoint, Pixel } from './geometry/coord';
 import { ColorRef, TRANSPARENT_REF } from './palette';
 import { Tool } from './tool-settings';
-import { BrushActive } from './tools/brush/brush';
-import { pointsToPixels } from './tools/brush/brush';
+import {
+    BrushActive,
+    getBrushPoints,
+    pointsToPixels,
+} from './tools/brush/brush';
 import {
     ClaimerComplete,
     ClaimerCreate,
@@ -13,6 +17,7 @@ import {
     ClaimerResizeEdit,
 } from './tools/claimer/claimer';
 import { ErasureActive } from './tools/erasure/erasure';
+import { LineActive, LineComplete } from './tools/line/line';
 
 type Undo = { type: 'undo' };
 type Redo = { type: 'redo' };
@@ -20,6 +25,8 @@ type Redo = { type: 'redo' };
 export type Action =
     | ErasureActive
     | BrushActive
+    | LineActive
+    | LineComplete
     | ClaimerCreate
     | ClaimerComplete
     | ClaimerEdit
@@ -113,6 +120,15 @@ export function derivePixelsFromActions(actions: Action[]): Pixel[] {
             pixels.push(...pointsToPixels(action.points, action.color_ref));
         } else if (action.type === ACTION_TYPES.ERASURE_ACTIVE) {
             pixels.push(...pointsToPixels(action.points, TRANSPARENT_REF));
+        } else if (action.type === ACTION_TYPES.LINE_COMPLETE) {
+            const linePoints = bresenhamLine(
+                action.vector.x,
+                action.vector.y,
+                action.vector.x + action.vector.magnitudeX,
+                action.vector.y + action.vector.magnitudeY,
+            );
+            const brushPoints = getBrushPoints(linePoints, action.size, 1);
+            pixels.push(...pointsToPixels(brushPoints, action.color_ref));
         } else if (action.type === 'realtime-active') {
             pixels.push(...action.pixels);
         }
@@ -164,6 +180,30 @@ export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
                                     undonePixel.y === pixel.y,
                             ),
                     );
+                } else if (undoAction.type === ACTION_TYPES.LINE_COMPLETE) {
+                    const undoneLinePoints = bresenhamLine(
+                        undoAction.vector.x,
+                        undoAction.vector.y,
+                        undoAction.vector.x + undoAction.vector.magnitudeX,
+                        undoAction.vector.y + undoAction.vector.magnitudeY,
+                    );
+                    const undoneBrushPoints = getBrushPoints(
+                        undoneLinePoints,
+                        undoAction.size,
+                        1,
+                    );
+                    const undonePixels = pointsToPixels(
+                        undoneBrushPoints,
+                        undoAction.color_ref,
+                    );
+                    unsetPixels = unsetPixels.filter(
+                        (pixel) =>
+                            !undonePixels.find(
+                                (undonePixel) =>
+                                    undonePixel.x === pixel.x &&
+                                    undonePixel.y === pixel.y,
+                            ),
+                    );
                 }
             }
         } else if (action.type === 'undo') {
@@ -178,6 +218,21 @@ export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
                 } else if (action.type === ACTION_TYPES.ERASURE_ACTIVE) {
                     unsetPixels.push(
                         ...pointsToPixels(action.points, TRANSPARENT_REF),
+                    );
+                } else if (action.type === ACTION_TYPES.LINE_COMPLETE) {
+                    const linePoints = bresenhamLine(
+                        action.vector.x,
+                        action.vector.y,
+                        action.vector.x + action.vector.magnitudeX,
+                        action.vector.y + action.vector.magnitudeY,
+                    );
+                    const brushPoints = getBrushPoints(
+                        linePoints,
+                        action.size,
+                        1,
+                    );
+                    unsetPixels.push(
+                        ...pointsToPixels(brushPoints, action.color_ref),
                     );
                 }
             }
@@ -241,21 +296,22 @@ export function resolveActions(actions: Action[]): Action[] {
 
 export function getActionToUndo(
     prevActions: Action[],
-): BrushActive | ErasureActive | null {
+): BrushActive | ErasureActive | LineComplete | null {
     return (
         [...resolveActions(prevActions)]
             .reverse()
             .find(
                 (action) =>
                     action.type === ACTION_TYPES.BRUSH_ACTIVE ||
-                    action.type === ACTION_TYPES.ERASURE_ACTIVE,
+                    action.type === ACTION_TYPES.ERASURE_ACTIVE ||
+                    action.type === ACTION_TYPES.LINE_COMPLETE,
             ) ?? null
     );
 }
 
 export function getActionToRedo(
     prevActions: Action[],
-): BrushActive | ErasureActive | null {
+): BrushActive | ErasureActive | LineComplete | null {
     const reversedCollapsedPrevActions = [
         ...collapseUndoRedoCombos(prevActions),
     ].reverse();
@@ -267,7 +323,8 @@ export function getActionToRedo(
             .find(
                 (action) =>
                     action.type === ACTION_TYPES.BRUSH_ACTIVE ||
-                    action.type === ACTION_TYPES.ERASURE_ACTIVE,
+                    action.type === ACTION_TYPES.ERASURE_ACTIVE ||
+                    action.type === ACTION_TYPES.LINE_COMPLETE,
             ) ?? null
     );
 }

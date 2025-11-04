@@ -8,6 +8,7 @@ import {
     claimerSettingsSchema,
 } from './tools/claimer/claimer-settings';
 import { ErasureSettings } from './tools/erasure/erasure';
+import { LineSettings } from './tools/line/line';
 import { PaletteSettings } from './tools/palette';
 
 function createToolKey(key: string) {
@@ -20,6 +21,7 @@ function getByKey(key: string) {
 
 const BRUSH_SIZE = 'brush-size';
 const ERASURE_SIZE = 'erasure-size';
+const LINE_SIZE = 'line-size';
 const PALETTE_IS_OPEN = 'palette-is-open';
 const PALETTE_FOREGROUND_COLOR_REF = 'palette-foreground-color-ref';
 const PALETTE_BACKGROUND_COLOR_REF = 'palette-background-color-ref';
@@ -34,6 +36,10 @@ export function updateToolSettings(toolSettings: ToolSettings) {
     window.localStorage.setItem(
         createToolKey(ERASURE_SIZE),
         toolSettings.erasure.size.toString(),
+    );
+    window.localStorage.setItem(
+        createToolKey(LINE_SIZE),
+        toolSettings.line.size.toString(),
     );
     window.localStorage.setItem(
         createToolKey(PALETTE_IS_OPEN),
@@ -72,6 +78,7 @@ const stringToColorRefSchema = stringToNumberSchema.transform(
 export enum Tool {
     Brush = 'brush',
     Erasure = 'erasure',
+    Line = 'line',
     Claimer = 'claimer',
 }
 
@@ -84,6 +91,7 @@ const stringToToolSchema = z
 const toolSettingsSchema = z.object({
     brush: z.object({ size: z.number() }),
     erasure: z.object({ size: z.number() }),
+    line: z.object({ size: z.number() }),
     palette: z.object({
         isOpen: z.boolean(),
         foregroundColorRef: colorRefSchema,
@@ -96,6 +104,7 @@ const toolSettingsSchema = z.object({
 export type ToolSettings = {
     brush: BrushSettings;
     erasure: ErasureSettings;
+    line: LineSettings;
     palette: PaletteSettings;
     claimer: ClaimerSettings;
     currentTool: Tool;
@@ -107,6 +116,9 @@ export const DEFAULT_TOOL_SETTINGS = toolSettingsSchema.parse({
     },
     brush: {
         size: 2,
+    },
+    line: {
+        size: 1,
     },
     palette: {
         isOpen: true,
@@ -123,6 +135,7 @@ export function getToolSettings(): ToolSettings | undefined {
     const currentTool = stringToToolSchema.safeParse(getByKey(CURRENT_TOOL));
     const brushSize = stringToNumberSchema.safeParse(getByKey(BRUSH_SIZE));
     const erasureSize = stringToNumberSchema.safeParse(getByKey(ERASURE_SIZE));
+    const lineSize = stringToNumberSchema.safeParse(getByKey(LINE_SIZE));
     const paletteIsOpen = stringToBooleanSchema.safeParse(
         getByKey(PALETTE_IS_OPEN),
     );
@@ -139,6 +152,9 @@ export function getToolSettings(): ToolSettings | undefined {
         },
         erasure: {
             size: erasureSize.data ?? DEFAULT_TOOL_SETTINGS.erasure.size,
+        },
+        line: {
+            size: lineSize.data ?? DEFAULT_TOOL_SETTINGS.line.size,
         },
         palette: {
             isOpen: paletteIsOpen.data ?? DEFAULT_TOOL_SETTINGS.palette.isOpen,
