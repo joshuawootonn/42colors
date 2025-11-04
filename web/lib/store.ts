@@ -1238,7 +1238,7 @@ export const store = createStore({
             };
         },
 
-        startEditPlot: (context, { plotId }: { plotId: number }) => {
+        startEditPlot: (context, { plotId }: { plotId: number }, enqueue) => {
             if (isInitialStore(context)) return;
 
             const userPlots = (context.queryClient.getQueryData([
@@ -1254,6 +1254,10 @@ export const store = createStore({
                 );
                 return context;
             }
+
+            enqueue.effect(() => {
+                store.trigger.changeTool({ tool: Tool.Claimer });
+            });
 
             return {
                 ...context,
