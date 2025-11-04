@@ -1,6 +1,7 @@
 import { ACTION_TYPES } from '../../action-types';
 import { getZoomMultiplier } from '../../camera';
 import { getPixelSize } from '../../canvas/canvas';
+import { bresenhamLine } from '../../geometry/bresenham-line';
 import { AbsolutePoint } from '../../geometry/coord';
 import { getCanvasPolygon } from '../../geometry/polygon';
 import { BLACK_REF, COLOR_TABLE, TRANSPARENT_REF } from '../../palette';
@@ -10,7 +11,6 @@ import { uuid } from '../../utils/uuid';
 import { hexToRgbaColor } from '../../webgpu/colors';
 import { EnqueueObject } from '../../xstate-internal-types';
 import {
-    bresenhamLine,
     getAbsolutePoint,
     getBrushPoints,
     getCameraOffset,
