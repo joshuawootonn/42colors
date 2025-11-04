@@ -18,7 +18,12 @@ export default function Page() {
                 }
             }}
         >
-            <DialogContent className={cn(...dialogProse, 'w-157')}>
+            <DialogContent
+                initialFocus={() => {
+                    return { current: null };
+                }}
+                className={cn(...dialogProse, 'w-157')}
+            >
                 <Changelog />
             </DialogContent>
         </Dialog>
