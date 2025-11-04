@@ -1160,6 +1160,24 @@ export const store = createStore({
             };
         },
 
+        cancelClaimerEdit: (context) => {
+            if (isInitialStore(context)) return;
+
+            // Cancel any active edit or resize actions
+            const shouldClearAction =
+                context.activeAction?.type === ACTION_TYPES.CLAIMER_EDIT ||
+                context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT;
+
+            if (!shouldClearAction) {
+                return context;
+            }
+
+            return {
+                ...context,
+                activeAction: null,
+            };
+        },
+
         completeClaim: (context) => {
             if (isInitialStore(context)) return;
 
@@ -1265,8 +1283,13 @@ export const store = createStore({
             };
         },
 
-        deselectPlot: (context) => {
+        deselectPlot: (context, _, enqueue) => {
             if (isInitialStore(context)) return;
+
+            enqueue.effect(() => {
+                store.trigger.cancelClaimerEdit();
+            });
+
             return {
                 ...context,
                 toolSettings: {
