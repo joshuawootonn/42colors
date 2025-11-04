@@ -164,6 +164,27 @@ function redrawTelegraph(context: InitializedStore) {
         lineWidth: 0.4,
         color: CLAIMER_YELLOW,
     });
+
+    // Draw grips (vertex handles) for the completed polygon during create
+    if (context.activeAction.polygon != null) {
+        const lines = context.activeAction.polygon.vertices.map(([x, y]) => ({
+            startX: x,
+            startY: y,
+            endX: x,
+            endY: y,
+            color: GRAY_800,
+            thickness: 0.45,
+        }));
+
+        telegraphWebGPUManager.redrawLines(lines, {
+            xOffset,
+            yOffset,
+            xCamera: context.camera.x,
+            yCamera: context.camera.y,
+            pixelSize,
+            cameraMode: 'relative' as const,
+        });
+    }
 }
 
 export type ClaimerComplete = {
