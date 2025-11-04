@@ -29,6 +29,16 @@ export default function Changelog() {
             <hr className="w-full border-t-2 border-border" />
             <ul>
                 <li>
+                    <DateComponent date={new Date('11/04/2025')} /> — Created
+                    the line tool.
+                    <video
+                        src="/changelog/25-11-04-create-line-tool.mp4"
+                        muted
+                        controls
+                        className="mt-4 border border-border"
+                    />
+                </li>
+                <li>
                     <DateComponent date={new Date('11/03/2025')} /> —
                     42colors.com now auto-selects the plot in the middle of your
                     screen and displays a menu for common ops.
