@@ -415,7 +415,6 @@ describe('simplifyPolygon', () => {
         });
 
         const simplified = simplifyPolygon(polygon);
-        console.log(simplified.vertices);
 
         expect(simplified.vertices).toEqual([
             [0, 0],
