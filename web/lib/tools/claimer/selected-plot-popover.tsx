@@ -84,13 +84,12 @@ export function SelectedPlotPopover() {
             // Use the simplified polygon from active action if resizing/editing
             let polygonToUse = selectedPlot.polygon;
             if (
-                activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT &&
-                activeAction.plotId === selectedPlot.id
-            ) {
-                polygonToUse = activeAction.polygon;
-            } else if (
-                activeAction?.type === ACTION_TYPES.CLAIMER_EDIT &&
-                activeAction.plotId === selectedPlot.id
+                (activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT &&
+                    activeAction.plotId === selectedPlot.id) ||
+                (activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_EDIT &&
+                    activeAction.plotId === selectedPlot.id) ||
+                (activeAction?.type === ACTION_TYPES.CLAIMER_EDIT &&
+                    activeAction.plotId === selectedPlot.id)
             ) {
                 polygonToUse = activeAction.polygon;
             }

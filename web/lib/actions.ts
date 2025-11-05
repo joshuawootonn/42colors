@@ -14,6 +14,7 @@ import {
     ClaimerCreate,
     ClaimerEdit,
     ClaimerNewRectCreate,
+    ClaimerNewRectEdit,
     ClaimerResizeCreate,
     ClaimerResizeEdit,
 } from './tools/claimer/claimer';
@@ -30,6 +31,7 @@ export type Action =
     | LineComplete
     | ClaimerCreate
     | ClaimerNewRectCreate
+    | ClaimerNewRectEdit
     | ClaimerComplete
     | ClaimerEdit
     | ClaimerResizeEdit

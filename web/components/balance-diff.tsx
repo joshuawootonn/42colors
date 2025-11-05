@@ -16,6 +16,7 @@ export function BalanceDiff() {
         if (
             activeAction.type === ACTION_TYPES.CLAIMER_CREATE ||
             activeAction.type === ACTION_TYPES.CLAIMER_NEW_RECT_CREATE ||
+            activeAction.type === ACTION_TYPES.CLAIMER_NEW_RECT_EDIT ||
             activeAction.type === ACTION_TYPES.CLAIMER_EDIT ||
             activeAction.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT ||
             activeAction.type === ACTION_TYPES.CLAIMER_RESIZE_CREATE

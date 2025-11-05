@@ -26,7 +26,8 @@ function updateCursor(context: InitializedStore): void {
         context.activeAction?.type !== ACTION_TYPES.CLAIMER_RESIZE_CREATE &&
         context.activeAction?.type !== ACTION_TYPES.CLAIMER_EDIT &&
         context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE &&
-        context.activeAction?.type !== ACTION_TYPES.CLAIMER_NEW_RECT_CREATE
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_NEW_RECT_CREATE &&
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_NEW_RECT_EDIT
     ) {
         return;
     }
@@ -59,7 +60,8 @@ function updateCursor(context: InitializedStore): void {
     if (
         context.activeAction?.type === ACTION_TYPES.CLAIMER_EDIT ||
         context.activeAction?.type === ACTION_TYPES.CLAIMER_CREATE ||
-        context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_CREATE
+        context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_CREATE ||
+        context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_EDIT
     ) {
         polygon = context.activeAction.polygon;
     }
@@ -95,6 +97,7 @@ function redrawTelegraph(context: InitializedStore) {
     if (
         context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE &&
         context.activeAction?.type !== ACTION_TYPES.CLAIMER_NEW_RECT_CREATE &&
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_NEW_RECT_EDIT &&
         context.activeAction?.type !== ACTION_TYPES.CLAIMER_EDIT &&
         context.activeAction?.type !== ACTION_TYPES.CLAIMER_RESIZE_EDIT &&
         context.activeAction?.type !== ACTION_TYPES.CLAIMER_RESIZE_CREATE
@@ -104,8 +107,11 @@ function redrawTelegraph(context: InitializedStore) {
 
     const polygons: Polygon[] = [];
 
-    // For CLAIMER_NEW_RECT_CREATE, render the composite polygons (merged result)
-    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_CREATE) {
+    // For CLAIMER_NEW_RECT_CREATE and CLAIMER_NEW_RECT_EDIT, render the composite polygons (merged result)
+    if (
+        context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_CREATE ||
+        context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_EDIT
+    ) {
         // Render the composite polygons which combine originalPolygon and nextRect
         const actionPolygons: Polygon[] = [];
 
@@ -192,6 +198,14 @@ export type ClaimerNewRectCreate = {
 export type ClaimerEdit = {
     type: typeof ACTION_TYPES.CLAIMER_EDIT;
     plotId: number;
+    polygon: Polygon;
+};
+
+export type ClaimerNewRectEdit = {
+    type: typeof ACTION_TYPES.CLAIMER_NEW_RECT_EDIT;
+    plotId: number;
+    originalPolygon: Polygon;
+    nextRect: Rect | null;
     polygon: Polygon;
 };
 
@@ -309,6 +323,72 @@ export function startEditAction(plotId: number, polygon: Polygon): ClaimerEdit {
         type: ACTION_TYPES.CLAIMER_EDIT,
         plotId,
         polygon: nonMatchingEndpointsPolygon,
+    };
+}
+
+export function startNewRectEditAction(
+    curr: ClaimerEdit,
+    rect: Rect,
+): ClaimerNewRectEdit {
+    const polygonsToMerge: Polygon[] = [];
+
+    polygonsToMerge.push(curr.polygon);
+    polygonsToMerge.push(rectToPolygonSchema.parse(rect));
+
+    const compositePolygons = getCompositePolygons(polygonsToMerge);
+    const polygon = getMostComplexPolygon(compositePolygons);
+
+    return {
+        type: ACTION_TYPES.CLAIMER_NEW_RECT_EDIT,
+        plotId: curr.plotId,
+        originalPolygon: curr.polygon,
+        nextRect: rect,
+        polygon,
+    };
+}
+
+export function completeNewRectEditAction(
+    curr: ClaimerNewRectEdit,
+): ClaimerEdit {
+    return {
+        type: ACTION_TYPES.CLAIMER_EDIT,
+        plotId: curr.plotId,
+        polygon: curr.polygon,
+    };
+}
+
+/**
+ * Updates a ClaimerNewRectEdit action by updating the rect with a new target point
+ * and recalculating the polygon to reflect the merged result.
+ */
+export function updateNewRectEditAction(
+    action: ClaimerNewRectEdit,
+    targetX: number,
+    targetY: number,
+): ClaimerNewRectEdit {
+    if (action.nextRect == null) {
+        return action;
+    }
+
+    const updatedRect = rectSchema.parse({
+        origin: action.nextRect.origin,
+        target: { x: targetX, y: targetY },
+    });
+
+    const polygonsToMerge: Polygon[] = [];
+
+    polygonsToMerge.push(action.originalPolygon);
+    polygonsToMerge.push(rectToPolygonSchema.parse(updatedRect));
+
+    const compositePolygons = getCompositePolygons(polygonsToMerge);
+    const polygon = getMostComplexPolygon(compositePolygons);
+
+    return {
+        type: ACTION_TYPES.CLAIMER_NEW_RECT_EDIT,
+        plotId: action.plotId,
+        originalPolygon: action.originalPolygon,
+        nextRect: updatedRect,
+        polygon,
     };
 }
 
@@ -525,7 +605,16 @@ function onPointerDown(
             updateCursor(updatedContext);
             return updatedContext;
         }
-        return context;
+
+        // If clicking outside the polygon, start a new rect edit
+        const rect = rectSchema.parse({
+            origin: absolutePoint,
+            target: absolutePoint,
+        });
+        return {
+            ...context,
+            activeAction: startNewRectEditAction(context.activeAction, rect),
+        };
     }
 
     // If we're in create mode, transition to resize mode when clicking a vertex
@@ -637,6 +726,21 @@ function onPointerMove(
         };
     }
 
+    // Handle new rect edit mode - update rect as cursor moves
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_EDIT) {
+        updateCursor(context);
+        const updatedAction = updateNewRectEditAction(
+            context.activeAction,
+            absolutePoint.x,
+            absolutePoint.y,
+        );
+
+        return {
+            ...context,
+            activeAction: updatedAction,
+        };
+    }
+
     return context;
 }
 
@@ -683,6 +787,20 @@ function onWheel(
     // Handle new rect create mode during wheel
     if (context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_CREATE) {
         const updatedAction = updateNewRectCreateAction(
+            context.activeAction,
+            absolutePoint.x,
+            absolutePoint.y,
+        );
+
+        return {
+            ...context,
+            activeAction: updatedAction,
+        };
+    }
+
+    // Handle new rect edit mode during wheel
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_EDIT) {
+        const updatedAction = updateNewRectEditAction(
             context.activeAction,
             absolutePoint.x,
             absolutePoint.y,
@@ -744,6 +862,17 @@ function onPointerOut(
         };
     }
 
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_EDIT) {
+        const completedRectAction = completeNewRectEditAction(
+            context.activeAction,
+        );
+
+        return {
+            ...context,
+            activeAction: completedRectAction,
+        };
+    }
+
     return context;
 }
 
@@ -788,6 +917,17 @@ function onPointerUp(
                 activeAction: null,
             };
         }
+
+        return {
+            ...context,
+            activeAction: completedRectAction,
+        };
+    }
+
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_EDIT) {
+        const completedRectAction = completeNewRectEditAction(
+            context.activeAction,
+        );
 
         return {
             ...context,
