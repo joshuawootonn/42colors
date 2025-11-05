@@ -8,6 +8,10 @@ defmodule Api.Canvas.Pixel.Repo do
 
   alias Api.Canvas.Pixel
 
+  # PostgreSQL limit is 65535 parameters. Each pixel has 7 fields,
+  # so we can safely insert ~9,362 pixels per batch. Using 9,000 for safety margin.
+  @batch_size 9_000
+
   @doc """
   Returns the list of pixels.
 
@@ -58,7 +62,8 @@ defmodule Api.Canvas.Pixel.Repo do
   end
 
   @doc """
-  Creates many pixels using a single bulk INSERT query.
+  Creates many pixels using bulk INSERT queries. Large batches are automatically
+  split into smaller batches to avoid PostgreSQL's parameter limit (65535).
 
   ## Examples
 
@@ -95,14 +100,18 @@ defmodule Api.Canvas.Pixel.Repo do
             }
           end)
 
-        # Use insert_all for bulk insert - this generates a single INSERT statement
-        {count, pixels} = Repo.insert_all(Pixel, insert_data, returning: true)
+        # Split into batches if needed to avoid PostgreSQL parameter limit
+        insert_data
+        |> Enum.chunk_every(@batch_size)
+        |> Enum.reduce_while({:ok, []}, fn batch, {:ok, acc_pixels} ->
+          {count, pixels} = Repo.insert_all(Pixel, batch, returning: true)
 
-        if count == length(attrs_list) do
-          {:ok, pixels}
-        else
-          {:error, "Partial insert failure"}
-        end
+          if count == length(batch) do
+            {:cont, {:ok, acc_pixels ++ pixels}}
+          else
+            {:halt, {:error, "Partial insert failure in batch"}}
+          end
+        end)
 
       invalid_changeset ->
         {:error, invalid_changeset}
