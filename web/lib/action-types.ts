@@ -19,6 +19,7 @@ export const ACTION_TYPES = {
     CLAIMER_RESIZE_EDIT: 'claimer-resize-edit',
     CLAIMER_RESIZE_CREATE: 'claimer-resize-create',
     CLAIMER_CREATE: 'claimer-create',
+    CLAIMER_NEW_RECT_CREATE: 'claimer-new-rect-create',
 
     // Other actions
     REALTIME_ACTIVE: 'realtime-active',

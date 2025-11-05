@@ -52,12 +52,7 @@ import {
 import { fetchPixels } from './fetch-pixels';
 import { bresenhamLine } from './geometry/bresenham-line';
 import { Pixel, getLastPixelValue } from './geometry/coord';
-import {
-    getCenterPoint,
-    getCompositePolygons,
-    polygonSchema,
-    rectToPolygonSchema,
-} from './geometry/polygon';
+import { getCenterPoint, polygonSchema } from './geometry/polygon';
 import { Vector } from './geometry/vector';
 import { KeyboardCode } from './keyboard-codes';
 import { TRANSPARENT_REF, getNextColor, getPreviousColor } from './palette';
@@ -1187,9 +1182,10 @@ export const store = createStore({
                 );
             }
 
-            const rects = [...context.activeAction.rects];
-            if (context.activeAction.nextRect != null) {
-                rects.push(context.activeAction.nextRect);
+            const polygon = context.activeAction.polygon;
+
+            if (polygon == null) {
+                throw new Error('No polygon to complete claim');
             }
 
             context.queryClient.refetchQueries({ queryKey: ['user', 'plots'] });
@@ -1197,13 +1193,7 @@ export const store = createStore({
             return {
                 ...context,
                 actions: context.actions.concat(
-                    completeRectangleClaimerAction(
-                        getCompositePolygons(
-                            rects.map((rect) =>
-                                rectToPolygonSchema.parse(rect),
-                            ),
-                        ),
-                    ),
+                    completeRectangleClaimerAction([polygon]),
                 ),
                 activeAction: null,
             };

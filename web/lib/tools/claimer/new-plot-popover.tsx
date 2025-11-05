@@ -33,7 +33,9 @@ export function NewPlotPopover() {
 
     useEffect(() => {
         if (
-            activeAction?.type === ACTION_TYPES.CLAIMER_CREATE &&
+            (activeAction?.type === ACTION_TYPES.CLAIMER_CREATE ||
+                activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_CREATE ||
+                activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_CREATE) &&
             camera &&
             typeof window !== 'undefined'
         ) {
@@ -48,7 +50,12 @@ export function NewPlotPopover() {
         }
     }, [activeAction, camera]);
 
-    if (user == null || activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE) {
+    if (
+        user == null ||
+        (activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE &&
+            activeAction?.type !== ACTION_TYPES.CLAIMER_NEW_RECT_CREATE &&
+            activeAction?.type !== ACTION_TYPES.CLAIMER_RESIZE_CREATE)
+    ) {
         return null;
     }
 

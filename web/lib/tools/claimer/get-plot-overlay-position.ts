@@ -1,10 +1,10 @@
-import {
-    Polygon,
-    getCompositePolygons,
-    rectToPolygonSchema,
-} from '../../geometry/polygon';
+import { Polygon } from '../../geometry/polygon';
 import { canvasToClient } from '../../utils/clientToCanvasConversion';
-import { ClaimerCreate } from './claimer';
+import {
+    ClaimerCreate,
+    ClaimerNewRectCreate,
+    ClaimerResizeCreate,
+} from './claimer';
 
 export function getPlotOverlayPositionForPolygons(
     polygons: Polygon[],
@@ -49,25 +49,15 @@ export function getPlotOverlayPositionForPolygons(
 }
 
 export function getPlotOverlayPositionForActiveAction(
-    activeAction: ClaimerCreate,
+    activeAction: ClaimerCreate | ClaimerNewRectCreate | ClaimerResizeCreate,
     camera: { x: number; y: number; zoom: number },
 ): { x: number; y: number } {
-    const rects = [...activeAction.rects];
-    if (activeAction.nextRect != null) {
-        rects.push(activeAction.nextRect);
-    }
+    const polygon = activeAction.polygon;
 
-    if (rects.length === 0) {
-        // Fallback to center of screen if no rects
+    if (polygon == null) {
+        // Fallback to center of screen if no polygon
         return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     }
 
-    const polygons = rects.map((rect) => rectToPolygonSchema.parse(rect));
-    const aggregatedPolygons = getCompositePolygons(polygons);
-
-    if (aggregatedPolygons.length === 0) {
-        return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    }
-
-    return getPlotOverlayPositionForPolygons(aggregatedPolygons, camera);
+    return getPlotOverlayPositionForPolygons([polygon], camera);
 }

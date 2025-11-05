@@ -11,7 +11,7 @@ import {
     polygonSchema,
     rectToPolygonSchema,
 } from '../../geometry/polygon';
-import { Rect, getRectSize, rectSchema } from '../../geometry/rect';
+import { Rect, rectSchema } from '../../geometry/rect';
 import { simplifyPolygon } from '../../geometry/simplify-polygon';
 import { InitializedStore } from '../../store';
 import { CLAIMER_YELLOW, GRAY_800 } from '../../webgpu/colors';
@@ -25,7 +25,8 @@ function updateCursor(context: InitializedStore): void {
         context.activeAction?.type !== ACTION_TYPES.CLAIMER_RESIZE_EDIT &&
         context.activeAction?.type !== ACTION_TYPES.CLAIMER_RESIZE_CREATE &&
         context.activeAction?.type !== ACTION_TYPES.CLAIMER_EDIT &&
-        context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE &&
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_NEW_RECT_CREATE
     ) {
         return;
     }
@@ -55,11 +56,10 @@ function updateCursor(context: InitializedStore): void {
     const worldY = (clientY - yOffset) / pixelSize + context.camera.y;
 
     let polygon: Polygon | null = null;
-    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_EDIT) {
-        polygon = context.activeAction.polygon;
-    } else if (
-        context.activeAction?.type === ACTION_TYPES.CLAIMER_CREATE &&
-        context.activeAction.polygon
+    if (
+        context.activeAction?.type === ACTION_TYPES.CLAIMER_EDIT ||
+        context.activeAction?.type === ACTION_TYPES.CLAIMER_CREATE ||
+        context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_CREATE
     ) {
         polygon = context.activeAction.polygon;
     }
@@ -93,69 +93,53 @@ function redrawTelegraph(context: InitializedStore) {
     const { xOffset, yOffset } = getCameraOffset(context.camera);
 
     if (
-        context.activeAction?.type === ACTION_TYPES.CLAIMER_EDIT ||
-        context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT ||
-        context.activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_CREATE
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE &&
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_NEW_RECT_CREATE &&
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_EDIT &&
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_RESIZE_EDIT &&
+        context.activeAction?.type !== ACTION_TYPES.CLAIMER_RESIZE_CREATE
     ) {
-        const polygon =
-            context.activeAction.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT ||
-            context.activeAction.type === ACTION_TYPES.CLAIMER_RESIZE_CREATE
-                ? context.activeAction.polygon
-                : context.activeAction.polygon;
-
-        // Draw the simplified polygon outline
-        const webGPUPolygons = [{ polygon }];
-
-        telegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
-            xOffset,
-            yOffset,
-            xCamera: context.camera.x,
-            yCamera: context.camera.y,
-            pixelSize,
-            lineWidth: 0.4,
-            color: CLAIMER_YELLOW,
-        });
-
-        const lines = polygon.vertices.map(([x, y]) => ({
-            startX: x,
-            startY: y,
-            endX: x,
-            endY: y,
-            color: GRAY_800,
-            thickness: 0.45,
-        }));
-
-        telegraphWebGPUManager.redrawLines(lines, {
-            xOffset,
-            yOffset,
-            xCamera: context.camera.x,
-            yCamera: context.camera.y,
-            pixelSize,
-            cameraMode: 'relative' as const,
-        });
-
         return context;
     }
 
-    // Handle normal claiming telegraph
-    if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE) {
+    const polygons: Polygon[] = [];
+
+    // For CLAIMER_NEW_RECT_CREATE, render the composite polygons (merged result)
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_CREATE) {
+        // Render the composite polygons which combine originalPolygon and nextRect
+        const actionPolygons: Polygon[] = [];
+
+        if (context.activeAction.originalPolygon != null) {
+            actionPolygons.push(context.activeAction.originalPolygon);
+        }
+
+        if (context.activeAction.nextRect != null) {
+            actionPolygons.push(
+                rectToPolygonSchema.parse(context.activeAction.nextRect),
+            );
+        }
+
+        // Get all composite polygons (handles both overlapping and non-overlapping cases)
+        if (actionPolygons.length > 0) {
+            const compositePolygons = getCompositePolygons(actionPolygons);
+            polygons.push(...compositePolygons);
+        }
+    } else {
+        // For other action types, just show the polygon
+        const polygon = context.activeAction.polygon;
+        if (polygon != null) {
+            polygons.push(polygon);
+        }
+    }
+
+    if (polygons.length === 0) {
         return context;
     }
 
-    const polygonRenderItems: { polygon: Polygon }[] = [];
-    if (context.activeAction.polygon != null) {
-        polygonRenderItems.push({
-            polygon: context.activeAction.polygon,
-        });
-    }
+    // Draw the simplified polygon outline
+    const webGPUPolygons = polygons.map((polygon) => ({ polygon }));
 
-    if (context.activeAction.nextRect != null) {
-        polygonRenderItems.push({
-            polygon: rectToPolygonSchema.parse(context.activeAction.nextRect),
-        });
-    }
-
-    telegraphWebGPUManager.redrawPolygons(polygonRenderItems, {
+    telegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
         xOffset,
         yOffset,
         xCamera: context.camera.x,
@@ -165,7 +149,6 @@ function redrawTelegraph(context: InitializedStore) {
         color: CLAIMER_YELLOW,
     });
 
-    // Draw grips (vertex handles) for the completed polygon during create
     if (context.activeAction.polygon != null) {
         const lines = context.activeAction.polygon.vertices.map(([x, y]) => ({
             startX: x,
@@ -185,6 +168,8 @@ function redrawTelegraph(context: InitializedStore) {
             cameraMode: 'relative' as const,
         });
     }
+
+    return context;
 }
 
 export type ClaimerComplete = {
@@ -194,9 +179,14 @@ export type ClaimerComplete = {
 
 export type ClaimerCreate = {
     type: typeof ACTION_TYPES.CLAIMER_CREATE;
-    rects: Rect[];
     polygon: Polygon | null;
+};
+
+export type ClaimerNewRectCreate = {
+    type: typeof ACTION_TYPES.CLAIMER_NEW_RECT_CREATE;
+    originalPolygon: Polygon | null;
     nextRect: Rect | null;
+    polygon: Polygon;
 };
 
 export type ClaimerEdit = {
@@ -220,65 +210,85 @@ export type ClaimerResizeCreate = {
     originalPolygon: Polygon;
     modifiedPolygon: Polygon;
     polygon: Polygon;
-    rects: Rect[];
 };
 
-export function startClaimerAction(rect: Rect): ClaimerCreate {
+export function startClaimerAction(rect: Rect): ClaimerNewRectCreate {
+    const polygon = rectToPolygonSchema.parse(rect);
     return {
-        type: ACTION_TYPES.CLAIMER_CREATE,
-        rects: [],
-        polygon: rectToPolygonSchema.parse(rect),
+        type: ACTION_TYPES.CLAIMER_NEW_RECT_CREATE,
+        originalPolygon: null,
         nextRect: rect,
-    };
-}
-
-export function newRectAction(curr: ClaimerCreate, rect: Rect): ClaimerCreate {
-    return {
-        type: ACTION_TYPES.CLAIMER_CREATE,
-        rects: curr.rects,
-        nextRect: rect,
-        polygon: curr.polygon,
-    };
-}
-
-export function completeRectAction(curr: ClaimerCreate): ClaimerCreate {
-    const size = curr.nextRect ? getRectSize(curr.nextRect) : 0;
-
-    if (size === 0) {
-        return {
-            type: ACTION_TYPES.CLAIMER_CREATE,
-            rects: curr.rects,
-            nextRect: null,
-            polygon: curr.polygon,
-        };
-    }
-
-    const compositePolygons = getCompositePolygons(
-        [...curr.rects, curr.nextRect]
-            .filter(Boolean)
-            .map((rect) => rectToPolygonSchema.parse(rect)),
-    );
-
-    const polygon = getMostComplexPolygon(compositePolygons);
-
-    return {
-        type: ACTION_TYPES.CLAIMER_CREATE,
-        rects:
-            compositePolygons.length > 1 || curr.nextRect == null
-                ? curr.rects
-                : curr.rects.concat(curr.nextRect),
-        nextRect: null,
         polygon,
     };
 }
 
-export function nextClaimerAction(
-    activeBrushAction: ClaimerCreate,
-    nextRect: Rect,
+export function startNewRectCreateAction(
+    curr: ClaimerCreate,
+    rect: Rect,
+): ClaimerNewRectCreate {
+    const polygonsToMerge: Polygon[] = [];
+
+    const originalPolygon = curr.polygon;
+    if (originalPolygon != null) {
+        polygonsToMerge.push(originalPolygon);
+    }
+
+    polygonsToMerge.push(rectToPolygonSchema.parse(rect));
+
+    const compositePolygons = getCompositePolygons(polygonsToMerge);
+    const polygon = getMostComplexPolygon(compositePolygons);
+
+    return {
+        type: ACTION_TYPES.CLAIMER_NEW_RECT_CREATE,
+        originalPolygon,
+        nextRect: rect,
+        polygon,
+    };
+}
+
+export function completeNewRectCreateAction(
+    curr: ClaimerNewRectCreate,
 ): ClaimerCreate {
     return {
-        ...activeBrushAction,
-        nextRect,
+        type: ACTION_TYPES.CLAIMER_CREATE,
+        polygon: curr.polygon,
+    };
+}
+
+/**
+ * Updates a ClaimerNewRectCreate action by updating the rect with a new target point
+ * and recalculating the polygon to reflect the merged result.
+ */
+export function updateNewRectCreateAction(
+    action: ClaimerNewRectCreate,
+    targetX: number,
+    targetY: number,
+): ClaimerNewRectCreate {
+    if (action.nextRect == null) {
+        return action;
+    }
+
+    const updatedRect = rectSchema.parse({
+        origin: action.nextRect.origin,
+        target: { x: targetX, y: targetY },
+    });
+
+    const polygonsToMerge: Polygon[] = [];
+
+    if (action.originalPolygon != null) {
+        polygonsToMerge.push(action.originalPolygon);
+    }
+
+    polygonsToMerge.push(rectToPolygonSchema.parse(updatedRect));
+
+    const compositePolygons = getCompositePolygons(polygonsToMerge);
+    const polygon = getMostComplexPolygon(compositePolygons);
+
+    return {
+        type: ACTION_TYPES.CLAIMER_NEW_RECT_CREATE,
+        originalPolygon: action.originalPolygon,
+        nextRect: updatedRect,
+        polygon,
     };
 }
 
@@ -320,7 +330,6 @@ export function startResizeAction(
 export function startResizeCreateAction(
     vertexIndex: number,
     polygon: Polygon,
-    rects: Rect[],
 ): ClaimerResizeCreate {
     return {
         type: ACTION_TYPES.CLAIMER_RESIZE_CREATE,
@@ -328,7 +337,6 @@ export function startResizeCreateAction(
         originalPolygon: polygon,
         modifiedPolygon: polygon,
         polygon: polygon,
-        rects,
     };
 }
 
@@ -521,29 +529,27 @@ function onPointerDown(
     }
 
     // If we're in create mode, transition to resize mode when clicking a vertex
-    if (
-        context.activeAction?.type === ACTION_TYPES.CLAIMER_CREATE &&
-        context.activeAction.polygon
-    ) {
-        const handleProximity = 2; // world units
-        const clickedVertexIndex =
-            context.activeAction.polygon.vertices.findIndex(
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_CREATE) {
+        const currentPolygon = context.activeAction.polygon;
+        if (currentPolygon != null) {
+            const handleProximity = 2; // world units
+            const clickedVertexIndex = currentPolygon.vertices.findIndex(
                 ([vx, vy]) =>
                     Math.abs(vx - absolutePoint.x) <= handleProximity &&
                     Math.abs(vy - absolutePoint.y) <= handleProximity,
             );
 
-        if (clickedVertexIndex !== -1) {
-            const updatedContext = {
-                ...context,
-                activeAction: startResizeCreateAction(
-                    clickedVertexIndex,
-                    context.activeAction.polygon,
-                    context.activeAction.rects,
-                ),
-            };
-            updateCursor(updatedContext);
-            return updatedContext;
+            if (clickedVertexIndex !== -1) {
+                const updatedContext = {
+                    ...context,
+                    activeAction: startResizeCreateAction(
+                        clickedVertexIndex,
+                        currentPolygon,
+                    ),
+                };
+                updateCursor(updatedContext);
+                return updatedContext;
+            }
         }
     }
 
@@ -555,7 +561,7 @@ function onPointerDown(
     const nextActiveAction =
         context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE
             ? startClaimerAction(rect)
-            : newRectAction(context.activeAction, rect);
+            : startNewRectCreateAction(context.activeAction, rect);
 
     return {
         ...context,
@@ -613,29 +619,25 @@ function onPointerMove(
     // Handle create mode cursor updates
     if (context.activeAction?.type === ACTION_TYPES.CLAIMER_CREATE) {
         updateCursor(context);
-        if (context.activeAction.nextRect == null) {
-            return context;
-        }
-    }
-
-    if (
-        context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE ||
-        context.activeAction.nextRect == null
-    ) {
         return context;
     }
 
-    const rect = rectSchema.parse({
-        origin: context.activeAction.nextRect.origin,
-        target: absolutePoint,
-    });
+    // Handle new rect create mode - update rect as cursor moves
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_CREATE) {
+        updateCursor(context);
+        const updatedAction = updateNewRectCreateAction(
+            context.activeAction,
+            absolutePoint.x,
+            absolutePoint.y,
+        );
 
-    const nextActiveAction = nextClaimerAction(context.activeAction, rect);
+        return {
+            ...context,
+            activeAction: updatedAction,
+        };
+    }
 
-    return {
-        ...context,
-        activeAction: nextActiveAction,
-    };
+    return context;
 }
 
 function onWheel(
@@ -673,24 +675,26 @@ function onWheel(
         };
     }
 
-    if (
-        context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE ||
-        context.activeAction.nextRect == null
-    ) {
+    // Handle create mode during wheel
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_CREATE) {
         return context;
     }
 
-    const rect = rectSchema.parse({
-        origin: context.activeAction.nextRect.origin,
-        target: absolutePoint,
-    });
+    // Handle new rect create mode during wheel
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_CREATE) {
+        const updatedAction = updateNewRectCreateAction(
+            context.activeAction,
+            absolutePoint.x,
+            absolutePoint.y,
+        );
 
-    const nextActiveAction = nextClaimerAction(context.activeAction, rect);
+        return {
+            ...context,
+            activeAction: updatedAction,
+        };
+    }
 
-    return {
-        ...context,
-        activeAction: nextActiveAction,
-    };
+    return context;
 }
 
 function onPointerOut(
@@ -716,30 +720,31 @@ function onPointerOut(
             ...context,
             activeAction: {
                 type: ACTION_TYPES.CLAIMER_CREATE,
-                rects: context.activeAction.rects,
                 polygon: context.activeAction.polygon,
-                nextRect: null,
             },
         };
         updateCursor(updatedContext);
         return updatedContext;
     }
-    if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE) {
-        return context;
-    }
-    const completedRectAction = completeRectAction(context.activeAction);
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_CREATE) {
+        const completedRectAction = completeNewRectCreateAction(
+            context.activeAction,
+        );
 
-    if (completedRectAction.rects.length === 0) {
+        if (completedRectAction.polygon == null) {
+            return {
+                ...context,
+                activeAction: null,
+            };
+        }
+
         return {
             ...context,
-            activeAction: null,
+            activeAction: completedRectAction,
         };
     }
 
-    return {
-        ...context,
-        activeAction: completedRectAction,
-    };
+    return context;
 }
 
 function onPointerUp(
@@ -765,32 +770,32 @@ function onPointerUp(
             ...context,
             activeAction: {
                 type: ACTION_TYPES.CLAIMER_CREATE,
-                rects: context.activeAction.rects,
                 polygon: context.activeAction.polygon,
-                nextRect: null,
             },
         };
         updateCursor(updatedContext);
         return updatedContext;
     }
 
-    if (context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE) {
-        return context;
-    }
+    if (context.activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_CREATE) {
+        const completedRectAction = completeNewRectCreateAction(
+            context.activeAction,
+        );
 
-    const completedRectAction = completeRectAction(context.activeAction);
+        if (completedRectAction.polygon == null) {
+            return {
+                ...context,
+                activeAction: null,
+            };
+        }
 
-    if (completedRectAction.rects.length === 0) {
         return {
             ...context,
-            activeAction: null,
+            activeAction: completedRectAction,
         };
     }
 
-    return {
-        ...context,
-        activeAction: completedRectAction,
-    };
+    return context;
 }
 
 export const ClaimerTool = {

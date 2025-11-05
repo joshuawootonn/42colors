@@ -3,10 +3,8 @@ import { z } from 'zod';
 import { ACTION_TYPES } from '../../action-types';
 import {
     completePolygonRing,
-    getCompositePolygons,
     getPolygonSize,
     polygonSchema,
-    rectToPolygonSchema,
 } from '../../geometry/polygon';
 import { store } from '../../store';
 import { isInitialStore } from '../../utils/is-initial-store';
@@ -71,15 +69,13 @@ export async function createPlot(plotData: {
         );
     }
 
-    const rects = [...context.activeAction.rects];
-    if (context.activeAction.nextRect != null) {
-        rects.push(context.activeAction.nextRect);
+    const polygon = context.activeAction.polygon;
+
+    if (polygon == null) {
+        throw new Error('No polygon to create plot from');
     }
-    const polygons = completeRectangleClaimerAction(
-        getCompositePolygons(
-            rects.map((rect) => rectToPolygonSchema.parse(rect)),
-        ),
-    ).polygons;
+
+    const polygons = completeRectangleClaimerAction([polygon]).polygons;
 
     // Validate polygon size before sending to backend
     if (polygons.length === 0 || getPolygonSize(polygons[0]) < 1) {
