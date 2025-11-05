@@ -29,6 +29,20 @@ export default function Changelog() {
             <hr className="w-full border-t-2 border-border" />
             <ul>
                 <li>
+                    <DateComponent date={new Date('11/05/2025')} />
+                    <ul>
+                        <li>
+                            Show the title of a plot when it&apos;s selected.
+                            <video
+                                src="/changelog/25-11-05-selected-plot-popover-title.mp4"
+                                muted
+                                controls
+                                className="mt-4 border border-border"
+                            />
+                        </li>
+                    </ul>
+                </li>
+                <li>
                     <DateComponent date={new Date('11/04/2025')} /> - BIG day
                     <ul>
                         <li>
