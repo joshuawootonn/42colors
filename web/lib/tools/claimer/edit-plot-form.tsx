@@ -225,7 +225,7 @@ export function EditPlotForm({ plot, triggerProps }: EditPlotFormProps) {
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => setIsOpen(false)}
+                            onClick={() => handleOpenChange(false)}
                             disabled={isSubmitting}
                         >
                             Cancel
