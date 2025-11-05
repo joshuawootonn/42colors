@@ -29,14 +29,38 @@ export default function Changelog() {
             <hr className="w-full border-t-2 border-border" />
             <ul>
                 <li>
-                    <DateComponent date={new Date('11/04/2025')} /> — Created
-                    the line tool.
-                    <video
-                        src="/changelog/25-11-04-create-line-tool.mp4"
-                        muted
-                        controls
-                        className="mt-4 border border-border"
-                    />
+                    <DateComponent date={new Date('11/04/2025')} /> - BIG day
+                    <ul>
+                        <li>
+                            Make is so you could drag from outside the polygon
+                            to add new vertices when editing an existing plot.
+                            <video
+                                src="/changelog/25-11-04-dragging-rectangle-plot-edit.mp4"
+                                muted
+                                controls
+                                className="mt-4 border border-border"
+                            />
+                        </li>
+                        <li>
+                            Made it so you could drag the points of your polygon
+                            when creating a new plot.
+                            <video
+                                src="/changelog/25-11-04-dragging-handles-plot-create.mp4"
+                                muted
+                                controls
+                                className="mt-4 border border-border"
+                            />
+                        </li>
+                        <li>
+                            Created the line tool.
+                            <video
+                                src="/changelog/25-11-04-create-line-tool.mp4"
+                                muted
+                                controls
+                                className="mt-4 border border-border"
+                            />
+                        </li>
+                    </ul>
                 </li>
                 <li>
                     <DateComponent date={new Date('11/03/2025')} /> —
