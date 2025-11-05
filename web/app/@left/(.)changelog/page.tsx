@@ -22,7 +22,10 @@ export default function Page() {
                 initialFocus={() => {
                     return { current: null };
                 }}
-                className={cn(...dialogProse, 'w-157')}
+                className={cn(
+                    ...dialogProse,
+                    'max-h-[calc(100vh-100px)] w-157',
+                )}
             >
                 <Changelog />
             </DialogContent>
