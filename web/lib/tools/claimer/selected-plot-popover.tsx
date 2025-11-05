@@ -70,7 +70,20 @@ export function SelectedPlotPopover() {
         const recentPlot = recentPlots?.find(
             (plot) => plot.id === selectedPlotId,
         );
-        return recentPlot || null;
+        if (recentPlot) return recentPlot;
+
+        // Try to find in chunk plots (for plots loaded by chunk)
+        const context = store.getSnapshot().context;
+        if (context.state === 'initialized') {
+            for (const chunk of Object.values(context.canvas.chunkCanvases)) {
+                const chunkPlot = chunk.plots.find(
+                    (plot) => plot.id === selectedPlotId,
+                );
+                if (chunkPlot) return chunkPlot;
+            }
+        }
+
+        return null;
     }, [selectedPlotId, userPlots, recentPlots]);
 
     useEffect(() => {
@@ -78,18 +91,19 @@ export function SelectedPlotPopover() {
             selectedPlot &&
             selectedPlot.polygon &&
             camera &&
-            typeof window !== 'undefined' &&
-            user?.id === selectedPlot.userId
+            typeof window !== 'undefined'
         ) {
             // Use the simplified polygon from active action if resizing/editing
             let polygonToUse = selectedPlot.polygon;
             if (
-                (activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT &&
+                user?.id === selectedPlot.userId &&
+                ((activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT &&
                     activeAction.plotId === selectedPlot.id) ||
-                (activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_EDIT &&
-                    activeAction.plotId === selectedPlot.id) ||
-                (activeAction?.type === ACTION_TYPES.CLAIMER_EDIT &&
-                    activeAction.plotId === selectedPlot.id)
+                    (activeAction?.type ===
+                        ACTION_TYPES.CLAIMER_NEW_RECT_EDIT &&
+                        activeAction.plotId === selectedPlot.id) ||
+                    (activeAction?.type === ACTION_TYPES.CLAIMER_EDIT &&
+                        activeAction.plotId === selectedPlot.id))
             ) {
                 polygonToUse = activeAction.polygon;
             }
@@ -105,8 +119,10 @@ export function SelectedPlotPopover() {
         }
     }, [selectedPlot, camera, user, activeAction]);
 
-    // Don't render if no user, no selected plot, or user doesn't own the plot
-    if (!user || !selectedPlot || user.id !== selectedPlot.userId) {
+    // Render popover for any selected plot (owned or not)
+    // Only show edit/delete buttons if user owns the plot
+    const isOwned = user?.id === selectedPlot?.userId;
+    if (!user || !selectedPlot) {
         return null;
     }
 
@@ -143,15 +159,22 @@ export function SelectedPlotPopover() {
                 }}
                 hideCloseButton={true}
             >
-                <div className="flex items-start space-x-[-1px]">
-                    <EditPlotForm
-                        plot={selectedPlot}
-                        triggerProps={{ className: 'px-2 py-1' }}
-                    />
-                    <DeletePlotButton
-                        plot={selectedPlot}
-                        triggerProps={{ className: 'px-2 py-1' }}
-                    />
+                <div className="flex items-start space-x-[-1.5px]">
+                    <div className="h-8 max-w-xs truncate border-1.5 border-border bg-secondary px-2 py-1 text-sm text-primary">
+                        {selectedPlot.name}
+                    </div>
+                    {isOwned && (
+                        <>
+                            <EditPlotForm
+                                plot={selectedPlot}
+                                triggerProps={{ className: 'px-2 py-1' }}
+                            />
+                            <DeletePlotButton
+                                plot={selectedPlot}
+                                triggerProps={{ className: 'px-2 py-1' }}
+                            />
+                        </>
+                    )}
                     <IconButton
                         onClick={() => {
                             store.trigger.deselectPlot();
