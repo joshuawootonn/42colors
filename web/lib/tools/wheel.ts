@@ -25,7 +25,7 @@ function onWheel(
     // which is why I have this assumption based on the delta being less than 5.
     // console.log(e.deltaY, e.deltaZ);
     const deltaZoom = e.metaKey
-        ? Math.abs(e.deltaY) < 5
+        ? Math.abs(e.deltaY) < 25
             ? e.deltaY * -4
             : e.deltaY * -0.3
         : 0;
