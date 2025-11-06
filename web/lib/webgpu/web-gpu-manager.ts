@@ -245,7 +245,7 @@ export async function createWebGPUManager(
                     );
                     await manager.initialize();
 
-                    console.log('WebGPU manager initialized successfully');
+                    console.debug('WebGPU manager initialized successfully');
 
                     return manager;
                 }

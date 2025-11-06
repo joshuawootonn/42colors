@@ -44,7 +44,7 @@ export async function initializeChunkWebGPU(
     try {
         const webgpuManager = await createWebGPUManager(chunkCanvas);
         if (webgpuManager) {
-            console.log('Chunk WebGPU manager initialized successfully');
+            console.debug('Chunk WebGPU manager initialized successfully');
             return webgpuManager;
         }
     } catch (error) {

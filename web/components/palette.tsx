@@ -153,8 +153,7 @@ export function Palette() {
                     >
                         {colorChunk.map((color_ref) => (
                             <IconButton
-                                onClick={(e) => {
-                                    console.log(e.button);
+                                onClick={() => {
                                     store.trigger.updatePaletteSettings({
                                         palette: {
                                             foregroundColorRef: color_ref,

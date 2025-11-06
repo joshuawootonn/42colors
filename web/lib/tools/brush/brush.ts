@@ -228,9 +228,10 @@ function redrawTelegraph(context: InitializedStore) {
     }
 
     if (context.interaction.cursorPosition == null) {
-        console.info(
-            'Skipping brush telegraph draw since `cursorPosition` is null',
-        );
+        // too noisy
+        // console.debug(
+        //     'Skipping brush telegraph draw since `cursorPosition` is null',
+        // );
         return;
     }
 

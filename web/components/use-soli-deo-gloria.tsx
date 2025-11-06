@@ -5,6 +5,7 @@ export function useSoliDeoGloria() {
 
     useEffect(() => {
         if (hasLogged.current) return;
+        if (process.env.NODE_ENV !== 'production') return;
 
         hasLogged.current = true;
         console.log(`

@@ -30,7 +30,7 @@ export async function fetchPixels(
     search.set('x', x.toString());
     search.set('y', y.toString());
 
-    console.log(`fetching chunk x: ${x} y: ${y}`);
+    console.debug(`fetching chunk x: ${x} y: ${y}`);
     return fetch(new URL(`/api/pixels?${search}`, apiOrigin)).then(
         async (res) => {
             const binary = await res.arrayBuffer();

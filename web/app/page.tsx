@@ -100,7 +100,7 @@ export default function Page() {
                             telegraphWebGPUManager &&
                             realtimeWebGPUManager
                         ) {
-                            console.log('initializing store');
+                            console.debug('initializing store');
 
                             store.trigger.initializeStore({
                                 body,
