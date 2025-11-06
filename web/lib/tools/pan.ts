@@ -28,7 +28,6 @@ function onPointerDown(e: PointerEvent, context: Store) {
         context.canvas?.rootCanvas.removeEventListener('pointermove', pan);
 
         store.trigger.setIsPressed({ isPressed: false });
-        store.trigger.fetchPixels();
     };
 
     context.canvas.rootCanvas.addEventListener('pointerup', cleanUp, {

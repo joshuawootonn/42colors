@@ -107,7 +107,6 @@ export function PlotsPopover({
     const selectPlot = (plotId: number) => {
         store.trigger.selectPlot({ plotId });
         store.trigger.moveToPlot({ plotId });
-        store.trigger.fetchPixels();
     };
 
     return (

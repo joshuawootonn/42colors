@@ -220,7 +220,6 @@ export function LogsPopover({
     const selectPlot = (plotId: number) => {
         store.trigger.selectPlot({ plotId });
         store.trigger.moveToPlot({ plotId });
-        store.trigger.fetchPixels();
     };
 
     const {

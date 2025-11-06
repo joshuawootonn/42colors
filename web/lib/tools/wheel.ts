@@ -5,12 +5,6 @@ import { clamp } from '../utils/clamp';
 import { isInitialStore } from '../utils/is-initial-store';
 import { EnqueueObject } from '../xstate-internal-types';
 
-function fetchPixels() {
-    store.trigger.fetchPixels();
-}
-
-let timeout: NodeJS.Timeout;
-
 function onWheel(
     context: Store,
     e: WheelEvent,
@@ -63,12 +57,6 @@ function onWheel(
     //   nextPixelY,
     //   zoom: context.camera.zoom,
     // });
-
-    clearTimeout(timeout);
-
-    enqueue.effect(() => {
-        timeout = setTimeout(fetchPixels, 100);
-    });
 
     enqueue.effect(() => {
         store.trigger.moveCamera({

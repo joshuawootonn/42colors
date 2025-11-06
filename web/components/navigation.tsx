@@ -58,8 +58,6 @@ export function Navigation() {
                 },
             });
         }
-
-        store.trigger.fetchPixels();
     }, []);
 
     useCameraSearchParams(x, y, zoom);
@@ -78,7 +76,6 @@ export function Navigation() {
                     store.trigger.moveCamera({
                         camera: { x: 0, y: 0, zoom: 100 },
                     });
-                    store.trigger.fetchPixels();
                 }}
                 className={
                     'svg-outline-within-sm relative z-0 flex h-8 items-center justify-center bg-transparent text-base outline-none'

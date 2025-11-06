@@ -980,6 +980,7 @@ export const store = createStore({
 
                 // Show crosshair at center when camera moves
                 showCrosshair();
+                store.trigger.fetchPixels();
 
                 if (options.autoSelectPlot) {
                     // Get the center point of the new camera position
