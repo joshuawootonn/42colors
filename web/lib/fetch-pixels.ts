@@ -1,4 +1,4 @@
-import { ChunkPixel, chunkPixelSchema } from './canvas/chunk';
+import { ChunkPixel } from './canvas/chunk';
 import { CHUNK_LENGTH } from './constants';
 import { Pixel } from './geometry/coord';
 import { ColorRef } from './palette';
@@ -10,13 +10,12 @@ function binaryToPixels(binary: ArrayBuffer): ChunkPixel[] {
     const pixels = [];
     for (let i = 0; i < parsedArray.length; i++) {
         if (parsedArray[i] !== 0) {
-            pixels.push(
-                chunkPixelSchema.parse({
-                    x: i % CHUNK_LENGTH,
-                    y: Math.floor(i / CHUNK_LENGTH),
-                    color_ref: parsedArray[i] as ColorRef,
-                }),
-            );
+            // Casting here instead of parsing because parsing is really expensive and other than the type branding is unnecessary
+            pixels.push({
+                x: i % CHUNK_LENGTH,
+                y: Math.floor(i / CHUNK_LENGTH),
+                color_ref: parsedArray[i] as ColorRef,
+            } as ChunkPixel);
         }
     }
     return pixels;
