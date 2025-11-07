@@ -72,16 +72,16 @@
 }
 
 /* focus-within is required because inputs have no content, and `:before` is prepended to content.*/
-.svg-outline:focus,
-.svg-outline-sm:focus,
-.svg-outline-border:focus,
-.svg-outline-inset:focus,
-.svg-outline-within:focus-within *,
-.svg-outline-within-sm:focus-within * {
+.svg-outline:focus-visible,
+.svg-outline-sm:focus-visible,
+.svg-outline-border:focus-visible,
+.svg-outline-inset:focus-visible,
+.svg-outline-within:has(:focus-visible) *,
+.svg-outline-within-sm:has(:focus-visible) * {
     @apply outline-none;
 }
-.svg-outline-within-sm:focus-within:before,
-.svg-outline-within:focus-within:before {
+.svg-outline-within-sm:has(:focus-visible):before,
+.svg-outline-within:has(:focus-visible):before {
     @apply -inset-2;
     content: ' ';
     background-color: black;
@@ -92,12 +92,12 @@
 }
 
 .svg-outline-override,
-.svg-outline:focus:before,
-.svg-outline-sm:focus:before,
-.svg-outline-xs:focus:before,
-.svg-outline-border:focus:before,
-.svg-outline-inset:focus:before,
-.svg-outline-stubby:focus:before {
+.svg-outline:focus-visible:before,
+.svg-outline-sm:focus-visible:before,
+.svg-outline-xs:focus-visible:before,
+.svg-outline-border:focus-visible:before,
+.svg-outline-inset:focus-visible:before,
+.svg-outline-stubby:focus-visible:before {
     @apply -inset-2;
     content: ' ';
     background-color: black;
@@ -105,24 +105,24 @@
     mask-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" %3E%3Crect x="0" y="0" width="100%25" height="100%25" stroke-width="3" stroke="black" fill="transparent" stroke-dasharray="6 5" /%3E%3C/svg%3E');
     position: absolute;
 }
-.svg-outline-within-sm:focus-within:before,
-.svg-outline-sm:focus:before {
+.svg-outline-within-sm:has(:focus-visible):before,
+.svg-outline-sm:focus-visible:before {
     @apply -inset-1;
 }
 
-.svg-outline-xs:focus:before {
+.svg-outline-xs:focus-visible:before {
     @apply inset-0;
 }
 
-.svg-outline-border:focus:before {
+.svg-outline-border:focus-visible:before {
     inset: -0.09375rem;
 }
 
-.svg-outline-inset:focus:before {
+.svg-outline-inset:focus-visible:before {
     @apply inset-0.5;
 }
 
-.svg-outline-stubby:focus:before {
+.svg-outline-stubby:focus-visible:before {
     @apply -bottom-0.5 -left-3 -right-3 -top-0.5;
 
     background-color: black;
