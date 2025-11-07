@@ -29,6 +29,17 @@ export default function Changelog() {
             <hr className="w-full border-t-2 border-border" />
             <ul>
                 <li>
+                    <DateComponent date={new Date('11/06/2025')} />
+                    <ul>
+                        <li>
+                            Added keyboard shortcuts for camera zoom:{' '}
+                            <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> + <kbd>+</kbd> to
+                            zoom in and <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> +{' '}
+                            <kbd>-</kbd> to zoom out.
+                        </li>
+                    </ul>
+                </li>
+                <li>
                     <DateComponent date={new Date('11/05/2025')} />
                     <ul>
                         <li>
