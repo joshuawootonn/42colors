@@ -35,7 +35,15 @@ import { draw } from './canvas/draw';
 import { resizeFullsizeCanvas } from './canvas/fullsize';
 import { resizeRealtimeCanvas } from './canvas/realtime';
 import { showCrosshair } from './canvas/ui';
-import { CHUNK_LENGTH } from './constants';
+import {
+    CHUNK_LENGTH,
+    X_MAX,
+    X_MIN,
+    Y_MAX,
+    Y_MIN,
+    ZOOM_MAX,
+    ZOOM_MIN,
+} from './constants';
 import {
     onContextMenu,
     onGesture,
@@ -57,6 +65,7 @@ import { Vector } from './geometry/vector';
 import { KeyboardCode } from './keyboard-codes';
 import { TRANSPARENT_REF, getNextColor, getPreviousColor } from './palette';
 import { findPlotAtPoint } from './plots/plots.rest';
+import { roundTo1Place } from './round-to-five';
 import { newPixels, setupChannel, setupSocketConnection } from './sockets';
 import {
     DEFAULT_TOOL_SETTINGS,
@@ -88,6 +97,7 @@ import { clampLineSize } from './tools/line/line-utils';
 import { PaletteSettings } from './tools/palette';
 import { PanTool } from './tools/pan';
 import { WheelTool } from './tools/wheel';
+import { clamp } from './utils/clamp';
 import { isInitialStore } from './utils/is-initial-store';
 import { uuid } from './utils/uuid';
 import { WebGPUManager } from './webgpu/web-gpu-manager';
@@ -1421,6 +1431,119 @@ export const store = createStore({
             if (isHotkey('mod+z', e)) {
                 e.preventDefault();
                 enqueue.effect(() => store.trigger.undo());
+                return context;
+            }
+
+            // Camera zoom shortcuts (Cmd/Ctrl + Plus/Minus)
+            // Platform-specific: Mac uses metaKey (Cmd), Windows uses ctrlKey
+            const isMac =
+                /Mac|iPhone|iPod|iPad/i.test(navigator.platform) ||
+                /Mac|iPhone|iPod|iPad/i.test(navigator.userAgent);
+            const isModKeyPressed = isMac
+                ? e.metaKey && !e.ctrlKey
+                : e.ctrlKey && !e.metaKey;
+            // Use e.code for more reliable key detection (Equal for =/+ key, Minus for -/_ key)
+            const isZoomIn =
+                isModKeyPressed &&
+                (e.code === 'Equal' || e.key === '=' || e.key === '+');
+            const isZoomOut =
+                isModKeyPressed &&
+                (e.code === 'Minus' || e.key === '-' || e.key === '_');
+
+            if (isZoomIn) {
+                e.preventDefault();
+
+                const pixelWidth = context.camera.zoom / 20;
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+
+                // Zoom increments of 100
+                const currentZoom = context.camera.zoom;
+                const nextZoom = clamp(currentZoom + 100, ZOOM_MIN, ZOOM_MAX);
+
+                const pixelX = centerX / pixelWidth;
+                const pixelY = centerY / pixelWidth;
+
+                const nextPixelWidth = nextZoom / 20;
+                const nextPixelX = centerX / nextPixelWidth;
+                const nextPixelY = centerY / nextPixelWidth;
+
+                const deltaXFromZoom = pixelX - nextPixelX;
+                const deltaYFromZoom = pixelY - nextPixelY;
+
+                enqueue.effect(() => {
+                    store.trigger.moveCamera({
+                        camera: {
+                            zoom: roundTo1Place(nextZoom),
+                            x: roundTo1Place(
+                                clamp(
+                                    context.camera.x + deltaXFromZoom,
+                                    X_MIN,
+                                    X_MAX,
+                                ),
+                            ),
+                            y: roundTo1Place(
+                                clamp(
+                                    context.camera.y + deltaYFromZoom,
+                                    Y_MIN,
+                                    Y_MAX,
+                                ),
+                            ),
+                        },
+                    });
+                });
+
+                return context;
+            }
+
+            if (isZoomOut) {
+                e.preventDefault();
+
+                const pixelWidth = context.camera.zoom / 20;
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+
+                // Special case: zoom from 100 to 50, otherwise decrement by 100
+                const currentZoom = context.camera.zoom;
+                let nextZoom: number;
+                if (currentZoom === 100) {
+                    nextZoom = 50;
+                } else {
+                    nextZoom = clamp(currentZoom - 100, ZOOM_MIN, ZOOM_MAX);
+                }
+
+                const pixelX = centerX / pixelWidth;
+                const pixelY = centerY / pixelWidth;
+
+                const nextPixelWidth = nextZoom / 20;
+                const nextPixelX = centerX / nextPixelWidth;
+                const nextPixelY = centerY / nextPixelWidth;
+
+                const deltaXFromZoom = pixelX - nextPixelX;
+                const deltaYFromZoom = pixelY - nextPixelY;
+
+                enqueue.effect(() => {
+                    store.trigger.moveCamera({
+                        camera: {
+                            zoom: roundTo1Place(nextZoom),
+                            x: roundTo1Place(
+                                clamp(
+                                    context.camera.x + deltaXFromZoom,
+                                    X_MIN,
+                                    X_MAX,
+                                ),
+                            ),
+                            y: roundTo1Place(
+                                clamp(
+                                    context.camera.y + deltaYFromZoom,
+                                    Y_MIN,
+                                    Y_MAX,
+                                ),
+                            ),
+                        },
+                    });
+                });
+
                 return context;
             }
 
