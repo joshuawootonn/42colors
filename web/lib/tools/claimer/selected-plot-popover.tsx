@@ -122,7 +122,7 @@ export function SelectedPlotPopover() {
     // Render popover for any selected plot (owned or not)
     // Only show edit/delete buttons if user owns the plot
     const isOwned = user?.id === selectedPlot?.userId;
-    if (!user || !selectedPlot) {
+    if (!selectedPlot) {
         return null;
     }
 
