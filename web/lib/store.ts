@@ -1450,66 +1450,37 @@ export const store = createStore({
                 isModKeyPressed &&
                 (e.code === 'Minus' || e.key === '-' || e.key === '_');
 
-            if (isZoomIn) {
+            if (isZoomIn || isZoomOut) {
                 e.preventDefault();
 
                 const pixelWidth = context.camera.zoom / 20;
                 const centerX = window.innerWidth / 2;
                 const centerY = window.innerHeight / 2;
 
-                // Zoom increments of 100
+                // Non-linear zoom stops
+                const zoomStops = [
+                    50, 60, 75, 100, 150, 200, 300, 400, 600, 800,
+                ];
                 const currentZoom = context.camera.zoom;
-                const nextZoom = clamp(currentZoom + 100, ZOOM_MIN, ZOOM_MAX);
 
-                const pixelX = centerX / pixelWidth;
-                const pixelY = centerY / pixelWidth;
-
-                const nextPixelWidth = nextZoom / 20;
-                const nextPixelX = centerX / nextPixelWidth;
-                const nextPixelY = centerY / nextPixelWidth;
-
-                const deltaXFromZoom = pixelX - nextPixelX;
-                const deltaYFromZoom = pixelY - nextPixelY;
-
-                enqueue.effect(() => {
-                    store.trigger.moveCamera({
-                        camera: {
-                            zoom: roundTo1Place(nextZoom),
-                            x: roundTo1Place(
-                                clamp(
-                                    context.camera.x + deltaXFromZoom,
-                                    X_MIN,
-                                    X_MAX,
-                                ),
-                            ),
-                            y: roundTo1Place(
-                                clamp(
-                                    context.camera.y + deltaYFromZoom,
-                                    Y_MIN,
-                                    Y_MAX,
-                                ),
-                            ),
-                        },
-                    });
-                });
-
-                return context;
-            }
-
-            if (isZoomOut) {
-                e.preventDefault();
-
-                const pixelWidth = context.camera.zoom / 20;
-                const centerX = window.innerWidth / 2;
-                const centerY = window.innerHeight / 2;
-
-                // Special case: zoom from 100 to 50, otherwise decrement by 100
-                const currentZoom = context.camera.zoom;
                 let nextZoom: number;
-                if (currentZoom === 100) {
-                    nextZoom = 50;
+                if (isZoomIn) {
+                    // Find the next zoom stop greater than current zoom
+                    const nextStop = zoomStops.find(
+                        (stop) => stop > currentZoom,
+                    );
+                    nextZoom = nextStop
+                        ? clamp(nextStop, ZOOM_MIN, ZOOM_MAX)
+                        : clamp(currentZoom, ZOOM_MIN, ZOOM_MAX);
                 } else {
-                    nextZoom = clamp(currentZoom - 100, ZOOM_MIN, ZOOM_MAX);
+                    // Find the previous zoom stop less than current zoom
+                    const previousStop = zoomStops
+                        .slice()
+                        .reverse()
+                        .find((stop) => stop < currentZoom);
+                    nextZoom = previousStop
+                        ? clamp(previousStop, ZOOM_MIN, ZOOM_MAX)
+                        : clamp(currentZoom, ZOOM_MIN, ZOOM_MAX);
                 }
 
                 const pixelX = centerX / pixelWidth;
