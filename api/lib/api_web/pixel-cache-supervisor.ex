@@ -29,9 +29,7 @@ defmodule ApiWeb.PixelCacheSupervisor do
   def init(_init_args) do
     TelemetryHelper.instrument(:initialize_file, fn -> PixelCache.initialize_file() end)
 
-    total_pixels = load_and_write_pixels_in_batches(0, 0)
-
-    IO.puts("Wrote #{total_pixels} pixels to file")
+    spawn(fn -> load_and_write_pixels_in_batches(0, 0) end)
 
     {:ok, %{}}
   end
@@ -51,37 +49,34 @@ defmodule ApiWeb.PixelCacheSupervisor do
       if batch_size == @batch_size do
         load_and_write_pixels_in_batches(offset + @batch_size, new_total)
       else
+        IO.puts("Cache population complete: #{new_total} pixels")
         new_total
       end
     else
+      IO.puts("Cache population complete: #{total_count} pixels")
       total_count
     end
   end
 
   @impl true
-  def handle_call(:sub_section_of_pixels, _from, _) do
+  def handle_call(:sub_section_of_pixels, _from, state) do
     sub_section_of_pixels = PixelCache.read_sub_section_of_file(%{x: 500, y: 500})
 
-    {:reply, %{sub_section_of_pixels: sub_section_of_pixels},
-     %{sub_section_of_pixels: sub_section_of_pixels}}
+    {:reply, %{sub_section_of_pixels: sub_section_of_pixels}, state}
   end
 
-  @impl true
-  def handle_call({:sub_section_of_pixels_as_binary, x, y}, _from, _) do
+  def handle_call({:sub_section_of_pixels_as_binary, x, y}, _from, state) do
     sub_section_of_pixels_as_binary =
       PixelCache.read_sub_section_of_file_as_binary(%{x: x, y: y})
 
-    {:reply, %{sub_section_of_pixels_as_binary: sub_section_of_pixels_as_binary},
-     %{sub_section_of_pixels_as_binary: sub_section_of_pixels_as_binary}}
+    {:reply, %{sub_section_of_pixels_as_binary: sub_section_of_pixels_as_binary}, state}
   end
 
-  @impl true
   def handle_call({:write_pixels, pixels}, _from, state) do
     TelemetryHelper.instrument(:write_matrix_to_file, fn ->
       PixelCache.write_coordinates_to_file(pixels)
     end)
 
-    # or you can return the updated state if necessary
     {:reply, :ok, state}
   end
 end
