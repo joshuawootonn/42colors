@@ -87,7 +87,7 @@ dashboards:
   @echo "📊 LiveDashboard: http://localhost:4000/dev/dashboard"
 
 deploy: 
-  kamal deploy
+  export $(xargs < .env.prod) && kamal deploy 
 
 logs:
   kamal app logs
