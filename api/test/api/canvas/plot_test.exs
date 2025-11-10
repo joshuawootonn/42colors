@@ -334,8 +334,8 @@ defmodule Api.PlotTest do
       result = Plot.Repo.plots_covering_points(points)
 
       # Debug output to see what we get
-      IO.inspect(result, label: "U-shaped polygon results")
-      IO.puts("Total points found: #{map_size(result)}")
+      # IO.inspect(result, label: "U-shaped polygon results")
+      # IO.puts("Total points found: #{map_size(result)}")
 
       # Points that should definitely be included (interior of U arms)
       interior_points = [
@@ -377,30 +377,30 @@ defmodule Api.PlotTest do
       end)
 
       # Test corners and edges (results may vary based on boundary rules)
-      corner_and_edge_points = [
-        # outer corners
-        {0, 0},
-        {0, 10},
-        {10, 10},
-        {10, 0},
-        # inner corners
-        {2, 0},
-        {8, 0},
-        {2, 10},
-        {8, 10},
-        # edge midpoints
-        {0, 5},
-        {10, 5},
-        {5, 0},
-        {5, 10}
-      ]
+      # corner_and_edge_points = [
+      #   # outer corners
+      #   {0, 0},
+      #   {0, 10},
+      #   {10, 10},
+      #   {10, 0},
+      #   # inner corners
+      #   {2, 0},
+      #   {8, 0},
+      #   {2, 10},
+      #   {8, 10},
+      #   # edge midpoints
+      #   {0, 5},
+      #   {10, 5},
+      #   {5, 0},
+      #   {5, 10}
+      # ]
 
-      IO.puts("Corner and edge results:")
+      # IO.puts("Corner and edge results:")
 
-      Enum.each(corner_and_edge_points, fn point ->
-        included = Map.has_key?(result, point)
-        IO.puts("  #{inspect(point)}: #{if included, do: "INCLUDED", else: "excluded"}")
-      end)
+      # Enum.each(corner_and_edge_points, fn point ->
+      #   refute Map.has_key?(result, point)
+      # IO.puts("  #{inspect(point)}: #{if included, do: "INCLUDED", else: "excluded"}")
+      # end)
     end
   end
 
