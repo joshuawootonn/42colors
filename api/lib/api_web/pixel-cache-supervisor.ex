@@ -23,19 +23,39 @@ defmodule ApiWeb.PixelCacheSupervisor do
     GenServer.call(__MODULE__, {:write_pixels, pixels})
   end
 
+  @batch_size 100_000
+
   @impl true
   def init(_init_args) do
-    pixels = Pixel.Repo.list_pixels()
-
     TelemetryHelper.instrument(:initialize_file, fn -> PixelCache.initialize_file() end)
 
-    IO.puts("Writing #{pixels |> length} pixels to file")
+    total_pixels = load_and_write_pixels_in_batches(0, 0)
 
-    TelemetryHelper.instrument(:write_matrix_to_file, fn ->
-      PixelCache.write_coordinates_to_file(pixels)
-    end)
+    IO.puts("Wrote #{total_pixels} pixels to file")
 
     {:ok, %{}}
+  end
+
+  defp load_and_write_pixels_in_batches(offset, total_count) do
+    batch = Pixel.Repo.list_pixels(limit: @batch_size, offset: offset)
+    batch_size = length(batch)
+
+    if batch_size > 0 do
+      TelemetryHelper.instrument(:write_matrix_to_file, fn ->
+        PixelCache.write_coordinates_to_file(batch)
+      end)
+
+      new_total = total_count + batch_size
+      IO.puts("Processed batch: #{batch_size} pixels (total: #{new_total})")
+
+      if batch_size == @batch_size do
+        load_and_write_pixels_in_batches(offset + @batch_size, new_total)
+      else
+        new_total
+      end
+    else
+      total_count
+    end
   end
 
   @impl true

@@ -28,6 +28,23 @@ defmodule Api.Canvas.Pixel.Repo do
   end
 
   @doc """
+  Returns a list of pixels with limit and offset for batching.
+
+  ## Examples
+
+      iex> list_pixels(limit: 100_000, offset: 0)
+      [%Pixel{}, ...]
+
+  """
+  def list_pixels(limit: limit, offset: offset) do
+    Pixel
+    |> order_by([p], asc: p.inserted_at)
+    |> limit(^limit)
+    |> offset(^offset)
+    |> Repo.all()
+  end
+
+  @doc """
   Gets a single pixel.
 
   Raises `Ecto.NoResultsError` if the Pixel does not exist.
