@@ -75,6 +75,14 @@ export const TOASTS = {
         description: 'to save and share your pixels',
         button: buttonOptions,
     }),
+    loginToUseBucket: (buttonOptions: {
+        label: string;
+        onClick: () => void;
+    }) => ({
+        title: 'Login (when you are ready)',
+        description: 'to enable the bucket tool and much more',
+        button: buttonOptions,
+    }),
     dailyGrantClaimed: {
         title: 'Daily Grant Claimed',
         description: '1,000 pixels for visiting today',
@@ -83,6 +91,15 @@ export const TOASTS = {
         title: "You can't draw here",
         description:
             "It's someone else's claim. Either draw in the open area or claim a plot for yourself.",
+    },
+    cannotBucketOtherPlot: {
+        title: "You can't bucket fill here",
+        description: "This plot doesn't belongs to you.",
+    },
+    cannotBucketOutsidePlot: {
+        title: "You can't bucket fill here",
+        description:
+            'The bucket fill tool only works within plots you have claimed.',
     },
 } as const;
 
@@ -97,7 +114,11 @@ export const toasts = {
         label: string;
         onClick: () => void;
     }) => toast(TOASTS.loginToSavePixels(buttonOptions)),
+    loginToUseBucket: (buttonOptions: { label: string; onClick: () => void }) =>
+        toast(TOASTS.loginToUseBucket(buttonOptions)),
     cannotDrawOnPlot: () => toast(TOASTS.cannotDrawOnPlot),
+    cannotBucketOtherPlot: () => toast(TOASTS.cannotBucketOtherPlot),
+    cannotBucketOutsidePlot: () => toast(TOASTS.cannotBucketOutsidePlot),
 } as const;
 
 export function Toast(props: ToastProps) {

@@ -212,7 +212,8 @@ export default function Page() {
                 {isWebGPUAvailable && (
                     <>
                         {(currentTool === Tool.Brush ||
-                            currentTool === Tool.Line) && <Palette />}
+                            currentTool === Tool.Line ||
+                            currentTool === Tool.Bucket) && <Palette />}
                         {currentTool === Tool.Brush && <BrushPanel />}
                         {currentTool === Tool.Erasure && <ErasurePanel />}
                         {currentTool === Tool.Line && <LinePanel />}

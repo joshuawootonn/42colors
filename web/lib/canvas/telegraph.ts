@@ -1,6 +1,7 @@
 import { InitializedStore } from '../store';
 import { Tool } from '../tool-settings';
 import { BrushTool } from '../tools/brush/brush';
+import { BucketTool } from '../tools/bucket/bucket';
 import { ClaimerTool } from '../tools/claimer/claimer';
 import { ErasureTool } from '../tools/erasure/erasure';
 import { LineTool } from '../tools/line/line';
@@ -24,6 +25,9 @@ export function renderTelegraph(context: InitializedStore) {
             break;
         case Tool.Claimer:
             ClaimerTool.redrawTelegraph(context);
+            break;
+        case Tool.Bucket:
+            BucketTool.redrawTelegraph(context);
             break;
         default:
             console.log('No telegraph rendering for tool:', tool);

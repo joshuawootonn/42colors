@@ -22,6 +22,9 @@ export const ACTION_TYPES = {
     CLAIMER_NEW_RECT_CREATE: 'claimer-new-rect-create',
     CLAIMER_NEW_RECT_EDIT: 'claimer-new-rect-edit',
 
+    // Bucket tool actions
+    BUCKET_ACTIVE: 'bucket-active',
+
     // Other actions
     REALTIME_ACTIVE: 'realtime-active',
     CAMERA_MOVE: 'camera-move',

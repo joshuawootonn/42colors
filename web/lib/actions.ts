@@ -2,6 +2,7 @@ import { ACTION_TYPES } from './action-types';
 import { Camera } from './camera';
 import { bresenhamLine } from './geometry/bresenham-line';
 import { AbsolutePoint, Pixel } from './geometry/coord';
+import { absolutePointTupleToPixels } from './line';
 import { ColorRef, TRANSPARENT_REF } from './palette';
 import { Tool } from './tool-settings';
 import {
@@ -9,6 +10,7 @@ import {
     getBrushPoints,
     pointsToPixels,
 } from './tools/brush/brush';
+import { BucketActive } from './tools/bucket/bucket';
 import {
     ClaimerComplete,
     ClaimerCreate,
@@ -29,6 +31,7 @@ export type Action =
     | BrushActive
     | LineActive
     | LineComplete
+    | BucketActive
     | ClaimerCreate
     | ClaimerNewRectCreate
     | ClaimerNewRectEdit
@@ -133,6 +136,10 @@ export function derivePixelsFromActions(actions: Action[]): Pixel[] {
             );
             const brushPoints = getBrushPoints(linePoints, action.size, 1);
             pixels.push(...pointsToPixels(brushPoints, action.color_ref));
+        } else if (action.type === ACTION_TYPES.BUCKET_ACTIVE) {
+            pixels.push(
+                ...absolutePointTupleToPixels(action.points, action.color_ref),
+            );
         } else if (action.type === 'realtime-active') {
             pixels.push(...action.pixels);
         }
@@ -158,23 +165,15 @@ export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
             if (undoAction != null) {
                 completedActions.push(undoAction);
 
-                if (undoAction.type === ACTION_TYPES.BRUSH_ACTIVE) {
+                if (
+                    undoAction.type === ACTION_TYPES.BRUSH_ACTIVE ||
+                    undoAction.type === ACTION_TYPES.ERASURE_ACTIVE
+                ) {
                     const undonePixels = pointsToPixels(
                         undoAction.points,
-                        undoAction.color_ref,
-                    );
-                    unsetPixels = unsetPixels.filter(
-                        (pixel) =>
-                            !undonePixels.find(
-                                (undonePixel) =>
-                                    undonePixel.x === pixel.x &&
-                                    undonePixel.y === pixel.y,
-                            ),
-                    );
-                } else if (undoAction.type === ACTION_TYPES.ERASURE_ACTIVE) {
-                    const undonePixels = pointsToPixels(
-                        undoAction.points,
-                        TRANSPARENT_REF,
+                        undoAction.type === ACTION_TYPES.ERASURE_ACTIVE
+                            ? TRANSPARENT_REF
+                            : undoAction.color_ref,
                     );
                     unsetPixels = unsetPixels.filter(
                         (pixel) =>
@@ -198,6 +197,19 @@ export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
                     );
                     const undonePixels = pointsToPixels(
                         undoneBrushPoints,
+                        undoAction.color_ref,
+                    );
+                    unsetPixels = unsetPixels.filter(
+                        (pixel) =>
+                            !undonePixels.find(
+                                (undonePixel) =>
+                                    undonePixel.x === pixel.x &&
+                                    undonePixel.y === pixel.y,
+                            ),
+                    );
+                } else if (undoAction.type === ACTION_TYPES.BUCKET_ACTIVE) {
+                    const undonePixels = absolutePointTupleToPixels(
+                        undoAction.points,
                         undoAction.color_ref,
                     );
                     unsetPixels = unsetPixels.filter(
@@ -237,6 +249,13 @@ export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
                     );
                     unsetPixels.push(
                         ...pointsToPixels(brushPoints, action.color_ref),
+                    );
+                } else if (action.type === ACTION_TYPES.BUCKET_ACTIVE) {
+                    unsetPixels.push(
+                        ...absolutePointTupleToPixels(
+                            action.points,
+                            action.color_ref,
+                        ),
                     );
                 }
             }
@@ -300,7 +319,7 @@ export function resolveActions(actions: Action[]): Action[] {
 
 export function getActionToUndo(
     prevActions: Action[],
-): BrushActive | ErasureActive | LineComplete | null {
+): BrushActive | ErasureActive | LineComplete | BucketActive | null {
     return (
         [...resolveActions(prevActions)]
             .reverse()
@@ -308,14 +327,15 @@ export function getActionToUndo(
                 (action) =>
                     action.type === ACTION_TYPES.BRUSH_ACTIVE ||
                     action.type === ACTION_TYPES.ERASURE_ACTIVE ||
-                    action.type === ACTION_TYPES.LINE_COMPLETE,
+                    action.type === ACTION_TYPES.LINE_COMPLETE ||
+                    action.type === ACTION_TYPES.BUCKET_ACTIVE,
             ) ?? null
     );
 }
 
 export function getActionToRedo(
     prevActions: Action[],
-): BrushActive | ErasureActive | LineComplete | null {
+): BrushActive | ErasureActive | LineComplete | BucketActive | null {
     const reversedCollapsedPrevActions = [
         ...collapseUndoRedoCombos(prevActions),
     ].reverse();
@@ -328,7 +348,8 @@ export function getActionToRedo(
                 (action) =>
                     action.type === ACTION_TYPES.BRUSH_ACTIVE ||
                     action.type === ACTION_TYPES.ERASURE_ACTIVE ||
-                    action.type === ACTION_TYPES.LINE_COMPLETE,
+                    action.type === ACTION_TYPES.LINE_COMPLETE ||
+                    action.type === ACTION_TYPES.BUCKET_ACTIVE,
             ) ?? null
     );
 }

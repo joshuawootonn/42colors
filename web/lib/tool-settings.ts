@@ -80,6 +80,7 @@ export enum Tool {
     Erasure = 'erasure',
     Line = 'line',
     Claimer = 'claimer',
+    Bucket = 'bucket',
 }
 
 const toolSchema = z.nativeEnum(Tool);

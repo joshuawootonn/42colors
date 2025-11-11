@@ -63,6 +63,7 @@ import { Pixel, getLastPixelValue } from './geometry/coord';
 import { getCenterPoint, polygonSchema } from './geometry/polygon';
 import { Vector } from './geometry/vector';
 import { KeyboardCode } from './keyboard-codes';
+import { absolutePointTupleToPixels } from './line';
 import { TRANSPARENT_REF, getNextColor, getPreviousColor } from './palette';
 import { findPlotAtPoint } from './plots/plots.rest';
 import { roundTo1Place } from './round-to-five';
@@ -80,6 +81,7 @@ import {
     pointsToPixels,
 } from './tools/brush/brush';
 import { clampBrushSize } from './tools/brush/brush-utils';
+import { BucketTool } from './tools/bucket/bucket';
 import {
     ClaimerTool,
     completeRectangleClaimerAction,
@@ -344,7 +346,8 @@ export const store = createStore({
                     if (
                         (action.type === ACTION_TYPES.BRUSH_ACTIVE ||
                             action.type === ACTION_TYPES.ERASURE_ACTIVE ||
-                            action.type === ACTION_TYPES.LINE_COMPLETE) &&
+                            action.type === ACTION_TYPES.LINE_COMPLETE ||
+                            action.type === ACTION_TYPES.BUCKET_ACTIVE) &&
                         action.action_id === event.action_id
                     ) {
                         // For LINE_COMPLETE, we need to reconstruct the points
@@ -390,8 +393,26 @@ export const store = createStore({
                                     lastPoint.y - firstPoint.y,
                                 ),
                             };
+                        } else if (action.type === ACTION_TYPES.BUCKET_ACTIVE) {
+                            const rejected_coords = new Set(
+                                event.rejected_pixels.map(
+                                    (p) => `${p.x},${p.y}`,
+                                ),
+                            );
+
+                            const points = action.points.filter(
+                                (point) =>
+                                    !rejected_coords.has(
+                                        `${point[0]},${point[1]}`,
+                                    ),
+                            );
+
+                            return {
+                                ...action,
+                                points,
+                            };
                         }
-                        // For BRUSH_ACTIVE and ERASURE_ACTIVE
+                        // For BRUSH_ACTIVE, ERASURE_ACTIVE, and BUCKET_ACTIVE
                         const rejected_coords = new Set(
                             event.rejected_pixels.map((p) => `${p.x},${p.y}`),
                         );
@@ -444,6 +465,11 @@ export const store = createStore({
                     1,
                 );
                 pixels = pointsToPixels(brushPoints, actionToUndo.color_ref);
+            } else if (actionToUndo.type === ACTION_TYPES.BUCKET_ACTIVE) {
+                pixels = absolutePointTupleToPixels(
+                    actionToUndo.points,
+                    actionToUndo.color_ref,
+                );
             } else {
                 pixels = pointsToPixels(
                     actionToUndo.points,
@@ -510,6 +536,11 @@ export const store = createStore({
                     1,
                 );
                 pixels = pointsToPixels(brushPoints, actionToRedo.color_ref);
+            } else if (actionToRedo.type === ACTION_TYPES.BUCKET_ACTIVE) {
+                pixels = absolutePointTupleToPixels(
+                    actionToRedo.points,
+                    actionToRedo.color_ref,
+                );
             } else {
                 pixels = pointsToPixels(
                     actionToRedo.points,
@@ -1035,6 +1066,11 @@ export const store = createStore({
 
             updateToolSettings(toolSettings);
 
+            // Reset cursor when changing tools
+            if (!isInitialStore(context)) {
+                context.canvas.rootCanvas.style.cursor = '';
+            }
+
             return {
                 ...context,
                 toolSettings,
@@ -1332,6 +1368,10 @@ export const store = createStore({
                 return ClaimerTool.onPointerDown(e, context, enqueue);
             }
 
+            if (tool === Tool.Bucket) {
+                return BucketTool.onPointerDown(e, context, enqueue);
+            }
+
             return context;
         },
 
@@ -1357,6 +1397,10 @@ export const store = createStore({
 
             if (tool === Tool.Claimer) {
                 return ClaimerTool.onPointerMove(e, context, enqueue);
+            }
+
+            if (tool === Tool.Bucket) {
+                return BucketTool.onPointerMove(e, context, enqueue);
             }
 
             return context;
@@ -1554,6 +1598,14 @@ export const store = createStore({
                     e.preventDefault();
                     enqueue.effect(() =>
                         store.trigger.changeTool({ tool: Tool.Line }),
+                    );
+                    return context;
+                }
+
+                if (isHotkey('g', e)) {
+                    e.preventDefault();
+                    enqueue.effect(() =>
+                        store.trigger.changeTool({ tool: Tool.Bucket }),
                     );
                     return context;
                 }
