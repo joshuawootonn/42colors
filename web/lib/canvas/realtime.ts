@@ -74,9 +74,11 @@ function getCacheKey(contextId: string, actionsHash: number): string {
     return `${contextId}:${actionsHash}`;
 }
 
-export function renderRealtime(context: InitializedStore) {
-    if (isInitialStore(context)) return;
-
+export function getCachedPixelsFromActions(context: InitializedStore): {
+    pixels: Pixel[];
+    unsetPixels: Pixel[];
+    dedupedPixels: Pixel[];
+} {
     const actions = context.activeAction
         ? context.actions.concat(context.activeAction)
         : context.actions;
@@ -88,10 +90,6 @@ export function renderRealtime(context: InitializedStore) {
 
     const existingCache = cache.get(cacheKey);
 
-    let pixels: Pixel[];
-    let unsetPixels: Pixel[];
-    let dedupedPixels: Pixel[];
-
     // Never use cache when there's an active action - it changes every frame during dragging
     if (
         !hasActiveAction &&
@@ -101,36 +99,50 @@ export function renderRealtime(context: InitializedStore) {
         existingCache.actionsHash === actionsHash &&
         existingCache.contextId === context.id
     ) {
-        pixels = existingCache.cachedPixels;
-        unsetPixels = existingCache.cachedUnsetPixels;
-        dedupedPixels = existingCache.cachedDedupedPixels;
-    } else {
-        pixels = derivePixelsFromActions(actions);
-        unsetPixels = deriveUnsetPixelsFromActions(actions);
-        dedupedPixels = dedupeCoords(pixels);
+        return {
+            pixels: existingCache.cachedPixels,
+            unsetPixels: existingCache.cachedUnsetPixels,
+            dedupedPixels: existingCache.cachedDedupedPixels,
+        };
+    }
 
-        // Only cache when there's no active action (user is not currently drawing)
-        if (!hasActiveAction) {
-            const newCache: RealtimeCache = {
-                actionsLength,
-                hasActiveAction,
-                cachedPixels: pixels,
-                cachedUnsetPixels: unsetPixels,
-                cachedDedupedPixels: dedupedPixels,
-                actionsHash,
-                contextId: context.id,
-            };
+    const pixels = derivePixelsFromActions(actions);
+    const unsetPixels = deriveUnsetPixelsFromActions(actions);
+    const dedupedPixels = dedupeCoords(pixels);
 
-            cache.set(cacheKey, newCache);
+    // Only cache when there's no active action (user is not currently drawing)
+    if (!hasActiveAction) {
+        const newCache: RealtimeCache = {
+            actionsLength,
+            hasActiveAction,
+            cachedPixels: pixels,
+            cachedUnsetPixels: unsetPixels,
+            cachedDedupedPixels: dedupedPixels,
+            actionsHash,
+            contextId: context.id,
+        };
 
-            if (cache.size > MAX_CACHE_SIZE) {
-                const firstKey = cache.keys().next().value;
-                if (firstKey) {
-                    cache.delete(firstKey);
-                }
+        cache.set(cacheKey, newCache);
+
+        if (cache.size > MAX_CACHE_SIZE) {
+            const firstKey = cache.keys().next().value;
+            if (firstKey) {
+                cache.delete(firstKey);
             }
         }
     }
+
+    return {
+        pixels,
+        unsetPixels,
+        dedupedPixels,
+    };
+}
+
+export function renderRealtime(context: InitializedStore) {
+    if (isInitialStore(context)) return;
+
+    const { unsetPixels, dedupedPixels } = getCachedPixelsFromActions(context);
 
     unsetChunkPixels(context.canvas.chunkCanvases, unsetPixels);
 
