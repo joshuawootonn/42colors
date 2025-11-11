@@ -228,25 +228,21 @@ function redrawTelegraph(context: InitializedStore) {
     }
 
     if (context.interaction.cursorPosition == null) {
-        // too noisy
-        // console.debug(
-        //     'Skipping brush telegraph draw since `cursorPosition` is null',
-        // );
         return;
     }
 
     const clientX = context.interaction.cursorPosition.clientX;
     const clientY = context.interaction.cursorPosition.clientY;
 
-    const relativePoint = getAbsolutePoint(clientX, clientY, context);
+    const absolutePoint = getAbsolutePoint(clientX, clientY, context);
     const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
     const colorHex =
         COLOR_TABLE[context.toolSettings.palette.foregroundColorRef];
     const color = hexToRgbaColor(colorHex);
 
     const brushPolygon = getCanvasPolygon(
-        relativePoint.x,
-        relativePoint.y,
+        absolutePoint.x,
+        absolutePoint.y,
         context.toolSettings.brush.size,
     );
 
