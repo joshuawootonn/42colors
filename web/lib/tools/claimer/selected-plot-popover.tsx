@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import { X } from '@/components/icons/x';
+import { X32 } from '@/components/icons/x_32';
 import { IconButton } from '@/components/ui/icon-button';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { isScrollingAtom } from '@/lib/events';
@@ -180,7 +180,7 @@ export function SelectedPlotPopover() {
                             store.trigger.deselectPlot();
                         }}
                     >
-                        <X />
+                        <X32 />
                     </IconButton>
                 </div>
             </PopoverContent>

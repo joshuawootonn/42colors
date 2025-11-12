@@ -7,7 +7,7 @@ import { useForwardedRef } from '@/components/ui/hooks/use-forwarded-ref';
 import { cn } from '@/lib/utils';
 import { Popover as PopoverPrimitive } from '@base-ui-components/react/popover';
 
-import { X } from '../icons/x';
+import { X32 } from '../icons/x_32';
 import { useCornerAnchor } from './hooks/use-corner-anchor';
 import { useDraggablePosition } from './hooks/use-draggable-position';
 
@@ -168,7 +168,7 @@ const PopoverContent = React.forwardRef<
                                         className="svg-outline absolute right-0 top-0 border-1.5 border-primary bg-white text-primary"
                                         {...renderProps}
                                     >
-                                        <X />
+                                        <X32 />
                                         <span className="sr-only">Close</span>
                                     </button>
                                 )}

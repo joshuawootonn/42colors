@@ -6,7 +6,7 @@ import { createContext, useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { Dialog as DialogPrimitive } from '@base-ui-components/react/dialog';
 
-import { X } from '../icons/x';
+import { X32 } from '../icons/x_32';
 
 const Dialog = DialogPrimitive.Root;
 
@@ -57,7 +57,7 @@ const DialogContent = React.forwardRef<
                             {...props}
                             className="svg-outline absolute right-0 top-0 translate-x-[1.5px] translate-y-[-1.5px] border-1.5 border-primary bg-white"
                         >
-                            <X />
+                            <X32 />
                             <span className="sr-only">Close</span>
                         </button>
                     )}
