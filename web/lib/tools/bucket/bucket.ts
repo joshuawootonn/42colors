@@ -169,7 +169,7 @@ function onPointerDown(
     if (context.user == null) {
         enqueue.effect(() => {
             toasts.loginToUseBucket({
-                label: 'Sign up',
+                label: 'Log in',
                 onClick: () => {
                     window.location.href = '/login';
                 },

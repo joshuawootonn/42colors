@@ -573,7 +573,7 @@ function onPointerDown(
 ): InitializedStore {
     if (!context.user) {
         toasts.loginToClaimLand({
-            label: 'login',
+            label: 'Log in',
             onClick: () => {
                 window.location.href = '/login';
             },

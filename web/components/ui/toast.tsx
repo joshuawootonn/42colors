@@ -1,9 +1,16 @@
 'use client';
 
+import { motion } from 'motion/react';
 import { Toaster as Sonner, toast as sonnerToast } from 'sonner';
+
+import { useState } from 'react';
 
 import { useTheme } from 'next-themes';
 
+import { cn } from '@/lib/utils';
+import { Collapsible } from '@base-ui-components/react/collapsible';
+
+import { X24 } from '../icons/x_24';
 import { Button } from './button';
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
@@ -21,6 +28,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
             gap={12}
             position="bottom-center"
             expand
+            closeButton={true}
             {...props}
         />
     );
@@ -63,43 +71,48 @@ export const TOASTS = {
         label: string;
         onClick: () => void;
     }) => ({
-        title: 'Login (when you are ready)',
-        description: 'to claim land and protect your art',
+        title: 'Login to claim land',
+        description:
+            'If you want to protect your art from would be vandals, log in and claim a plot with pixels you are granted.',
         button: buttonOptions,
     }),
     loginToSavePixels: (buttonOptions: {
         label: string;
         onClick: () => void;
     }) => ({
-        title: 'Login (when you are ready)',
-        description: 'to save and share your pixels',
+        title: 'Login to protect drawing',
+        description:
+            'If you want to edit the canvas, you need to log in. This helps keep the canvas safer for everyone.',
         button: buttonOptions,
     }),
     loginToUseBucket: (buttonOptions: {
         label: string;
         onClick: () => void;
     }) => ({
-        title: 'Login (when you are ready)',
-        description: 'to enable the bucket tool and much more',
+        title: 'Login to enable the bucket tool',
+        description:
+            'Powerful tools are reserved for pixels you have claimed. To use the bucket tool, create an account, claim some land, and try again.',
         button: buttonOptions,
     }),
     dailyGrantClaimed: {
-        title: 'Daily Grant Claimed',
-        description: '1,000 pixels for visiting today',
+        title: 'Daily grant claimed (+1000)',
+        description:
+            'Every day you visit 42colors you are granted 1000 pixels. Right now you can use these pixels to claim land and protect your art, but soon it they will also be your passage to voting on other art and much more. ',
     },
     cannotDrawOnPlot: {
         title: "You can't draw here",
         description:
-            "It's someone else's claim. Either draw in the open area or claim a plot for yourself.",
+            "It's someone else's plot. Either draw in the open area or claim a plot for yourself.",
     },
     cannotBucketOtherPlot: {
         title: "You can't bucket fill here",
-        description: "This plot doesn't belongs to you.",
+        description:
+            "It's someone else's plot. Claim a plot for yourself and try again.",
     },
     cannotBucketOutsidePlot: {
         title: "You can't bucket fill here",
         description:
-            'The bucket fill tool only works within plots you have claimed.',
+            'The bucket fill tool is reserved for pixels you have claimed. Claim a plot for yourself and try again.',
     },
 } as const;
 
@@ -121,33 +134,147 @@ export const toasts = {
     cannotBucketOutsidePlot: () => toast(TOASTS.cannotBucketOutsidePlot),
 } as const;
 
+const _closeButtonVariants = {
+    hidden: {
+        x: 24,
+        y: 0,
+        opacity: 0,
+        scale: 0.98,
+    },
+    visible: {
+        x: 26,
+        y: 0,
+        opacity: 1,
+        scale: 1,
+    },
+};
+
+const chevronVariants = {
+    closed: {
+        rotate: 0,
+    },
+    open: {
+        rotate: 90,
+    },
+};
+
 export function Toast(props: ToastProps) {
     const { title, description, button, id } = props;
-
+    const [isOpen, setIsOpen] = useState(false);
     return (
-        <div className="flex w-105 max-w-full items-center text-pretty border-1.5 border-primary bg-secondary p-4 font-sans shadow-lg md:max-w-120">
-            <div className="flex flex-1 items-center">
-                <div className="w-full">
-                    <p className="text-sm text-primary">{title}</p>
-                    <p className="mt-1 text-pretty text-sm text-gray-500">
-                        {description}
-                    </p>
-                </div>
-            </div>
-            <div className="ml-4 shrink-0">
-                {button && (
-                    <Button
-                        size="sm"
-                        onClick={() => {
-                            button.onClick();
-                            sonnerToast.dismiss(id);
+        <motion.div
+            className={cn(
+                'group flex w-105 max-w-full items-center text-pretty font-sans shadow-lg md:max-w-120',
+                'relative z-0',
+            )}
+            initial="visible"
+            whileHover="visible"
+            animate="visible"
+        >
+            <motion.div
+                onClick={() => sonnerToast.dismiss(id)}
+                className={cn(
+                    'absolute right-0 top-0 -z-10',
+                    'flex flex-col items-center justify-center',
+                    '-space-y-[1.5px]',
+                )}
+            ></motion.div>
+            <Collapsible.Root
+                open={isOpen}
+                onOpenChange={setIsOpen}
+                className={cn(
+                    'flex-grow border-1.5 border-primary bg-secondary',
+                    'py-4 pl-2.5 pr-3',
+                )}
+            >
+                <Collapsible.Trigger
+                    className={cn(
+                        'group flex w-full items-center justify-start text-primary outline-none hover:text-primary focus-visible:text-primary',
+                        'space-x-2',
+                    )}
+                >
+                    <motion.svg
+                        className={cn(
+                            'flex items-center justify-center text-primary',
+                            'size-5',
+                        )}
+                        width={24}
+                        height={24}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        initial="closed"
+                        animate={isOpen ? 'open' : 'closed'}
+                        variants={chevronVariants}
+                        transition={{
+                            type: 'tween',
+                            duration: 0.09,
+                            ease: 'easeOut',
                         }}
                     >
-                        {button.label}
-                    </Button>
-                )}
-            </div>
-        </div>
+                        <path
+                            d="M9 18L15 12L9 6"
+                            stroke="currentColor"
+                            strokeWidth={1.5}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                    </motion.svg>
+
+                    <p
+                        className={cn(
+                            'text-md flex-grow translate-y-[-1px] text-left leading-[19.5px] text-primary',
+                        )}
+                    >
+                        {title}
+                    </p>
+                    <div
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            sonnerToast.dismiss(id);
+                        }}
+                        className={cn(
+                            'relative z-0',
+                            'flex items-center justify-center text-primary outline-none hover:text-primary focus-visible:text-primary',
+                            'before:content-[" "] before:absolute before:-inset-4 before:opacity-0',
+                            'size-5',
+                        )}
+                        aria-label="Close"
+                    >
+                        <X24 />
+                    </div>
+                </Collapsible.Trigger>
+
+                <Collapsible.Panel
+                    className={cn(
+                        'flex w-full flex-col',
+                        'h-[var(--collapsible-panel-height)] data-[ending-style]:h-0 data-[starting-style]:h-0',
+                        'data-open:opacity-100 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',
+                        'data-open:mt-2 data-[ending-style]:mt-0 data-[starting-style]:mt-0',
+                        'flex flex-col justify-end overflow-hidden text-sm',
+                        'data-[open]:[transition:height_0.2s_ease-out,margin-top_0.2s_ease-out_0.0s,opacity_0.15s_ease-out_0.05s]',
+                        'data-[closed]:[transition:height_0.2s_ease-out,margin-top_0.2s_ease-out_0.0s,opacity_0.15s_ease-out_0.0s]',
+                        'mt-2',
+                    )}
+                >
+                    <p className={cn('text-pretty pl-2 text-sm text-gray-500')}>
+                        {description}
+                    </p>
+                    {button && (
+                        <div className="relative z-0 float-right mt-2 self-end">
+                            <Button
+                                size="sm"
+                                onClick={() => {
+                                    button.onClick();
+                                    sonnerToast.dismiss(id);
+                                }}
+                            >
+                                {button.label}
+                            </Button>
+                        </div>
+                    )}
+                </Collapsible.Panel>
+            </Collapsible.Root>
+        </motion.div>
     );
 }
 

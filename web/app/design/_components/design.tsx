@@ -92,7 +92,7 @@ export function DesignPage() {
                     <Toast
                         id="toast-login-to-claim-land"
                         {...TOASTS.loginToClaimLand({
-                            label: 'login',
+                            label: 'Log in',
                             onClick: () => {},
                         })}
                     />
@@ -104,7 +104,7 @@ export function DesignPage() {
                     <Toast
                         id="toast-login-to-save-pixels"
                         {...TOASTS.loginToSavePixels({
-                            label: 'login',
+                            label: 'Log in',
                             onClick: () => {},
                         })}
                     />
@@ -123,6 +123,36 @@ export function DesignPage() {
                         id="toast-cannot-draw"
                         title={TOASTS.cannotDrawOnPlot.title}
                         description={TOASTS.cannotDrawOnPlot.description}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <h3 className="text-sm font-medium">
+                        Cannot Bucket Fill Other Plot
+                    </h3>
+                    <Toast
+                        id="toast-cannot-bucket-other-plot"
+                        title={TOASTS.cannotBucketOtherPlot.title}
+                        description={TOASTS.cannotBucketOtherPlot.description}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <h3 className="text-sm font-medium">
+                        Cannot Bucket Fill Outside Plot
+                    </h3>
+                    <Toast
+                        id="toast-cannot-bucket-outside-plot"
+                        title={TOASTS.cannotBucketOutsidePlot.title}
+                        description={TOASTS.cannotBucketOutsidePlot.description}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <h3 className="text-sm font-medium">Login to Use Bucket</h3>
+                    <Toast
+                        id="toast-login-to-use-bucket"
+                        {...TOASTS.loginToUseBucket({
+                            label: 'Sign up',
+                            onClick: () => {},
+                        })}
                     />
                 </div>
             </div>
