@@ -251,8 +251,8 @@ export function Toast(props: ToastProps) {
                         'data-open:opacity-100 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',
                         'data-open:mt-2 data-[ending-style]:mt-0 data-[starting-style]:mt-0',
                         'flex flex-col justify-end overflow-hidden text-sm',
-                        'data-[open]:[transition:height_0.2s_ease-out,margin-top_0.2s_ease-out_0.0s,opacity_0.15s_ease-out_0.05s]',
-                        'data-[closed]:[transition:height_0.2s_ease-out,margin-top_0.2s_ease-out_0.0s,opacity_0.15s_ease-out_0.0s]',
+                        'data-[open]:[transition:height_0.15s_ease,margin-top_0.15s_ease_0.0s,opacity_0.075s_ease_0.075s]',
+                        'data-[closed]:[transition:height_0.15s_ease,margin-top_0.15s_ease_0.0s,opacity_0.075s_ease_0.0s]',
                         'mt-2',
                     )}
                 >
