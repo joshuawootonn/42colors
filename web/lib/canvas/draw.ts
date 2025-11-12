@@ -55,7 +55,33 @@ export function draw(context: InitializedStore) {
             CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
             CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
         );
+    });
 
+    const pixelSize = getPixelSize(zoomMultiplier);
+    const canvasWidthPlusBleed =
+        pixelSize * getSizeInPixelsPlusBleed(window.innerWidth, pixelSize);
+    const canvasHeightPlusBleed =
+        pixelSize * getSizeInPixelsPlusBleed(window.innerHeight, pixelSize);
+
+    renderRealtime(context);
+    context.canvas.rootCanvasContext.drawImage(
+        context.canvas.realtimeCanvas,
+        x,
+        y,
+        canvasWidthPlusBleed,
+        canvasHeightPlusBleed,
+    );
+
+    renderTelegraph(context);
+    context.canvas.rootCanvasContext.drawImage(
+        context.canvas.telegraphCanvas,
+        x,
+        y,
+        window.innerWidth + FULLSIZE_CANVAS_BLEED,
+        window.innerHeight + FULLSIZE_CANVAS_BLEED,
+    );
+
+    Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
         if (
             chunk.webgpuCanvas != null &&
             chunk.webgpuManager != null &&
@@ -74,35 +100,9 @@ export function draw(context: InitializedStore) {
         }
     });
 
-    const pixelSize = getPixelSize(zoomMultiplier);
-    const canvasWidthPlusBleed =
-        pixelSize * getSizeInPixelsPlusBleed(window.innerWidth, pixelSize);
-    const canvasHeightPlusBleed =
-        pixelSize * getSizeInPixelsPlusBleed(window.innerHeight, pixelSize);
-
-    renderRealtime(context);
-
-    context.canvas.rootCanvasContext.drawImage(
-        context.canvas.realtimeCanvas,
-        x,
-        y,
-        canvasWidthPlusBleed,
-        canvasHeightPlusBleed,
-    );
-
     renderUI(context);
-
     context.canvas.rootCanvasContext.drawImage(
         context.canvas.uiCanvas,
-        x,
-        y,
-        window.innerWidth + FULLSIZE_CANVAS_BLEED,
-        window.innerHeight + FULLSIZE_CANVAS_BLEED,
-    );
-
-    renderTelegraph(context);
-    context.canvas.rootCanvasContext.drawImage(
-        context.canvas.telegraphCanvas,
         x,
         y,
         window.innerWidth + FULLSIZE_CANVAS_BLEED,
