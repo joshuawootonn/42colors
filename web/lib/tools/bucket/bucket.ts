@@ -50,10 +50,9 @@ function getPixelColor(
     const chunkPixelX = x - chunkOrigin.x;
     const chunkPixelY = y - chunkOrigin.y;
 
-    for (const pixel of chunk.pixels) {
-        if (pixel.x === chunkPixelX && pixel.y === chunkPixelY) {
-            return pixel.color_ref;
-        }
+    const pixel = chunk.pixelMap.get(`${chunkPixelX},${chunkPixelY}`);
+    if (pixel != null) {
+        return pixel.color_ref;
     }
 
     return TRANSPARENT_REF;

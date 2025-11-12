@@ -12,6 +12,7 @@ export type Chunk = {
     x: number;
     y: number;
     pixels: Pixel[];
+    pixelMap: Map<string, Pixel>;
     element: HTMLCanvasElement;
     context: CanvasRenderingContext2D;
     plots: Plot[];

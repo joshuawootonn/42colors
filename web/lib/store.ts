@@ -692,6 +692,7 @@ export const store = createStore({
                         x: chunkX,
                         y: chunkY,
                         pixels: [],
+                        pixelMap: new Map(),
                         plots: [],
                         renderConditions: { zoom: context.camera.zoom },
                         webgpuManager: null,
@@ -826,9 +827,25 @@ export const store = createStore({
                 return;
             }
 
+            const chunkOrigin = { x: prev.x, y: prev.y };
+            let newPixelMap = prev.pixelMap;
+            if (pixels) {
+                newPixelMap = new Map(prev.pixelMap);
+                for (let i = 0; i < pixels.length; i++) {
+                    const pixel = pixels[i];
+                    const chunkPixel = {
+                        x: pixel.x - chunkOrigin.x,
+                        y: pixel.y - chunkOrigin.y,
+                    };
+                    const key = `${chunkPixel.x},${chunkPixel.y}`;
+                    newPixelMap.set(key, pixel);
+                }
+            }
+
             context.canvas.chunkCanvases[chunkKey] = {
                 ...prev,
                 pixels: pixels ? [...prev.pixels, ...pixels] : prev.pixels,
+                pixelMap: newPixelMap,
                 plots: plots ? [...prev.plots, ...plots] : prev.plots,
             };
 
@@ -855,9 +872,22 @@ export const store = createStore({
                 return;
             }
 
+            const chunkOrigin = { x: prev.x, y: prev.y };
+            const newPixelMap = new Map(prev.pixelMap);
+            for (let i = 0; i < pixels.length; i++) {
+                const pixel = pixels[i];
+                const chunkPixel = {
+                    x: pixel.x - chunkOrigin.x,
+                    y: pixel.y - chunkOrigin.y,
+                };
+                const key = `${chunkPixel.x},${chunkPixel.y}`;
+                newPixelMap.set(key, pixel);
+            }
+
             context.canvas.chunkCanvases[chunkKey] = {
                 ...prev,
                 pixels: [...prev.pixels, ...pixels],
+                pixelMap: newPixelMap,
             };
 
             enqueue.effect(() => {
@@ -912,9 +942,20 @@ export const store = createStore({
                 (pixel) => !pixelIdSet.has(`${pixel.x},${pixel.y}`),
             );
 
+            const chunkOrigin = { x: prev.x, y: prev.y };
+            const newPixelMap = new Map(prev.pixelMap);
+            for (const pixelId of pixelIds) {
+                const [absX, absY] = pixelId.split(',').map(Number);
+                const chunkPixelX = absX - chunkOrigin.x;
+                const chunkPixelY = absY - chunkOrigin.y;
+                const chunkKey = `${chunkPixelX},${chunkPixelY}`;
+                newPixelMap.delete(chunkKey);
+            }
+
             context.canvas.chunkCanvases[chunkKey] = {
                 ...prev,
                 pixels: remainingPixels,
+                pixelMap: newPixelMap,
             };
 
             enqueue.effect(() => {
