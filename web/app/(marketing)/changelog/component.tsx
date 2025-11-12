@@ -29,6 +29,20 @@ export default function Changelog() {
             <hr className="w-full border-t-2 border-border" />
             <ul>
                 <li>
+                    <DateComponent date={new Date('11/11/2025')} />
+                    <ul>
+                        <li>
+                            Created the bucket tool.
+                            <video
+                                src="/changelog/25-11-11-bucket-tool.mp4"
+                                muted
+                                controls
+                                className="mt-4 border border-border"
+                            />
+                        </li>
+                    </ul>
+                </li>
+                <li>
                     <DateComponent date={new Date('11/06/2025')} />
                     <ul>
                         <li>
