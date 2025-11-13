@@ -407,36 +407,52 @@ export function renderPolygons(
         transformData,
     );
 
-    // Render each polygon
-    for (const { polygon } of items) {
-        // Update color uniform buffer for this polygon
-        const colorData = new Float32Array(color);
-        renderer.device.queue.writeBuffer(renderer.colorBuffer, 0, colorData);
+    // Update color uniform buffer once for all polygons
+    const colorData = new Float32Array(color);
+    renderer.device.queue.writeBuffer(renderer.colorBuffer, 0, colorData);
 
+    // Collect all vertex data from all polygons
+    const allVertexData: Float32Array[] = [];
+    for (const { polygon } of items) {
         const vertexData = filled
             ? generateFilledPolygonTriangles(polygon, options)
             : generatePolygonLineSegments(polygon, options);
 
-        if (vertexData.length === 0) {
-            continue;
+        if (vertexData.length > 0) {
+            allVertexData.push(vertexData);
         }
-
-        // Get a buffer from the pool
-        const vertexBuffer = renderer.bufferPool.getBuffer(
-            vertexData.length * 4,
-        );
-        renderer.device.queue.writeBuffer(vertexBuffer, 0, vertexData);
-
-        // Set up render pass
-        renderPass.setPipeline(renderer.renderPipeline);
-        renderPass.setBindGroup(0, renderer.transformBindGroup);
-        renderPass.setBindGroup(1, renderer.colorBindGroup);
-        renderPass.setVertexBuffer(0, vertexBuffer);
-        renderPass.draw(vertexData.length / 2); // 2 vertices per triangle vertex
-
-        // Schedule buffer to be returned after GPU work completes
-        renderer.bufferPool.returnBufferAfterFrame(vertexBuffer);
     }
+
+    if (allVertexData.length === 0) {
+        return;
+    }
+
+    // Combine all vertex data into a single buffer
+    const totalLength = allVertexData.reduce((sum, arr) => sum + arr.length, 0);
+    const combinedVertexData = new Float32Array(totalLength);
+    let offset = 0;
+    for (const vertexData of allVertexData) {
+        combinedVertexData.set(vertexData, offset);
+        offset += vertexData.length;
+    }
+
+    // Get a buffer from the pool and write all vertex data at once
+    const vertexBuffer = renderer.bufferPool.getBuffer(
+        combinedVertexData.length * 4,
+    );
+    renderer.device.queue.writeBuffer(vertexBuffer, 0, combinedVertexData);
+
+    // Set up render pass once
+    renderPass.setPipeline(renderer.renderPipeline);
+    renderPass.setBindGroup(0, renderer.transformBindGroup);
+    renderPass.setBindGroup(1, renderer.colorBindGroup);
+    renderPass.setVertexBuffer(0, vertexBuffer);
+
+    // Single draw call for all polygons
+    renderPass.draw(combinedVertexData.length / 2); // 2 floats per vertex
+
+    // Schedule buffer to be returned after GPU work completes
+    renderer.bufferPool.returnBufferAfterFrame(vertexBuffer);
 }
 
 export function destroyWebGPUPolygonRenderer(
