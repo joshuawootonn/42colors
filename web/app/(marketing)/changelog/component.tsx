@@ -29,6 +29,16 @@ export default function Changelog() {
             <hr className="w-full border-t-2 border-border" />
             <ul>
                 <li>
+                    <DateComponent date={new Date('11/13/2025')} />
+                    <ul>
+                        <li>
+                            Dropped some optimizations for the bucket tool
+                            rendering. At this point it is still pretty rough
+                            haha. Working on it!
+                        </li>
+                    </ul>
+                </li>
+                <li>
                     <DateComponent date={new Date('11/11/2025')} />
                     <ul>
                         <li>
