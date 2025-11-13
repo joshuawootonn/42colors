@@ -213,7 +213,8 @@ export default function Page() {
                     <>
                         {(currentTool === Tool.Brush ||
                             currentTool === Tool.Line ||
-                            currentTool === Tool.Bucket) && <Palette />}
+                            currentTool === Tool.Bucket ||
+                            currentTool === Tool.Eyedropper) && <Palette />}
                         {currentTool === Tool.Brush && <BrushPanel />}
                         {currentTool === Tool.Erasure && <ErasurePanel />}
                         {currentTool === Tool.Line && <LinePanel />}

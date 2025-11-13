@@ -81,6 +81,7 @@ export enum Tool {
     Line = 'line',
     Claimer = 'claimer',
     Bucket = 'bucket',
+    Eyedropper = 'eyedropper',
 }
 
 const toolSchema = z.nativeEnum(Tool);

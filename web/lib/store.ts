@@ -94,6 +94,7 @@ import {
 } from './tools/claimer/claimer.rest';
 import { ErasureSettings, ErasureTool } from './tools/erasure/erasure';
 import { clampErasureSize } from './tools/erasure/erasure-utils';
+import { EyedropperTool } from './tools/eyedropper/eyedropper';
 import { LineSettings, LineTool } from './tools/line/line';
 import { clampLineSize } from './tools/line/line-utils';
 import { PaletteSettings } from './tools/palette';
@@ -148,6 +149,8 @@ export type InitializedStore = {
     interaction: {
         isPressed: boolean;
         isSpacePressed: boolean;
+        isAltPressed: boolean;
+        previousTool: Tool | null;
         cursorPosition: { clientX: number; clientY: number } | null;
     };
     user?: {
@@ -234,6 +237,8 @@ export const store = createStore({
                 interaction: {
                     isPressed: false,
                     isSpacePressed: false,
+                    isAltPressed: false,
+                    previousTool: null,
                     cursorPosition: null,
                 },
                 actions: [],
@@ -1391,6 +1396,12 @@ export const store = createStore({
             if (context.interaction.isSpacePressed) {
                 return PanTool.onPointerDown(e, context);
             }
+
+            // Alt/Option key quick mode: temporarily switch to eyedropper
+            if (context.interaction.isAltPressed || e.altKey) {
+                return EyedropperTool.onPointerDown(e, context, enqueue);
+            }
+
             const tool = context.toolSettings.currentTool;
 
             if (tool === Tool.Brush) {
@@ -1413,6 +1424,10 @@ export const store = createStore({
                 return BucketTool.onPointerDown(e, context, enqueue);
             }
 
+            if (tool === Tool.Eyedropper) {
+                return EyedropperTool.onPointerDown(e, context, enqueue);
+            }
+
             return context;
         },
 
@@ -1422,6 +1437,12 @@ export const store = createStore({
             enqueue.effect(() => {
                 store.trigger.setCursorPosition({ cursorPosition: e });
             });
+
+            // Alt/Option key quick mode: show eyedropper cursor
+            if (context.interaction.isAltPressed || e.altKey) {
+                return EyedropperTool.onPointerMove(e, context, enqueue);
+            }
+
             const tool = context.toolSettings.currentTool;
 
             if (tool === Tool.Brush) {
@@ -1442,6 +1463,10 @@ export const store = createStore({
 
             if (tool === Tool.Bucket) {
                 return BucketTool.onPointerMove(e, context, enqueue);
+            }
+
+            if (tool === Tool.Eyedropper) {
+                return EyedropperTool.onPointerMove(e, context, enqueue);
             }
 
             return context;
@@ -1811,6 +1836,26 @@ export const store = createStore({
                     },
                 };
             }
+
+            // Alt/Option key: toggle eyedropper mode
+            // Only trigger when Alt is pressed by itself (not as a modifier for another key)
+            if (e.code === 'AltLeft' || e.code === 'AltRight') {
+                // Only toggle if not already in eyedropper mode
+                if (!context.interaction.isAltPressed) {
+                    return {
+                        ...context,
+                        interaction: {
+                            ...context.interaction,
+                            isAltPressed: true,
+                            previousTool: context.toolSettings.currentTool,
+                        },
+                        toolSettings: {
+                            ...context.toolSettings,
+                            currentTool: Tool.Eyedropper,
+                        },
+                    };
+                }
+            }
             return context;
         },
 
@@ -1826,6 +1871,29 @@ export const store = createStore({
                         isSpacePressed: false,
                     },
                 };
+            }
+
+            // Alt/Option key: restore previous tool and cursor
+            if (e.code === 'AltLeft' || e.code === 'AltRight') {
+                if (
+                    context.interaction.isAltPressed &&
+                    context.interaction.previousTool !== null
+                ) {
+                    const restoredContext = {
+                        ...context,
+                        interaction: {
+                            ...context.interaction,
+                            isAltPressed: false,
+                            previousTool: null,
+                        },
+                        toolSettings: {
+                            ...context.toolSettings,
+                            currentTool: context.interaction.previousTool,
+                        },
+                    };
+
+                    return restoredContext;
+                }
             }
             return context;
         },
