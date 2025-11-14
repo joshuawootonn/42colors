@@ -29,8 +29,27 @@ export default function Changelog() {
             <hr className="w-full border-t-2 border-border" />
             <ul>
                 <li>
-                    <DateComponent date={new Date('11/13/2025')} />
+                    <DateComponent date={new Date('11/15/2025')} />
                     <ul>
+                        <li>
+                            Created the eyedropper tool.
+                            <video
+                                src="/changelog/25-11-13-new-eyedropper-tool.mp4"
+                                muted
+                                controls
+                                className="mt-4 border border-border"
+                            />
+                        </li>
+                        <li>
+                            Click on the canvas to quickly pick your primary
+                            color. Right click to similarly set your secondary
+                            color. <br />
+                            <br />
+                            You can also hold <kbd>Option</kbd>/<kbd>Alt</kbd>{' '}
+                            to temporarily switch to eyedropper mode from any
+                            tool. Releasing the <kbd>Option</kbd>/<kbd>Alt</kbd>{' '}
+                            key will revert to your previous tool.
+                        </li>
                         <li>
                             Dropped some optimizations for the bucket tool
                             rendering. At this point it is still pretty rough
