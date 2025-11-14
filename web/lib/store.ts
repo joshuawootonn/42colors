@@ -832,15 +832,14 @@ export const store = createStore({
                 return;
             }
 
-            const chunkOrigin = { x: prev.x, y: prev.y };
             let newPixelMap = prev.pixelMap;
             if (pixels) {
                 newPixelMap = new Map(prev.pixelMap);
                 for (let i = 0; i < pixels.length; i++) {
                     const pixel = pixels[i];
                     const chunkPixel = {
-                        x: pixel.x - chunkOrigin.x,
-                        y: pixel.y - chunkOrigin.y,
+                        x: pixel.x,
+                        y: pixel.y,
                     };
                     const key = `${chunkPixel.x},${chunkPixel.y}`;
                     newPixelMap.set(key, pixel);
@@ -877,13 +876,13 @@ export const store = createStore({
                 return;
             }
 
-            const chunkOrigin = { x: prev.x, y: prev.y };
             const newPixelMap = new Map(prev.pixelMap);
+
             for (let i = 0; i < pixels.length; i++) {
                 const pixel = pixels[i];
                 const chunkPixel = {
-                    x: pixel.x - chunkOrigin.x,
-                    y: pixel.y - chunkOrigin.y,
+                    x: pixel.x,
+                    y: pixel.y,
                 };
                 const key = `${chunkPixel.x},${chunkPixel.y}`;
                 newPixelMap.set(key, pixel);
@@ -947,12 +946,11 @@ export const store = createStore({
                 (pixel) => !pixelIdSet.has(`${pixel.x},${pixel.y}`),
             );
 
-            const chunkOrigin = { x: prev.x, y: prev.y };
             const newPixelMap = new Map(prev.pixelMap);
             for (const pixelId of pixelIds) {
                 const [absX, absY] = pixelId.split(',').map(Number);
-                const chunkPixelX = absX - chunkOrigin.x;
-                const chunkPixelY = absY - chunkOrigin.y;
+                const chunkPixelX = absX;
+                const chunkPixelY = absY;
                 const chunkKey = `${chunkPixelX},${chunkPixelY}`;
                 newPixelMap.delete(chunkKey);
             }
