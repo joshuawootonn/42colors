@@ -15,8 +15,6 @@ import { renderUI } from './ui';
 
 export function draw(context: InitializedStore) {
     const zoomMultiplier = getZoomMultiplier(context.camera);
-    const cameraXStart = Math.floor(context.camera.x);
-    const cameraYStart = Math.floor(context.camera.y);
     context.canvas.rootCanvas.width = window.innerWidth;
     context.canvas.rootCanvas.height = window.innerHeight;
 
@@ -30,13 +28,17 @@ export function draw(context: InitializedStore) {
         context.canvas.rootCanvas.height,
     );
 
+    // Math.floor to avoid sub pixel offsets
+    // Math.floor after canvasToClient so zooming in and out is smooth
     context.canvas.rootCanvasContext.translate(
-        -canvasToClient(context.camera.x, context.camera.zoom),
-        -canvasToClient(context.camera.y, context.camera.zoom),
+        -Math.floor(canvasToClient(context.camera.x, context.camera.zoom)),
+        -Math.floor(canvasToClient(context.camera.y, context.camera.zoom)),
     );
 
-    const x = canvasToClient(cameraXStart, context.camera.zoom);
-    const y = canvasToClient(cameraYStart, context.camera.zoom);
+    const nonChunkX = Math.floor(context.camera.x);
+    const nonChunkY = Math.floor(context.camera.y);
+    const x = canvasToClient(nonChunkX, context.camera.zoom);
+    const y = canvasToClient(nonChunkY, context.camera.zoom);
 
     context.canvas.rootCanvasContext.drawImage(
         context.canvas.backgroundCanvas,
