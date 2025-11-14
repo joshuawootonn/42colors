@@ -194,17 +194,6 @@ export class WebGPUManager {
         this.device.queue.submit([commandEncoder.finish()]);
     }
 
-    getCameraOffset(camera: { x: number; y: number }): {
-        xOffset: number;
-        yOffset: number;
-    } {
-        // Extract decimal parts for sub-pixel positioning
-        const xOffset = camera.x - Math.floor(camera.x);
-        const yOffset = camera.y - Math.floor(camera.y);
-
-        return { xOffset, yOffset };
-    }
-
     destroy(): void {
         if (this.polygonRenderer) {
             destroyWebGPUPolygonRenderer(this.polygonRenderer);
