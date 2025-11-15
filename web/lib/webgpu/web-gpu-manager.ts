@@ -25,10 +25,19 @@ import {
 
 export type { LineRenderItem as LineItem };
 
+type TextureDimensions = {
+    width: number;
+    height: number;
+};
+
 export class WebGPUManager {
     private polygonRenderer: WebGPUPolygonRenderer | null = null;
     private pixelRenderer: WebGPUPixelRenderer | null = null;
     private lineRenderer: WebGPULineRenderer | null = null;
+    private textureRenderPipeline: GPURenderPipeline | null = null;
+    private textureSampler: GPUSampler | null = null;
+    private persistentTexture: GPUTexture | null = null;
+    private persistentTextureSize: TextureDimensions | null = null;
     private device: GPUDevice;
     private context: GPUCanvasContext;
     private canvasFormat: GPUTextureFormat;
@@ -56,6 +65,23 @@ export class WebGPUManager {
             this.device,
             this.canvasFormat,
         );
+        this.initializeTextureRenderer();
+    }
+
+    createRenderTexture(size: TextureDimensions): GPUTexture {
+        return this.device.createTexture({
+            size: {
+                width: size.width,
+                height: size.height,
+                depthOrArrayLayers: 1,
+            },
+            format: this.canvasFormat,
+            usage:
+                GPUTextureUsage.RENDER_ATTACHMENT |
+                GPUTextureUsage.TEXTURE_BINDING |
+                GPUTextureUsage.COPY_SRC |
+                GPUTextureUsage.COPY_DST,
+        });
     }
 
     redrawPolygons(
@@ -154,8 +180,7 @@ export class WebGPUManager {
             colorAttachments: [
                 {
                     view: this.context.getCurrentTexture().createView(),
-                    clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 0.0 },
-                    loadOp: 'clear',
+                    loadOp: 'load',
                     storeOp: 'store',
                 },
             ],
@@ -173,6 +198,200 @@ export class WebGPUManager {
         this.device.queue.submit([commandEncoder.finish()]);
 
         this.pixelRenderer.bufferPool.processFrameCompletion();
+    }
+
+    private renderPixelsToTexture(
+        targetTexture: GPUTexture,
+        size: TextureDimensions,
+        pixels: Pixel[],
+        options: Partial<PixelRenderOptions> = {},
+        clear = false,
+    ): void {
+        if (!this.pixelRenderer) {
+            throw new Error(
+                'WebGPU pixel renderer not initialized. Call initialize() first.',
+            );
+        }
+
+        const commandEncoder = this.device.createCommandEncoder();
+        const renderPass = commandEncoder.beginRenderPass({
+            colorAttachments: [
+                {
+                    view: targetTexture.createView(),
+                    clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 0.0 },
+                    loadOp: clear ? 'clear' : 'load',
+                    storeOp: 'store',
+                },
+            ],
+        });
+        const renderOptions: PixelRenderOptions = {
+            ...options,
+            canvasWidth: size.width,
+            canvasHeight: size.height,
+        };
+
+        const shouldRender = pixels.length > 0;
+        if (shouldRender) {
+            renderPixels(this.pixelRenderer, pixels, renderOptions, renderPass);
+        }
+
+        renderPass.end();
+        this.device.queue.submit([commandEncoder.finish()]);
+
+        if (shouldRender) {
+            this.pixelRenderer.bufferPool.processFrameCompletion();
+        }
+    }
+
+    initializePersistentTexture(size: TextureDimensions): void {
+        const needsNewTexture =
+            !this.persistentTexture ||
+            !this.persistentTextureSize ||
+            this.persistentTextureSize.width !== size.width ||
+            this.persistentTextureSize.height !== size.height;
+
+        if (!needsNewTexture) {
+            return;
+        }
+
+        this.persistentTexture?.destroy();
+        this.persistentTexture = this.createRenderTexture(size);
+        this.persistentTextureSize = size;
+    }
+
+    renderPersistentPixels(
+        pixels: Pixel[],
+        options: Partial<PixelRenderOptions> = {},
+        clear = false,
+    ): void {
+        if (!this.persistentTexture || !this.persistentTextureSize) {
+            throw new Error('Persistent texture not initialized.');
+        }
+
+        if (clear || pixels.length > 0) {
+            this.renderPixelsToTexture(
+                this.persistentTexture,
+                this.persistentTextureSize,
+                pixels,
+                options,
+                clear,
+            );
+        }
+
+        this.presentTexture(this.persistentTexture);
+    }
+
+    private initializeTextureRenderer(): void {
+        const vertexModule = this.device.createShaderModule({
+            code: `
+                struct VertexOutput {
+                    @builtin(position) position: vec4<f32>,
+                    @location(0) texCoords: vec2<f32>,
+                };
+
+                @vertex
+                fn main(@builtin(vertex_index) vertexIndex: u32) -> VertexOutput {
+                    var positions = array<vec2<f32>, 4>(
+                        vec2<f32>(-1.0, -1.0),
+                        vec2<f32>(1.0, -1.0),
+                        vec2<f32>(-1.0, 1.0),
+                        vec2<f32>(1.0, 1.0)
+                    );
+
+                    var uvs = array<vec2<f32>, 4>(
+                        vec2<f32>(0.0, 1.0),
+                        vec2<f32>(1.0, 1.0),
+                        vec2<f32>(0.0, 0.0),
+                        vec2<f32>(1.0, 0.0)
+                    );
+
+                    var output: VertexOutput;
+                    output.position = vec4<f32>(positions[vertexIndex], 0.0, 1.0);
+                    output.texCoords = uvs[vertexIndex];
+                    return output;
+                }
+            `,
+        });
+
+        const fragmentModule = this.device.createShaderModule({
+            code: `
+                struct VertexOutput {
+                    @builtin(position) position: vec4<f32>,
+                    @location(0) texCoords: vec2<f32>,
+                };
+
+                @group(0) @binding(0) var mySampler: sampler;
+                @group(0) @binding(1) var myTexture: texture_2d<f32>;
+
+                @fragment
+                fn main(input: VertexOutput) -> @location(0) vec4<f32> {
+                    return textureSample(myTexture, mySampler, input.texCoords);
+                }
+            `,
+        });
+
+        this.textureSampler = this.device.createSampler({
+            magFilter: 'nearest',
+            minFilter: 'nearest',
+            addressModeU: 'clamp-to-edge',
+            addressModeV: 'clamp-to-edge',
+        });
+
+        this.textureRenderPipeline = this.device.createRenderPipeline({
+            layout: 'auto',
+            vertex: {
+                module: vertexModule,
+                entryPoint: 'main',
+            },
+            fragment: {
+                module: fragmentModule,
+                entryPoint: 'main',
+                targets: [{ format: this.canvasFormat }],
+            },
+            primitive: {
+                topology: 'triangle-strip',
+                stripIndexFormat: undefined,
+            },
+        });
+    }
+
+    private presentTexture(sourceTexture: GPUTexture): void {
+        if (!this.textureRenderPipeline || !this.textureSampler) {
+            throw new Error('Texture renderer not initialized.');
+        }
+
+        const bindGroup = this.device.createBindGroup({
+            layout: this.textureRenderPipeline.getBindGroupLayout(0),
+            entries: [
+                {
+                    binding: 0,
+                    resource: this.textureSampler,
+                },
+                {
+                    binding: 1,
+                    resource: sourceTexture.createView(),
+                },
+            ],
+        });
+
+        const commandEncoder = this.device.createCommandEncoder();
+        const renderPass = commandEncoder.beginRenderPass({
+            colorAttachments: [
+                {
+                    view: this.context.getCurrentTexture().createView(),
+                    clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 0.0 },
+                    loadOp: 'clear',
+                    storeOp: 'store',
+                },
+            ],
+        });
+
+        renderPass.setPipeline(this.textureRenderPipeline);
+        renderPass.setBindGroup(0, bindGroup);
+        renderPass.draw(4);
+        renderPass.end();
+
+        this.device.queue.submit([commandEncoder.finish()]);
     }
 
     clear(): void {
@@ -207,6 +426,11 @@ export class WebGPUManager {
             destroyWebGPULineRenderer(this.lineRenderer);
             this.lineRenderer = null;
         }
+        this.textureRenderPipeline = null;
+        this.textureSampler = null;
+        this.persistentTexture?.destroy();
+        this.persistentTexture = null;
+        this.persistentTextureSize = null;
     }
 }
 

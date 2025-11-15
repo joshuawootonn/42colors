@@ -43,15 +43,6 @@ export type Action =
           type: 'realtime-active';
           pixels: Pixel[];
       }
-    | {
-          type: 'camera-move';
-          points: Camera[];
-      }
-    | {
-          type: 'tool-change';
-          before: Tool;
-          after: Tool;
-      }
     | Undo
     | Redo;
 

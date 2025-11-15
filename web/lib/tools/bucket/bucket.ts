@@ -50,7 +50,7 @@ function getPixelColor(
     const chunkPixelX = x - chunkOrigin.x;
     const chunkPixelY = y - chunkOrigin.y;
 
-    const pixel = chunk.pixelMap.get(`${chunkPixelX},${chunkPixelY}`);
+    const pixel = chunk.getPixelValue(chunkPixelX, chunkPixelY);
     if (pixel != null) {
         return pixel.color_ref;
     }

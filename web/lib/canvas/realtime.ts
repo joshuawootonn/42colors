@@ -8,7 +8,7 @@ import { InitializedStore } from '../store';
 import { dedupeCoords } from '../utils/dedupe-coords';
 import { isInitialStore } from '../utils/is-initial-store';
 import { getPixelSize, getSizeInPixelsPlusBleed } from './canvas';
-import { clearChunkPixels, unsetChunkPixels } from './chunk';
+import { getUniqueChunksFromPixels } from './chunk';
 
 export function createRealtimeCanvas(camera: Camera) {
     const canvas = document.createElement('canvas');
@@ -142,14 +142,23 @@ export function getCachedPixelsFromActions(context: InitializedStore): {
 export function renderRealtime(context: InitializedStore) {
     if (isInitialStore(context)) return;
 
-    const { unsetPixels, dedupedPixels } = getCachedPixelsFromActions(context);
+    const { dedupedPixels, unsetPixels } = getCachedPixelsFromActions(context);
 
-    unsetChunkPixels(context.canvas.chunkCanvases, unsetPixels);
+    const uniqueChunkKeys = getUniqueChunksFromPixels(unsetPixels);
+    for (let i = 0; i < uniqueChunkKeys.length; i++) {
+        const chunk = context.canvas.chunkCanvases[uniqueChunkKeys[i]];
+        chunk.unsetPixels(unsetPixels);
+    }
+
+    const uniqueDedupedChunkKeys = getUniqueChunksFromPixels(dedupedPixels);
+
+    for (let i = 0; i < uniqueDedupedChunkKeys.length; i++) {
+        const chunk = context.canvas.chunkCanvases[uniqueDedupedChunkKeys[i]];
+        chunk.clearPixels(dedupedPixels);
+    }
 
     context.canvas.realtimeWebGPUManager.redrawPixels(dedupedPixels, {
         xCamera: context.camera.x,
         yCamera: context.camera.y,
     });
-
-    clearChunkPixels(context.canvas.chunkCanvases, dedupedPixels);
 }
