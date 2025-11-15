@@ -27,8 +27,6 @@ export const ACTION_TYPES = {
 
     // Other actions
     REALTIME_ACTIVE: 'realtime-active',
-    CAMERA_MOVE: 'camera-move',
-    TOOL_CHANGE: 'tool-change',
     UNDO: 'undo',
     REDO: 'redo',
 } as const;

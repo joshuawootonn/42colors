@@ -7,7 +7,6 @@ import {
 import { InitializedStore } from '../store';
 import { canvasToClient } from '../utils/clientToCanvasConversion';
 import { getPixelSize, getSizeInPixelsPlusBleed } from './canvas';
-import { clearChunk, renderPlotsToChunk } from './chunk';
 import { FULLSIZE_CANVAS_BLEED } from './fullsize';
 import { renderRealtime } from './realtime';
 import { renderTelegraph } from './telegraph';
@@ -51,7 +50,7 @@ export function draw(context: InitializedStore) {
     Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
         context.canvas.rootCanvasContext.imageSmoothingEnabled = false;
         context.canvas.rootCanvasContext.drawImage(
-            chunk.element,
+            chunk.pixelCanvas,
             canvasToClient(chunk.x, context.camera.zoom),
             canvasToClient(chunk.y, context.camera.zoom),
             CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
@@ -86,11 +85,8 @@ export function draw(context: InitializedStore) {
     Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
         if (
             context.adminSettings.plotBordersVisible &&
-            chunk.uiCanvas != null &&
-            chunk.uiWebGPUManager != null &&
-            chunk.plots.length > 0
+            chunk.uiCanvas != null
         ) {
-            renderPlotsToChunk(chunk);
             context.canvas.rootCanvasContext.drawImage(
                 chunk.uiCanvas,
                 canvasToClient(chunk.x, context.camera.zoom),
@@ -98,8 +94,6 @@ export function draw(context: InitializedStore) {
                 CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
                 CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
             );
-        } else {
-            clearChunk(chunk);
         }
     });
 
