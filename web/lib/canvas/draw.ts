@@ -86,13 +86,13 @@ export function draw(context: InitializedStore) {
     Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
         if (
             context.adminSettings.plotBordersVisible &&
-            chunk.webgpuCanvas != null &&
-            chunk.webgpuManager != null &&
+            chunk.uiCanvas != null &&
+            chunk.uiWebGPUManager != null &&
             chunk.plots.length > 0
         ) {
             renderPlotsToChunk(chunk);
             context.canvas.rootCanvasContext.drawImage(
-                chunk.webgpuCanvas,
+                chunk.uiCanvas,
                 canvasToClient(chunk.x, context.camera.zoom),
                 canvasToClient(chunk.y, context.camera.zoom),
                 CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
