@@ -326,7 +326,7 @@ export const store = createStore({
 
             if (!isInitialStore(context)) {
                 Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
-                    cleanupChunkWebGPU(chunk.webgpuManager);
+                    cleanupChunkWebGPU(chunk.uiWebGPUManager);
                 });
             }
         },
@@ -713,7 +713,7 @@ export const store = createStore({
                         pixelMap: new Map(),
                         plots: [],
                         renderConditions: { zoom: context.camera.zoom },
-                        webgpuManager: null,
+                        uiWebGPUManager: null,
                     };
 
                     enqueue.effect(async () => {
@@ -819,7 +819,11 @@ export const store = createStore({
                     ...context.canvas,
                     chunkCanvases: {
                         ...context.canvas.chunkCanvases,
-                        [chunkKey]: { ...prev, webgpuManager, webgpuCanvas },
+                        [chunkKey]: {
+                            ...prev,
+                            uiWebGPUManager: webgpuManager,
+                            uiCanvas: webgpuCanvas,
+                        },
                     },
                 },
             };

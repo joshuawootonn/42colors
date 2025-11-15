@@ -19,8 +19,8 @@ export type Chunk = {
     renderConditions: {
         zoom: number;
     };
-    webgpuManager?: WebGPUManager | null;
-    webgpuCanvas?: HTMLCanvasElement;
+    uiWebGPUManager?: WebGPUManager | null;
+    uiCanvas?: HTMLCanvasElement;
 };
 
 export type ChunkCanvases = Record<string, Chunk>;
@@ -61,7 +61,7 @@ export function cleanupChunkWebGPU(
 }
 
 export function renderPlotsToChunk(chunk: Chunk): void {
-    if (!chunk.webgpuManager || chunk.plots.length === 0) {
+    if (!chunk.uiWebGPUManager || chunk.plots.length === 0) {
         return;
     }
 
@@ -69,7 +69,7 @@ export function renderPlotsToChunk(chunk: Chunk): void {
         polygon: plot.polygon,
     }));
 
-    chunk.webgpuManager.redrawPolygons(polygonRenderData, {
+    chunk.uiWebGPUManager.redrawPolygons(polygonRenderData, {
         containsMatchingEndpoints: true,
         xOffset: 0,
         yOffset: 0,
@@ -82,7 +82,7 @@ export function renderPlotsToChunk(chunk: Chunk): void {
 }
 
 export function clearChunk(chunk: Chunk): void {
-    chunk.webgpuManager?.clear();
+    chunk.uiWebGPUManager?.clear();
 }
 
 export function drawPixelsToChunkCanvas(
