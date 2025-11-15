@@ -21,6 +21,8 @@ export type Chunk = {
     };
     uiWebGPUManager?: WebGPUManager | null;
     uiCanvas?: HTMLCanvasElement;
+    realtimeWebGPUManager?: WebGPUManager | null;
+    realtimeCanvas?: HTMLCanvasElement;
 };
 
 export type ChunkCanvases = Record<string, Chunk>;
