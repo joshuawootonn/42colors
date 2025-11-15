@@ -608,55 +608,7 @@ export const store = createStore({
                 },
             };
         },
-
-        updateChunk: (
-            context,
-            {
-                chunkKey,
-                pixels,
-                plots,
-            }: { chunkKey: string; pixels?: Pixel[]; plots?: Plot[] },
-            enqueue,
-        ) => {
-            if (isInitialStore(context)) return;
-
-            const prev = context.canvas.chunkCanvases[chunkKey];
-
-            if (prev == null) {
-                console.log(
-                    `skipping chunk update on uninitialized, chunkKey: ${chunkKey}`,
-                );
-                return;
-            }
-
-            let newPixelMap = prev.pixelMap;
-            if (pixels) {
-                newPixelMap = new Map(prev.pixelMap);
-                for (let i = 0; i < pixels.length; i++) {
-                    const pixel = pixels[i];
-                    const chunkPixel = {
-                        x: pixel.x,
-                        y: pixel.y,
-                    };
-                    const key = `${chunkPixel.x},${chunkPixel.y}`;
-                    newPixelMap.set(key, pixel);
-                }
-            }
-
-            context.canvas.chunkCanvases[chunkKey] = {
-                ...prev,
-                pixels: pixels ? [...prev.pixels, ...pixels] : prev.pixels,
-                pixelMap: newPixelMap,
-                plots: plots ? [...prev.plots, ...plots] : prev.plots,
-            };
-
-            enqueue.effect(() => {
-                if (pixels) {
-                    store.trigger.drawPixelsToChunkCanvas({ chunkKey, pixels });
-                }
-            });
-        },
-
+      
         redrawChunk: (context, { chunkKey }: { chunkKey: string }, enqueue) => {
             if (isInitialStore(context)) return;
             enqueue.effect(() => {
@@ -1000,47 +952,6 @@ export const store = createStore({
             context.canvas.chunkCanvases[chunkKey] = {
                 ...prev,
                 plots: [...prev.plots, ...plots],
-            };
-
-            enqueue.effect(() => {
-                store.trigger.redrawChunk({ chunkKey });
-            });
-        },
-
-        removePixels: (
-            context,
-            { chunkKey, pixelIds }: { chunkKey: string; pixelIds: string[] },
-            enqueue,
-        ) => {
-            if (isInitialStore(context)) return;
-
-            const prev = context.canvas.chunkCanvases[chunkKey];
-
-            if (prev == null) {
-                console.log(
-                    `skipping remove pixels on uninitialized chunk, chunkKey: ${chunkKey}`,
-                );
-                return;
-            }
-
-            const pixelIdSet = new Set(pixelIds);
-            const remainingPixels = prev.pixels.filter(
-                (pixel) => !pixelIdSet.has(`${pixel.x},${pixel.y}`),
-            );
-
-            const newPixelMap = new Map(prev.pixelMap);
-            for (const pixelId of pixelIds) {
-                const [absX, absY] = pixelId.split(',').map(Number);
-                const chunkPixelX = absX;
-                const chunkPixelY = absY;
-                const chunkKey = `${chunkPixelX},${chunkPixelY}`;
-                newPixelMap.delete(chunkKey);
-            }
-
-            context.canvas.chunkCanvases[chunkKey] = {
-                ...prev,
-                pixels: remainingPixels,
-                pixelMap: newPixelMap,
             };
 
             enqueue.effect(() => {
