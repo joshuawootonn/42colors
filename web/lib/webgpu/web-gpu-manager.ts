@@ -101,8 +101,7 @@ export class WebGPUManager {
             colorAttachments: [
                 {
                     view: this.context.getCurrentTexture().createView(),
-                    clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 0.0 },
-                    loadOp: 'clear',
+                    loadOp: 'load',
                     storeOp: 'store',
                 },
             ],
@@ -139,7 +138,6 @@ export class WebGPUManager {
             colorAttachments: [
                 {
                     view: this.context.getCurrentTexture().createView(),
-                    clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 0.0 },
                     loadOp: 'load',
                     storeOp: 'store',
                 },
@@ -436,32 +434,29 @@ export class WebGPUManager {
 
 export async function createWebGPUManager(
     canvas: HTMLCanvasElement,
+    existingDevice: GPUDevice,
 ): Promise<WebGPUManager | null> {
     if (navigator.gpu) {
         try {
-            const adapter = await navigator.gpu.requestAdapter();
-            if (adapter) {
-                const device = await adapter.requestDevice();
-                const webgpuContext = canvas.getContext('webgpu');
-                if (webgpuContext) {
-                    const canvasFormat =
-                        navigator.gpu.getPreferredCanvasFormat();
-                    webgpuContext.configure({
-                        device,
-                        format: canvasFormat,
-                        alphaMode: 'premultiplied',
-                    });
-                    const manager = new WebGPUManager(
-                        device,
-                        webgpuContext,
-                        canvasFormat,
-                    );
-                    await manager.initialize();
+            const device = existingDevice;
+            const webgpuContext = canvas.getContext('webgpu');
+            if (webgpuContext) {
+                const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+                webgpuContext.configure({
+                    device,
+                    format: canvasFormat,
+                    alphaMode: 'premultiplied',
+                });
+                const manager = new WebGPUManager(
+                    device,
+                    webgpuContext,
+                    canvasFormat,
+                );
+                await manager.initialize();
 
-                    console.debug('WebGPU manager initialized successfully');
+                console.debug('WebGPU manager initialized successfully');
 
-                    return manager;
-                }
+                return manager;
             }
         } catch (error) {
             console.warn('Failed to initialize WebGPU for rendering:', error);

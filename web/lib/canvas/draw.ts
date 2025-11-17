@@ -6,9 +6,7 @@ import {
 } from '../constants';
 import { InitializedStore } from '../store';
 import { canvasToClient } from '../utils/clientToCanvasConversion';
-import { getPixelSize, getSizeInPixelsPlusBleed } from './canvas';
 import { FULLSIZE_CANVAS_BLEED } from './fullsize';
-import { renderRealtime } from './realtime';
 import { renderTelegraph } from './telegraph';
 import { renderUI } from './ui';
 
@@ -47,6 +45,7 @@ export function draw(context: InitializedStore) {
         window.innerHeight * zoomMultiplier * BACKGROUND_SIZE,
     );
 
+    // Render chunk pixel canvases
     Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
         context.canvas.rootCanvasContext.imageSmoothingEnabled = false;
         context.canvas.rootCanvasContext.drawImage(
@@ -58,20 +57,17 @@ export function draw(context: InitializedStore) {
         );
     });
 
-    const pixelSize = getPixelSize(zoomMultiplier);
-    const canvasWidthPlusBleed =
-        pixelSize * getSizeInPixelsPlusBleed(window.innerWidth, pixelSize);
-    const canvasHeightPlusBleed =
-        pixelSize * getSizeInPixelsPlusBleed(window.innerHeight, pixelSize);
-
-    renderRealtime(context);
-    context.canvas.rootCanvasContext.drawImage(
-        context.canvas.realtimeCanvas,
-        x,
-        y,
-        canvasWidthPlusBleed,
-        canvasHeightPlusBleed,
-    );
+    // Render chunk realtime canvases (for active actions)
+    Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
+        context.canvas.rootCanvasContext.imageSmoothingEnabled = false;
+        context.canvas.rootCanvasContext.drawImage(
+            chunk.realtimeCanvas,
+            canvasToClient(chunk.x, context.camera.zoom),
+            canvasToClient(chunk.y, context.camera.zoom),
+            CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
+            CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
+        );
+    });
 
     renderTelegraph(context);
     context.canvas.rootCanvasContext.drawImage(
