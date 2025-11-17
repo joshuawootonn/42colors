@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { Action, derivePixelsFromActions } from '../actions';
 import { CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from '../constants';
 import { AbsolutePoint, Coord, Pixel, pixelSchema } from '../geometry/coord';
 import { AbsolutePointTuple } from '../line';
@@ -65,6 +66,7 @@ export function getChunkPixel(chunkOrigin: Coord, pixel: Pixel): ChunkPixel {
 export class Chunk {
     public readonly pixelCanvas: HTMLCanvasElement;
     public readonly uiCanvas: HTMLCanvasElement;
+    public readonly realtimeCanvas: HTMLCanvasElement;
     private pixels: Pixel[] = [];
     private pixelMap: Map<string, Pixel> = new Map();
 
@@ -72,6 +74,10 @@ export class Chunk {
 
     private pixelWebGPUManager: WebGPUManager | null = null;
     private uiWebGPUManager: WebGPUManager | null = null;
+    private realtimeWebGPUManager: WebGPUManager | null = null;
+
+    private relatedActions: Action[] = [];
+    private relatedActiveAction: Action | null = null;
 
     public isInitialized(): boolean {
         return this.pixelWebGPUManager != null && this.uiWebGPUManager != null;
@@ -92,6 +98,13 @@ export class Chunk {
         const canvas = document.createElement('canvas');
         canvas.width = CHUNK_LENGTH * CANVAS_PIXEL_RATIO;
         canvas.height = CHUNK_LENGTH * CANVAS_PIXEL_RATIO;
+        return canvas;
+    }
+
+    createRealtimeChunkCanvas(): HTMLCanvasElement {
+        const canvas = document.createElement('canvas');
+        canvas.width = CHUNK_LENGTH;
+        canvas.height = CHUNK_LENGTH;
         return canvas;
     }
 
@@ -128,6 +141,22 @@ export class Chunk {
             .catch((error) => {
                 console.error(
                     'Failed to initialize chunk UI WebGPU manager',
+                    this.key(),
+                    error,
+                );
+            });
+        this.realtimeCanvas = this.createRealtimeChunkCanvas();
+        createWebGPUManager(this.realtimeCanvas)
+            .then((manager) => {
+                this.realtimeWebGPUManager = manager;
+                console.debug(
+                    'Chunk Realtime WebGPU manager initialized successfully',
+                    this.key(),
+                );
+            })
+            .catch((error) => {
+                console.error(
+                    'Failed to initialize chunk Realtime WebGPU manager',
                     this.key(),
                     error,
                 );
@@ -235,7 +264,49 @@ export class Chunk {
         this.plotRender();
     }
 
+    //////////////// Action management methods ////////////////
+
+    updateRelatedActiveAction(action: Action | null): void {
+        this.relatedActiveAction = action;
+        this.renderRealtimePixels();
+    }
+
+    completeActiveAction(action: Action): void {
+        this.relatedActiveAction = null;
+        this.relatedActions = this.relatedActions.concat(action);
+        this.renderRealtimePixels();
+    }
+
+    addRelatedAction(action: Action): void {
+        this.relatedActions = this.relatedActions.concat(action);
+        this.renderRealtimePixels();
+    }
+
+    renderRealtimePixels(): void {
+        if (!this.realtimeWebGPUManager) {
+            return;
+        }
+
+        const actions = this.relatedActiveAction
+            ? this.relatedActions.concat(this.relatedActiveAction)
+            : this.relatedActions;
+
+        if (actions.length === 0) {
+            this.realtimeWebGPUManager.clear();
+            return;
+        }
+
+        const pixels = derivePixelsFromActions(actions);
+
+        this.realtimeWebGPUManager.redrawPixels(pixels, {
+            xCamera: 0,
+            yCamera: 0,
+        });
+    }
+
     public destroy(): void {
         this.pixelWebGPUManager?.destroy();
+        this.uiWebGPUManager?.destroy();
+        this.realtimeWebGPUManager?.destroy();
     }
 }

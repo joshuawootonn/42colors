@@ -47,6 +47,7 @@ export function draw(context: InitializedStore) {
         window.innerHeight * zoomMultiplier * BACKGROUND_SIZE,
     );
 
+    // Render chunk pixel canvases
     Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
         context.canvas.rootCanvasContext.imageSmoothingEnabled = false;
         context.canvas.rootCanvasContext.drawImage(
@@ -58,20 +59,18 @@ export function draw(context: InitializedStore) {
         );
     });
 
-    const pixelSize = getPixelSize(zoomMultiplier);
-    const canvasWidthPlusBleed =
-        pixelSize * getSizeInPixelsPlusBleed(window.innerWidth, pixelSize);
-    const canvasHeightPlusBleed =
-        pixelSize * getSizeInPixelsPlusBleed(window.innerHeight, pixelSize);
-
+    // Render chunk realtime canvases (for active actions)
     renderRealtime(context);
-    context.canvas.rootCanvasContext.drawImage(
-        context.canvas.realtimeCanvas,
-        x,
-        y,
-        canvasWidthPlusBleed,
-        canvasHeightPlusBleed,
-    );
+    Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
+        context.canvas.rootCanvasContext.imageSmoothingEnabled = false;
+        context.canvas.rootCanvasContext.drawImage(
+            chunk.realtimeCanvas,
+            canvasToClient(chunk.x, context.camera.zoom),
+            canvasToClient(chunk.y, context.camera.zoom),
+            CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
+            CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
+        );
+    });
 
     renderTelegraph(context);
     context.canvas.rootCanvasContext.drawImage(

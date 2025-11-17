@@ -324,7 +324,7 @@ export function nextBrushAction(
         ...activeBrushAction,
         anchorPoints: activeBrushAction.anchorPoints.concat(newAnchorPoints),
         points: activeBrushAction.points.concat(newBrushPoints),
-        chunkKeys: getUniqueChunksFromPoints(newBrushPoints),
+        chunkKeys: getUniqueChunksFromPoints([...activeBrushAction.points, ...newBrushPoints]),
     };
 }
 

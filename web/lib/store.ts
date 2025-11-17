@@ -29,7 +29,6 @@ import {
 } from './canvas/chunk';
 import { draw } from './canvas/draw';
 import { resizeFullsizeCanvas } from './canvas/fullsize';
-import { resizeRealtimeCanvas } from './canvas/realtime';
 import { showCrosshair } from './canvas/ui';
 import {
     CHUNK_LENGTH,
@@ -138,13 +137,11 @@ export type InitializedStore = {
         rootCanvasContext: CanvasRenderingContext2D;
         backgroundCanvas: HTMLCanvasElement;
         backgroundCanvasContext: CanvasRenderingContext2D;
-        realtimeCanvas: HTMLCanvasElement;
         telegraphCanvas: HTMLCanvasElement;
         uiCanvas: HTMLCanvasElement;
         chunkCanvases: ChunkCanvases;
         uiWebGPUManager: WebGPUManager;
         telegraphWebGPUManager: WebGPUManager;
-        realtimeWebGPUManager: WebGPUManager;
     };
     actions: Action[];
     activeAction: Action | null;
@@ -188,6 +185,13 @@ const initialialStoreContext: Store = {
     interaction: undefined,
 } as Store;
 
+function getChunkKeysFromAction(action: Action): string[] {
+    if ('chunkKeys' in action && Array.isArray(action.chunkKeys)) {
+        return action.chunkKeys;
+    }
+    return [];
+}
+
 export const store = createStore({
     context: initialialStoreContext,
     on: {
@@ -205,12 +209,10 @@ export const store = createStore({
                 rootCanvasContext: CanvasRenderingContext2D;
                 backgroundCanvas: HTMLCanvasElement;
                 backgroundCanvasContext: CanvasRenderingContext2D;
-                realtimeCanvas: HTMLCanvasElement;
                 telegraphCanvas: HTMLCanvasElement;
                 uiCanvas: HTMLCanvasElement;
                 uiWebGPUManager: WebGPUManager;
                 telegraphWebGPUManager: WebGPUManager;
-                realtimeWebGPUManager: WebGPUManager;
             },
             enqueue,
         ) => {
@@ -258,13 +260,11 @@ export const store = createStore({
                     rootCanvasContext: event.rootCanvasContext,
                     backgroundCanvas: event.backgroundCanvas,
                     backgroundCanvasContext: event.backgroundCanvasContext,
-                    realtimeCanvas: event.realtimeCanvas,
                     telegraphCanvas: event.telegraphCanvas,
                     uiCanvas: event.uiCanvas,
                     chunkCanvases: {},
                     uiWebGPUManager: event.uiWebGPUManager,
                     telegraphWebGPUManager: event.telegraphWebGPUManager,
-                    realtimeWebGPUManager: event.realtimeWebGPUManager,
                 },
                 queryClient: event.queryClient,
             };
@@ -357,7 +357,6 @@ export const store = createStore({
 
         resizeRealtimeAndTelegraphCanvases: (context) => {
             if (isInitialStore(context)) return;
-            resizeRealtimeCanvas(context.canvas.realtimeCanvas, context.camera);
             resizeFullsizeCanvas(context.canvas.telegraphCanvas);
             resizeFullsizeCanvas(context.canvas.uiCanvas);
         },
@@ -573,6 +572,17 @@ export const store = createStore({
 
         updateCurrentAction: (context, event: { action: Action }) => {
             if (isInitialStore(context)) return;
+
+            const chunkKeys = getChunkKeysFromAction(event.action);
+            
+            // Update each affected chunk's active action
+            for (const chunkKey of chunkKeys) {
+                const chunk = context.canvas.chunkCanvases[chunkKey];
+                if (chunk) {
+                    chunk.updateRelatedActiveAction(event.action);
+                }
+            }
+
             return {
                 ...context,
                 activeAction: event.action,
@@ -581,6 +591,17 @@ export const store = createStore({
 
         completeCurrentAction: (context, event: { action: Action }) => {
             if (isInitialStore(context)) return;
+
+            const chunkKeys = getChunkKeysFromAction(event.action);
+            
+            // Add action to each affected chunk and clear its active action
+            for (const chunkKey of chunkKeys) {
+                const chunk = context.canvas.chunkCanvases[chunkKey];
+                if (chunk) {
+                    chunk.completeActiveAction(event.action);
+                }
+            }
+
             return {
                 ...context,
                 activeAction: null,
@@ -590,6 +611,17 @@ export const store = createStore({
 
         addAction: (context, event: { action: Action }) => {
             if (isInitialStore(context)) return;
+
+            const chunkKeys = getChunkKeysFromAction(event.action);
+            
+            // Add action to each affected chunk
+            for (const chunkKey of chunkKeys) {
+                const chunk = context.canvas.chunkCanvases[chunkKey];
+                if (chunk) {
+                    chunk.addRelatedAction(event.action);
+                }
+            }
+
             return {
                 ...context,
                 actions: context.actions.concat(event.action),

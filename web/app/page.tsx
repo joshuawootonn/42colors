@@ -13,7 +13,6 @@ import {
     drawBackgroundCanvas,
 } from '@/lib/canvas/background';
 import { createFullsizeCanvas } from '@/lib/canvas/fullsize';
-import { createRealtimeCanvas } from '@/lib/canvas/realtime';
 import { store } from '@/lib/store';
 import {
     DEFAULT_TOOL_SETTINGS,
@@ -73,7 +72,6 @@ export default function Page() {
             backgroundCanvasContext.imageSmoothingEnabled = false;
             drawBackgroundCanvas(backgroundCanvas, backgroundCanvasContext);
 
-            const realtimeCanvas = createRealtimeCanvas({ x, y, zoom });
             const telegraphCanvas = createFullsizeCanvas();
             const uiCanvas = createFullsizeCanvas();
 
@@ -87,18 +85,15 @@ export default function Page() {
             Promise.all([
                 createWebGPUManager(uiCanvas),
                 createWebGPUManager(telegraphCanvas),
-                createWebGPUManager(realtimeCanvas),
             ])
                 .then(
                     ([
                         uiWebGPUManager,
                         telegraphWebGPUManager,
-                        realtimeWebGPUManager,
                     ]) => {
                         if (
                             uiWebGPUManager &&
-                            telegraphWebGPUManager &&
-                            realtimeWebGPUManager
+                            telegraphWebGPUManager
                         ) {
                             console.debug('initializing store');
 
@@ -115,12 +110,10 @@ export default function Page() {
                                 rootCanvasContext,
                                 backgroundCanvas,
                                 backgroundCanvasContext,
-                                realtimeCanvas,
                                 telegraphCanvas,
                                 uiCanvas,
                                 uiWebGPUManager,
                                 telegraphWebGPUManager,
-                                realtimeWebGPUManager,
                             });
                         } else {
                             console.error(
