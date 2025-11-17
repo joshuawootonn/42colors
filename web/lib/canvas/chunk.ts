@@ -301,8 +301,10 @@ export class Chunk {
         // Filter pixels that belong to this chunk and convert to chunk-local coordinates
         const chunkPixels = allPixels
             .filter((pixel) => {
-                const pixelChunkX = Math.floor(pixel.x / CHUNK_LENGTH) * CHUNK_LENGTH;
-                const pixelChunkY = Math.floor(pixel.y / CHUNK_LENGTH) * CHUNK_LENGTH;
+                const pixelChunkX =
+                    Math.floor(pixel.x / CHUNK_LENGTH) * CHUNK_LENGTH;
+                const pixelChunkY =
+                    Math.floor(pixel.y / CHUNK_LENGTH) * CHUNK_LENGTH;
                 return pixelChunkX === this.x && pixelChunkY === this.y;
             })
             .map((pixel) => ({

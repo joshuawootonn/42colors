@@ -574,7 +574,7 @@ export const store = createStore({
             if (isInitialStore(context)) return;
 
             const chunkKeys = getChunkKeysFromAction(event.action);
-            
+
             // Update each affected chunk's active action
             for (const chunkKey of chunkKeys) {
                 const chunk = context.canvas.chunkCanvases[chunkKey];
@@ -593,7 +593,7 @@ export const store = createStore({
             if (isInitialStore(context)) return;
 
             const chunkKeys = getChunkKeysFromAction(event.action);
-            
+
             // Add action to each affected chunk and clear its active action
             for (const chunkKey of chunkKeys) {
                 const chunk = context.canvas.chunkCanvases[chunkKey];
@@ -613,7 +613,7 @@ export const store = createStore({
             if (isInitialStore(context)) return;
 
             const chunkKeys = getChunkKeysFromAction(event.action);
-            
+
             // Add action to each affected chunk
             for (const chunkKey of chunkKeys) {
                 const chunk = context.canvas.chunkCanvases[chunkKey];

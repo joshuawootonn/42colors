@@ -86,42 +86,31 @@ export default function Page() {
                 createWebGPUManager(uiCanvas),
                 createWebGPUManager(telegraphCanvas),
             ])
-                .then(
-                    ([
-                        uiWebGPUManager,
-                        telegraphWebGPUManager,
-                    ]) => {
-                        if (
-                            uiWebGPUManager &&
-                            telegraphWebGPUManager
-                        ) {
-                            console.debug('initializing store');
+                .then(([uiWebGPUManager, telegraphWebGPUManager]) => {
+                    if (uiWebGPUManager && telegraphWebGPUManager) {
+                        console.debug('initializing store');
 
-                            store.trigger.initializeStore({
-                                body,
-                                canvas: element,
-                                // todo(josh): make a config module that checks env vars
-                                apiOrigin,
-                                apiWebsocketOrigin,
-                                cameraOptions: { x, y, zoom },
-                                queryClient,
-                                toolSettings:
-                                    toolSettings ?? DEFAULT_TOOL_SETTINGS,
-                                rootCanvasContext,
-                                backgroundCanvas,
-                                backgroundCanvasContext,
-                                telegraphCanvas,
-                                uiCanvas,
-                                uiWebGPUManager,
-                                telegraphWebGPUManager,
-                            });
-                        } else {
-                            console.error(
-                                'Failed to initialize WebGPU managers',
-                            );
-                        }
-                    },
-                )
+                        store.trigger.initializeStore({
+                            body,
+                            canvas: element,
+                            // todo(josh): make a config module that checks env vars
+                            apiOrigin,
+                            apiWebsocketOrigin,
+                            cameraOptions: { x, y, zoom },
+                            queryClient,
+                            toolSettings: toolSettings ?? DEFAULT_TOOL_SETTINGS,
+                            rootCanvasContext,
+                            backgroundCanvas,
+                            backgroundCanvasContext,
+                            telegraphCanvas,
+                            uiCanvas,
+                            uiWebGPUManager,
+                            telegraphWebGPUManager,
+                        });
+                    } else {
+                        console.error('Failed to initialize WebGPU managers');
+                    }
+                })
                 .catch((error) => {
                     console.error('WebGPU initialization failed:', error);
                     setIsWebGPUAvailable(false);
