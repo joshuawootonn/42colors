@@ -3,7 +3,6 @@ import { z } from 'zod';
 
 import { toasts } from '@/components/ui/toast';
 
-import { getUniqueChunksFromPixels } from './canvas/chunk';
 import { startRejectedPlotsAnimation } from './canvas/ui';
 import { ErrorCode } from './error-codes';
 import { Pixel, pixelSchema } from './geometry/coord';
