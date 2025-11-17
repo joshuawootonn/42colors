@@ -21,7 +21,12 @@ import {
     resizeBackgroundCanvas,
 } from './canvas/background';
 import { getCameraCenterPoint } from './canvas/canvas';
-import { ChunkCanvases, Chunk, getChunkKey } from './canvas/chunk';
+import {
+    Chunk,
+    ChunkCanvases,
+    getChunkKey,
+    getUniqueChunksFromPixels,
+} from './canvas/chunk';
 import { draw } from './canvas/draw';
 import { resizeFullsizeCanvas } from './canvas/fullsize';
 import { resizeRealtimeCanvas } from './canvas/realtime';
@@ -409,18 +414,19 @@ export const store = createStore({
 
         //////////////// Collaboration events /////////////////
 
-        undo: (context, _, _enqueue) => {
+        undo: (context, _, enqueue) => {
             if (isInitialStore(context)) return;
 
             const actionToUndo = getActionToUndo(context.actions);
 
-            const nextActions = context.actions.concat({ type: 'undo' });
+            const nextAction = { type: 'undo' as const };
+            const nextActions = context.actions.concat(nextAction);
 
             if (actionToUndo == null) {
-                return {
-                    ...context,
-                    actions: nextActions,
-                };
+                enqueue.effect(() => {
+                    store.trigger.addAction({ action: nextAction });
+                });
+                return context;
             }
 
             let pixels: Pixel[];
@@ -471,24 +477,25 @@ export const store = createStore({
 
             newPixels(context, next);
 
-            return {
-                ...context,
-                actions: nextActions,
-            };
+            enqueue.effect(() => {
+                store.trigger.addAction({ action: nextAction });
+            });
+            return context;
         },
 
-        redo: (context, _, _enqueue) => {
+        redo: (context, _, enqueue) => {
             if (isInitialStore(context)) return;
 
-            const nextActions = context.actions.concat({ type: 'redo' });
+            const nextAction = { type: 'redo' as const };
+            const nextActions = context.actions.concat(nextAction);
 
             const actionToRedo = getActionToRedo(context.actions);
 
             if (actionToRedo == null) {
-                return {
-                    ...context,
-                    actions: nextActions,
-                };
+                enqueue.effect(() => {
+                    store.trigger.addAction({ action: nextAction });
+                });
+                return context;
             }
 
             let pixels: Pixel[];
@@ -539,10 +546,10 @@ export const store = createStore({
 
             newPixels(context, next);
 
-            return {
-                ...context,
-                actions: nextActions,
-            };
+            enqueue.effect(() => {
+                store.trigger.addAction({ action: nextAction });
+            });
+            return context;
         },
 
         //////////////// Chunk events /////////////////
@@ -564,20 +571,47 @@ export const store = createStore({
             return context;
         },
 
-        //////////////// Realtime events /////////////////
-
-        newRealtimePixels: (context, event: { pixels: Pixel[] }, _enqueue) => {
+        updateCurrentAction: (context, event: { action: Action }) => {
             if (isInitialStore(context)) return;
-
-            // clearChunkPixels(context.canvas.chunkCanvases, event.pixels);
-
             return {
                 ...context,
-                actions: context.actions.concat({
-                    type: 'realtime-active',
-                    pixels: event.pixels,
-                }),
+                activeAction: event.action,
             };
+        },
+
+        completeCurrentAction: (context, event: { action: Action }) => {
+            if (isInitialStore(context)) return;
+            return {
+                ...context,
+                activeAction: null,
+                actions: context.actions.concat(event.action),
+            };
+        },
+
+        addAction: (context, event: { action: Action }) => {
+            if (isInitialStore(context)) return;
+            return {
+                ...context,
+                actions: context.actions.concat(event.action),
+            };
+        },
+
+        //////////////// Realtime events /////////////////
+
+        newRealtimePixels: (context, event: { pixels: Pixel[] }, enqueue) => {
+            if (isInitialStore(context)) return;
+
+            enqueue.effect(() => {
+                store.trigger.addAction({
+                    action: {
+                        type: 'realtime-active',
+                        pixels: event.pixels,
+                        chunkKeys: getUniqueChunksFromPixels(event.pixels),
+                    },
+                });
+            });
+
+            return context;
         },
 
         newPixels: (context, event: { pixels: Pixel[]; action_id: string }) => {

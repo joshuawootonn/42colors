@@ -181,7 +181,7 @@ export function completeLineAction(activeLineAction: LineActive): LineComplete {
 function onPointerDown(
     e: PointerEvent,
     context: InitializedStore,
-    _enqueue: EnqueueObject<{ type: string }>,
+    enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     const startPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
@@ -202,16 +202,16 @@ function onPointerDown(
         context.toolSettings.line.size,
     );
 
-    return {
-        ...context,
-        activeAction: nextActiveAction,
-    };
+    enqueue.effect(() => {
+        store.trigger.updateCurrentAction({ action: nextActiveAction });
+    });
+    return context;
 }
 
 function onPointerMove(
     e: PointerEvent,
     context: InitializedStore,
-    _enqueue: EnqueueObject<{ type: string }>,
+    enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     if (context.activeAction?.type !== ACTION_TYPES.LINE_ACTIVE) {
         return context;
@@ -221,16 +221,16 @@ function onPointerMove(
 
     const nextActiveAction = nextLineAction(context.activeAction, endPoint);
 
-    return {
-        ...context,
-        activeAction: nextActiveAction,
-    };
+    enqueue.effect(() => {
+        store.trigger.updateCurrentAction({ action: nextActiveAction });
+    });
+    return context;
 }
 
 function onWheel(
     e: WheelEvent,
     context: InitializedStore,
-    _enqueue: EnqueueObject<{ type: string }>,
+    enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     if (context.activeAction?.type !== ACTION_TYPES.LINE_ACTIVE) {
         return context;
@@ -240,10 +240,10 @@ function onWheel(
 
     const nextActiveAction = nextLineAction(context.activeAction, endPoint);
 
-    return {
-        ...context,
-        activeAction: nextActiveAction,
-    };
+    enqueue.effect(() => {
+        store.trigger.updateCurrentAction({ action: nextActiveAction });
+    });
+    return context;
 }
 
 function onPointerOut(
@@ -276,17 +276,14 @@ function onPointerOut(
     const lineComplete = completeLineAction(context.activeAction);
 
     enqueue.effect(() => {
+        store.trigger.completeCurrentAction({ action: lineComplete });
         store.trigger.newPixels({
             pixels: pointsToPixels(brushPoints, color_ref),
             action_id,
         });
     });
 
-    return {
-        ...context,
-        activeAction: null,
-        actions: context.actions.concat(lineComplete),
-    };
+    return context;
 }
 
 function onPointerUp(
@@ -316,20 +313,16 @@ function onPointerUp(
         1,
     );
 
-    const lineComplete = completeLineAction(context.activeAction);
-
+    const completedAction = completeLineAction(context.activeAction);
     enqueue.effect(() => {
+        store.trigger.completeCurrentAction({ action: completedAction });
         store.trigger.newPixels({
             pixels: pointsToPixels(brushPoints, color_ref),
             action_id,
         });
     });
 
-    return {
-        ...context,
-        activeAction: null,
-        actions: context.actions.concat(lineComplete),
-    };
+    return context;
 }
 
 export const LineTool = {

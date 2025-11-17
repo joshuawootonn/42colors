@@ -1,4 +1,5 @@
 import { getUniqueChunksFromPoints } from '@/lib/canvas/chunk';
+
 import { ACTION_TYPES } from '../../action-types';
 import { Camera, getZoomMultiplier } from '../../camera';
 import { getPixelSize } from '../../canvas/canvas';
@@ -330,7 +331,7 @@ export function nextBrushAction(
 function onPointerDown(
     e: PointerEvent,
     context: InitializedStore,
-    _enqueue: EnqueueObject<{ type: string }>,
+    enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
@@ -361,16 +362,16 @@ function onPointerDown(
         color_ref,
     );
 
-    return {
-        ...context,
-        activeAction: nextActiveAction,
-    };
+    enqueue.effect(() => {
+        store.trigger.updateCurrentAction({ action: nextActiveAction });
+    });
+    return context;
 }
 
 function onPointerMove(
     e: PointerEvent,
     context: InitializedStore,
-    _enqueue: EnqueueObject<{ type: string }>,
+    enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     const { x, y } = getAbsolutePoint(e.clientX, e.clientY, context);
 
@@ -405,16 +406,16 @@ function onPointerMove(
         newBrushPoints,
     );
 
-    return {
-        ...context,
-        activeAction: nextActiveAction,
-    };
+    enqueue.effect(() => {
+        store.trigger.updateCurrentAction({ action: nextActiveAction });
+    });
+    return context;
 }
 
 function onWheel(
     e: WheelEvent,
     context: InitializedStore,
-    _enqueue: EnqueueObject<{ type: string }>,
+    enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
     const { x, y } = getAbsolutePoint(e.clientX, e.clientY, context);
 
@@ -449,10 +450,10 @@ function onWheel(
         newBrushPoints,
     );
 
-    return {
-        ...context,
-        activeAction: nextActiveAction,
-    };
+    enqueue.effect(() => {
+        store.trigger.updateCurrentAction({ action: nextActiveAction });
+    });
+    return context;
 }
 
 function onPointerOut(
@@ -466,17 +467,16 @@ function onPointerOut(
     const color_ref = context.activeAction.color_ref;
     const points = context.activeAction.points;
     const action_id = context.activeAction.action_id;
+    const completedAction = context.activeAction;
     enqueue.effect(() => {
+        store.trigger.completeCurrentAction({ action: completedAction });
         store.trigger.newPixels({
             pixels: pointsToPixels(points, color_ref),
             action_id,
         });
     });
-    return {
-        ...context,
-        activeAction: null,
-        actions: context.actions.concat(context.activeAction),
-    };
+
+    return context;
 }
 
 function onPointerUp(
@@ -490,17 +490,16 @@ function onPointerUp(
     const color_ref = context.activeAction.color_ref;
     const points = context.activeAction.points;
     const action_id = context.activeAction.action_id;
+
+    const completedAction = context.activeAction;
     enqueue.effect(() => {
+        store.trigger.completeCurrentAction({ action: completedAction });
         store.trigger.newPixels({
             pixels: pointsToPixels(points, color_ref),
             action_id: action_id,
         });
     });
-    return {
-        ...context,
-        activeAction: null,
-        actions: context.actions.concat(context.activeAction),
-    };
+    return context;
 }
 
 export const BrushTool = {
