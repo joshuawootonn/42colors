@@ -1,8 +1,10 @@
+import { getUniqueChunksFromPoints } from '@/lib/canvas/chunk';
+
 import { ACTION_TYPES } from '../../action-types';
 import { getZoomMultiplier } from '../../camera';
 import { getPixelSize } from '../../canvas/canvas';
 import { bresenhamLine } from '../../geometry/bresenham-line';
-import { AbsolutePoint } from '../../geometry/coord';
+import { AbsolutePoint, absolutePointSchema } from '../../geometry/coord';
 import { getCanvasPolygon } from '../../geometry/polygon';
 import { Vector } from '../../geometry/vector';
 import { COLOR_TABLE, ColorRef } from '../../palette';
@@ -27,6 +29,7 @@ export type LineActive = {
     color_ref: ColorRef;
     vector: Vector;
     size: number;
+    chunkKeys: string[];
 };
 
 export type LineComplete = {
@@ -35,6 +38,7 @@ export type LineComplete = {
     color_ref: ColorRef;
     vector: Vector;
     size: number;
+    chunkKeys: string[];
 };
 
 function redrawTelegraph(context: InitializedStore) {
@@ -137,6 +141,7 @@ export function startLineAction(
         color_ref,
         vector: new Vector(startPoint.x, startPoint.y, 0, 0),
         size,
+        chunkKeys: getUniqueChunksFromPoints([startPoint]),
     };
 }
 
@@ -152,6 +157,13 @@ export function nextLineAction(
             endPoint.x - activeLineAction.vector.x,
             endPoint.y - activeLineAction.vector.y,
         ),
+        chunkKeys: getUniqueChunksFromPoints([
+            absolutePointSchema.parse({
+                x: activeLineAction.vector.x,
+                y: activeLineAction.vector.y,
+            }),
+            endPoint,
+        ]),
     };
 }
 
@@ -162,6 +174,7 @@ export function completeLineAction(activeLineAction: LineActive): LineComplete {
         color_ref: activeLineAction.color_ref,
         vector: activeLineAction.vector,
         size: activeLineAction.size,
+        chunkKeys: activeLineAction.chunkKeys,
     };
 }
 

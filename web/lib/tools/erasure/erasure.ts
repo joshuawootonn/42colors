@@ -1,3 +1,4 @@
+import { getUniqueChunksFromPoints } from '@/lib/canvas/chunk';
 import { ACTION_TYPES } from '../../action-types';
 import { getZoomMultiplier } from '../../camera';
 import { getPixelSize } from '../../canvas/canvas';
@@ -77,6 +78,7 @@ export type ErasureActive = {
     action_id: string;
     points: AbsolutePoint[];
     anchorPoints: AbsolutePoint[];
+    chunkKeys: string[];
 };
 
 export function startErasureAction(
@@ -88,6 +90,7 @@ export function startErasureAction(
         action_id: uuid(),
         points: erasurePoints,
         anchorPoints: [anchorPoint],
+        chunkKeys: getUniqueChunksFromPoints(erasurePoints),
     };
 }
 
@@ -100,6 +103,7 @@ export function nextErasureAction(
         ...activeBrushAction,
         anchorPoints: activeBrushAction.anchorPoints.concat(newAnchorPoints),
         points: activeBrushAction.points.concat(newErasurePoints),
+        chunkKeys: getUniqueChunksFromPoints(newAnchorPoints),
     };
 }
 

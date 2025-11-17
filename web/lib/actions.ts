@@ -1,10 +1,9 @@
 import { ACTION_TYPES } from './action-types';
-import { Camera } from './camera';
+import { getUniqueChunksFromPoints } from './canvas/chunk';
 import { bresenhamLine } from './geometry/bresenham-line';
 import { AbsolutePoint, Pixel } from './geometry/coord';
 import { absolutePointTupleToPixels } from './line';
 import { ColorRef, TRANSPARENT_REF } from './palette';
-import { Tool } from './tool-settings';
 import {
     BrushActive,
     getBrushPoints,
@@ -42,6 +41,7 @@ export type Action =
     | {
           type: 'realtime-active';
           pixels: Pixel[];
+          chunkKeys: string[];
       }
     | Undo
     | Redo;
@@ -57,6 +57,7 @@ function create_brush_fixture(
         points,
         //todo(josh): these shouldn't be faked like this, update the function
         anchorPoints: points,
+        chunkKeys: getUniqueChunksFromPoints(points),
     };
 }
 function create_erase_fixture(points: AbsolutePoint[]): ErasureActive {
@@ -66,6 +67,7 @@ function create_erase_fixture(points: AbsolutePoint[]): ErasureActive {
         points,
         //todo(josh): these shouldn't be faked like this, update the function
         anchorPoints: points,
+        chunkKeys: getUniqueChunksFromPoints(points),
     };
 }
 function undo(): Undo {

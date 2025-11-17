@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 import { CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from '../constants';
-import { Coord, Pixel, pixelSchema } from '../geometry/coord';
+import { AbsolutePoint, Coord, Pixel, pixelSchema } from '../geometry/coord';
+import { AbsolutePointTuple } from '../line';
 import { Plot } from '../tools/claimer/claimer.rest';
 import { BLACK } from '../webgpu/colors';
 import { WebGPUManager, createWebGPUManager } from '../webgpu/web-gpu-manager';
@@ -20,6 +21,28 @@ export function getChunkOrigin(x: number, y: number): Coord {
 export function getChunkKey(x: number, y: number): string {
     const chunkOrigin = getChunkOrigin(x, y);
     return `x: ${chunkOrigin.x} y: ${chunkOrigin.y}`;
+}
+
+// todo(josh): It would be cool to get all action types onto one pixel format,
+// so this kinda glue code isn't necessary
+export function getUniqueChunksFromPoints(points: AbsolutePoint[]): string[] {
+    const chunks: Set<string> = new Set();
+    for (let i = 0; i < points.length; i++) {
+        const pixel = points[i];
+        chunks.add(getChunkKey(pixel.x, pixel.y));
+    }
+    return Array.from(chunks);
+}
+
+export function getUniqueChunksFromAbsolutePointTuples(
+    points: AbsolutePointTuple[],
+): string[] {
+    const chunks: Set<string> = new Set();
+    for (let i = 0; i < points.length; i++) {
+        const point = points[i];
+        chunks.add(getChunkKey(point[0], point[1]));
+    }
+    return Array.from(chunks);
 }
 
 export function getUniqueChunksFromPixels(pixels: Pixel[]): string[] {

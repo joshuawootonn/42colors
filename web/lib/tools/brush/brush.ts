@@ -1,3 +1,4 @@
+import { getUniqueChunksFromPoints } from '@/lib/canvas/chunk';
 import { ACTION_TYPES } from '../../action-types';
 import { Camera, getZoomMultiplier } from '../../camera';
 import { getPixelSize } from '../../canvas/canvas';
@@ -285,6 +286,7 @@ export type BrushActive = {
     color_ref: ColorRef;
     points: AbsolutePoint[];
     anchorPoints: AbsolutePoint[];
+    chunkKeys: string[];
 };
 
 export function isDuplicatePoint(
@@ -308,6 +310,7 @@ export function startBrushAction(
         color_ref,
         points: brushPoints,
         anchorPoints: [anchorPoint],
+        chunkKeys: getUniqueChunksFromPoints(brushPoints),
     };
 }
 
@@ -320,6 +323,7 @@ export function nextBrushAction(
         ...activeBrushAction,
         anchorPoints: activeBrushAction.anchorPoints.concat(newAnchorPoints),
         points: activeBrushAction.points.concat(newBrushPoints),
+        chunkKeys: getUniqueChunksFromPoints(newBrushPoints),
     };
 }
 

@@ -8,7 +8,11 @@ import {
 import { ACTION_TYPES } from '../../action-types';
 import { getZoomMultiplier } from '../../camera';
 import { getPixelSize } from '../../canvas/canvas';
-import { getChunkKey, getChunkOrigin } from '../../canvas/chunk';
+import {
+    getChunkKey,
+    getChunkOrigin,
+    getUniqueChunksFromAbsolutePointTuples,
+} from '../../canvas/chunk';
 import { getCachedPixelsFromActions } from '../../canvas/realtime';
 import { X_MAX, X_MIN, Y_MAX, Y_MIN } from '../../constants';
 import { AbsolutePoint, Pixel, getLastPixelValue } from '../../geometry/coord';
@@ -119,6 +123,7 @@ export type BucketActive = {
     action_id: string;
     color_ref: ColorRef;
     points: AbsolutePointTuple[];
+    chunkKeys: string[];
 };
 
 export function startBucketAction(
@@ -154,6 +159,7 @@ export function startBucketAction(
         action_id: uuid(),
         color_ref,
         points,
+        chunkKeys: getUniqueChunksFromAbsolutePointTuples(points),
     };
 }
 
