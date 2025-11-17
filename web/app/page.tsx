@@ -13,7 +13,6 @@ import {
     drawBackgroundCanvas,
 } from '@/lib/canvas/background';
 import { createFullsizeCanvas } from '@/lib/canvas/fullsize';
-import { createRealtimeCanvas } from '@/lib/canvas/realtime';
 import { store } from '@/lib/store';
 import {
     DEFAULT_TOOL_SETTINGS,
@@ -73,7 +72,6 @@ export default function Page() {
             backgroundCanvasContext.imageSmoothingEnabled = false;
             drawBackgroundCanvas(backgroundCanvas, backgroundCanvasContext);
 
-            const realtimeCanvas = createRealtimeCanvas({ x, y, zoom });
             const telegraphCanvas = createFullsizeCanvas();
             const uiCanvas = createFullsizeCanvas();
 
@@ -84,55 +82,50 @@ export default function Page() {
                 process.env.NEXT_PUBLIC_API_WEBSOCKET_ORIGIN ??
                 'https://api.42colors.com';
 
-            Promise.all([
-                createWebGPUManager(uiCanvas),
-                createWebGPUManager(telegraphCanvas),
-                createWebGPUManager(realtimeCanvas),
-            ])
-                .then(
-                    ([
-                        uiWebGPUManager,
-                        telegraphWebGPUManager,
-                        realtimeWebGPUManager,
-                    ]) => {
-                        if (
-                            uiWebGPUManager &&
-                            telegraphWebGPUManager &&
-                            realtimeWebGPUManager
-                        ) {
-                            console.debug('initializing store');
+            navigator?.gpu?.requestAdapter().then((adapter) => {
+                adapter?.requestDevice().then((device) => {
+                    Promise.all([
+                        createWebGPUManager(uiCanvas, device),
+                        createWebGPUManager(telegraphCanvas, device),
+                    ])
+                        .then(([uiWebGPUManager, telegraphWebGPUManager]) => {
+                            if (uiWebGPUManager && telegraphWebGPUManager) {
+                                console.debug('initializing store');
 
-                            store.trigger.initializeStore({
-                                body,
-                                canvas: element,
-                                // todo(josh): make a config module that checks env vars
-                                apiOrigin,
-                                apiWebsocketOrigin,
-                                cameraOptions: { x, y, zoom },
-                                queryClient,
-                                toolSettings:
-                                    toolSettings ?? DEFAULT_TOOL_SETTINGS,
-                                rootCanvasContext,
-                                backgroundCanvas,
-                                backgroundCanvasContext,
-                                realtimeCanvas,
-                                telegraphCanvas,
-                                uiCanvas,
-                                uiWebGPUManager,
-                                telegraphWebGPUManager,
-                                realtimeWebGPUManager,
-                            });
-                        } else {
+                                store.trigger.initializeStore({
+                                    body,
+                                    canvas: element,
+                                    // todo(josh): make a config module that checks env vars
+                                    apiOrigin,
+                                    apiWebsocketOrigin,
+                                    cameraOptions: { x, y, zoom },
+                                    queryClient,
+                                    toolSettings:
+                                        toolSettings ?? DEFAULT_TOOL_SETTINGS,
+                                    rootCanvasContext,
+                                    backgroundCanvas,
+                                    backgroundCanvasContext,
+                                    telegraphCanvas,
+                                    uiCanvas,
+                                    uiWebGPUManager,
+                                    telegraphWebGPUManager,
+                                    device,
+                                });
+                            } else {
+                                console.error(
+                                    'Failed to initialize WebGPU managers',
+                                );
+                            }
+                        })
+                        .catch((error) => {
                             console.error(
-                                'Failed to initialize WebGPU managers',
+                                'WebGPU initialization failed:',
+                                error,
                             );
-                        }
-                    },
-                )
-                .catch((error) => {
-                    console.error('WebGPU initialization failed:', error);
-                    setIsWebGPUAvailable(false);
+                            setIsWebGPUAvailable(false);
+                        });
                 });
+            });
             const unsubscribePlotCacheChanges = queryClient
                 .getQueryCache()
                 .subscribe((event) => {

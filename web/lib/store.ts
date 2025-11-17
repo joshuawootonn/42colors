@@ -29,7 +29,6 @@ import {
 } from './canvas/chunk';
 import { draw } from './canvas/draw';
 import { resizeFullsizeCanvas } from './canvas/fullsize';
-import { resizeRealtimeCanvas } from './canvas/realtime';
 import { showCrosshair } from './canvas/ui';
 import {
     CHUNK_LENGTH,
@@ -103,6 +102,7 @@ import { WebGPUManager } from './webgpu/web-gpu-manager';
 
 type AdminSettings = {
     plotBordersVisible: boolean;
+    chunkBordersVisible: boolean;
 };
 
 export type InitialStore = {
@@ -138,13 +138,12 @@ export type InitializedStore = {
         rootCanvasContext: CanvasRenderingContext2D;
         backgroundCanvas: HTMLCanvasElement;
         backgroundCanvasContext: CanvasRenderingContext2D;
-        realtimeCanvas: HTMLCanvasElement;
         telegraphCanvas: HTMLCanvasElement;
         uiCanvas: HTMLCanvasElement;
         chunkCanvases: ChunkCanvases;
         uiWebGPUManager: WebGPUManager;
         telegraphWebGPUManager: WebGPUManager;
-        realtimeWebGPUManager: WebGPUManager;
+        device: GPUDevice;
     };
     actions: Action[];
     activeAction: Action | null;
@@ -175,6 +174,7 @@ const initialCamera: Camera = {
 
 const defaultAdminSettings: AdminSettings = {
     plotBordersVisible: true,
+    chunkBordersVisible: true,
 };
 
 const initialialStoreContext: Store = {
@@ -187,6 +187,13 @@ const initialialStoreContext: Store = {
     adminSettings: defaultAdminSettings,
     interaction: undefined,
 } as Store;
+
+function getChunkKeysFromAction(action: Action): string[] {
+    if ('chunkKeys' in action && Array.isArray(action.chunkKeys)) {
+        return action.chunkKeys;
+    }
+    return [];
+}
 
 export const store = createStore({
     context: initialialStoreContext,
@@ -205,12 +212,11 @@ export const store = createStore({
                 rootCanvasContext: CanvasRenderingContext2D;
                 backgroundCanvas: HTMLCanvasElement;
                 backgroundCanvasContext: CanvasRenderingContext2D;
-                realtimeCanvas: HTMLCanvasElement;
                 telegraphCanvas: HTMLCanvasElement;
                 uiCanvas: HTMLCanvasElement;
                 uiWebGPUManager: WebGPUManager;
                 telegraphWebGPUManager: WebGPUManager;
-                realtimeWebGPUManager: WebGPUManager;
+                device: GPUDevice;
             },
             enqueue,
         ) => {
@@ -258,13 +264,12 @@ export const store = createStore({
                     rootCanvasContext: event.rootCanvasContext,
                     backgroundCanvas: event.backgroundCanvas,
                     backgroundCanvasContext: event.backgroundCanvasContext,
-                    realtimeCanvas: event.realtimeCanvas,
                     telegraphCanvas: event.telegraphCanvas,
                     uiCanvas: event.uiCanvas,
                     chunkCanvases: {},
                     uiWebGPUManager: event.uiWebGPUManager,
                     telegraphWebGPUManager: event.telegraphWebGPUManager,
-                    realtimeWebGPUManager: event.realtimeWebGPUManager,
+                    device: event.device,
                 },
                 queryClient: event.queryClient,
             };
@@ -357,7 +362,6 @@ export const store = createStore({
 
         resizeRealtimeAndTelegraphCanvases: (context) => {
             if (isInitialStore(context)) return;
-            resizeRealtimeCanvas(context.canvas.realtimeCanvas, context.camera);
             resizeFullsizeCanvas(context.canvas.telegraphCanvas);
             resizeFullsizeCanvas(context.canvas.uiCanvas);
         },
@@ -573,6 +577,17 @@ export const store = createStore({
 
         updateCurrentAction: (context, event: { action: Action }) => {
             if (isInitialStore(context)) return;
+
+            const chunkKeys = getChunkKeysFromAction(event.action);
+
+            // Update each affected chunk's active action
+            for (const chunkKey of chunkKeys) {
+                const chunk = context.canvas.chunkCanvases[chunkKey];
+                if (chunk) {
+                    chunk.updateRelatedActiveAction(event.action);
+                }
+            }
+
             return {
                 ...context,
                 activeAction: event.action,
@@ -581,6 +596,17 @@ export const store = createStore({
 
         completeCurrentAction: (context, event: { action: Action }) => {
             if (isInitialStore(context)) return;
+
+            const chunkKeys = getChunkKeysFromAction(event.action);
+
+            // Add action to each affected chunk and clear its active action
+            for (const chunkKey of chunkKeys) {
+                const chunk = context.canvas.chunkCanvases[chunkKey];
+                if (chunk) {
+                    chunk.completeActiveAction(event.action);
+                }
+            }
+
             return {
                 ...context,
                 activeAction: null,
@@ -590,6 +616,17 @@ export const store = createStore({
 
         addAction: (context, event: { action: Action }) => {
             if (isInitialStore(context)) return;
+
+            const chunkKeys = getChunkKeysFromAction(event.action);
+
+            // Add action to each affected chunk
+            for (const chunkKey of chunkKeys) {
+                const chunk = context.canvas.chunkCanvases[chunkKey];
+                if (chunk) {
+                    chunk.addRelatedAction(event.action);
+                }
+            }
+
             return {
                 ...context,
                 actions: context.actions.concat(event.action),
@@ -759,6 +796,7 @@ export const store = createStore({
                     context.canvas.chunkCanvases[chunkKey] = new Chunk(
                         chunkX,
                         chunkY,
+                        context.canvas.device,
                     );
 
                     enqueue.effect(async () => {
@@ -977,6 +1015,20 @@ export const store = createStore({
                     ...context.adminSettings,
                     plotBordersVisible:
                         !context.adminSettings.plotBordersVisible,
+                },
+            };
+        },
+
+        toggleChunkBorderVisibility: (context) => {
+            if (isInitialStore(context)) return;
+            if (!isAdminUser(context.user)) return context;
+
+            return {
+                ...context,
+                adminSettings: {
+                    ...context.adminSettings,
+                    chunkBordersVisible:
+                        !context.adminSettings.chunkBordersVisible,
                 },
             };
         },
@@ -1322,6 +1374,14 @@ export const store = createStore({
                 e.preventDefault();
                 enqueue.effect(() =>
                     store.trigger.togglePlotBorderVisibility(),
+                );
+                return context;
+            }
+
+            if (isAdminUser(context.user) && isHotkey('mod+shift+c', e)) {
+                e.preventDefault();
+                enqueue.effect(() =>
+                    store.trigger.toggleChunkBorderVisibility(),
                 );
                 return context;
             }

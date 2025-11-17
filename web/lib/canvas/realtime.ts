@@ -138,27 +138,3 @@ export function getCachedPixelsFromActions(context: InitializedStore): {
         dedupedPixels,
     };
 }
-
-export function renderRealtime(context: InitializedStore) {
-    if (isInitialStore(context)) return;
-
-    const { dedupedPixels, unsetPixels } = getCachedPixelsFromActions(context);
-
-    const uniqueChunkKeys = getUniqueChunksFromPixels(unsetPixels);
-    for (let i = 0; i < uniqueChunkKeys.length; i++) {
-        const chunk = context.canvas.chunkCanvases[uniqueChunkKeys[i]];
-        chunk.unsetPixels(unsetPixels);
-    }
-
-    const uniqueDedupedChunkKeys = getUniqueChunksFromPixels(dedupedPixels);
-
-    for (let i = 0; i < uniqueDedupedChunkKeys.length; i++) {
-        const chunk = context.canvas.chunkCanvases[uniqueDedupedChunkKeys[i]];
-        chunk.clearPixels(dedupedPixels);
-    }
-
-    context.canvas.realtimeWebGPUManager.redrawPixels(dedupedPixels, {
-        xCamera: context.camera.x,
-        yCamera: context.camera.y,
-    });
-}
