@@ -168,13 +168,22 @@ export function nextLineAction(
 }
 
 export function completeLineAction(activeLineAction: LineActive): LineComplete {
+    const linePoints = bresenhamLine(
+        activeLineAction.vector.x,
+        activeLineAction.vector.y,
+        activeLineAction.vector.x + activeLineAction.vector.magnitudeX,
+        activeLineAction.vector.y + activeLineAction.vector.magnitudeY,
+    );
+
+    const uniqueChunkKeys = getUniqueChunksFromPoints(linePoints);
+
     return {
         type: ACTION_TYPES.LINE_COMPLETE,
         action_id: activeLineAction.action_id,
         color_ref: activeLineAction.color_ref,
         vector: activeLineAction.vector,
         size: activeLineAction.size,
-        chunkKeys: activeLineAction.chunkKeys,
+        chunkKeys: uniqueChunkKeys,
     };
 }
 
