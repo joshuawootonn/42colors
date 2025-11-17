@@ -6,9 +6,7 @@ import {
 } from '../constants';
 import { InitializedStore } from '../store';
 import { canvasToClient } from '../utils/clientToCanvasConversion';
-import { getPixelSize, getSizeInPixelsPlusBleed } from './canvas';
 import { FULLSIZE_CANVAS_BLEED } from './fullsize';
-import { renderRealtime } from './realtime';
 import { renderTelegraph } from './telegraph';
 import { renderUI } from './ui';
 
