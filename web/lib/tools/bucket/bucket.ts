@@ -237,6 +237,7 @@ function onPointerDown(
 
     const action_id = nextActiveAction.action_id;
     enqueue.effect(() => {
+        store.trigger.completeCurrentAction({ action: nextActiveAction });
         store.trigger.newPixels({
             pixels: absolutePointTupleToPixels(
                 nextActiveAction.points,
@@ -246,11 +247,7 @@ function onPointerDown(
         });
     });
 
-    return {
-        ...context,
-        activeAction: null,
-        actions: context.actions.concat(nextActiveAction),
-    };
+    return context;
 }
 
 function onPointerMove(
