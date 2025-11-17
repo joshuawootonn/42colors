@@ -12,6 +12,7 @@ import {
     getActionToUndo,
     resolveActions,
 } from './actions';
+import { isAdminUser } from './admin';
 import authService from './auth';
 import { Camera } from './camera';
 import { centerCameraOnPoint } from './camera-utils';
@@ -105,12 +106,17 @@ import { isInitialStore } from './utils/is-initial-store';
 import { uuid } from './utils/uuid';
 import { WebGPUManager } from './webgpu/web-gpu-manager';
 
+type AdminSettings = {
+    plotBordersVisible: boolean;
+};
+
 export type InitialStore = {
     state: 'initial';
     camera: Camera;
     currentTool: Tool;
     currentColorRef: number;
     toolSettings: ToolSettings;
+    adminSettings: AdminSettings;
     id: undefined;
     interaction: undefined;
     queryClient: undefined;
@@ -121,6 +127,7 @@ export type InitialStore = {
 export type InitializedStore = {
     state: 'initialized';
     camera: Camera;
+    adminSettings: AdminSettings;
     server: {
         apiOrigin: string;
         websocketOriginURL: string;
@@ -171,6 +178,10 @@ const initialCamera: Camera = {
     zoom: process.env.NODE_ENV === 'development' ? 500 : 100,
 };
 
+const defaultAdminSettings: AdminSettings = {
+    plotBordersVisible: true,
+};
+
 const initialialStoreContext: Store = {
     id: undefined,
     state: 'initial',
@@ -178,6 +189,7 @@ const initialialStoreContext: Store = {
     currentTool: 'brush',
     currentColorRef: 1,
     toolSettings: DEFAULT_TOOL_SETTINGS,
+    adminSettings: defaultAdminSettings,
     interaction: undefined,
 } as Store;
 
@@ -229,6 +241,7 @@ export const store = createStore({
                     y: event.cameraOptions.y,
                     zoom: event.cameraOptions.zoom,
                 },
+                adminSettings: { ...context.adminSettings },
                 server: {
                     apiOrigin: event.apiOrigin,
                     websocketOriginURL: event.apiWebsocketOrigin,
@@ -1195,6 +1208,20 @@ export const store = createStore({
             };
         },
 
+        togglePlotBorderVisibility: (context) => {
+            if (isInitialStore(context)) return;
+            if (!isAdminUser(context.user)) return context;
+
+            return {
+                ...context,
+                adminSettings: {
+                    ...context.adminSettings,
+                    plotBordersVisible:
+                        !context.adminSettings.plotBordersVisible,
+                },
+            };
+        },
+
         clearCursor: (context) => {
             if (isInitialStore(context)) return;
             return {
@@ -1528,6 +1555,14 @@ export const store = createStore({
         onKeyDown: (context, { e }: { e: KeyboardEvent }, enqueue) => {
             if (isInitialStore(context)) return;
             if (e.defaultPrevented) return;
+
+            if (isAdminUser(context.user) && isHotkey('mod+shift+b', e)) {
+                e.preventDefault();
+                enqueue.effect(() =>
+                    store.trigger.togglePlotBorderVisibility(),
+                );
+                return context;
+            }
 
             // Undo/Redo shortcuts
             if (isHotkey('mod+shift+z', e)) {

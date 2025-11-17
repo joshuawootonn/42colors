@@ -9,14 +9,13 @@ import {
     PopoverContent,
     PopoverHeading,
 } from '@/components/ui/popover';
+import { isAdminUser } from '@/lib/admin';
 import { grantPixels } from '@/lib/admin.rest';
 import { store } from '@/lib/store';
 import userService, { type SearchedUser } from '@/lib/user';
 import { cn } from '@/lib/utils';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSelector } from '@xstate/store/react';
-
-const ADMIN_EMAIL = 'jose56wonton@gmail.com';
 
 export function AdminPopover({ children }: { children: ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -27,7 +26,7 @@ export function AdminPopover({ children }: { children: ReactNode }) {
     const currentUser = useSelector(store, (state) => state.context?.user);
 
     // Only show for admin user
-    const isAdmin = currentUser?.email === ADMIN_EMAIL;
+    const isAdmin = isAdminUser(currentUser);
 
     const {
         data: searchResults,

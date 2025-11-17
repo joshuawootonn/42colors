@@ -85,6 +85,7 @@ export function draw(context: InitializedStore) {
 
     Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
         if (
+            context.adminSettings.plotBordersVisible &&
             chunk.webgpuCanvas != null &&
             chunk.webgpuManager != null &&
             chunk.plots.length > 0
