@@ -296,9 +296,27 @@ export class Chunk {
             return;
         }
 
-        const pixels = derivePixelsFromActions(actions);
+        const allPixels = derivePixelsFromActions(actions);
 
-        this.realtimeWebGPUManager.redrawPixels(pixels, {
+        // Filter pixels that belong to this chunk and convert to chunk-local coordinates
+        const chunkPixels = allPixels
+            .filter((pixel) => {
+                const pixelChunkX = Math.floor(pixel.x / CHUNK_LENGTH) * CHUNK_LENGTH;
+                const pixelChunkY = Math.floor(pixel.y / CHUNK_LENGTH) * CHUNK_LENGTH;
+                return pixelChunkX === this.x && pixelChunkY === this.y;
+            })
+            .map((pixel) => ({
+                x: pixel.x - this.x,
+                y: pixel.y - this.y,
+                color_ref: pixel.color_ref,
+            }));
+
+        if (chunkPixels.length === 0) {
+            this.realtimeWebGPUManager.clear();
+            return;
+        }
+
+        this.realtimeWebGPUManager.redrawPixels(chunkPixels, {
             xCamera: 0,
             yCamera: 0,
         });

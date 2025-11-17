@@ -138,12 +138,3 @@ export function getCachedPixelsFromActions(context: InitializedStore): {
         dedupedPixels,
     };
 }
-
-export function renderRealtime(context: InitializedStore) {
-    if (isInitialStore(context)) return;
-
-    // Render realtime pixels for each chunk
-    Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
-        chunk.renderRealtimePixels();
-    });
-}

@@ -60,7 +60,6 @@ export function draw(context: InitializedStore) {
     });
 
     // Render chunk realtime canvases (for active actions)
-    renderRealtime(context);
     Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
         context.canvas.rootCanvasContext.imageSmoothingEnabled = false;
         context.canvas.rootCanvasContext.drawImage(
