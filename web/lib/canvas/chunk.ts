@@ -111,9 +111,10 @@ export class Chunk {
     constructor(
         public readonly x: number,
         public readonly y: number,
+        private readonly device: GPUDevice,
     ) {
         this.pixelCanvas = this.createChunkCanvas();
-        createWebGPUManager(this.pixelCanvas)
+        createWebGPUManager(this.pixelCanvas, this.device)
             .then((manager) => {
                 this.pixelWebGPUManager = manager;
                 console.debug(
@@ -129,7 +130,7 @@ export class Chunk {
                 );
             });
         this.uiCanvas = this.createUIChunkCanvas();
-        createWebGPUManager(this.uiCanvas)
+        createWebGPUManager(this.uiCanvas, this.device)
             .then((manager) => {
                 this.uiWebGPUManager = manager;
                 console.debug(
@@ -146,7 +147,7 @@ export class Chunk {
                 );
             });
         this.realtimeCanvas = this.createRealtimeChunkCanvas();
-        createWebGPUManager(this.realtimeCanvas)
+        createWebGPUManager(this.realtimeCanvas, this.device)
             .then((manager) => {
                 this.realtimeWebGPUManager = manager;
                 console.debug(

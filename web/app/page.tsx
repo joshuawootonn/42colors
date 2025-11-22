@@ -82,39 +82,50 @@ export default function Page() {
                 process.env.NEXT_PUBLIC_API_WEBSOCKET_ORIGIN ??
                 'https://api.42colors.com';
 
-            Promise.all([
-                createWebGPUManager(uiCanvas),
-                createWebGPUManager(telegraphCanvas),
-            ])
-                .then(([uiWebGPUManager, telegraphWebGPUManager]) => {
-                    if (uiWebGPUManager && telegraphWebGPUManager) {
-                        console.debug('initializing store');
+            navigator?.gpu?.requestAdapter().then((adapter) => {
+                adapter?.requestDevice().then((device) => {
+                    Promise.all([
+                        createWebGPUManager(uiCanvas, device),
+                        createWebGPUManager(telegraphCanvas, device),
+                    ])
+                        .then(([uiWebGPUManager, telegraphWebGPUManager]) => {
+                            if (uiWebGPUManager && telegraphWebGPUManager) {
+                                console.debug('initializing store');
 
-                        store.trigger.initializeStore({
-                            body,
-                            canvas: element,
-                            // todo(josh): make a config module that checks env vars
-                            apiOrigin,
-                            apiWebsocketOrigin,
-                            cameraOptions: { x, y, zoom },
-                            queryClient,
-                            toolSettings: toolSettings ?? DEFAULT_TOOL_SETTINGS,
-                            rootCanvasContext,
-                            backgroundCanvas,
-                            backgroundCanvasContext,
-                            telegraphCanvas,
-                            uiCanvas,
-                            uiWebGPUManager,
-                            telegraphWebGPUManager,
+                                store.trigger.initializeStore({
+                                    body,
+                                    canvas: element,
+                                    // todo(josh): make a config module that checks env vars
+                                    apiOrigin,
+                                    apiWebsocketOrigin,
+                                    cameraOptions: { x, y, zoom },
+                                    queryClient,
+                                    toolSettings:
+                                        toolSettings ?? DEFAULT_TOOL_SETTINGS,
+                                    rootCanvasContext,
+                                    backgroundCanvas,
+                                    backgroundCanvasContext,
+                                    telegraphCanvas,
+                                    uiCanvas,
+                                    uiWebGPUManager,
+                                    telegraphWebGPUManager,
+                                    device,
+                                });
+                            } else {
+                                console.error(
+                                    'Failed to initialize WebGPU managers',
+                                );
+                            }
+                        })
+                        .catch((error) => {
+                            console.error(
+                                'WebGPU initialization failed:',
+                                error,
+                            );
+                            setIsWebGPUAvailable(false);
                         });
-                    } else {
-                        console.error('Failed to initialize WebGPU managers');
-                    }
-                })
-                .catch((error) => {
-                    console.error('WebGPU initialization failed:', error);
-                    setIsWebGPUAvailable(false);
                 });
+            });
             const unsubscribePlotCacheChanges = queryClient
                 .getQueryCache()
                 .subscribe((event) => {

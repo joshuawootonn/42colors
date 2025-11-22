@@ -142,6 +142,7 @@ export type InitializedStore = {
         chunkCanvases: ChunkCanvases;
         uiWebGPUManager: WebGPUManager;
         telegraphWebGPUManager: WebGPUManager;
+        device: GPUDevice;
     };
     actions: Action[];
     activeAction: Action | null;
@@ -213,6 +214,7 @@ export const store = createStore({
                 uiCanvas: HTMLCanvasElement;
                 uiWebGPUManager: WebGPUManager;
                 telegraphWebGPUManager: WebGPUManager;
+                device: GPUDevice;
             },
             enqueue,
         ) => {
@@ -265,6 +267,7 @@ export const store = createStore({
                     chunkCanvases: {},
                     uiWebGPUManager: event.uiWebGPUManager,
                     telegraphWebGPUManager: event.telegraphWebGPUManager,
+                    device: event.device,
                 },
                 queryClient: event.queryClient,
             };
@@ -791,6 +794,7 @@ export const store = createStore({
                     context.canvas.chunkCanvases[chunkKey] = new Chunk(
                         chunkX,
                         chunkY,
+                        context.canvas.device,
                     );
 
                     enqueue.effect(async () => {
