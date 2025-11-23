@@ -6,9 +6,7 @@ import { Camera, getZoomMultiplier } from '../camera';
 import { Pixel } from '../geometry/coord';
 import { InitializedStore } from '../store';
 import { dedupeCoords } from '../utils/dedupe-coords';
-import { isInitialStore } from '../utils/is-initial-store';
 import { getPixelSize, getSizeInPixelsPlusBleed } from './canvas';
-import { getUniqueChunksFromPixels } from './chunk';
 
 export function createRealtimeCanvas(camera: Camera) {
     const canvas = document.createElement('canvas');
