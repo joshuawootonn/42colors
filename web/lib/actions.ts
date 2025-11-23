@@ -170,14 +170,7 @@ export function derivePixelsFromActions(actions: Action[]): Pixel[] {
         } else if (action.type === ACTION_TYPES.ERASURE_ACTIVE) {
             pixels.push(...pointsToPixels(action.points, TRANSPARENT_REF));
         } else if (action.type === ACTION_TYPES.LINE_COMPLETE) {
-            const linePoints = bresenhamLine(
-                action.vector.x,
-                action.vector.y,
-                action.vector.x + action.vector.magnitudeX,
-                action.vector.y + action.vector.magnitudeY,
-            );
-            const brushPoints = getBrushPoints(linePoints, action.size, 1);
-            pixels.push(...pointsToPixels(brushPoints, action.color_ref));
+            pixels.push(...pointsToPixels(action.points, action.color_ref));
         } else if (action.type === ACTION_TYPES.BUCKET_ACTIVE) {
             pixels.push(
                 ...absolutePointTupleToPixels(action.points, action.color_ref),
