@@ -198,7 +198,7 @@ export class Chunk {
     }
 
     // todo(josh): This is bad. We shouldn't have a method for unsetting pixels.
-    // We should instead model pixel rejection as an action taken by the store. 
+    // We should instead model pixel rejection as an action taken by the store.
     unsetSpecificPixels(_unsetPixels: Pixel[]): void {
         const unsetPixels = _unsetPixels.map((pixel) => {
             return {

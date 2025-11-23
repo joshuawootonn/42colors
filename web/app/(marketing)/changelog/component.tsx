@@ -29,6 +29,35 @@ export default function Changelog() {
             <hr className="w-full border-t-2 border-border" />
             <ul>
                 <li>
+                    <DateComponent date={new Date('11/23/2025')} />
+                    <ul>
+                        <li>
+                            I optimized the rendering of the realtime pixels you
+                            draw and the canvas UI (like the plot polygons) in
+                            two ways.
+                            <ul>
+                                <li>
+                                    First, I render the realtime pixels and
+                                    polygons on a per chunk basis. This means
+                                    that only the pixels that are in the chunk
+                                    you are drawing in are rendered.
+                                </li>
+                                <li>
+                                    Second, I&apos;m rendering these canvases on
+                                    demand now instead of every frame. This
+                                    isolates heavy computation to only when
+                                    it&apos;s needed rather than doing it every
+                                    frame.
+                                </li>
+                            </ul>
+                            This took over a week, and I&apos; relieved this
+                            work is behind me, but I&apos;m glad I did it and it
+                            will become increasingly important as people draw
+                            and the canvas grows.
+                        </li>
+                    </ul>
+                </li>
+                <li>
                     <DateComponent date={new Date('11/15/2025')} />
                     <ul>
                         <li>
