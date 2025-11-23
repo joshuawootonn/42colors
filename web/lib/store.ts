@@ -692,11 +692,6 @@ export const store = createStore({
         ) => {
             if (isInitialStore(context)) return;
 
-            const beforeAction = context.actions.find(
-                (action): action is EditableAction =>
-                    isEditableAction(action) &&
-                    action.action_id === event.action_id,
-            );
             const next_actions = updateActionBasedOnRejectedPixels(
                 context.actions,
                 event.rejected_pixels,
@@ -709,7 +704,6 @@ export const store = createStore({
                         isEditableAction(action) &&
                         action.action_id === event.action_id,
                 );
-                console.log('action', beforeAction, action);
                 if (action) {
                     store.trigger.updateActionById({ action });
                 }

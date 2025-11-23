@@ -239,7 +239,6 @@ export class Chunk {
     private plotRender(): void {
         this.uiWebGPUManager?.clear();
 
-        console.log('redrawing plots', this.plots);
         this.uiWebGPUManager?.redrawPolygons(
             this.plots.map((plot) => ({
                 polygon: plot.polygon,
