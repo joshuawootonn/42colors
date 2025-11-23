@@ -21,7 +21,7 @@ test *ARGS:
   bun run test {{ARGS}}
 
 test-watch *ARGS:
-  bun run test --watch {{ARGS}}
+  bun run test-watch {{ARGS}}
 
 test-ui *ARGS:
   bun run test --ui {{ARGS}}
@@ -42,6 +42,9 @@ format-check:
 type-check:
   bun run tsc --noEmit
 
+# CI
+ci: lint format type-check test
+
 # Utilities
 clean:
   rm -rf .next node_modules/.cache
@@ -50,4 +53,3 @@ clean-all:
   rm -rf .next node_modules node_modules/.cache bun.lockb
 
 reinstall: clean-all install
-
