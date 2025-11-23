@@ -7,10 +7,13 @@ import { createStore } from '@xstate/store';
 import { ACTION_TYPES } from './action-types';
 import {
     Action,
+    EditableAction,
     derivePixelsFromActions,
     getActionToRedo,
     getActionToUndo,
+    isEditableAction,
     resolveActions,
+    updateActionBasedOnRejectedPixels,
 } from './actions';
 import { isAdminUser } from './admin';
 import authService from './auth';
@@ -56,7 +59,6 @@ import { fetchPixels } from './fetch-pixels';
 import { bresenhamLine } from './geometry/bresenham-line';
 import { Pixel, getLastPixelValue } from './geometry/coord';
 import { getCenterPoint, polygonSchema } from './geometry/polygon';
-import { Vector } from './geometry/vector';
 import { KeyboardCode } from './keyboard-codes';
 import { absolutePointTupleToPixels } from './line';
 import { TRANSPARENT_REF, getNextColor, getPreviousColor } from './palette';
@@ -594,6 +596,30 @@ export const store = createStore({
             };
         },
 
+        updateActionById: (context, event: { action: EditableAction }) => {
+            if (isInitialStore(context)) return;
+
+            const chunkKeys = getChunkKeysFromAction(event.action);
+
+            for (const chunkKey of chunkKeys) {
+                const chunk = context.canvas.chunkCanvases[chunkKey];
+                if (chunk) {
+                    chunk.updateActionById(event.action);
+                }
+            }
+
+            return {
+                ...context,
+                actions: context.actions.map((action) => {
+                    if (!isEditableAction(action)) return action;
+
+                    if (action.action_id === event.action.action_id)
+                        return event.action;
+                    return action;
+                }),
+            };
+        },
+
         completeCurrentAction: (context, event: { action: Action }) => {
             if (isInitialStore(context)) return;
 
@@ -662,98 +688,32 @@ export const store = createStore({
         filterPixelsFromActions: (
             context,
             event: { action_id: string; rejected_pixels: Pixel[] },
+            enqueue,
         ) => {
             if (isInitialStore(context)) return;
 
-            const next_actions = context.actions
-                .map((action) => {
-                    if (
-                        (action.type === ACTION_TYPES.BRUSH_ACTIVE ||
-                            action.type === ACTION_TYPES.ERASURE_ACTIVE ||
-                            action.type === ACTION_TYPES.LINE_COMPLETE ||
-                            action.type === ACTION_TYPES.BUCKET_ACTIVE) &&
-                        action.action_id === event.action_id
-                    ) {
-                        // For LINE_COMPLETE, we need to reconstruct the points
-                        if (action.type === ACTION_TYPES.LINE_COMPLETE) {
-                            const linePoints = bresenhamLine(
-                                action.vector.x,
-                                action.vector.y,
-                                action.vector.x + action.vector.magnitudeX,
-                                action.vector.y + action.vector.magnitudeY,
-                            );
-                            const brushPoints = getBrushPoints(
-                                linePoints,
-                                action.size,
-                                1,
-                            );
-                            const rejected_coords = new Set(
-                                event.rejected_pixels.map(
-                                    (p) => `${p.x},${p.y}`,
-                                ),
-                            );
-                            const filteredBrushPoints = brushPoints.filter(
-                                (point) =>
-                                    !rejected_coords.has(
-                                        `${point.x},${point.y}`,
-                                    ),
-                            );
-                            // Reconstruct vector from filtered points
-                            // This is a simplification - we'll use the first and last points
-                            if (filteredBrushPoints.length === 0) {
-                                return null; // Remove action if no points remain
-                            }
-                            const firstPoint = filteredBrushPoints[0];
-                            const lastPoint =
-                                filteredBrushPoints[
-                                    filteredBrushPoints.length - 1
-                                ];
-                            return {
-                                ...action,
-                                vector: new Vector(
-                                    firstPoint.x,
-                                    firstPoint.y,
-                                    lastPoint.x - firstPoint.x,
-                                    lastPoint.y - firstPoint.y,
-                                ),
-                            };
-                        } else if (action.type === ACTION_TYPES.BUCKET_ACTIVE) {
-                            const rejected_coords = new Set(
-                                event.rejected_pixels.map(
-                                    (p) => `${p.x},${p.y}`,
-                                ),
-                            );
+            const beforeAction = context.actions.find(
+                (action): action is EditableAction =>
+                    isEditableAction(action) &&
+                    action.action_id === event.action_id,
+            );
+            const next_actions = updateActionBasedOnRejectedPixels(
+                context.actions,
+                event.rejected_pixels,
+                event.action_id,
+            );
 
-                            const points = action.points.filter(
-                                (point) =>
-                                    !rejected_coords.has(
-                                        `${point[0]},${point[1]}`,
-                                    ),
-                            );
-
-                            return {
-                                ...action,
-                                points,
-                            };
-                        }
-                        // For BRUSH_ACTIVE, ERASURE_ACTIVE, and BUCKET_ACTIVE
-                        const rejected_coords = new Set(
-                            event.rejected_pixels.map((p) => `${p.x},${p.y}`),
-                        );
-
-                        const points = action.points.filter(
-                            (point) =>
-                                !rejected_coords.has(`${point.x},${point.y}`),
-                        );
-
-                        return {
-                            ...action,
-                            points,
-                        };
-                    }
-                    return action;
-                })
-                .filter((action) => action !== null) as Action[];
+            enqueue.effect(() => {
+                const action = next_actions.find(
+                    (action): action is EditableAction =>
+                        isEditableAction(action) &&
+                        action.action_id === event.action_id,
+                );
+                console.log('action', beforeAction, action);
+                if (action) {
+                    store.trigger.updateActionById({ action });
+                }
+            });
 
             return {
                 ...context,

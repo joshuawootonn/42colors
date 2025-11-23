@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
-import { Action, derivePixelsFromActions } from '../actions';
+import {
+    Action,
+    EditableAction,
+    derivePixelsFromActions,
+    isEditableAction,
+} from '../actions';
 import { CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from '../constants';
 import { AbsolutePoint, Coord, Pixel, pixelSchema } from '../geometry/coord';
 import { AbsolutePointTuple } from '../line';
@@ -351,6 +356,17 @@ export class Chunk {
 
     updateRelatedActiveAction(action: Action | null): void {
         this.relatedActiveAction = action;
+        this.renderRealtimePixels();
+    }
+
+    updateActionById(action: EditableAction): void {
+        this.relatedActions = this.relatedActions.map((existingAction) => {
+            if (!isEditableAction(existingAction)) return existingAction;
+
+            if (existingAction.action_id === action.action_id) return action;
+
+            return existingAction;
+        });
         this.renderRealtimePixels();
     }
 
