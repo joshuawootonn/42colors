@@ -4,11 +4,13 @@ import {
     Action,
     EditableAction,
     derivePixelsFromActions,
+    deriveUnsetPixelsFromActions,
     isEditableAction,
 } from '../actions';
 import { CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from '../constants';
 import { AbsolutePoint, Coord, Pixel, pixelSchema } from '../geometry/coord';
 import { AbsolutePointTuple } from '../line';
+import { TRANSPARENT_REF } from '../palette';
 import { Plot } from '../tools/claimer/claimer.rest';
 import { BLACK, DARK_RED } from '../webgpu/colors';
 import { WebGPUManager, createWebGPUManager } from '../webgpu/web-gpu-manager';
@@ -195,25 +197,15 @@ export class Chunk {
         );
     }
 
-    clearPixels(pixels: Pixel[]): void {
-        const transparentPixels = pixels.map(
-            (pixel) =>
-                ({
-                    x: pixel.x,
-                    y: pixel.y,
-                    color_ref: 0,
-                }) as Pixel,
+    private updatePersistentPixels(
+        _pixels: Pixel[],
+        _unsetPixels: Pixel[],
+    ): void {
+        const erasedPixels = _pixels.filter(
+            (pixel) => pixel.color_ref === TRANSPARENT_REF,
         );
 
-        this.pixelWebGPUManager?.renderPersistentPixels(
-            transparentPixels,
-            { xCamera: 0, yCamera: 0 },
-            false,
-        );
-    }
-
-    unsetPixels(pixels: Pixel[]): void {
-        const unsetPixels = pixels.map((pixel) => {
+        const unsetPixels = _unsetPixels.map((pixel) => {
             return {
                 x: pixel.x,
                 y: pixel.y,
@@ -224,7 +216,7 @@ export class Chunk {
         });
 
         this.pixelWebGPUManager?.renderPersistentPixels(
-            unsetPixels,
+            [...erasedPixels, ...unsetPixels],
             { xCamera: 0, yCamera: 0 },
             false,
         );
@@ -391,6 +383,9 @@ export class Chunk {
         }
 
         const allPixels = derivePixelsFromActions(actions);
+        const allUnsetPixels = deriveUnsetPixelsFromActions(actions);
+
+        this.updatePersistentPixels(allPixels, allUnsetPixels);
 
         // Filter pixels that belong to this chunk and convert to chunk-local coordinates
         const chunkPixels = allPixels
