@@ -22,8 +22,8 @@ import {
 import { ErasureActive } from './tools/erasure/erasure';
 import { LineActive, LineComplete } from './tools/line/line';
 
-type Undo = { type: 'undo' };
-type Redo = { type: 'redo' };
+export type Undo = { type: 'undo'; chunkKeys: string[] };
+export type Redo = { type: 'redo'; chunkKeys: string[] };
 
 export type EditableAction =
     | ErasureActive
@@ -82,11 +82,11 @@ function create_erase_fixture(points: AbsolutePoint[]): ErasureActive {
         chunkKeys: getUniqueChunksFromPoints(points),
     };
 }
-function undo(): Undo {
-    return { type: 'undo' };
+function undo(chunkKeys?: string[]): Undo {
+    return { type: 'undo', chunkKeys: chunkKeys ?? [] };
 }
-function redo(): Redo {
-    return { type: 'redo' };
+function redo(chunkKeys?: string[]): Redo {
+    return { type: 'redo', chunkKeys: chunkKeys ?? [] };
 }
 
 function create_line_fixture(
@@ -313,7 +313,7 @@ export function collapseUndoRedoCombos(actions: Action[]): Action[] {
         if (action.type === 'redo') {
             undoStack.pop();
         } else if (action.type === 'undo') {
-            undoStack.push({ type: 'undo' });
+            undoStack.push({ type: 'undo', chunkKeys: action.chunkKeys });
         } else {
             completedActions.push(...undoStack);
             undoStack = [];
@@ -371,7 +371,7 @@ export function getActionToRedo(
 
     if (reversedCollapsedPrevActions.at(0)?.type != 'undo') return null;
     return (
-        [...resolveActions(prevActions.concat({ type: 'redo' }))]
+        [...resolveActions(prevActions.concat({ type: 'redo', chunkKeys: [] }))]
             .reverse()
             .find((action) => isEditableAction(action)) ?? null
     );

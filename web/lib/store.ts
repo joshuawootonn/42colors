@@ -8,6 +8,8 @@ import { ACTION_TYPES } from './action-types';
 import {
     Action,
     EditableAction,
+    Redo,
+    Undo,
     derivePixelsFromActions,
     getActionToRedo,
     getActionToUndo,
@@ -425,7 +427,10 @@ export const store = createStore({
 
             const actionToUndo = getActionToUndo(context.actions);
 
-            const nextAction = { type: 'undo' as const };
+            const nextAction: Undo = {
+                type: 'undo' as const,
+                chunkKeys: actionToUndo?.chunkKeys ?? [],
+            };
             const nextActions = context.actions.concat(nextAction);
 
             if (actionToUndo == null) {
@@ -492,10 +497,13 @@ export const store = createStore({
         redo: (context, _, enqueue) => {
             if (isInitialStore(context)) return;
 
-            const nextAction = { type: 'redo' as const };
-            const nextActions = context.actions.concat(nextAction);
-
             const actionToRedo = getActionToRedo(context.actions);
+            const nextAction: Redo = {
+                type: 'redo' as const,
+                chunkKeys: actionToRedo?.chunkKeys ?? [],
+            };
+
+            const nextActions = context.actions.concat(nextAction);
 
             if (actionToRedo == null) {
                 enqueue.effect(() => {
