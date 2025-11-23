@@ -22,19 +22,13 @@ import {
 } from './canvas/background';
 import { getCameraCenterPoint } from './canvas/canvas';
 import {
+    Chunk,
     ChunkCanvases,
-    cleanupChunkWebGPU,
-    clearChunkCanvas,
-    clearChunkPixels,
-    createChunkCanvas,
-    createUIChunkCanvas,
-    drawPixelsToChunkCanvas,
     getChunkKey,
-    initializeChunkWebGPU,
+    getUniqueChunksFromPixels,
 } from './canvas/chunk';
 import { draw } from './canvas/draw';
 import { resizeFullsizeCanvas } from './canvas/fullsize';
-import { resizeRealtimeCanvas } from './canvas/realtime';
 import { showCrosshair } from './canvas/ui';
 import {
     CHUNK_LENGTH,
@@ -143,13 +137,12 @@ export type InitializedStore = {
         rootCanvasContext: CanvasRenderingContext2D;
         backgroundCanvas: HTMLCanvasElement;
         backgroundCanvasContext: CanvasRenderingContext2D;
-        realtimeCanvas: HTMLCanvasElement;
         telegraphCanvas: HTMLCanvasElement;
         uiCanvas: HTMLCanvasElement;
         chunkCanvases: ChunkCanvases;
         uiWebGPUManager: WebGPUManager;
         telegraphWebGPUManager: WebGPUManager;
-        realtimeWebGPUManager: WebGPUManager;
+        device: GPUDevice;
     };
     actions: Action[];
     activeAction: Action | null;
@@ -193,9 +186,17 @@ const initialialStoreContext: Store = {
     interaction: undefined,
 } as Store;
 
+function getChunkKeysFromAction(action: Action): string[] {
+    if ('chunkKeys' in action && Array.isArray(action.chunkKeys)) {
+        return action.chunkKeys;
+    }
+    return [];
+}
+
 export const store = createStore({
     context: initialialStoreContext,
     on: {
+        //////////////// General store /////////////////
         initializeStore: (
             context,
             event: {
@@ -209,12 +210,11 @@ export const store = createStore({
                 rootCanvasContext: CanvasRenderingContext2D;
                 backgroundCanvas: HTMLCanvasElement;
                 backgroundCanvasContext: CanvasRenderingContext2D;
-                realtimeCanvas: HTMLCanvasElement;
                 telegraphCanvas: HTMLCanvasElement;
                 uiCanvas: HTMLCanvasElement;
                 uiWebGPUManager: WebGPUManager;
                 telegraphWebGPUManager: WebGPUManager;
-                realtimeWebGPUManager: WebGPUManager;
+                device: GPUDevice;
             },
             enqueue,
         ) => {
@@ -262,13 +262,12 @@ export const store = createStore({
                     rootCanvasContext: event.rootCanvasContext,
                     backgroundCanvas: event.backgroundCanvas,
                     backgroundCanvasContext: event.backgroundCanvasContext,
-                    realtimeCanvas: event.realtimeCanvas,
                     telegraphCanvas: event.telegraphCanvas,
                     uiCanvas: event.uiCanvas,
                     chunkCanvases: {},
                     uiWebGPUManager: event.uiWebGPUManager,
                     telegraphWebGPUManager: event.telegraphWebGPUManager,
-                    realtimeWebGPUManager: event.realtimeWebGPUManager,
+                    device: event.device,
                 },
                 queryClient: event.queryClient,
             };
@@ -326,23 +325,328 @@ export const store = createStore({
 
             if (!isInitialStore(context)) {
                 Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
-                    cleanupChunkWebGPU(chunk.webgpuManager);
+                    chunk.destroy();
                 });
             }
         },
 
-        newRealtimePixels: (context, event: { pixels: Pixel[] }, _enqueue) => {
+        reconnectToSocket: (
+            context,
+            event: {
+                channel_token?: string;
+            },
+        ) => {
             if (isInitialStore(context)) return;
-
-            clearChunkPixels(context.canvas.chunkCanvases, event.pixels);
+            const socket = setupSocketConnection(
+                context.server.websocketOriginURL,
+                event.channel_token,
+            );
+            const channel = setupChannel(socket);
 
             return {
                 ...context,
-                actions: context.actions.concat({
-                    type: 'realtime-active',
-                    pixels: event.pixels,
-                }),
+                server: {
+                    ...context.server,
+                    socket,
+                    channel,
+                },
             };
+        },
+
+        draw: (context) => {
+            if (isInitialStore(context)) return;
+            draw(context);
+        },
+
+        resizeRealtimeAndTelegraphCanvases: (context) => {
+            if (isInitialStore(context)) return;
+            resizeFullsizeCanvas(context.canvas.telegraphCanvas);
+            resizeFullsizeCanvas(context.canvas.uiCanvas);
+        },
+
+        //////////////// User events /////////////////
+
+        setUser: (
+            context,
+            event: {
+                user: {
+                    email: string;
+                    id: number;
+                    balance: number;
+                    channel_token: string;
+                } | null;
+            },
+        ) => {
+            if (isInitialStore(context)) return;
+            return {
+                ...context,
+                user: event.user,
+            };
+        },
+
+        fetchUser: (context, _, enqueue) => {
+            if (isInitialStore(context)) return;
+            enqueue.effect(() =>
+                context.queryClient
+                    .fetchQuery({
+                        queryKey: ['user', 'me'],
+                        queryFn: () =>
+                            authService.getCurrentUser(
+                                context.server.apiOrigin,
+                            ),
+                    })
+                    .then((json) => {
+                        store.trigger.setUser({
+                            user: json ? json.user : null,
+                        });
+                        store.trigger.reconnectToSocket({
+                            channel_token: json?.user.channel_token,
+                        });
+                    }),
+            );
+        },
+
+        setAuthURL: (context, { authURL }: { authURL: string }) => {
+            if (isInitialStore(context)) return;
+            return {
+                ...context,
+                server: { ...context.server, authURL },
+            };
+        },
+
+        //////////////// Collaboration events /////////////////
+
+        undo: (context, _, enqueue) => {
+            if (isInitialStore(context)) return;
+
+            const actionToUndo = getActionToUndo(context.actions);
+
+            const nextAction = { type: 'undo' as const };
+            const nextActions = context.actions.concat(nextAction);
+
+            if (actionToUndo == null) {
+                enqueue.effect(() => {
+                    store.trigger.addAction({ action: nextAction });
+                });
+                return context;
+            }
+
+            let pixels: Pixel[];
+            if (actionToUndo.type === ACTION_TYPES.LINE_COMPLETE) {
+                const linePoints = bresenhamLine(
+                    actionToUndo.vector.x,
+                    actionToUndo.vector.y,
+                    actionToUndo.vector.x + actionToUndo.vector.magnitudeX,
+                    actionToUndo.vector.y + actionToUndo.vector.magnitudeY,
+                );
+                const brushPoints = getBrushPoints(
+                    linePoints,
+                    actionToUndo.size,
+                    1,
+                );
+                pixels = pointsToPixels(brushPoints, actionToUndo.color_ref);
+            } else if (actionToUndo.type === ACTION_TYPES.BUCKET_ACTIVE) {
+                pixels = absolutePointTupleToPixels(
+                    actionToUndo.points,
+                    actionToUndo.color_ref,
+                );
+            } else {
+                pixels = pointsToPixels(
+                    actionToUndo.points,
+                    actionToUndo.type === ACTION_TYPES.ERASURE_ACTIVE
+                        ? TRANSPARENT_REF
+                        : actionToUndo.color_ref,
+                );
+            }
+
+            const resolvedActions = resolveActions(nextActions);
+            const resolvedPixels = derivePixelsFromActions(resolvedActions);
+            const next: Pixel[] = [];
+            for (let i = 0; i < pixels.length; i++) {
+                const pixel = pixels[i];
+                const lastPixelValue =
+                    getLastPixelValue(resolvedPixels, pixel) ??
+                    context.canvas.chunkCanvases[
+                        getChunkKey(pixel.x, pixel.y)
+                    ]?.getPixelValue(pixel.x, pixel.y) ??
+                    ({
+                        x: pixel.x,
+                        y: pixel.y,
+                        color_ref: 0,
+                    } as Pixel);
+                next.push(lastPixelValue);
+            }
+
+            newPixels(context, next);
+
+            enqueue.effect(() => {
+                store.trigger.addAction({ action: nextAction });
+            });
+            return context;
+        },
+
+        redo: (context, _, enqueue) => {
+            if (isInitialStore(context)) return;
+
+            const nextAction = { type: 'redo' as const };
+            const nextActions = context.actions.concat(nextAction);
+
+            const actionToRedo = getActionToRedo(context.actions);
+
+            if (actionToRedo == null) {
+                enqueue.effect(() => {
+                    store.trigger.addAction({ action: nextAction });
+                });
+                return context;
+            }
+
+            let pixels: Pixel[];
+            if (actionToRedo.type === ACTION_TYPES.LINE_COMPLETE) {
+                const linePoints = bresenhamLine(
+                    actionToRedo.vector.x,
+                    actionToRedo.vector.y,
+                    actionToRedo.vector.x + actionToRedo.vector.magnitudeX,
+                    actionToRedo.vector.y + actionToRedo.vector.magnitudeY,
+                );
+                const brushPoints = getBrushPoints(
+                    linePoints,
+                    actionToRedo.size,
+                    1,
+                );
+                pixels = pointsToPixels(brushPoints, actionToRedo.color_ref);
+            } else if (actionToRedo.type === ACTION_TYPES.BUCKET_ACTIVE) {
+                pixels = absolutePointTupleToPixels(
+                    actionToRedo.points,
+                    actionToRedo.color_ref,
+                );
+            } else {
+                pixels = pointsToPixels(
+                    actionToRedo.points,
+                    actionToRedo.type === ACTION_TYPES.ERASURE_ACTIVE
+                        ? TRANSPARENT_REF
+                        : actionToRedo.color_ref,
+                );
+            }
+
+            const resolvedActions = resolveActions(nextActions);
+            const resolvedPixels = derivePixelsFromActions(resolvedActions);
+            const next: Pixel[] = [];
+            for (let i = 0; i < pixels.length; i++) {
+                const pixel = pixels[i];
+                const lastPixelValue =
+                    getLastPixelValue(resolvedPixels, pixel) ??
+                    context.canvas.chunkCanvases[
+                        getChunkKey(pixel.x, pixel.y)
+                    ]?.getPixelValue(pixel.x, pixel.y) ??
+                    ({
+                        x: pixel.x,
+                        y: pixel.y,
+                        color_ref: 0,
+                    } as Pixel);
+                next.push(lastPixelValue);
+            }
+
+            newPixels(context, next);
+
+            enqueue.effect(() => {
+                store.trigger.addAction({ action: nextAction });
+            });
+            return context;
+        },
+
+        //////////////// Chunk events /////////////////
+
+        chunkOp: (
+            context,
+            event: {
+                chunkKey: string;
+                operation: (chunk: Chunk) => void;
+            },
+        ) => {
+            if (isInitialStore(context)) return;
+
+            const chunk = context.canvas.chunkCanvases[event.chunkKey];
+            if (!chunk) {
+                throw new Error(`Chunk not found: ${event.chunkKey}`);
+            }
+            event.operation(chunk);
+            return context;
+        },
+
+        updateCurrentAction: (context, event: { action: Action }) => {
+            if (isInitialStore(context)) return;
+
+            const chunkKeys = getChunkKeysFromAction(event.action);
+
+            // Update each affected chunk's active action
+            for (const chunkKey of chunkKeys) {
+                const chunk = context.canvas.chunkCanvases[chunkKey];
+                if (chunk) {
+                    chunk.updateRelatedActiveAction(event.action);
+                }
+            }
+
+            return {
+                ...context,
+                activeAction: event.action,
+            };
+        },
+
+        completeCurrentAction: (context, event: { action: Action }) => {
+            if (isInitialStore(context)) return;
+
+            const chunkKeys = getChunkKeysFromAction(event.action);
+
+            // Add action to each affected chunk and clear its active action
+            for (const chunkKey of chunkKeys) {
+                const chunk = context.canvas.chunkCanvases[chunkKey];
+                if (chunk) {
+                    chunk.completeActiveAction(event.action);
+                }
+            }
+
+            return {
+                ...context,
+                activeAction: null,
+                actions: context.actions.concat(event.action),
+            };
+        },
+
+        addAction: (context, event: { action: Action }) => {
+            if (isInitialStore(context)) return;
+
+            const chunkKeys = getChunkKeysFromAction(event.action);
+
+            // Add action to each affected chunk
+            for (const chunkKey of chunkKeys) {
+                const chunk = context.canvas.chunkCanvases[chunkKey];
+                if (chunk) {
+                    chunk.addRelatedAction(event.action);
+                }
+            }
+
+            return {
+                ...context,
+                actions: context.actions.concat(event.action),
+            };
+        },
+
+        //////////////// Realtime events /////////////////
+
+        newRealtimePixels: (context, event: { pixels: Pixel[] }, enqueue) => {
+            if (isInitialStore(context)) return;
+
+            enqueue.effect(() => {
+                store.trigger.addAction({
+                    action: {
+                        type: 'realtime-active',
+                        pixels: event.pixels,
+                        chunkKeys: getUniqueChunksFromPixels(event.pixels),
+                    },
+                });
+            });
+
+            return context;
         },
 
         newPixels: (context, event: { pixels: Pixel[]; action_id: string }) => {
@@ -455,218 +759,7 @@ export const store = createStore({
             };
         },
 
-        undo: (context, _, _enqueue) => {
-            if (isInitialStore(context)) return;
-
-            const actionToUndo = getActionToUndo(context.actions);
-
-            const nextActions = context.actions.concat({ type: 'undo' });
-
-            if (actionToUndo == null) {
-                return {
-                    ...context,
-                    actions: nextActions,
-                };
-            }
-
-            let pixels: Pixel[];
-            if (actionToUndo.type === ACTION_TYPES.LINE_COMPLETE) {
-                const linePoints = bresenhamLine(
-                    actionToUndo.vector.x,
-                    actionToUndo.vector.y,
-                    actionToUndo.vector.x + actionToUndo.vector.magnitudeX,
-                    actionToUndo.vector.y + actionToUndo.vector.magnitudeY,
-                );
-                const brushPoints = getBrushPoints(
-                    linePoints,
-                    actionToUndo.size,
-                    1,
-                );
-                pixels = pointsToPixels(brushPoints, actionToUndo.color_ref);
-            } else if (actionToUndo.type === ACTION_TYPES.BUCKET_ACTIVE) {
-                pixels = absolutePointTupleToPixels(
-                    actionToUndo.points,
-                    actionToUndo.color_ref,
-                );
-            } else {
-                pixels = pointsToPixels(
-                    actionToUndo.points,
-                    actionToUndo.type === ACTION_TYPES.ERASURE_ACTIVE
-                        ? TRANSPARENT_REF
-                        : actionToUndo.color_ref,
-                );
-            }
-
-            const resolvedActions = resolveActions(nextActions);
-            const resolvedPixels = derivePixelsFromActions(resolvedActions);
-            const next: Pixel[] = [];
-            for (let i = 0; i < pixels.length; i++) {
-                const pixel = pixels[i];
-                const lastPixelValue =
-                    getLastPixelValue(resolvedPixels, pixel) ??
-                    getLastPixelValue(
-                        context.canvas.chunkCanvases[
-                            getChunkKey(pixel.x, pixel.y)
-                        ].pixels,
-                        pixel,
-                    ) ??
-                    ({
-                        x: pixel.x,
-                        y: pixel.y,
-                        color_ref: 0,
-                    } as Pixel);
-                next.push(lastPixelValue);
-            }
-
-            newPixels(context, next);
-
-            return {
-                ...context,
-                actions: nextActions,
-            };
-        },
-
-        redo: (context, _, _enqueue) => {
-            if (isInitialStore(context)) return;
-
-            const nextActions = context.actions.concat({ type: 'redo' });
-
-            const actionToRedo = getActionToRedo(context.actions);
-
-            if (actionToRedo == null) {
-                return {
-                    ...context,
-                    actions: nextActions,
-                };
-            }
-
-            let pixels: Pixel[];
-            if (actionToRedo.type === ACTION_TYPES.LINE_COMPLETE) {
-                const linePoints = bresenhamLine(
-                    actionToRedo.vector.x,
-                    actionToRedo.vector.y,
-                    actionToRedo.vector.x + actionToRedo.vector.magnitudeX,
-                    actionToRedo.vector.y + actionToRedo.vector.magnitudeY,
-                );
-                const brushPoints = getBrushPoints(
-                    linePoints,
-                    actionToRedo.size,
-                    1,
-                );
-                pixels = pointsToPixels(brushPoints, actionToRedo.color_ref);
-            } else if (actionToRedo.type === ACTION_TYPES.BUCKET_ACTIVE) {
-                pixels = absolutePointTupleToPixels(
-                    actionToRedo.points,
-                    actionToRedo.color_ref,
-                );
-            } else {
-                pixels = pointsToPixels(
-                    actionToRedo.points,
-                    actionToRedo.type === ACTION_TYPES.ERASURE_ACTIVE
-                        ? TRANSPARENT_REF
-                        : actionToRedo.color_ref,
-                );
-            }
-
-            const resolvedActions = resolveActions(nextActions);
-            const resolvedPixels = derivePixelsFromActions(resolvedActions);
-            const next: Pixel[] = [];
-            for (let i = 0; i < pixels.length; i++) {
-                const pixel = pixels[i];
-                const lastPixelValue =
-                    getLastPixelValue(resolvedPixels, pixel) ??
-                    getLastPixelValue(
-                        context.canvas.chunkCanvases[
-                            getChunkKey(pixel.x, pixel.y)
-                        ].pixels,
-                        pixel,
-                    ) ??
-                    ({
-                        x: pixel.x,
-                        y: pixel.y,
-                        color_ref: 0,
-                    } as Pixel);
-                next.push(lastPixelValue);
-            }
-
-            newPixels(context, next);
-
-            return {
-                ...context,
-                actions: nextActions,
-            };
-        },
-
-        setUser: (
-            context,
-            event: {
-                user: {
-                    email: string;
-                    id: number;
-                    balance: number;
-                    channel_token: string;
-                } | null;
-            },
-        ) => {
-            if (isInitialStore(context)) return;
-            return {
-                ...context,
-                user: event.user,
-            };
-        },
-
-        reconnectToSocket: (
-            context,
-            event: {
-                channel_token?: string;
-            },
-        ) => {
-            if (isInitialStore(context)) return;
-            const socket = setupSocketConnection(
-                context.server.websocketOriginURL,
-                event.channel_token,
-            );
-            const channel = setupChannel(socket);
-
-            return {
-                ...context,
-                server: {
-                    ...context.server,
-                    socket,
-                    channel,
-                },
-            };
-        },
-
-        fetchUser: (context, _, enqueue) => {
-            if (isInitialStore(context)) return;
-            enqueue.effect(() =>
-                context.queryClient
-                    .fetchQuery({
-                        queryKey: ['user', 'me'],
-                        queryFn: () =>
-                            authService.getCurrentUser(
-                                context.server.apiOrigin,
-                            ),
-                    })
-                    .then((json) => {
-                        store.trigger.setUser({
-                            user: json ? json.user : null,
-                        });
-                        store.trigger.reconnectToSocket({
-                            channel_token: json?.user.channel_token,
-                        });
-                    }),
-            );
-        },
-
-        setAuthURL: (context, { authURL }: { authURL: string }) => {
-            if (isInitialStore(context)) return;
-            return {
-                ...context,
-                server: { ...context.server, authURL },
-            };
-        },
+        //////////////// Unknown events /////////////////
 
         fetchPixels: (context, _, enqueue) => {
             if (isInitialStore(context)) return;
@@ -698,23 +791,11 @@ export const store = createStore({
                     }
                     const chunkKey = getChunkKey(chunkX, chunkY);
 
-                    const canvas = createChunkCanvas();
-                    const canvasContext = canvas.getContext('2d');
-                    canvasContext!.imageSmoothingEnabled = false;
-
-                    console.log('setting chunk canvases', context.state);
-
-                    context.canvas.chunkCanvases[chunkKey] = {
-                        element: canvas,
-                        context: canvasContext!,
-                        x: chunkX,
-                        y: chunkY,
-                        pixels: [],
-                        pixelMap: new Map(),
-                        plots: [],
-                        renderConditions: { zoom: context.camera.zoom },
-                        webgpuManager: null,
-                    };
+                    context.canvas.chunkCanvases[chunkKey] = new Chunk(
+                        chunkX,
+                        chunkY,
+                        context.canvas.device,
+                    );
 
                     enqueue.effect(async () => {
                         context.queryClient
@@ -727,9 +808,14 @@ export const store = createStore({
                                         chunkY,
                                     ),
                             })
-                            .then((pixels) =>
-                                store.trigger.addPixels({ chunkKey, pixels }),
-                            );
+                            .then((pixels) => {
+                                store.trigger.chunkOp({
+                                    chunkKey,
+                                    operation: (chunk) => {
+                                        chunk.initializeWithPixels(pixels);
+                                    },
+                                });
+                            });
 
                         context.queryClient
                             .fetchQuery({
@@ -737,323 +823,37 @@ export const store = createStore({
                                 queryFn: () => getPlotsByChunk(chunkX, chunkY),
                             })
                             .then((plots) =>
-                                store.trigger.addPlots({
+                                store.trigger.chunkOp({
                                     chunkKey,
-                                    plots: plots.map((plot) => ({
-                                        ...plot,
-                                        polygon: polygonSchema.parse({
-                                            vertices: plot.polygon.vertices.map(
-                                                (vertex) => {
-                                                    return [
-                                                        vertex[0] - chunkX,
-                                                        vertex[1] - chunkY,
-                                                    ];
-                                                },
-                                            ),
-                                        }),
-                                    })),
+                                    operation: (chunk) => {
+                                        chunk.upsertPlots(
+                                            plots.map((plot) => ({
+                                                ...plot,
+                                                polygon: polygonSchema.parse({
+                                                    vertices:
+                                                        plot.polygon.vertices.map(
+                                                            (vertex) => {
+                                                                return [
+                                                                    vertex[0] -
+                                                                        chunkX,
+                                                                    vertex[1] -
+                                                                        chunkY,
+                                                                ];
+                                                            },
+                                                        ),
+                                                }),
+                                            })),
+                                        );
+                                    },
                                 }),
                             );
-                        try {
-                            const webgpuCanvas = createUIChunkCanvas();
-                            const webgpuManager =
-                                await initializeChunkWebGPU(webgpuCanvas);
-
-                            if (
-                                webgpuManager &&
-                                context.canvas.chunkCanvases[chunkKey]
-                            ) {
-                                store.trigger.setChunkWebGPUManager({
-                                    chunkKey,
-                                    webgpuManager,
-                                    webgpuCanvas,
-                                });
-
-                                console.log(
-                                    `WebGPU manager initialized for chunk ${chunkKey}`,
-                                );
-                            } else {
-                                throw new Error(
-                                    `WebGPU manager initialization failed for chunk ${chunkKey}`,
-                                );
-                            }
-                        } catch (error) {
-                            console.warn(
-                                `Error initializing WebGPU manager for chunk ${chunkKey}:`,
-                                error,
-                            );
-                        }
                     });
                 }
             }
             return context;
         },
 
-        setChunkWebGPUManager: (
-            context,
-            {
-                chunkKey,
-                webgpuManager,
-                webgpuCanvas,
-            }: {
-                chunkKey: string;
-                webgpuManager: WebGPUManager;
-                webgpuCanvas: HTMLCanvasElement;
-            },
-            _enqueue,
-        ) => {
-            if (isInitialStore(context)) return;
-
-            const prev = context.canvas.chunkCanvases[chunkKey];
-
-            if (prev == null) {
-                console.log(
-                    `skipping set chunk webgpu manager on uninitialized chunk, chunkKey: ${chunkKey}`,
-                );
-                return;
-            }
-
-            return {
-                ...context,
-                canvas: {
-                    ...context.canvas,
-                    chunkCanvases: {
-                        ...context.canvas.chunkCanvases,
-                        [chunkKey]: { ...prev, webgpuManager, webgpuCanvas },
-                    },
-                },
-            };
-        },
-
-        updateChunk: (
-            context,
-            {
-                chunkKey,
-                pixels,
-                plots,
-            }: { chunkKey: string; pixels?: Pixel[]; plots?: Plot[] },
-            enqueue,
-        ) => {
-            if (isInitialStore(context)) return;
-
-            const prev = context.canvas.chunkCanvases[chunkKey];
-
-            if (prev == null) {
-                console.log(
-                    `skipping chunk update on uninitialized, chunkKey: ${chunkKey}`,
-                );
-                return;
-            }
-
-            let newPixelMap = prev.pixelMap;
-            if (pixels) {
-                newPixelMap = new Map(prev.pixelMap);
-                for (let i = 0; i < pixels.length; i++) {
-                    const pixel = pixels[i];
-                    const chunkPixel = {
-                        x: pixel.x,
-                        y: pixel.y,
-                    };
-                    const key = `${chunkPixel.x},${chunkPixel.y}`;
-                    newPixelMap.set(key, pixel);
-                }
-            }
-
-            context.canvas.chunkCanvases[chunkKey] = {
-                ...prev,
-                pixels: pixels ? [...prev.pixels, ...pixels] : prev.pixels,
-                pixelMap: newPixelMap,
-                plots: plots ? [...prev.plots, ...plots] : prev.plots,
-            };
-
-            enqueue.effect(() => {
-                if (pixels) {
-                    store.trigger.drawPixelsToChunkCanvas({ chunkKey, pixels });
-                }
-            });
-        },
-
-        addPixels: (
-            context,
-            { chunkKey, pixels }: { chunkKey: string; pixels: Pixel[] },
-            enqueue,
-        ) => {
-            if (isInitialStore(context)) return;
-
-            const prev = context.canvas.chunkCanvases[chunkKey];
-
-            if (prev == null) {
-                console.log(
-                    `skipping add pixels on uninitialized chunk, chunkKey: ${chunkKey}`,
-                );
-                return;
-            }
-
-            const newPixelMap = new Map(prev.pixelMap);
-
-            for (let i = 0; i < pixels.length; i++) {
-                const pixel = pixels[i];
-                const chunkPixel = {
-                    x: pixel.x,
-                    y: pixel.y,
-                };
-                const key = `${chunkPixel.x},${chunkPixel.y}`;
-                newPixelMap.set(key, pixel);
-            }
-
-            context.canvas.chunkCanvases[chunkKey] = {
-                ...prev,
-                pixels: [...prev.pixels, ...pixels],
-                pixelMap: newPixelMap,
-            };
-
-            enqueue.effect(() => {
-                store.trigger.redrawChunk({ chunkKey });
-            });
-        },
-
-        addPlots: (
-            context,
-            { chunkKey, plots }: { chunkKey: string; plots: Plot[] },
-            enqueue,
-        ) => {
-            if (isInitialStore(context)) return;
-
-            const prev = context.canvas.chunkCanvases[chunkKey];
-
-            if (prev == null) {
-                console.log(
-                    `skipping add plots on uninitialized chunk, chunkKey: ${chunkKey}`,
-                );
-                return;
-            }
-
-            context.canvas.chunkCanvases[chunkKey] = {
-                ...prev,
-                plots: [...prev.plots, ...plots],
-            };
-
-            enqueue.effect(() => {
-                store.trigger.redrawChunk({ chunkKey });
-            });
-        },
-
-        removePixels: (
-            context,
-            { chunkKey, pixelIds }: { chunkKey: string; pixelIds: string[] },
-            enqueue,
-        ) => {
-            if (isInitialStore(context)) return;
-
-            const prev = context.canvas.chunkCanvases[chunkKey];
-
-            if (prev == null) {
-                console.log(
-                    `skipping remove pixels on uninitialized chunk, chunkKey: ${chunkKey}`,
-                );
-                return;
-            }
-
-            const pixelIdSet = new Set(pixelIds);
-            const remainingPixels = prev.pixels.filter(
-                (pixel) => !pixelIdSet.has(`${pixel.x},${pixel.y}`),
-            );
-
-            const newPixelMap = new Map(prev.pixelMap);
-            for (const pixelId of pixelIds) {
-                const [absX, absY] = pixelId.split(',').map(Number);
-                const chunkPixelX = absX;
-                const chunkPixelY = absY;
-                const chunkKey = `${chunkPixelX},${chunkPixelY}`;
-                newPixelMap.delete(chunkKey);
-            }
-
-            context.canvas.chunkCanvases[chunkKey] = {
-                ...prev,
-                pixels: remainingPixels,
-                pixelMap: newPixelMap,
-            };
-
-            enqueue.effect(() => {
-                store.trigger.redrawChunk({ chunkKey });
-            });
-        },
-
-        removePlots: (
-            context,
-            { chunkKey, plotIds }: { chunkKey: string; plotIds: number[] },
-            enqueue,
-        ) => {
-            if (isInitialStore(context)) return;
-
-            const prev = context.canvas.chunkCanvases[chunkKey];
-
-            if (prev == null) {
-                console.log(
-                    `skipping remove plots on uninitialized chunk, chunkKey: ${chunkKey}`,
-                );
-                return;
-            }
-
-            const plotIdSet = new Set(plotIds);
-            const remainingPlots = prev.plots.filter(
-                (plot) => !plotIdSet.has(plot.id),
-            );
-
-            // console.log({
-            //     remainingPlots,
-            //     prevPlots: prev.plots,
-            //     chunkCanvases: context.canvas.chunkCanvases,
-            //     plotIdSet,
-            //     chunkKey,
-            // });
-
-            context.canvas.chunkCanvases[chunkKey] = {
-                ...prev,
-                plots: remainingPlots,
-            };
-
-            enqueue.effect(() => {
-                store.trigger.redrawChunk({ chunkKey });
-            });
-        },
-
-        redrawChunk: (context, { chunkKey }: { chunkKey: string }, enqueue) => {
-            if (isInitialStore(context)) return;
-            enqueue.effect(() => {
-                store.trigger.clearChunk({ chunkKey });
-                store.trigger.drawPixelsToChunkCanvas({
-                    chunkKey,
-                    pixels: context.canvas.chunkCanvases[chunkKey].pixels,
-                });
-            });
-        },
-
-        resizeRealtimeAndTelegraphCanvases: (context) => {
-            if (isInitialStore(context)) return;
-            resizeRealtimeCanvas(context.canvas.realtimeCanvas, context.camera);
-            resizeFullsizeCanvas(context.canvas.telegraphCanvas);
-            resizeFullsizeCanvas(context.canvas.uiCanvas);
-        },
-
-        clearChunk: (context, { chunkKey }: { chunkKey: string }, enqueue) => {
-            if (isInitialStore(context)) return;
-            enqueue.effect(() => {
-                clearChunkCanvas(context.canvas.chunkCanvases, chunkKey);
-            });
-        },
-
-        drawPixelsToChunkCanvas: (
-            context,
-            event: { chunkKey: string; pixels: Pixel[] },
-        ) => {
-            if (isInitialStore(context)) return;
-            drawPixelsToChunkCanvas(
-                context.canvas.chunkCanvases[event.chunkKey].element,
-                context.canvas.chunkCanvases[event.chunkKey].context,
-                event.pixels,
-            );
-        },
+        //////////////// Tool events /////////////////
 
         moveCamera: (
             context,
@@ -1106,11 +906,6 @@ export const store = createStore({
                 ...context,
                 camera: newCamera,
             };
-        },
-
-        draw: (context) => {
-            if (isInitialStore(context)) return;
-            draw(context);
         },
 
         changeTool: (context, event: { tool: Tool }) => {
@@ -1222,48 +1017,7 @@ export const store = createStore({
             };
         },
 
-        clearCursor: (context) => {
-            if (isInitialStore(context)) return;
-            return {
-                ...context,
-                interaction: { ...context.interaction, cursorPosition: null },
-            };
-        },
-
-        setCursorPosition: (
-            context,
-            {
-                cursorPosition,
-            }: { cursorPosition: { clientX: number; clientY: number } },
-        ) => {
-            if (isInitialStore(context)) return;
-            return {
-                ...context,
-                interaction: {
-                    ...context.interaction,
-                    cursorPosition: cursorPosition,
-                },
-            };
-        },
-
-        setIsPressed: (context, { isPressed }: { isPressed: boolean }) => {
-            if (isInitialStore(context)) return;
-            return {
-                ...context,
-                interaction: { ...context.interaction, isPressed },
-            };
-        },
-
-        setIsSpacePressed: (
-            context,
-            { isSpacePressed }: { isSpacePressed: boolean },
-        ) => {
-            if (isInitialStore(context)) return;
-            return {
-                ...context,
-                interaction: { ...context.interaction, isSpacePressed },
-            };
-        },
+        //////////////// Claim events//////////////////
 
         clearClaim: (context) => {
             if (isInitialStore(context)) return;
@@ -1317,6 +1071,7 @@ export const store = createStore({
             };
         },
 
+        /////////////// Plot events /////////////////
         moveToPlot: (context, { plotId }: { plotId: number }, enqueue) => {
             if (isInitialStore(context)) return;
             const userPlots = (context.queryClient.getQueryData([
@@ -1407,9 +1162,52 @@ export const store = createStore({
             };
         },
 
-        //////////////////////////////////////////////
-        // Event handlers
-        //////////////////////////////////////////////
+        //////////// Interaction state events ////////////
+
+        clearCursor: (context) => {
+            if (isInitialStore(context)) return;
+            return {
+                ...context,
+                interaction: { ...context.interaction, cursorPosition: null },
+            };
+        },
+
+        setCursorPosition: (
+            context,
+            {
+                cursorPosition,
+            }: { cursorPosition: { clientX: number; clientY: number } },
+        ) => {
+            if (isInitialStore(context)) return;
+            return {
+                ...context,
+                interaction: {
+                    ...context.interaction,
+                    cursorPosition: cursorPosition,
+                },
+            };
+        },
+
+        setIsPressed: (context, { isPressed }: { isPressed: boolean }) => {
+            if (isInitialStore(context)) return;
+            return {
+                ...context,
+                interaction: { ...context.interaction, isPressed },
+            };
+        },
+
+        setIsSpacePressed: (
+            context,
+            { isSpacePressed }: { isSpacePressed: boolean },
+        ) => {
+            if (isInitialStore(context)) return;
+            return {
+                ...context,
+                interaction: { ...context.interaction, isSpacePressed },
+            };
+        },
+
+        ///////////// Event handlers ////////////////
 
         onPointerDown: (context, { e }: { e: PointerEvent }, enqueue) => {
             if (isInitialStore(context)) return;

@@ -1,154 +1,17 @@
 import { z } from 'zod';
 
+import { Action, derivePixelsFromActions } from '../actions';
 import { CANVAS_PIXEL_RATIO, CHUNK_LENGTH } from '../constants';
-import { Coord, Pixel, pixelSchema } from '../geometry/coord';
-import { COLOR_TABLE } from '../palette';
+import { AbsolutePoint, Coord, Pixel, pixelSchema } from '../geometry/coord';
+import { AbsolutePointTuple } from '../line';
 import { Plot } from '../tools/claimer/claimer.rest';
-import { dedupe } from '../utils/dedupe';
 import { BLACK } from '../webgpu/colors';
 import { WebGPUManager, createWebGPUManager } from '../webgpu/web-gpu-manager';
 
-export type Chunk = {
-    x: number;
-    y: number;
-    pixels: Pixel[];
-    pixelMap: Map<string, Pixel>;
-    element: HTMLCanvasElement;
-    context: CanvasRenderingContext2D;
-    plots: Plot[];
-    renderConditions: {
-        zoom: number;
-    };
-    webgpuManager?: WebGPUManager | null;
-    webgpuCanvas?: HTMLCanvasElement;
-};
-
 export type ChunkCanvases = Record<string, Chunk>;
-
-export function createChunkCanvas(): HTMLCanvasElement {
-    const canvas = document.createElement('canvas');
-    canvas.width = CHUNK_LENGTH;
-    canvas.height = CHUNK_LENGTH;
-    return canvas;
-}
-
-export function createUIChunkCanvas(): HTMLCanvasElement {
-    const canvas = document.createElement('canvas');
-    canvas.width = CHUNK_LENGTH * CANVAS_PIXEL_RATIO;
-    canvas.height = CHUNK_LENGTH * CANVAS_PIXEL_RATIO;
-    return canvas;
-}
-
-export async function initializeChunkWebGPU(
-    chunkCanvas: HTMLCanvasElement,
-): Promise<WebGPUManager | null> {
-    try {
-        const webgpuManager = await createWebGPUManager(chunkCanvas);
-        if (webgpuManager) {
-            console.debug('Chunk WebGPU manager initialized successfully');
-            return webgpuManager;
-        }
-    } catch (error) {
-        console.warn('Failed to initialize chunk WebGPU manager:', error);
-    }
-    return null;
-}
-
-export function cleanupChunkWebGPU(
-    webgpuManager: WebGPUManager | null | undefined,
-): void {
-    webgpuManager?.destroy();
-}
-
-export function renderPlotsToChunk(chunk: Chunk): void {
-    if (!chunk.webgpuManager || chunk.plots.length === 0) {
-        return;
-    }
-
-    const polygonRenderData = chunk.plots.map((plot) => ({
-        polygon: plot.polygon,
-    }));
-
-    chunk.webgpuManager.redrawPolygons(polygonRenderData, {
-        containsMatchingEndpoints: true,
-        xOffset: 0,
-        yOffset: 0,
-        xCamera: 0,
-        yCamera: 0,
-        pixelSize: 5,
-        lineWidth: 0.25,
-        color: BLACK,
-    });
-}
-
-export function clearChunk(chunk: Chunk): void {
-    chunk.webgpuManager?.clear();
-}
-
-export function drawPixelsToChunkCanvas(
-    canvas: HTMLCanvasElement,
-    context: CanvasRenderingContext2D,
-    pixels: Pixel[],
-): HTMLCanvasElement {
-    context.imageSmoothingEnabled = false;
-
-    for (let i = 0; i < pixels.length; i++) {
-        const pixel = pixels[i];
-        context.fillStyle = COLOR_TABLE[pixel.color_ref];
-        context.fillRect(pixel.x, pixel.y, 1, 1);
-    }
-
-    return canvas;
-}
-
-export function unsetChunkPixels(
-    chunkCanvases: ChunkCanvases,
-    pixels: Pixel[],
-) {
-    const chunkKeys = [];
-    for (let i = 0; i < pixels.length; i++) {
-        const pixel = pixels[i];
-        chunkKeys.push(getChunkKey(pixel.x, pixel.y));
-    }
-    const uniqueChunkKeys = dedupe(chunkKeys);
-    for (let i = 0; i < uniqueChunkKeys.length; i++) {
-        const chunk = chunkCanvases[uniqueChunkKeys[i]];
-        drawPixelsToChunkCanvas(chunk.element, chunk.context, chunk.pixels);
-    }
-}
-
-export function clearChunkPixels(
-    chunkCanvases: ChunkCanvases,
-    pixels: Pixel[],
-) {
-    for (let i = 0; i < pixels.length; i++) {
-        const p = pixels[i];
-        const chunkOrigin = getChunkOrigin(p.x, p.y);
-        const chunk = chunkCanvases[getChunkKey(p.x, p.y)];
-        const chunkPixel = getChunkPixel(chunkOrigin, p);
-
-        chunk.context.clearRect(chunkPixel.x, chunkPixel.y, 1, 1);
-    }
-}
-
-export function clearChunkCanvas(
-    chunkCanvases: ChunkCanvases,
-    chunkKey: string,
-) {
-    const chunk = chunkCanvases[chunkKey];
-    chunk.context.clearRect(0, 0, CHUNK_LENGTH, CHUNK_LENGTH);
-}
 
 export const chunkPixelSchema = pixelSchema.brand<'ChunkPixel'>();
 export type ChunkPixel = z.infer<typeof chunkPixelSchema>;
-
-function getChunkPixel(chunkOrigin: Coord, pixel: Pixel): ChunkPixel {
-    return {
-        x: pixel.x - chunkOrigin.x,
-        y: pixel.y - chunkOrigin.y,
-        color_ref: pixel.color_ref,
-    } as ChunkPixel;
-}
 
 export function getChunkOrigin(x: number, y: number): Coord {
     const chunkX = Math.floor(x / CHUNK_LENGTH) * CHUNK_LENGTH;
@@ -161,6 +24,28 @@ export function getChunkKey(x: number, y: number): string {
     return `x: ${chunkOrigin.x} y: ${chunkOrigin.y}`;
 }
 
+// todo(josh): It would be cool to get all action types onto one pixel format,
+// so this kinda glue code isn't necessary
+export function getUniqueChunksFromPoints(points: AbsolutePoint[]): string[] {
+    const chunks: Set<string> = new Set();
+    for (let i = 0; i < points.length; i++) {
+        const pixel = points[i];
+        chunks.add(getChunkKey(pixel.x, pixel.y));
+    }
+    return Array.from(chunks);
+}
+
+export function getUniqueChunksFromAbsolutePointTuples(
+    points: AbsolutePointTuple[],
+): string[] {
+    const chunks: Set<string> = new Set();
+    for (let i = 0; i < points.length; i++) {
+        const point = points[i];
+        chunks.add(getChunkKey(point[0], point[1]));
+    }
+    return Array.from(chunks);
+}
+
 export function getUniqueChunksFromPixels(pixels: Pixel[]): string[] {
     const chunks: Set<string> = new Set();
     for (let i = 0; i < pixels.length; i++) {
@@ -168,4 +53,281 @@ export function getUniqueChunksFromPixels(pixels: Pixel[]): string[] {
         chunks.add(getChunkKey(pixel.x, pixel.y));
     }
     return Array.from(chunks);
+}
+
+export function getChunkPixel(chunkOrigin: Coord, pixel: Pixel): ChunkPixel {
+    return {
+        x: pixel.x - chunkOrigin.x,
+        y: pixel.y - chunkOrigin.y,
+        color_ref: pixel.color_ref,
+    } as ChunkPixel;
+}
+
+export class Chunk {
+    public readonly pixelCanvas: HTMLCanvasElement;
+    public readonly uiCanvas: HTMLCanvasElement;
+    public readonly realtimeCanvas: HTMLCanvasElement;
+    private pixels: Pixel[] = [];
+    private pixelMap: Map<string, Pixel> = new Map();
+
+    public plots: Plot[] = [];
+
+    private pixelWebGPUManager: WebGPUManager | null = null;
+    private uiWebGPUManager: WebGPUManager | null = null;
+    private realtimeWebGPUManager: WebGPUManager | null = null;
+
+    private relatedActions: Action[] = [];
+    private relatedActiveAction: Action | null = null;
+
+    public isInitialized(): boolean {
+        return this.pixelWebGPUManager != null && this.uiWebGPUManager != null;
+    }
+
+    private key(): string {
+        return `${this.x}-${this.y}`;
+    }
+
+    createChunkCanvas(): HTMLCanvasElement {
+        const canvas = document.createElement('canvas');
+        canvas.width = CHUNK_LENGTH;
+        canvas.height = CHUNK_LENGTH;
+        return canvas;
+    }
+
+    createUIChunkCanvas(): HTMLCanvasElement {
+        const canvas = document.createElement('canvas');
+        canvas.width = CHUNK_LENGTH * CANVAS_PIXEL_RATIO;
+        canvas.height = CHUNK_LENGTH * CANVAS_PIXEL_RATIO;
+        return canvas;
+    }
+
+    createRealtimeChunkCanvas(): HTMLCanvasElement {
+        const canvas = document.createElement('canvas');
+        canvas.width = CHUNK_LENGTH;
+        canvas.height = CHUNK_LENGTH;
+        return canvas;
+    }
+
+    constructor(
+        public readonly x: number,
+        public readonly y: number,
+        private readonly device: GPUDevice,
+    ) {
+        this.pixelCanvas = this.createChunkCanvas();
+        createWebGPUManager(this.pixelCanvas, this.device)
+            .then((manager) => {
+                this.pixelWebGPUManager = manager;
+                console.debug(
+                    'Chunk Pixel WebGPU manager initialized successfully',
+                    this.key(),
+                );
+            })
+            .catch((error) => {
+                console.error(
+                    'Failed to initialize chunk Pixel WebGPU manager',
+                    this.key(),
+                    error,
+                );
+            });
+        this.uiCanvas = this.createUIChunkCanvas();
+        createWebGPUManager(this.uiCanvas, this.device)
+            .then((manager) => {
+                this.uiWebGPUManager = manager;
+                console.debug(
+                    'Chunk UI WebGPU manager initialized successfully',
+                    this.key(),
+                );
+                this.plotRender();
+            })
+            .catch((error) => {
+                console.error(
+                    'Failed to initialize chunk UI WebGPU manager',
+                    this.key(),
+                    error,
+                );
+            });
+        this.realtimeCanvas = this.createRealtimeChunkCanvas();
+        createWebGPUManager(this.realtimeCanvas, this.device, true)
+            .then((manager) => {
+                this.realtimeWebGPUManager = manager;
+                console.debug(
+                    'Chunk Realtime WebGPU manager initialized successfully',
+                    this.key(),
+                );
+            })
+            .catch((error) => {
+                console.error(
+                    'Failed to initialize chunk Realtime WebGPU manager',
+                    this.key(),
+                    error,
+                );
+            });
+    }
+
+    private getPixelKey(x: number, y: number): string {
+        return `${x}_${y}`;
+    }
+
+    initializeWithPixels(pixels: Pixel[]): void {
+        this.pixels = pixels;
+        this.pixelMap = new Map(
+            pixels.map((pixel) => [this.getPixelKey(pixel.x, pixel.y), pixel]),
+        );
+        this.pixelWebGPUManager?.initializePersistentTexture({
+            width: CHUNK_LENGTH,
+            height: CHUNK_LENGTH,
+        });
+
+        this.pixelWebGPUManager?.renderPersistentPixels(
+            pixels,
+            {
+                xCamera: 0,
+                yCamera: 0,
+            },
+            true,
+        );
+    }
+
+    clearPixels(pixels: Pixel[]): void {
+        const transparentPixels = pixels.map(
+            (pixel) =>
+                ({
+                    x: pixel.x,
+                    y: pixel.y,
+                    color_ref: 0,
+                }) as Pixel,
+        );
+
+        this.pixelWebGPUManager?.renderPersistentPixels(
+            transparentPixels,
+            { xCamera: 0, yCamera: 0 },
+            false,
+        );
+    }
+
+    unsetPixels(pixels: Pixel[]): void {
+        const unsetPixels = pixels.map((pixel) => {
+            return {
+                x: pixel.x,
+                y: pixel.y,
+                color_ref:
+                    this.pixelMap.get(this.getPixelKey(pixel.x, pixel.y))
+                        ?.color_ref ?? 0,
+            } as Pixel;
+        });
+
+        this.pixelWebGPUManager?.renderPersistentPixels(
+            unsetPixels,
+            { xCamera: 0, yCamera: 0 },
+            false,
+        );
+    }
+
+    getPixelValue(x: number, y: number): Pixel | null {
+        return this.pixelMap.get(this.getPixelKey(x, y)) ?? null;
+    }
+
+    //////////////// Plot methods ////////////////
+
+     plotRender(): void {
+        this.uiWebGPUManager?.clear();
+
+        console.log('redrawing plots', this.plots);
+        this.uiWebGPUManager?.redrawPolygons(
+            this.plots.map((plot) => ({
+                polygon: plot.polygon,
+            })),
+            {
+                containsMatchingEndpoints: true,
+                xOffset: 0,
+                yOffset: 0,
+                xCamera: 0,
+                yCamera: 0,
+                pixelSize: 5,
+                lineWidth: 0.25,
+                color: BLACK,
+            },
+        );
+    }
+
+    upsertPlots(plots: Plot[]): void {
+        this.plots = [
+            ...this.plots.filter(
+                (plot) => !plots.some((p) => p.id === plot.id),
+            ),
+            ...plots,
+        ];
+        this.plotRender();
+    }
+
+    deletePlots(plotIds: number[]): void {
+        this.plots = this.plots.filter((plot) => !plotIds.includes(plot.id));
+        this.plotRender();
+    }
+
+    //////////////// Action management methods ////////////////
+
+    updateRelatedActiveAction(action: Action | null): void {
+        this.relatedActiveAction = action;
+        this.renderRealtimePixels();
+    }
+
+    completeActiveAction(action: Action): void {
+        this.relatedActiveAction = null;
+        this.relatedActions = this.relatedActions.concat(action);
+        this.renderRealtimePixels();
+    }
+
+    addRelatedAction(action: Action): void {
+        this.relatedActions = this.relatedActions.concat(action);
+        this.renderRealtimePixels();
+    }
+
+    renderRealtimePixels(): void {
+        if (!this.realtimeWebGPUManager) {
+            return;
+        }
+
+        const actions = this.relatedActiveAction
+            ? this.relatedActions.concat(this.relatedActiveAction)
+            : this.relatedActions;
+
+        if (actions.length === 0) {
+            this.realtimeWebGPUManager.clear();
+            return;
+        }
+
+        const allPixels = derivePixelsFromActions(actions);
+
+        // Filter pixels that belong to this chunk and convert to chunk-local coordinates
+        const chunkPixels = allPixels
+            .filter((pixel) => {
+                const pixelChunkX =
+                    Math.floor(pixel.x / CHUNK_LENGTH) * CHUNK_LENGTH;
+                const pixelChunkY =
+                    Math.floor(pixel.y / CHUNK_LENGTH) * CHUNK_LENGTH;
+                return pixelChunkX === this.x && pixelChunkY === this.y;
+            })
+            .map((pixel) => ({
+                x: pixel.x - this.x,
+                y: pixel.y - this.y,
+                color_ref: pixel.color_ref,
+            }));
+
+        if (chunkPixels.length === 0) {
+            this.realtimeWebGPUManager.clear();
+            return;
+        }
+
+        this.realtimeWebGPUManager.redrawPixels(chunkPixels, {
+            xCamera: 0,
+            yCamera: 0,
+        });
+    }
+
+    public destroy(): void {
+        this.pixelWebGPUManager?.destroy();
+        this.uiWebGPUManager?.destroy();
+        this.realtimeWebGPUManager?.destroy();
+    }
 }

@@ -8,7 +8,11 @@ import {
 import { ACTION_TYPES } from '../../action-types';
 import { getZoomMultiplier } from '../../camera';
 import { getPixelSize } from '../../canvas/canvas';
-import { getChunkKey, getChunkOrigin } from '../../canvas/chunk';
+import {
+    getChunkKey,
+    getChunkOrigin,
+    getUniqueChunksFromAbsolutePointTuples,
+} from '../../canvas/chunk';
 import { getCachedPixelsFromActions } from '../../canvas/realtime';
 import { X_MAX, X_MIN, Y_MAX, Y_MIN } from '../../constants';
 import { AbsolutePoint, Pixel, getLastPixelValue } from '../../geometry/coord';
@@ -50,7 +54,7 @@ function getPixelColor(
     const chunkPixelX = x - chunkOrigin.x;
     const chunkPixelY = y - chunkOrigin.y;
 
-    const pixel = chunk.pixelMap.get(`${chunkPixelX},${chunkPixelY}`);
+    const pixel = chunk.getPixelValue(chunkPixelX, chunkPixelY);
     if (pixel != null) {
         return pixel.color_ref;
     }
@@ -119,6 +123,7 @@ export type BucketActive = {
     action_id: string;
     color_ref: ColorRef;
     points: AbsolutePointTuple[];
+    chunkKeys: string[];
 };
 
 export function startBucketAction(
@@ -154,6 +159,7 @@ export function startBucketAction(
         action_id: uuid(),
         color_ref,
         points,
+        chunkKeys: getUniqueChunksFromAbsolutePointTuples(points),
     };
 }
 
@@ -231,6 +237,7 @@ function onPointerDown(
 
     const action_id = nextActiveAction.action_id;
     enqueue.effect(() => {
+        store.trigger.completeCurrentAction({ action: nextActiveAction });
         store.trigger.newPixels({
             pixels: absolutePointTupleToPixels(
                 nextActiveAction.points,
@@ -240,11 +247,7 @@ function onPointerDown(
         });
     });
 
-    return {
-        ...context,
-        activeAction: null,
-        actions: context.actions.concat(nextActiveAction),
-    };
+    return context;
 }
 
 function onPointerMove(

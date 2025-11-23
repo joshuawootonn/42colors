@@ -3,7 +3,6 @@ import { z } from 'zod';
 
 import { toasts } from '@/components/ui/toast';
 
-import { getUniqueChunksFromPixels } from './canvas/chunk';
 import { startRejectedPlotsAnimation } from './canvas/ui';
 import { ErrorCode } from './error-codes';
 import { Pixel, pixelSchema } from './geometry/coord';
@@ -87,12 +86,6 @@ export function newPixels(
 
                 startRejectedPlotsAnimation(response.data.rejected_plot_ids);
 
-                getUniqueChunksFromPixels(pixels).forEach((chunkKey) => {
-                    store.trigger.redrawChunk({
-                        chunkKey,
-                    });
-                });
-
                 toasts.cannotDrawOnPlot();
                 return;
             }
@@ -151,7 +144,12 @@ export function setupChannel(socket: Socket): Channel {
                     }),
                 };
 
-                store.trigger.addPlots({ chunkKey, plots: [localPlot] });
+                store.trigger.chunkOp({
+                    chunkKey,
+                    operation: (chunk) => {
+                        chunk.upsertPlots([localPlot]);
+                    },
+                });
             });
         },
     );
@@ -169,8 +167,6 @@ export function setupChannel(socket: Socket): Channel {
                 const chunkX = parseInt(match[1]);
                 const chunkY = parseInt(match[2]);
 
-                store.trigger.removePlots({ chunkKey, plotIds: [plot.id] });
-
                 const localPlot: Plot = {
                     ...plot,
                     polygon: polygonSchema.parse({
@@ -181,7 +177,12 @@ export function setupChannel(socket: Socket): Channel {
                     }),
                 };
 
-                store.trigger.addPlots({ chunkKey, plots: [localPlot] });
+                store.trigger.chunkOp({
+                    chunkKey,
+                    operation: (chunk) => {
+                        chunk.upsertPlots([localPlot]);
+                    },
+                });
             });
         },
     );
@@ -193,7 +194,12 @@ export function setupChannel(socket: Socket): Channel {
             if (!chunk_keys) return;
 
             chunk_keys.forEach((chunkKey) => {
-                store.trigger.removePlots({ chunkKey, plotIds: [plot_id] });
+                store.trigger.chunkOp({
+                    chunkKey,
+                    operation: (chunk) => {
+                        chunk.deletePlots([plot_id]);
+                    },
+                });
             });
         },
     );

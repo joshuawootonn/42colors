@@ -8,7 +8,7 @@ import { InitializedStore } from '../store';
 import { dedupeCoords } from '../utils/dedupe-coords';
 import { isInitialStore } from '../utils/is-initial-store';
 import { getPixelSize, getSizeInPixelsPlusBleed } from './canvas';
-import { clearChunkPixels, unsetChunkPixels } from './chunk';
+import { getUniqueChunksFromPixels } from './chunk';
 
 export function createRealtimeCanvas(camera: Camera) {
     const canvas = document.createElement('canvas');
@@ -137,19 +137,4 @@ export function getCachedPixelsFromActions(context: InitializedStore): {
         unsetPixels,
         dedupedPixels,
     };
-}
-
-export function renderRealtime(context: InitializedStore) {
-    if (isInitialStore(context)) return;
-
-    const { unsetPixels, dedupedPixels } = getCachedPixelsFromActions(context);
-
-    unsetChunkPixels(context.canvas.chunkCanvases, unsetPixels);
-
-    context.canvas.realtimeWebGPUManager.redrawPixels(dedupedPixels, {
-        xCamera: context.camera.x,
-        yCamera: context.camera.y,
-    });
-
-    clearChunkPixels(context.canvas.chunkCanvases, dedupedPixels);
 }
