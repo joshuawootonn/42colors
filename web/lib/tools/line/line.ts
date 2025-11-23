@@ -4,7 +4,7 @@ import { ACTION_TYPES } from '../../action-types';
 import { getZoomMultiplier } from '../../camera';
 import { getPixelSize } from '../../canvas/canvas';
 import { bresenhamLine } from '../../geometry/bresenham-line';
-import { AbsolutePoint, absolutePointSchema } from '../../geometry/coord';
+import { AbsolutePoint } from '../../geometry/coord';
 import { getCanvasPolygon } from '../../geometry/polygon';
 import { Vector } from '../../geometry/vector';
 import { COLOR_TABLE, ColorRef } from '../../palette';
@@ -30,6 +30,8 @@ export type LineActive = {
     vector: Vector;
     size: number;
     chunkKeys: string[];
+    anchorPoints: AbsolutePoint[];
+    points: AbsolutePoint[];
 };
 
 export type LineComplete = {
@@ -39,6 +41,8 @@ export type LineComplete = {
     vector: Vector;
     size: number;
     chunkKeys: string[];
+    anchorPoints: AbsolutePoint[];
+    points: AbsolutePoint[];
 };
 
 function redrawTelegraph(context: InitializedStore) {
@@ -59,20 +63,13 @@ function redrawTelegraph(context: InitializedStore) {
         context.activeAction.type === ACTION_TYPES.LINE_ACTIVE
     ) {
         const activeLineAction = context.activeAction as LineActive;
-        const vector = activeLineAction.vector;
         const colorHex = COLOR_TABLE[activeLineAction.color_ref];
         const color = hexToRgbaColor(colorHex);
 
         // Get line points and expand them with brush size
-        const linePoints = bresenhamLine(
-            vector.x,
-            vector.y,
-            vector.x + vector.magnitudeX,
-            vector.y + vector.magnitudeY,
-        );
 
         // Create polygons for each brush point and union them
-        const brushPolygons = linePoints.map((point) =>
+        const brushPolygons = activeLineAction.anchorPoints.map((point) =>
             getCanvasPolygon(point.x, point.y, activeLineAction.size),
         );
 
@@ -135,13 +132,18 @@ export function startLineAction(
     color_ref: ColorRef,
     size: number,
 ): LineActive {
+    const anchorPoints = [startPoint];
+    const points = getBrushPoints(anchorPoints, size, 1);
+
     return {
         type: ACTION_TYPES.LINE_ACTIVE,
         action_id: uuid(),
         color_ref,
         vector: new Vector(startPoint.x, startPoint.y, 0, 0),
         size,
-        chunkKeys: getUniqueChunksFromPoints([startPoint]),
+        chunkKeys: getUniqueChunksFromPoints(points),
+        anchorPoints,
+        points,
     };
 }
 
@@ -149,6 +151,15 @@ export function nextLineAction(
     activeLineAction: LineActive,
     endPoint: AbsolutePoint,
 ): LineActive {
+    const anchorPoints = bresenhamLine(
+        activeLineAction.vector.x,
+        activeLineAction.vector.y,
+        endPoint.x,
+        endPoint.y,
+    );
+
+    const points = getBrushPoints(anchorPoints, activeLineAction.size, 1);
+
     return {
         ...activeLineAction,
         vector: new Vector(
@@ -157,25 +168,23 @@ export function nextLineAction(
             endPoint.x - activeLineAction.vector.x,
             endPoint.y - activeLineAction.vector.y,
         ),
-        chunkKeys: getUniqueChunksFromPoints([
-            absolutePointSchema.parse({
-                x: activeLineAction.vector.x,
-                y: activeLineAction.vector.y,
-            }),
-            endPoint,
-        ]),
+        chunkKeys: getUniqueChunksFromPoints(points),
+        anchorPoints,
+        points,
     };
 }
 
 export function completeLineAction(activeLineAction: LineActive): LineComplete {
-    const linePoints = bresenhamLine(
+    const anchorPoints = bresenhamLine(
         activeLineAction.vector.x,
         activeLineAction.vector.y,
         activeLineAction.vector.x + activeLineAction.vector.magnitudeX,
         activeLineAction.vector.y + activeLineAction.vector.magnitudeY,
     );
 
-    const uniqueChunkKeys = getUniqueChunksFromPoints(linePoints);
+    const points = getBrushPoints(anchorPoints, activeLineAction.size, 1);
+
+    const uniqueChunkKeys = getUniqueChunksFromPoints(points);
 
     return {
         type: ACTION_TYPES.LINE_COMPLETE,
@@ -184,6 +193,8 @@ export function completeLineAction(activeLineAction: LineActive): LineComplete {
         vector: activeLineAction.vector,
         size: activeLineAction.size,
         chunkKeys: uniqueChunkKeys,
+        anchorPoints,
+        points,
     };
 }
 
@@ -264,30 +275,13 @@ function onPointerOut(
         return context;
     }
 
-    const vector = context.activeAction.vector;
-    const color_ref = context.activeAction.color_ref;
     const action_id = context.activeAction.action_id;
-
-    const linePoints = bresenhamLine(
-        vector.x,
-        vector.y,
-        vector.x + vector.magnitudeX,
-        vector.y + vector.magnitudeY,
-    );
-
-    // Apply size to the line points
-    const brushPoints = getBrushPoints(
-        linePoints,
-        context.activeAction.size,
-        1,
-    );
-
     const lineComplete = completeLineAction(context.activeAction);
 
     enqueue.effect(() => {
         store.trigger.completeCurrentAction({ action: lineComplete });
         store.trigger.newPixels({
-            pixels: pointsToPixels(brushPoints, color_ref),
+            pixels: pointsToPixels(lineComplete.points, lineComplete.color_ref),
             action_id,
         });
     });
@@ -304,29 +298,16 @@ function onPointerUp(
         return context;
     }
 
-    const vector = context.activeAction.vector;
-    const color_ref = context.activeAction.color_ref;
     const action_id = context.activeAction.action_id;
-
-    const linePoints = bresenhamLine(
-        vector.x,
-        vector.y,
-        vector.x + vector.magnitudeX,
-        vector.y + vector.magnitudeY,
-    );
-
-    // Apply size to the line points
-    const brushPoints = getBrushPoints(
-        linePoints,
-        context.activeAction.size,
-        1,
-    );
-
     const completedAction = completeLineAction(context.activeAction);
+
     enqueue.effect(() => {
         store.trigger.completeCurrentAction({ action: completedAction });
         store.trigger.newPixels({
-            pixels: pointsToPixels(brushPoints, color_ref),
+            pixels: pointsToPixels(
+                completedAction.points,
+                completedAction.color_ref,
+            ),
             action_id,
         });
     });
