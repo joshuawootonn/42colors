@@ -101,15 +101,15 @@ export function setupChannel(socket: Socket): Channel {
     channel
         .join()
         .receive('ok', (resp: unknown) => {
-            console.log('Joined successfully', resp);
+            console.debug('Joined successfully', resp);
         })
         .receive('error', (resp: unknown) => {
-            console.log('Unable to join', resp);
+            console.error('Unable to join', resp);
         });
 
     channel.on('new_pixels', (payload: NewPixelResponse) => {
         if (payload.store_id === store.getSnapshot().context.id) {
-            console.log(`skipping realtime since they came from this store`);
+            console.debug(`skipping realtime since they came from this store`);
             return;
         }
 

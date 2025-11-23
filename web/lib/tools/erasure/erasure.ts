@@ -34,9 +34,6 @@ function redrawTelegraph(context: InitializedStore) {
     }
 
     if (context.interaction.cursorPosition == null) {
-        console.info(
-            'Skipping erasure telegraph draw since `cursorPosition` is null',
-        );
         return;
     }
 
