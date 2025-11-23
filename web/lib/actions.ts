@@ -25,12 +25,24 @@ import { LineActive, LineComplete } from './tools/line/line';
 type Undo = { type: 'undo' };
 type Redo = { type: 'redo' };
 
-export type Action =
+export type EditableAction =
     | ErasureActive
     | BrushActive
-    | LineActive
     | LineComplete
-    | BucketActive
+    | BucketActive;
+
+export function isEditableAction(action: Action): action is EditableAction {
+    return (
+        action.type === ACTION_TYPES.BRUSH_ACTIVE ||
+        action.type === ACTION_TYPES.ERASURE_ACTIVE ||
+        action.type === ACTION_TYPES.LINE_COMPLETE ||
+        action.type === ACTION_TYPES.BUCKET_ACTIVE
+    );
+}
+
+export type Action =
+    | EditableAction
+    | LineActive
     | ClaimerCreate
     | ClaimerNewRectCreate
     | ClaimerNewRectEdit
@@ -353,13 +365,7 @@ export function getActionToUndo(
     return (
         [...resolveActions(prevActions)]
             .reverse()
-            .find(
-                (action) =>
-                    action.type === ACTION_TYPES.BRUSH_ACTIVE ||
-                    action.type === ACTION_TYPES.ERASURE_ACTIVE ||
-                    action.type === ACTION_TYPES.LINE_COMPLETE ||
-                    action.type === ACTION_TYPES.BUCKET_ACTIVE,
-            ) ?? null
+            .find((action) => isEditableAction(action)) ?? null
     );
 }
 
@@ -374,13 +380,7 @@ export function getActionToRedo(
     return (
         [...resolveActions(prevActions.concat({ type: 'redo' }))]
             .reverse()
-            .find(
-                (action) =>
-                    action.type === ACTION_TYPES.BRUSH_ACTIVE ||
-                    action.type === ACTION_TYPES.ERASURE_ACTIVE ||
-                    action.type === ACTION_TYPES.LINE_COMPLETE ||
-                    action.type === ACTION_TYPES.BUCKET_ACTIVE,
-            ) ?? null
+            .find((action) => isEditableAction(action)) ?? null
     );
 }
 
