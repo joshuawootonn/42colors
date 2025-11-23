@@ -437,18 +437,24 @@ export class WebGPUManager {
 export async function createWebGPUManager(
     canvas: HTMLCanvasElement,
     existingDevice: GPUDevice,
+    toggleDebugLogging: boolean = false,
 ): Promise<WebGPUManager | null> {
     if (navigator.gpu) {
         try {
             const device = existingDevice;
             const webgpuContext = canvas.getContext('webgpu');
+            
             if (webgpuContext) {
                 const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+               
                 webgpuContext.configure({
                     device,
                     format: canvasFormat,
                     alphaMode: 'premultiplied',
                 });
+                // if (toggleDebugLogging) {
+                //     return null;
+                // }
                 const manager = new WebGPUManager(
                     device,
                     webgpuContext,

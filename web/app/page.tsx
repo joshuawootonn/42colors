@@ -112,9 +112,9 @@ export default function Page() {
                                     device,
                                 });
                             } else {
-                                console.error(
-                                    'Failed to initialize WebGPU managers',
-                                );
+                                // console.error(
+                                //     'Failed to initialize WebGPU managers',
+                                // );
                             }
                         })
                         .catch((error) => {

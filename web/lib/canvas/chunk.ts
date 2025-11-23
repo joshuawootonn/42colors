@@ -147,7 +147,7 @@ export class Chunk {
                 );
             });
         this.realtimeCanvas = this.createRealtimeChunkCanvas();
-        createWebGPUManager(this.realtimeCanvas, this.device)
+        createWebGPUManager(this.realtimeCanvas, this.device, true)
             .then((manager) => {
                 this.realtimeWebGPUManager = manager;
                 console.debug(
@@ -229,7 +229,7 @@ export class Chunk {
 
     //////////////// Plot methods ////////////////
 
-    private plotRender(): void {
+     plotRender(): void {
         this.uiWebGPUManager?.clear();
 
         console.log('redrawing plots', this.plots);
