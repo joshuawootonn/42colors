@@ -197,6 +197,28 @@ export class Chunk {
         );
     }
 
+    // todo(josh): This is bad. We shouldn't have a method for unsetting pixels.
+    // We should instead model pixel rejection as an action taken by the store. 
+    unsetSpecificPixels(_unsetPixels: Pixel[]): void {
+        const unsetPixels = _unsetPixels.map((pixel) => {
+            return {
+                x: pixel.x,
+                y: pixel.y,
+                color_ref:
+                    this.pixelMap.get(this.getPixelKey(pixel.x, pixel.y))
+                        ?.color_ref ?? 0,
+            } as Pixel;
+        });
+        this.pixelWebGPUManager?.renderPersistentPixels(
+            unsetPixels,
+            {
+                xCamera: 0,
+                yCamera: 0,
+            },
+            false,
+        );
+    }
+
     private updatePersistentPixels(
         _pixels: Pixel[],
         _unsetPixels: Pixel[],

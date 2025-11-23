@@ -628,6 +628,25 @@ export const store = createStore({
             };
         },
 
+        redrawSpecificPixels: (context, event: { pixels: Pixel[] }) => {
+            if (isInitialStore(context)) return;
+
+            const chunkKeys = getUniqueChunksFromPixels(event.pixels);
+
+            for (const chunkKey of chunkKeys) {
+                const chunk = context.canvas.chunkCanvases[chunkKey];
+                if (chunk) {
+                    chunk.unsetSpecificPixels(
+                        event.pixels.filter(
+                            (pixel) =>
+                                getChunkKey(pixel.x, pixel.y) === chunkKey,
+                        ),
+                    );
+                }
+            }
+            return context;
+        },
+
         completeCurrentAction: (context, event: { action: Action }) => {
             if (isInitialStore(context)) return;
 
@@ -714,6 +733,9 @@ export const store = createStore({
                 );
                 if (action) {
                     store.trigger.updateActionById({ action });
+                    store.trigger.redrawSpecificPixels({
+                        pixels: event.rejected_pixels,
+                    });
                 }
             });
 
