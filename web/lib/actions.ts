@@ -2,7 +2,7 @@ import { ACTION_TYPES } from './action-types';
 import { getUniqueChunksFromPoints } from './canvas/chunk';
 import { bresenhamLine } from './geometry/bresenham-line';
 import { AbsolutePoint, Pixel } from './geometry/coord';
-import { absolutePointTupleToPixels } from './line';
+import { AbsolutePointTuple, absolutePointTupleToPixels } from './line';
 import { ColorRef, TRANSPARENT_REF } from './palette';
 import {
     BrushActive,
@@ -77,9 +77,46 @@ function redo(): Redo {
     return { type: 'redo' };
 }
 
+function create_line_fixture(
+    points: AbsolutePoint[],
+    color_ref: ColorRef,
+): LineComplete {
+    return {
+        type: ACTION_TYPES.LINE_COMPLETE,
+        action_id: '22222222-2222-2222-2222-222222222222',
+        color_ref,
+        vector: {
+            x: 0,
+            y: 0,
+            magnitudeX: 0,
+            magnitudeY: 0,
+            toDOMRect: () => new DOMRect(),
+        },
+        size: 1,
+        chunkKeys: [],
+        anchorPoints: points,
+        points,
+    };
+}
+
+function create_bucket_fixture(
+    points: AbsolutePointTuple[],
+    color_ref: ColorRef,
+): BucketActive {
+    return {
+        type: ACTION_TYPES.BUCKET_ACTIVE,
+        action_id: '33333333-3333-3333-3333-333333333333',
+        color_ref,
+        chunkKeys: [],
+        points,
+    };
+}
+
 export const Actions = {
     brush: create_brush_fixture,
     erase: create_erase_fixture,
+    line: create_line_fixture,
+    bucket: create_bucket_fixture,
     undo,
     redo,
 };
@@ -345,4 +382,62 @@ export function getActionToRedo(
                     action.type === ACTION_TYPES.BUCKET_ACTIVE,
             ) ?? null
     );
+}
+
+export function updateActionBasedOnRejectedPixels(
+    actions: Action[],
+    rejected_pixels: Pixel[],
+    action_id: string,
+): Action[] {
+    return actions.map((action) => {
+        if (
+            action.type !== ACTION_TYPES.BRUSH_ACTIVE &&
+            action.type !== ACTION_TYPES.ERASURE_ACTIVE &&
+            action.type !== ACTION_TYPES.LINE_COMPLETE &&
+            action.type !== ACTION_TYPES.BUCKET_ACTIVE
+        )
+            return action;
+
+        if (action.action_id !== action_id) return action;
+
+        if (
+            action.type === ACTION_TYPES.BRUSH_ACTIVE ||
+            action.type === ACTION_TYPES.ERASURE_ACTIVE
+        ) {
+            const rejected_coords = new Set(
+                rejected_pixels.map((p) => `${p.x},${p.y}`),
+            );
+            const points = action.points.filter(
+                (point) => !rejected_coords.has(`${point.x},${point.y}`),
+            );
+            return { ...action, points };
+        }
+        if (action.type === ACTION_TYPES.LINE_COMPLETE) {
+            const rejected_coords = new Set(
+                rejected_pixels.map((p) => `${p.x},${p.y}`),
+            );
+            const filteredBrushPoints = action.points.filter(
+                (point) => !rejected_coords.has(`${point.x},${point.y}`),
+            );
+
+            return {
+                ...action,
+                points: filteredBrushPoints,
+            };
+        } else if (action.type === ACTION_TYPES.BUCKET_ACTIVE) {
+            const rejected_coords = new Set(
+                rejected_pixels.map((p) => `${p.x},${p.y}`),
+            );
+
+            const points = action.points.filter(
+                (point) => !rejected_coords.has(`${point[0]},${point[1]}`),
+            );
+
+            return {
+                ...action,
+                points,
+            };
+        }
+        return action;
+    });
 }
