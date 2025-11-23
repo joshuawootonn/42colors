@@ -384,10 +384,6 @@ export class Chunk {
 
         const allPixels = derivePixelsFromActions(actions);
         const allUnsetPixels = deriveUnsetPixelsFromActions(actions);
-
-        this.updatePersistentPixels(allPixels, allUnsetPixels);
-
-        // Filter pixels that belong to this chunk and convert to chunk-local coordinates
         const chunkPixels = allPixels
             .filter((pixel) => {
                 const pixelChunkX =
@@ -404,6 +400,23 @@ export class Chunk {
                         color_ref: pixel.color_ref,
                     }) as Pixel,
             );
+        const chunkUnsetPixels = allUnsetPixels
+            .filter((pixel) => {
+                const pixelChunkX =
+                    Math.floor(pixel.x / CHUNK_LENGTH) * CHUNK_LENGTH;
+                const pixelChunkY =
+                    Math.floor(pixel.y / CHUNK_LENGTH) * CHUNK_LENGTH;
+                return pixelChunkX === this.x && pixelChunkY === this.y;
+            })
+            .map(
+                (pixel) =>
+                    ({
+                        x: pixel.x - this.x,
+                        y: pixel.y - this.y,
+                        color_ref: pixel.color_ref,
+                    }) as Pixel,
+            );
+        this.updatePersistentPixels(chunkPixels, chunkUnsetPixels);
 
         if (chunkPixels.length === 0) {
             this.realtimeWebGPUManager?.clear();
