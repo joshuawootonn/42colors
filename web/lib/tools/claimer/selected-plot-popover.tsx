@@ -6,29 +6,20 @@ import { X32 } from '@/components/icons/x_32';
 import { IconButton } from '@/components/ui/icon-button';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { isScrollingAtom } from '@/lib/events';
-import { usePlots } from '@/lib/plots/plots.rest';
 import { canvasToClient } from '@/lib/utils/clientToCanvasConversion';
-import { useQuery } from '@tanstack/react-query';
 import { useAtom, useSelector } from '@xstate/store/react';
 
 import { ACTION_TYPES } from '../../action-types';
 import { store } from '../../store';
-import { getUserPlots } from './claimer.rest';
 import { DeletePlotButton } from './delete-plot-button';
 import { EditPlotForm } from './edit-plot-form';
 import { getPlotOverlayPositionForPolygons } from './get-plot-overlay-position';
+import { useSelectedPlot } from './use-selected-plot';
 
 export function SelectedPlotPopover() {
-    const selectedPlotId = useSelector(
-        store,
-        (state) => state.context.toolSettings?.claimer.selectedPlotId,
-    );
     const camera = useSelector(store, (state) => state.context.camera);
     const user = useSelector(store, (state) => state.context?.user);
-    const queryClient = useSelector(
-        store,
-        (state) => state.context.queryClient,
-    );
+
     const activeAction = useSelector(
         store,
         (state) => state.context.activeAction,
@@ -48,43 +39,7 @@ export function SelectedPlotPopover() {
         activeAction?.type === ACTION_TYPES.CLAIMER_EDIT ||
         activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_EDIT;
 
-    // Get user plots reactively
-    const { data: userPlots } = useQuery({
-        queryKey: ['user', 'plots'],
-        queryFn: getUserPlots,
-        enabled: !!selectedPlotId && !!queryClient,
-    });
-    const { data: recentPlots } = usePlots(100, {
-        enabled: !!selectedPlotId && !!queryClient,
-    });
-
-    // Get the selected plot data
-    const selectedPlot = useMemo(() => {
-        if (!selectedPlotId) return null;
-
-        // Try to find the plot in user plots first
-        const userPlot = userPlots?.find((plot) => plot.id === selectedPlotId);
-        if (userPlot) return userPlot;
-
-        // Try to find in recent plots
-        const recentPlot = recentPlots?.find(
-            (plot) => plot.id === selectedPlotId,
-        );
-        if (recentPlot) return recentPlot;
-
-        // Try to find in chunk plots (for plots loaded by chunk)
-        const context = store.getSnapshot().context;
-        if (context.state === 'initialized') {
-            for (const chunk of Object.values(context.canvas.chunkCanvases)) {
-                const chunkPlot = chunk.plots.find(
-                    (plot) => plot.id === selectedPlotId,
-                );
-                if (chunkPlot) return chunkPlot;
-            }
-        }
-
-        return null;
-    }, [selectedPlotId, userPlots, recentPlots]);
+    const selectedPlot = useSelectedPlot();
 
     useEffect(() => {
         if (
@@ -122,6 +77,7 @@ export function SelectedPlotPopover() {
     // Render popover for any selected plot (owned or not)
     // Only show edit/delete buttons if user owns the plot
     const isOwned = user?.id === selectedPlot?.userId;
+
     if (!selectedPlot) {
         return null;
     }
