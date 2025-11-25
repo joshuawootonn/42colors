@@ -19,23 +19,21 @@ export function About() {
             <p>— a pixel art editor and social game</p>
 
             <p>
-                You start with a grant for four thousand pixels. After surveying
-                the canvas, and finding a fitting spot, your first goal should
-                be to claim a plot of land.
+                Start with a grant for four thousand pixels, survey the canvas,
+                find a fitting spot, and when you do claim a part of the canvas.
             </p>
 
             <p>
-                Next, it&apos;s time to draw (something dope of course). When
-                you are done, people can upvote or downvote your art, which
-                decides whether you get more pixels or not. Pixels are
-                currency.{' '}
+                Next, it&apos;s time to draw, something dope of course. When you
+                have, people will visit and vote on your art, which will
+                determine whether you get more pixels — the currency of this
+                world.
             </p>
 
             <p>
                 Your first claim will be small, as four thousand is only so
-                much. But as you come back and visit you&apos;ll you&apos;ll be
-                granted more pixels for more art. And when people upvote your
-                work (coming soon!!) you&apos;ll be awarded in full.
+                much. But as you come back and visit you&apos;ll be granted more
+                pixels for more art and such.
             </p>
 
             <p>I can&apos;t wait to see what you create. ✨</p>
