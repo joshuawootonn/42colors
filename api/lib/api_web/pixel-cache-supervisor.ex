@@ -29,7 +29,10 @@ defmodule ApiWeb.PixelCacheSupervisor do
   def init(_init_args) do
     TelemetryHelper.instrument(:initialize_file, fn -> PixelCache.initialize_file() end)
 
-    spawn(fn -> load_and_write_pixels_in_batches(0, 0) end)
+    # Skip loading pixels from DB in test environment to avoid sandbox issues
+    unless Mix.env() == :test do
+      spawn(fn -> load_and_write_pixels_in_batches(0, 0) end)
+    end
 
     {:ok, %{}}
   end
