@@ -34,7 +34,8 @@ defmodule ApiWeb.PlotJSON do
       userId: plot.user_id,
       insertedAt: plot.inserted_at,
       updatedAt: plot.updated_at,
-      polygon: polygon_data
+      polygon: polygon_data,
+      score: plot.score
     }
   end
 end

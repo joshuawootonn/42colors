@@ -7,8 +7,10 @@ defmodule Api.Canvas.Plot do
     field :description, :string
     field :polygon, Geo.PostGIS.Geometry
     field :deleted_at, :utc_datetime
+    field :score, :integer, default: 0
     belongs_to :user, Api.Accounts.User
     has_many :pixels, Api.Canvas.Pixel
+    has_many :votes, Api.Canvas.Vote
 
     timestamps(type: :utc_datetime)
   end
@@ -16,7 +18,7 @@ defmodule Api.Canvas.Plot do
   @doc false
   def changeset(plot, attrs) do
     plot
-    |> cast(attrs, [:name, :description, :user_id, :polygon, :deleted_at])
+    |> cast(attrs, [:name, :description, :user_id, :polygon, :deleted_at, :score])
     |> validate_required([:name], message: "Name is required")
     |> validate_required([:user_id], message: "User is required")
     |> validate_length(:name,

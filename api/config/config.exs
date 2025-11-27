@@ -68,7 +68,7 @@ config :elixir_auth_google,
   client_id: System.get_env("GOOGLE_CLIENT_ID"),
   client_secret: System.get_env("GOOGLE_CLIENT_SECRET")
 
-# Callback URL from Google Auth 
+# Callback URL from Google Auth
 app_url = System.get_env("APP_URL") || "https://42colors.com"
 api_url = System.get_env("API_URL") || "https://api.42colors.com"
 env = System.get_env("ENV") || "prod"
@@ -79,6 +79,13 @@ config :api, :env, env
 
 require Logger
 Logger.info("Config loaded with #{app_url} / #{api_url} / #{client_secret} / #{client_id}")
+
+# Configure Quantum scheduler
+config :api, Api.Scheduler,
+  jobs: [
+    # Daily vote settlement at midnight UTC
+    {"0 0 * * *", {Api.Canvas.Vote.Service, :settle_daily_votes, []}}
+  ]
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

@@ -116,9 +116,10 @@ defmodule Api.Canvas.Plot.Service do
                   nil ->
                     {:error, :user_not_found}
 
-                  user ->
-                    # Calculate balance diff using the public function
-                    balance_change = LogService.calculate_balance_change(user.balance, cost)
+                  _user ->
+                    # Calculate balance diff using available balance (includes unsettled votes)
+                    available_balance = Api.Accounts.UserBalance.get_available_balance(user_id)
+                    balance_change = LogService.calculate_balance_change(available_balance, cost)
 
                     Multi.new()
                     |> Multi.insert(:plot, Plot.changeset(%Plot{}, attrs))
@@ -179,9 +180,10 @@ defmodule Api.Canvas.Plot.Service do
         nil ->
           {:error, :user_not_found}
 
-        user ->
-          # Calculate balance diff using the public function
-          balance_change = LogService.calculate_balance_change(user.balance, cost)
+        _user ->
+          # Calculate balance diff using available balance (includes unsettled votes)
+          available_balance = Api.Accounts.UserBalance.get_available_balance(plot.user_id)
+          balance_change = LogService.calculate_balance_change(available_balance, cost)
 
           Multi.new()
           |> Multi.update(:plot, Plot.changeset(plot, attrs))

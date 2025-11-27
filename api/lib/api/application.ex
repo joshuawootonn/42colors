@@ -11,6 +11,7 @@ defmodule Api.Application do
     children = [
       ApiWeb.Telemetry,
       Api.Repo,
+      Api.Scheduler,
       {DNSCluster, query: Application.get_env(:api, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Api.PubSub},
       # Start the Finch HTTP client for sending emails
