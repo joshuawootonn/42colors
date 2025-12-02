@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="42colors_admin@us-east-1.pg.psdb.cloud" uuid="62225a36-c3d4-4014-8016-c262a8612e02">
-      <driver-ref>postgresql</driver-ref>
-      <synchronize>true</synchronize>
-      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://us-east-1.pg.psdb.cloud:5432/42colors</jdbc-url>
-      <working-dir>$ProjectFileDir$</working-dir>
-    </data-source>
-    <data-source source="LOCAL" name="42colors_prod@us-east-1.pg.psdb.cloud [2]" uuid="f6cb65f4-69c6-49b4-9c85-7087abdbc6b3">
+    <data-source source="LOCAL" name="PROD-ADMIN@PS" uuid="62225a36-c3d4-4014-8016-c262a8612e02">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
