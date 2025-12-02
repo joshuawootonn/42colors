@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { toasts } from '@/components/ui/toast';
 
+import { isAdminUser } from './admin';
 import { startRejectedPlotsAnimation } from './canvas/ui';
 import { ErrorCode } from './error-codes';
 import { Pixel, pixelSchema } from './geometry/coord';
@@ -56,11 +57,16 @@ export function newPixels(
 
     if (context.server.channel == null || pixels.length === 0) return;
 
+    const adminOverride =
+        isAdminUser(context.user) &&
+        context.adminSettings.adminOverridePlotProtection;
+
     context.server.channel
         .push('new_pixels', {
             pixels,
             store_id: context.id,
             action_id,
+            admin_override: adminOverride,
         })
         .receive('error', (resp) => {
             const response = errorResponses.safeParse(resp);

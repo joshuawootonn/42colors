@@ -1,8 +1,12 @@
 defmodule ApiWeb.RegionChannel do
   use Phoenix.Channel
 
+  alias Api.Accounts.User
   alias Api.Canvas.PixelService
+  alias Api.Repo
   alias ApiWeb.PixelCacheSupervisor
+
+  @admin_emails ["jose56wonton@gmail.com", "anders.almberg@gmail.com"]
 
   def join("region:general", _message, socket) do
     {:ok, socket}
@@ -10,6 +14,7 @@ defmodule ApiWeb.RegionChannel do
 
   def handle_in("new_pixels", %{"pixels" => pixels, "store_id" => store_id} = payload, socket) do
     current_user_id = Map.get(socket.assigns, :current_user_id)
+    admin_override = Map.get(payload, "admin_override", false)
 
     if current_user_id == nil do
       # Allow unauthenticated users to draw; pixels will be saved without user association
@@ -24,7 +29,7 @@ defmodule ApiWeb.RegionChannel do
           }
         end)
 
-      case PixelService.create_many(pixel_attrs, nil) do
+      case PixelService.create_many(pixel_attrs, nil, skip_plot_validation: false) do
         {:ok, pixel_changesets} ->
           PixelCacheSupervisor.write_pixels_to_file(pixel_changesets)
 
@@ -88,7 +93,17 @@ defmodule ApiWeb.RegionChannel do
           }
         end)
 
-      case PixelService.create_many(pixel_attrs, current_user_id) do
+      # Check if admin override is valid (user must be an admin)
+      is_admin_override_valid =
+        admin_override && current_user_id != nil &&
+          case Repo.get(User, current_user_id) do
+            nil -> false
+            user -> user.email in @admin_emails
+          end
+
+      case PixelService.create_many(pixel_attrs, current_user_id,
+             skip_plot_validation: is_admin_override_valid
+           ) do
         {:ok, pixel_changesets} ->
           # All pixels were valid and created
           PixelCacheSupervisor.write_pixels_to_file(pixel_changesets)

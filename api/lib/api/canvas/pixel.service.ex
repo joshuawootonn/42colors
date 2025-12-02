@@ -13,9 +13,16 @@ defmodule Api.Canvas.PixelService do
   - Pixels outside all plots are accepted and saved with no plot association
 
   `user_id` can be nil (unauthenticated). In that case, pixels are accepted unless they fall inside any plot.
+
+  Options:
+  - `:skip_plot_validation` - when true, allows drawing on any plot (for admin override)
   """
-  def create_many(pixels, user_id)
+  def create_many(pixels, user_id, opts \\ [])
+
+  def create_many(pixels, user_id, opts)
       when is_list(pixels) and (is_integer(user_id) or is_nil(user_id)) do
+    skip_plot_validation = Keyword.get(opts, :skip_plot_validation, false)
+
     # Build point list and determine covering plots for each point
     points = Enum.map(pixels, fn pixel -> create_point(pixel.x, pixel.y) end)
     point_to_plot = Plot.Repo.plots_covering_points(points)
@@ -35,6 +42,8 @@ defmodule Api.Canvas.PixelService do
 
           %{user_id: plot_owner_id} ->
             cond do
+              # Admin override: accept all pixels
+              skip_plot_validation -> true
               is_nil(user_id) -> false
               plot_owner_id == user_id -> true
               true -> false
@@ -91,7 +100,7 @@ defmodule Api.Canvas.PixelService do
     end
   end
 
-  def create_many(_, _), do: {:error, :invalid_arguments}
+  def create_many(_, _, _), do: {:error, :invalid_arguments}
 
   # Creates a PostGIS point from x, y coordinates.
   defp create_point(x, y) do

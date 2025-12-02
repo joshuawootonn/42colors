@@ -107,6 +107,7 @@ import { WebGPUManager } from './webgpu/web-gpu-manager';
 type AdminSettings = {
     plotBordersVisible: boolean;
     chunkBordersVisible: boolean;
+    adminOverridePlotProtection: boolean;
 };
 
 export type InitialStore = {
@@ -179,6 +180,7 @@ const initialCamera: Camera = {
 const defaultAdminSettings: AdminSettings = {
     plotBordersVisible: true,
     chunkBordersVisible: true,
+    adminOverridePlotProtection: false,
 };
 
 const initialialStoreContext: Store = {
@@ -1013,6 +1015,20 @@ export const store = createStore({
                     ...context.adminSettings,
                     chunkBordersVisible:
                         !context.adminSettings.chunkBordersVisible,
+                },
+            };
+        },
+
+        toggleAdminOverridePlotProtection: (context) => {
+            if (isInitialStore(context)) return;
+            if (!isAdminUser(context.user)) return context;
+
+            return {
+                ...context,
+                adminSettings: {
+                    ...context.adminSettings,
+                    adminOverridePlotProtection:
+                        !context.adminSettings.adminOverridePlotProtection,
                 },
             };
         },

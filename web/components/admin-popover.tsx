@@ -9,6 +9,7 @@ import {
     PopoverContent,
     PopoverHeading,
 } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
 import { isAdminUser } from '@/lib/admin';
 import { grantPixels } from '@/lib/admin.rest';
 import { store } from '@/lib/store';
@@ -24,6 +25,10 @@ export function AdminPopover({ children }: { children: ReactNode }) {
     const [grantAmount, setGrantAmount] = useState('');
 
     const currentUser = useSelector(store, (state) => state.context?.user);
+    const adminOverridePlotProtection = useSelector(
+        store,
+        (state) => state.context?.adminSettings?.adminOverridePlotProtection,
+    );
 
     // Only show for admin user
     const isAdmin = isAdminUser(currentUser);
@@ -83,8 +88,28 @@ export function AdminPopover({ children }: { children: ReactNode }) {
             {children}
             <PopoverContent className="w-96">
                 <PopoverHeading>Admin</PopoverHeading>
-                <div className="space-y-4 py-2">
-                    <div className="space-y-2 px-2">
+                <div className="space-y-2 py-2">
+                    <div className="flex items-center justify-between px-2">
+                        <label
+                            htmlFor="admin-override"
+                            className="text-sm font-medium"
+                        >
+                            Override plot protection
+                        </label>
+                        <Switch
+                            id="admin-override"
+                            checked={adminOverridePlotProtection ?? false}
+                            onCheckedChange={() =>
+                                store.trigger.toggleAdminOverridePlotProtection()
+                            }
+                        />
+                    </div>
+                    {adminOverridePlotProtection && (
+                        <p className="px-2 text-xs text-amber-600">
+                            Warning: You can draw over any plot
+                        </p>
+                    )}
+                    <div className="space-y-2 border-t-1.5 px-2 pt-2">
                         <label
                             htmlFor="search-users"
                             className="text-sm font-medium"
