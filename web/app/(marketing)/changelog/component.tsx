@@ -29,10 +29,26 @@ export default function Changelog() {
             <hr className="w-full border-t-2 border-border" />
             <ul>
                 <li>
+                    <DateComponent date={new Date('12/02/2025')} />
+                    <ul>
+                        <li>
+                            Added a way for admins to draw override plot
+                            protection. This is exclusively used for clearing
+                            non family friendly art.
+                            <video
+                                src="/changelog/25-12-02-admin-override-of-plot-protection.mp4"
+                                muted
+                                controls
+                                className="mt-4 border border-border"
+                            />
+                        </li>
+                    </ul>
+                </li>
+                <li>
                     <DateComponent date={new Date('11/23/2025')} />
                     <ul>
                         <li>
-                            I optimized the rendering of the realtime pixels you
+                            Optimized the rendering of the realtime pixels you
                             draw and the canvas UI (like the plot polygons) in
                             two ways.
                             <ul>
