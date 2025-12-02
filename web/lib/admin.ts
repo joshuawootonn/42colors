@@ -1,4 +1,7 @@
-export const ADMIN_EMAILS = ['jose56wonton@gmail.com'];
+export const ADMIN_EMAILS = [
+    'jose56wonton@gmail.com',
+    'anders.almberg@gmail.com',
+];
 
 type MaybeUser =
     | {

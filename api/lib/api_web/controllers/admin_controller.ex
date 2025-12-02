@@ -5,12 +5,12 @@ defmodule ApiWeb.AdminController do
   alias Api.Logs.Log.Service, as: LogService
   alias Api.Repo
 
-  @admin_email "jose56wonton@gmail.com"
+  @admin_emails ["jose56wonton@gmail.com", "anders.almberg@gmail.com"]
 
   def search_users(conn, %{"query" => query}) when is_binary(query) do
     current_user = conn.assigns.current_user
 
-    unless current_user.email == @admin_email do
+    unless current_user.email in @admin_emails do
       conn
       |> put_status(:forbidden)
       |> json(%{
@@ -47,7 +47,7 @@ defmodule ApiWeb.AdminController do
   def grant_pixels(conn, %{"user_id" => user_id, "amount" => amount}) do
     current_user = conn.assigns.current_user
 
-    unless current_user.email == @admin_email do
+    unless current_user.email in @admin_emails do
       conn
       |> put_status(:forbidden)
       |> json(%{
