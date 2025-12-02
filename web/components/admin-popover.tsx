@@ -84,11 +84,15 @@ export function AdminPopover({ children }: { children: ReactNode }) {
             <PopoverContent className="w-96">
                 <PopoverHeading>Admin</PopoverHeading>
                 <div className="space-y-4 py-2">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">
+                    <div className="space-y-2 px-2">
+                        <label
+                            htmlFor="search-users"
+                            className="text-sm font-medium"
+                        >
                             Search Users
                         </label>
                         <Input
+                            id="search-users"
                             type="text"
                             placeholder="Search by email..."
                             value={searchQuery}
@@ -102,13 +106,13 @@ export function AdminPopover({ children }: { children: ReactNode }) {
                     </div>
 
                     {isSearching && (
-                        <div className="text-sm text-muted-foreground">
+                        <div className="px-2 text-sm text-muted-foreground">
                             Searching...
                         </div>
                     )}
 
                     {searchError && (
-                        <div className="text-sm text-red-600">
+                        <div className="px-2 text-sm text-red-600">
                             {searchError instanceof Error
                                 ? searchError.message
                                 : 'Failed to search users'}
@@ -116,13 +120,13 @@ export function AdminPopover({ children }: { children: ReactNode }) {
                     )}
 
                     {searchResults && searchResults.length > 0 && (
-                        <div className="max-h-48 overflow-auto rounded border border-input">
+                        <div className="max-h-48 overflow-auto rounded px-2">
                             {searchResults.map((user) => (
                                 <button
                                     key={user.id}
                                     type="button"
                                     className={cn(
-                                        'w-full p-2 text-left hover:bg-secondary',
+                                        'svg-outline-inset relative z-0 block w-full p-2 text-left hover:bg-secondary',
                                         selectedUser?.id === user.id &&
                                             'bg-secondary',
                                     )}
@@ -140,13 +144,13 @@ export function AdminPopover({ children }: { children: ReactNode }) {
                     )}
 
                     {searchResults && searchResults.length === 0 && (
-                        <div className="text-sm text-muted-foreground">
+                        <div className="px-2 text-sm text-muted-foreground">
                             No users found
                         </div>
                     )}
 
                     {selectedUser && (
-                        <div className="space-y-2 border-t pt-4">
+                        <div className="space-y-2 border-t px-2 pt-4">
                             <div className="text-sm">
                                 <div className="font-medium">
                                     Selected: {selectedUser.email}

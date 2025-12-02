@@ -24,7 +24,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             : PASSWORD_MANAGER_DISABLED_PROPS;
 
         return (
-            <div className={cn('svg-outline-within-sm relative', className)}>
+            <div
+                className={cn('svg-outline-within-sm relative z-0', className)}
+            >
                 <input
                     type={type}
                     className={cn(
