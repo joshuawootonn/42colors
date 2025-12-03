@@ -59,7 +59,7 @@ export function newPixels(
 
     const adminOverride =
         isAdminUser(context.user) &&
-        context.adminSettings.adminOverridePlotProtection;
+        context.adminSettings.isAdminCanvasEditingEnabled;
 
     context.server.channel
         .push('new_pixels', {

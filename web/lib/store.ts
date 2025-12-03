@@ -107,7 +107,7 @@ import { WebGPUManager } from './webgpu/web-gpu-manager';
 type AdminSettings = {
     plotBordersVisible: boolean;
     chunkBordersVisible: boolean;
-    adminOverridePlotProtection: boolean;
+    isAdminCanvasEditingEnabled: boolean;
     isAdminPlotEditingEnabled: boolean;
 };
 
@@ -181,7 +181,7 @@ const initialCamera: Camera = {
 const defaultAdminSettings: AdminSettings = {
     plotBordersVisible: true,
     chunkBordersVisible: true,
-    adminOverridePlotProtection: false,
+    isAdminCanvasEditingEnabled: false,
     isAdminPlotEditingEnabled: false,
 };
 
@@ -1021,7 +1021,7 @@ export const store = createStore({
             };
         },
 
-        toggleAdminOverridePlotProtection: (context) => {
+        toggleAdminCanvasEditing: (context) => {
             if (isInitialStore(context)) return;
             if (!isAdminUser(context.user)) return context;
 
@@ -1029,8 +1029,8 @@ export const store = createStore({
                 ...context,
                 adminSettings: {
                     ...context.adminSettings,
-                    adminOverridePlotProtection:
-                        !context.adminSettings.adminOverridePlotProtection,
+                    isAdminCanvasEditingEnabled:
+                        !context.adminSettings.isAdminCanvasEditingEnabled,
                 },
             };
         },

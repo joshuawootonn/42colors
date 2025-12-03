@@ -25,9 +25,9 @@ export function AdminPopover({ children }: { children: ReactNode }) {
     const [grantAmount, setGrantAmount] = useState('');
 
     const currentUser = useSelector(store, (state) => state.context?.user);
-    const adminOverridePlotProtection = useSelector(
+    const isAdminCanvasEditingEnabled = useSelector(
         store,
-        (state) => state.context?.adminSettings?.adminOverridePlotProtection,
+        (state) => state.context?.adminSettings?.isAdminCanvasEditingEnabled,
     );
     const isAdminPlotEditingEnabled = useSelector(
         store,
@@ -98,19 +98,19 @@ export function AdminPopover({ children }: { children: ReactNode }) {
                             htmlFor="admin-override"
                             className="text-sm font-medium"
                         >
-                            Override plot protection
+                            Enable admin canvas editing
                         </label>
                         <Switch
                             id="admin-override"
-                            checked={adminOverridePlotProtection ?? false}
+                            checked={isAdminCanvasEditingEnabled ?? false}
                             onCheckedChange={() =>
-                                store.trigger.toggleAdminOverridePlotProtection()
+                                store.trigger.toggleAdminCanvasEditing()
                             }
                         />
                     </div>
-                    {adminOverridePlotProtection && (
+                    {isAdminCanvasEditingEnabled && (
                         <p className="px-2 text-xs text-amber-600">
-                            Warning: You can draw over any plot
+                            Warning: You can draw on any plot
                         </p>
                     )}
                     <div className="border-t-1.5 border-border"></div>
