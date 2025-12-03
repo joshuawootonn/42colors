@@ -6,6 +6,8 @@ defmodule ApiWeb.PlotController do
 
   action_fallback ApiWeb.FallbackController
 
+  @admin_emails ["jose56wonton@gmail.com", "anders.almberg@gmail.com"]
+
   def index(conn, params) do
     case {Map.get(params, "x"), Map.get(params, "y")} do
       {nil, nil} ->
@@ -153,8 +155,17 @@ defmodule ApiWeb.PlotController do
 
   def update(conn, %{"id" => id, "plot" => plot_params}) do
     user = conn.assigns.current_user
+    is_admin = user.email in @admin_emails
 
-    case Plot.Repo.get_user_plot!(id, user.id) do
+    # Admin can edit any plot, regular users can only edit their own
+    plot_result =
+      if is_admin do
+        Plot.Repo.get_plot!(id)
+      else
+        Plot.Repo.get_user_plot!(id, user.id)
+      end
+
+    case plot_result do
       nil ->
         send_resp(conn, :not_found, "Not found")
 
@@ -242,8 +253,17 @@ defmodule ApiWeb.PlotController do
 
   def delete(conn, %{"id" => id}) do
     user = conn.assigns.current_user
+    is_admin = user.email in @admin_emails
 
-    case Plot.Repo.get_user_plot!(id, user.id) do
+    # Admin can delete any plot, regular users can only delete their own
+    plot_result =
+      if is_admin do
+        Plot.Repo.get_plot!(id)
+      else
+        Plot.Repo.get_user_plot!(id, user.id)
+      end
+
+    case plot_result do
       nil ->
         send_resp(conn, :not_found, "Not found")
 

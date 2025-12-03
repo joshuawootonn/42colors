@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { X32 } from '@/components/icons/x_32';
 import { IconButton } from '@/components/ui/icon-button';
 import { Popover, PopoverContent } from '@/components/ui/popover';
+import { isAdminUser } from '@/lib/admin';
 import { isScrollingAtom } from '@/lib/events';
 import { canvasToClient } from '@/lib/utils/clientToCanvasConversion';
 import { useAtom, useSelector } from '@xstate/store/react';
@@ -19,6 +20,10 @@ import { useSelectedPlot } from './use-selected-plot';
 export function SelectedPlotPopover() {
     const camera = useSelector(store, (state) => state.context.camera);
     const user = useSelector(store, (state) => state.context?.user);
+    const isAdminPlotEditingEnabled = useSelector(
+        store,
+        (state) => state.context?.adminSettings?.isAdminPlotEditingEnabled,
+    );
 
     const activeAction = useSelector(
         store,
@@ -75,8 +80,10 @@ export function SelectedPlotPopover() {
     }, [selectedPlot, camera, user, activeAction]);
 
     // Render popover for any selected plot (owned or not)
-    // Only show edit/delete buttons if user owns the plot
-    const isOwned = user?.id === selectedPlot?.userId;
+    // Only show edit/delete buttons if user owns the plot (or admin override is enabled)
+    const isAdminWithOverride = isAdminUser(user) && isAdminPlotEditingEnabled;
+    const canEditPlot =
+        user?.id === selectedPlot?.userId || isAdminWithOverride;
 
     if (!selectedPlot) {
         return null;
@@ -119,7 +126,7 @@ export function SelectedPlotPopover() {
                     <div className="h-8 max-w-xs truncate border-1.5 border-border bg-secondary px-2 py-1 text-sm text-primary">
                         {selectedPlot.name}
                     </div>
-                    {isOwned && (
+                    {canEditPlot && (
                         <>
                             <EditPlotForm
                                 plot={selectedPlot}

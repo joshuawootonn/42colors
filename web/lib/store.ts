@@ -108,6 +108,7 @@ type AdminSettings = {
     plotBordersVisible: boolean;
     chunkBordersVisible: boolean;
     adminOverridePlotProtection: boolean;
+    isAdminPlotEditingEnabled: boolean;
 };
 
 export type InitialStore = {
@@ -181,6 +182,7 @@ const defaultAdminSettings: AdminSettings = {
     plotBordersVisible: true,
     chunkBordersVisible: true,
     adminOverridePlotProtection: false,
+    isAdminPlotEditingEnabled: false,
 };
 
 const initialialStoreContext: Store = {
@@ -1029,6 +1031,20 @@ export const store = createStore({
                     ...context.adminSettings,
                     adminOverridePlotProtection:
                         !context.adminSettings.adminOverridePlotProtection,
+                },
+            };
+        },
+
+        toggleAdminPlotEditing: (context) => {
+            if (isInitialStore(context)) return;
+            if (!isAdminUser(context.user)) return context;
+
+            return {
+                ...context,
+                adminSettings: {
+                    ...context.adminSettings,
+                    isAdminPlotEditingEnabled:
+                        !context.adminSettings.isAdminPlotEditingEnabled,
                 },
             };
         },

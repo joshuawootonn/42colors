@@ -29,6 +29,10 @@ export function AdminPopover({ children }: { children: ReactNode }) {
         store,
         (state) => state.context?.adminSettings?.adminOverridePlotProtection,
     );
+    const isAdminPlotEditingEnabled = useSelector(
+        store,
+        (state) => state.context?.adminSettings?.isAdminPlotEditingEnabled,
+    );
 
     // Only show for admin user
     const isAdmin = isAdminUser(currentUser);
@@ -107,6 +111,27 @@ export function AdminPopover({ children }: { children: ReactNode }) {
                     {adminOverridePlotProtection && (
                         <p className="px-2 text-xs text-amber-600">
                             Warning: You can draw over any plot
+                        </p>
+                    )}
+                    <div className="border-t-1.5 border-border"></div>
+                    <div className="flex items-center justify-between px-2">
+                        <label
+                            htmlFor="admin-edit-all"
+                            className="text-sm font-medium"
+                        >
+                            Enable admin plot editing
+                        </label>
+                        <Switch
+                            id="admin-edit-all"
+                            checked={isAdminPlotEditingEnabled ?? false}
+                            onCheckedChange={() =>
+                                store.trigger.toggleAdminPlotEditing()
+                            }
+                        />
+                    </div>
+                    {isAdminPlotEditingEnabled && (
+                        <p className="px-2 text-xs text-amber-600">
+                            Warning: You can edit/delete any plot
                         </p>
                     )}
                     <div className="space-y-2 border-t-1.5 px-2 pt-2">
