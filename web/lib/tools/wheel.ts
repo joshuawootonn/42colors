@@ -1,4 +1,13 @@
-import { X_MAX, X_MIN, Y_MAX, Y_MIN, ZOOM_MAX, ZOOM_MIN } from '../constants';
+import { isAdminUser } from '../admin';
+import {
+    X_MAX,
+    X_MIN,
+    Y_MAX,
+    Y_MIN,
+    ZOOM_MAX,
+    ZOOM_MIN,
+    ZOOM_MIN_ADMIN,
+} from '../constants';
 import { roundTo1Place } from '../round-to-five';
 import { Store, store } from '../store';
 import { clamp } from '../utils/clamp';
@@ -12,6 +21,7 @@ function onWheel(
 ) {
     if (isInitialStore(context)) return;
 
+    const zoomMin = isAdminUser(context.user) ? ZOOM_MIN_ADMIN : ZOOM_MIN;
     const pixelWidth = context.camera.zoom / 20;
 
     // Differentiating pinch gestures from scroll wheels doesn't look possible.
@@ -23,7 +33,7 @@ function onWheel(
             ? e.deltaY * -4
             : e.deltaY * -0.3
         : 0;
-    const nextZoom = clamp(context.camera.zoom + deltaZoom, ZOOM_MIN, ZOOM_MAX);
+    const nextZoom = clamp(context.camera.zoom + deltaZoom, zoomMin, ZOOM_MAX);
 
     const pixelX = e.clientX / pixelWidth;
     const pixelY = e.clientY / pixelWidth;
