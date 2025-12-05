@@ -43,6 +43,7 @@ import {
     Y_MIN,
     ZOOM_MAX,
     ZOOM_MIN,
+    ZOOM_MIN_ADMIN,
 } from './constants';
 import {
     onContextMenu,
@@ -1438,10 +1439,15 @@ export const store = createStore({
                 const centerX = window.innerWidth / 2;
                 const centerY = window.innerHeight / 2;
 
-                // Non-linear zoom stops
-                const zoomStops = [
-                    50, 60, 75, 100, 150, 200, 300, 400, 600, 800,
-                ];
+                // Non-linear zoom stops (extended for admins)
+                const isAdmin = isAdminUser(context.user);
+                const zoomMin = isAdmin ? ZOOM_MIN_ADMIN : ZOOM_MIN;
+                const zoomStops = isAdmin
+                    ? [
+                          10, 15, 20, 30, 40, 50, 60, 75, 100, 150, 200, 300,
+                          400, 600, 800,
+                      ]
+                    : [50, 60, 75, 100, 150, 200, 300, 400, 600, 800];
                 const currentZoom = context.camera.zoom;
 
                 let nextZoom: number;
@@ -1451,8 +1457,8 @@ export const store = createStore({
                         (stop) => stop > currentZoom,
                     );
                     nextZoom = nextStop
-                        ? clamp(nextStop, ZOOM_MIN, ZOOM_MAX)
-                        : clamp(currentZoom, ZOOM_MIN, ZOOM_MAX);
+                        ? clamp(nextStop, zoomMin, ZOOM_MAX)
+                        : clamp(currentZoom, zoomMin, ZOOM_MAX);
                 } else {
                     // Find the previous zoom stop less than current zoom
                     const previousStop = zoomStops
@@ -1460,8 +1466,8 @@ export const store = createStore({
                         .reverse()
                         .find((stop) => stop < currentZoom);
                     nextZoom = previousStop
-                        ? clamp(previousStop, ZOOM_MIN, ZOOM_MAX)
-                        : clamp(currentZoom, ZOOM_MIN, ZOOM_MAX);
+                        ? clamp(previousStop, zoomMin, ZOOM_MAX)
+                        : clamp(currentZoom, zoomMin, ZOOM_MAX);
                 }
 
                 const pixelX = centerX / pixelWidth;

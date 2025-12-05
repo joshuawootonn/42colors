@@ -2,7 +2,15 @@ import { z } from 'zod';
 
 import { ChangeEvent, useCallback } from 'react';
 
-import { X_MAX, X_MIN, Y_MAX, Y_MIN } from '@/lib/constants';
+import { isAdminUser } from '@/lib/admin';
+import {
+    X_MAX,
+    X_MIN,
+    Y_MAX,
+    Y_MIN,
+    ZOOM_MIN,
+    ZOOM_MIN_ADMIN,
+} from '@/lib/constants';
 import { roundTo1Place } from '@/lib/round-to-five';
 import { store } from '@/lib/store';
 import { cn } from '@/lib/utils';
@@ -63,6 +71,10 @@ export function Navigation() {
     useCameraSearchParams(x, y, zoom);
 
     const state = useSelector(store, (state) => state.context.state);
+    const user = useSelector(store, (state) => state.context.user);
+    const isAdmin = isAdminUser(user);
+    const zoomMin = isAdmin ? ZOOM_MIN_ADMIN : ZOOM_MIN;
+
     if (state !== 'initialized') return null;
 
     return (
@@ -153,7 +165,7 @@ export function Navigation() {
                 name="zoom"
                 value={zoom}
                 step={10}
-                min={50}
+                min={zoomMin}
                 max={1000}
                 onChange={onChange}
             />
