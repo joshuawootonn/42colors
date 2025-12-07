@@ -3,13 +3,9 @@ import { z } from 'zod';
 import { store } from '../../store';
 import { isInitialStore } from '../../utils/is-initial-store';
 
-export type VoteType = 'upvote' | 'downvote';
-
 const castVoteResponseSchema = z.object({
     vote: z.object({
         id: z.number(),
-        vote_type: z.enum(['upvote', 'downvote']),
-        amount: z.number(),
     }),
     plot_score: z.number(),
 });
@@ -20,8 +16,7 @@ const voteErrorSchema = z.object({
 });
 
 const userVoteResponseSchema = z.object({
-    total: z.number(),
-    vote_type: z.enum(['upvote', 'downvote']).nullable(),
+    has_voted: z.boolean(),
 });
 
 export type CastVoteResponse = z.infer<typeof castVoteResponseSchema>;
@@ -37,11 +32,7 @@ export class VoteError extends Error {
     }
 }
 
-export async function castVote(
-    plotId: number,
-    voteType: VoteType,
-    amount: number,
-): Promise<CastVoteResponse> {
+export async function castVote(plotId: number): Promise<CastVoteResponse> {
     const context = store.getSnapshot().context;
     if (isInitialStore(context)) {
         throw new Error('Store not initialized');
@@ -57,8 +48,6 @@ export async function castVote(
             credentials: 'include',
             body: JSON.stringify({
                 plot_id: plotId,
-                vote_type: voteType,
-                amount,
             }),
         },
     );
@@ -99,4 +88,3 @@ export async function getUserVoteOnPlot(
     const json = await response.json();
     return userVoteResponseSchema.parse(json);
 }
-

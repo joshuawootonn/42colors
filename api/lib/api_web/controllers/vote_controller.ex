@@ -5,21 +5,17 @@ defmodule ApiWeb.VoteController do
 
   action_fallback ApiWeb.FallbackController
 
-  def create(conn, %{"plot_id" => plot_id, "vote_type" => vote_type, "amount" => amount}) do
+  def create(conn, %{"plot_id" => plot_id}) do
     user = conn.assigns.current_user
 
-    case Vote.Service.cast_vote(user.id, plot_id, vote_type, amount) do
+    case Vote.Service.cast_vote(user.id, plot_id) do
       {:ok, vote} ->
         plot = Api.Canvas.Plot.Repo.get_plot!(plot_id)
 
         conn
         |> put_status(:created)
         |> json(%{
-          vote: %{
-            id: vote.id,
-            vote_type: vote.vote_type,
-            amount: vote.amount
-          },
+          vote: %{id: vote.id},
           plot_score: plot.score
         })
 
@@ -36,23 +32,10 @@ defmodule ApiWeb.VoteController do
         |> put_status(:forbidden)
         |> json(%{error_code: "VOTE_OWN_PLOT", message: "You cannot vote on your own plot"})
 
-      {:error, :vote_direction_locked} ->
+      {:error, :already_voted} ->
         conn
         |> put_status(:conflict)
-        |> json(%{
-          error_code: "VOTE_DIRECTION_LOCKED",
-          message: "You cannot change your vote direction"
-        })
-
-      {:error, :vote_amount_exceeded} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{error_code: "VOTE_AMOUNT_EXCEEDED", message: "Maximum 100 pixels per plot"})
-
-      {:error, :vote_insufficient_balance} ->
-        conn
-        |> put_status(:payment_required)
-        |> json(%{error_code: "VOTE_INSUFFICIENT_BALANCE", message: "Insufficient balance"})
+        |> json(%{error_code: "ALREADY_VOTED", message: "You have already voted on this plot"})
 
       {:error, :plot_not_found} ->
         conn
@@ -68,10 +51,7 @@ defmodule ApiWeb.VoteController do
 
   def show(conn, %{"plot_id" => plot_id}) do
     user = conn.assigns.current_user
-
-    total = Vote.Repo.get_user_plot_vote_total(user.id, String.to_integer(plot_id))
-    vote_type = Vote.Repo.get_user_plot_vote_type(user.id, String.to_integer(plot_id))
-
-    json(conn, %{total: total, vote_type: vote_type})
+    has_voted = Vote.Repo.has_user_voted_on_plot?(user.id, String.to_integer(plot_id))
+    json(conn, %{has_voted: has_voted})
   end
 end

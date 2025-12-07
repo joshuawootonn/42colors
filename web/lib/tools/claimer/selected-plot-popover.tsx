@@ -16,7 +16,7 @@ import { DeletePlotButton } from './delete-plot-button';
 import { EditPlotForm } from './edit-plot-form';
 import { getPlotOverlayPositionForPolygons } from './get-plot-overlay-position';
 import { useSelectedPlot } from './use-selected-plot';
-import { VoteButtons } from './vote-buttons';
+import { VoteButton } from './vote-button';
 
 export function SelectedPlotPopover() {
     const camera = useSelector(store, (state) => state.context.camera);
@@ -139,7 +139,7 @@ export function SelectedPlotPopover() {
                             />
                         </>
                     ) : (
-                        user && <VoteButtons plot={selectedPlot} />
+                        user && <VoteButton plot={selectedPlot} />
                     )}
                     <IconButton
                         onClick={() => {

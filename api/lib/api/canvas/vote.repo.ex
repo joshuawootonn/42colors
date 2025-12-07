@@ -20,41 +20,6 @@ defmodule Api.Canvas.Vote.Repo do
   end
 
   @doc """
-  Gets the total amount a user has voted on a specific plot.
-  """
-  def get_user_plot_vote_total(user_id, plot_id) do
-    from(v in Vote,
-      where: v.user_id == ^user_id and v.plot_id == ^plot_id,
-      select: sum(v.amount)
-    )
-    |> Repo.one() || 0
-  end
-
-  @doc """
-  Gets the vote type a user has used on a specific plot.
-  Returns nil if no votes exist.
-  """
-  def get_user_plot_vote_type(user_id, plot_id) do
-    from(v in Vote,
-      where: v.user_id == ^user_id and v.plot_id == ^plot_id,
-      select: v.vote_type,
-      limit: 1
-    )
-    |> Repo.one()
-  end
-
-  @doc """
-  Gets the sum of unsettled votes cast by a user.
-  """
-  def get_user_unsettled_cast_total(user_id) do
-    from(v in Vote,
-      where: v.user_id == ^user_id and is_nil(v.settled_at),
-      select: sum(v.amount)
-    )
-    |> Repo.one() || 0
-  end
-
-  @doc """
   Gets all unsettled votes.
   """
   def get_unsettled_votes do
@@ -106,6 +71,17 @@ defmodule Api.Canvas.Vote.Repo do
     from(p in Plot,
       where: p.user_id == ^user_id,
       where: is_nil(p.deleted_at),
+      limit: 1
+    )
+    |> Repo.exists?()
+  end
+
+  @doc """
+  Checks if a user has voted on a specific plot.
+  """
+  def has_user_voted_on_plot?(user_id, plot_id) do
+    from(v in Vote,
+      where: v.user_id == ^user_id and v.plot_id == ^plot_id,
       limit: 1
     )
     |> Repo.exists?()

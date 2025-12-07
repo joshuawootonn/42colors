@@ -30,6 +30,17 @@ defmodule ApiWeb.Router do
 
   # Other scopes may use custom stacks.
   scope "/api", ApiWeb do
+    pipe_through [:api, :require_authenticated_user, :put_channel_token]
+
+    get "/users/me", UserSessionController, :read
+    post "/users/me/claim_daily_bonus", UserSessionController, :claim_daily_bonus
+    get "/plots/me", PlotController, :me_plots
+    get "/logs/me", LogController, :me_logs
+    get "/users/search", AdminController, :search_users
+    post "/admin/grant_pixels", AdminController, :grant_pixels
+  end
+
+  scope "/api", ApiWeb do
     pipe_through :api
 
     get "/plots", PlotController, :index
@@ -47,17 +58,6 @@ defmodule ApiWeb.Router do
     post "/users/register", UserRegistrationController, :create
     post "/users/reset_password", UserResetPasswordController, :create
     put "/users/reset_password/:token", UserResetPasswordController, :update
-  end
-
-  scope "/api", ApiWeb do
-    pipe_through [:api, :require_authenticated_user, :put_channel_token]
-
-    get "/users/me", UserSessionController, :read
-    post "/users/me/claim_daily_bonus", UserSessionController, :claim_daily_bonus
-    get "/plots/me", PlotController, :me_plots
-    get "/logs/me", LogController, :me_logs
-    get "/users/search", AdminController, :search_users
-    post "/admin/grant_pixels", AdminController, :grant_pixels
   end
 
   scope "/api", ApiWeb do
