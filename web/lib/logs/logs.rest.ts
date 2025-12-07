@@ -18,6 +18,7 @@ const baseLogSchema = z.object({
         'plot_created',
         'plot_updated',
         'plot_deleted',
+        'daily_vote_aggregate',
     ]),
     plotId: z.number().nullable(),
     insertedAt: z.string(),
@@ -111,6 +112,22 @@ const plotDeletedLogSchema = baseLogSchema.extend({
         .nullable(),
 });
 
+const voteDiffSchema = z.object({
+    name: z.string(),
+    old_score: z.number(),
+    new_score: z.number(),
+});
+
+const dailyVoteAggregateLogSchema = baseLogSchema.extend({
+    logType: z.literal('daily_vote_aggregate'),
+    diffs: z
+        .object({
+            cast_diffs: z.array(voteDiffSchema).optional(),
+            received_diffs: z.array(voteDiffSchema).optional(),
+        })
+        .nullable(),
+});
+
 // Union type for all log types
 export const logSchema = z.discriminatedUnion('logType', [
     initialGrantLogSchema,
@@ -120,6 +137,7 @@ export const logSchema = z.discriminatedUnion('logType', [
     plotCreatedLogSchema,
     plotUpdatedLogSchema,
     plotDeletedLogSchema,
+    dailyVoteAggregateLogSchema,
 ]);
 
 export const arrayLogResponseSchema = z.object({
@@ -132,6 +150,7 @@ export type BailoutGrantLog = z.infer<typeof bailoutGrantLogSchema>;
 export type PlotCreatedLog = z.infer<typeof plotCreatedLogSchema>;
 export type PlotUpdatedLog = z.infer<typeof plotUpdatedLogSchema>;
 export type PlotDeletedLog = z.infer<typeof plotDeletedLogSchema>;
+export type DailyVoteAggregateLog = z.infer<typeof dailyVoteAggregateLogSchema>;
 
 export async function getUserLogs(limit: number = 20): Promise<Log[]> {
     const context = store.getSnapshot().context;

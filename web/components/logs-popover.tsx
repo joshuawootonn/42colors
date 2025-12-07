@@ -38,6 +38,8 @@ function getLogTypeDisplay(logType: Log['logType']): string {
             return 'Plot Updated';
         case 'plot_deleted':
             return 'Plot Deleted';
+        case 'daily_vote_aggregate':
+            return 'Daily Vote Count';
         default:
             return logType;
     }
