@@ -33,6 +33,7 @@ defmodule ApiWeb.Router do
     pipe_through :api
 
     get "/plots", PlotController, :index
+    get "/plots/:id", PlotController, :show
     get "/pixels", PixelSubSectionInFileAsBinary, :index
 
     post "/users/confirm/:token", UserConfirmationController, :update
@@ -63,7 +64,6 @@ defmodule ApiWeb.Router do
     pipe_through [:api, :require_authenticated_user]
 
     post "/plots", PlotController, :create
-    get "/plots/:id", PlotController, :show
     put "/plots/:id", PlotController, :update
     delete "/plots/:id", PlotController, :delete
 

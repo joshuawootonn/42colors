@@ -10,7 +10,7 @@ import { store } from '../../store';
 import { isInitialStore } from '../../utils/is-initial-store';
 import { completeRectangleClaimerAction } from './claimer';
 
-const plotSchema = z.object({
+export const plotSchema = z.object({
     id: z.number(),
     name: z.string(),
     description: z.string().nullable(),
@@ -18,6 +18,11 @@ const plotSchema = z.object({
     insertedAt: z.string(),
     updatedAt: z.string(),
     userId: z.number(),
+    score: z.number().optional().default(0),
+});
+
+export const plotResponseSchema = z.object({
+    data: plotSchema,
 });
 
 export const arrayPlotResponseSchema = z.object({ data: z.array(plotSchema) });

@@ -114,6 +114,26 @@ export const TOASTS = {
         description:
             'The bucket fill tool is reserved for pixels you have claimed. Claim a plot for yourself and try again.',
     },
+    voteUnauthorized: {
+        title: 'Cannot vote',
+        description: 'Create a plot first to start voting on others\' art.',
+    },
+    voteInsufficientBalance: {
+        title: 'Insufficient balance',
+        description: 'You don\'t have enough pixels to vote.',
+    },
+    voteDirectionLocked: {
+        title: 'Vote locked',
+        description: 'You can\'t change your vote direction on this plot.',
+    },
+    voteAmountExceeded: {
+        title: 'Max votes reached',
+        description: 'Maximum 100 pixels per plot.',
+    },
+    voteFailed: (message?: string) => ({
+        title: 'Vote failed',
+        description: message || 'Something went wrong.',
+    }),
 } as const;
 
 export type ToastKey = keyof typeof TOASTS;
@@ -132,6 +152,11 @@ export const toasts = {
     cannotDrawOnPlot: () => toast(TOASTS.cannotDrawOnPlot),
     cannotBucketOtherPlot: () => toast(TOASTS.cannotBucketOtherPlot),
     cannotBucketOutsidePlot: () => toast(TOASTS.cannotBucketOutsidePlot),
+    voteUnauthorized: () => toast(TOASTS.voteUnauthorized),
+    voteInsufficientBalance: () => toast(TOASTS.voteInsufficientBalance),
+    voteDirectionLocked: () => toast(TOASTS.voteDirectionLocked),
+    voteAmountExceeded: () => toast(TOASTS.voteAmountExceeded),
+    voteFailed: (message?: string) => toast(TOASTS.voteFailed(message)),
 } as const;
 
 const _closeButtonVariants = {

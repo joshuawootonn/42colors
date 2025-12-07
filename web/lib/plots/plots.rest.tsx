@@ -6,7 +6,32 @@ import { getChunkKey, getChunkOrigin } from '../canvas/chunk';
 import { inside } from '../geometry/polygon';
 import { polygonSchema } from '../geometry/polygon';
 import { AbsolutePointTuple } from '../line';
-import { Plot, arrayPlotResponseSchema } from '../tools/claimer/claimer.rest';
+import {
+    Plot,
+    arrayPlotResponseSchema,
+    plotResponseSchema,
+} from '../tools/claimer/claimer.rest';
+
+export async function getPlot(id: number): Promise<Plot> {
+    const context = store.getSnapshot().context;
+    if (isInitialStore(context)) {
+        throw new Error('Server context is not initialized');
+    }
+
+    const response = await fetch(
+        new URL(`/api/plots/${id}`, context.server.apiOrigin),
+        {
+            method: 'GET',
+        },
+    );
+    if (!response.ok) {
+        throw new Error('Failed to fetch plot');
+    }
+
+    const json = await response.json();
+
+    return plotResponseSchema.parse(json).data;
+}
 
 export async function getPlots(limit: number = 10): Promise<Plot[]> {
     const context = store.getSnapshot().context;

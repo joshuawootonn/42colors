@@ -182,6 +182,7 @@ export function DesignPage() {
                                 insertedAt: '2024-01-01T10:00:00Z',
                                 updatedAt: '2024-01-01T10:00:00Z',
                                 userId: 1,
+                                score: 0,
                             },
                             {
                                 id: 2,
@@ -198,6 +199,7 @@ export function DesignPage() {
                                 insertedAt: '2024-01-01T10:00:00Z',
                                 updatedAt: '2024-01-01T10:00:00Z',
                                 userId: 1,
+                                score: 5,
                             },
                             {
                                 id: 3,
@@ -215,6 +217,7 @@ export function DesignPage() {
                                 insertedAt: '2024-01-01T10:00:00Z',
                                 updatedAt: '2024-01-01T10:00:00Z',
                                 userId: 3,
+                                score: -3,
                             },
                             {
                                 id: 4,
@@ -231,6 +234,7 @@ export function DesignPage() {
                                 insertedAt: '2024-01-01T10:00:00Z',
                                 updatedAt: '2024-01-01T10:00:00Z',
                                 userId: 2,
+                                score: 42,
                             },
                             {
                                 id: 5,
@@ -247,6 +251,7 @@ export function DesignPage() {
                                 insertedAt: '2024-01-01T10:00:00Z',
                                 updatedAt: '2024-01-01T10:00:00Z',
                                 userId: 1,
+                                score: 100,
                             },
                         ]}
                         isLoading={false}

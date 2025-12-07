@@ -142,14 +142,12 @@ defmodule ApiWeb.PlotController do
   end
 
   def show(conn, %{"id" => id}) do
-    user = conn.assigns.current_user
-
-    case Plot.Repo.get_user_plot!(id, user.id) do
-      nil ->
+    try do
+      plot = Plot.Repo.get_plot!(id)
+      render(conn, :show, plot: plot)
+    rescue
+      Ecto.NoResultsError ->
         send_resp(conn, :not_found, "Not found")
-
-      plot ->
-        render(conn, :show, plot: plot)
     end
   end
 
