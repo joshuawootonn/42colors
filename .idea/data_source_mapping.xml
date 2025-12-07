@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourcePerFileMappings">
-    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/62225a36-c3d4-4014-8016-c262a8612e02/console.sql" value="62225a36-c3d4-4014-8016-c262a8612e02" />
-    <file url="file://$PROJECT_DIR$/scripts/42colors_playground.sql" value="62225a36-c3d4-4014-8016-c262a8612e02" />
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/d4be5951-fc2b-47b6-b5f1-35defde3c63f/console.sql" value="d4be5951-fc2b-47b6-b5f1-35defde3c63f" />
   </component>
 </project>
