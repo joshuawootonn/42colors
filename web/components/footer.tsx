@@ -160,6 +160,54 @@ export function Footer() {
                         />
                         <DropdownMenuSubRoot>
                             <DropdownMenuSubTrigger>
+                                social
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent
+                                positionerProps={{
+                                    align: 'end',
+                                    alignOffset: -1.5,
+                                }}
+                            >
+                                <DropdownMenuItem
+                                    render={(props) => (
+                                        <a
+                                            {...props}
+                                            href="https://discord.gg/CbnfaUnbm6"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            discord
+                                        </a>
+                                    )}
+                                />
+                                <DropdownMenuItem
+                                    render={(props) => (
+                                        <a
+                                            {...props}
+                                            href="https://x.com/42_colors"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            twitter
+                                        </a>
+                                    )}
+                                />
+                                <DropdownMenuItem
+                                    render={(props) => (
+                                        <a
+                                            {...props}
+                                            href="https://bsky.app/profile/42colors.bsky.social"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            bluesky
+                                        </a>
+                                    )}
+                                />
+                            </DropdownMenuSubContent>
+                        </DropdownMenuSubRoot>
+                        <DropdownMenuSubRoot>
+                            <DropdownMenuSubTrigger>
                                 legal
                             </DropdownMenuSubTrigger>
                             <DropdownMenuSubContent
