@@ -5,6 +5,9 @@ defmodule ApiWeb.PixelCacheSupervisor do
   alias Api.Canvas.Pixel
   alias Api.PixelCache
 
+  # Capture Mix.env at compile time since Mix is not available at runtime in releases
+  @env Mix.env()
+
   def start_link(arg) do
     GenServer.start_link(__MODULE__, arg, name: __MODULE__)
   end
@@ -30,7 +33,7 @@ defmodule ApiWeb.PixelCacheSupervisor do
     TelemetryHelper.instrument(:initialize_file, fn -> PixelCache.initialize_file() end)
 
     # Skip loading pixels from DB in test environment to avoid sandbox issues
-    unless Mix.env() == :test do
+    unless @env == :test do
       spawn(fn -> load_and_write_pixels_in_batches(0, 0) end)
     end
 
