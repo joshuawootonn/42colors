@@ -145,11 +145,13 @@ export type InitializedStore = {
         rootCanvasContext: CanvasRenderingContext2D;
         backgroundCanvas: HTMLCanvasElement;
         backgroundCanvasContext: CanvasRenderingContext2D;
-        telegraphCanvas: HTMLCanvasElement;
+        pixelTelegraphCanvas: HTMLCanvasElement;
+        uiTelegraphCanvas: HTMLCanvasElement;
         uiCanvas: HTMLCanvasElement;
         chunkCanvases: ChunkCanvases;
         uiWebGPUManager: WebGPUManager;
-        telegraphWebGPUManager: WebGPUManager;
+        pixelTelegraphWebGPUManager: WebGPUManager;
+        uiTelegraphWebGPUManager: WebGPUManager;
         device: GPUDevice;
     };
     actions: Action[];
@@ -221,10 +223,12 @@ export const store = createStore({
                 rootCanvasContext: CanvasRenderingContext2D;
                 backgroundCanvas: HTMLCanvasElement;
                 backgroundCanvasContext: CanvasRenderingContext2D;
-                telegraphCanvas: HTMLCanvasElement;
+                pixelTelegraphCanvas: HTMLCanvasElement;
+                uiTelegraphCanvas: HTMLCanvasElement;
                 uiCanvas: HTMLCanvasElement;
                 uiWebGPUManager: WebGPUManager;
-                telegraphWebGPUManager: WebGPUManager;
+                pixelTelegraphWebGPUManager: WebGPUManager;
+                uiTelegraphWebGPUManager: WebGPUManager;
                 device: GPUDevice;
             },
             enqueue,
@@ -273,11 +277,14 @@ export const store = createStore({
                     rootCanvasContext: event.rootCanvasContext,
                     backgroundCanvas: event.backgroundCanvas,
                     backgroundCanvasContext: event.backgroundCanvasContext,
-                    telegraphCanvas: event.telegraphCanvas,
+                    pixelTelegraphCanvas: event.pixelTelegraphCanvas,
+                    uiTelegraphCanvas: event.uiTelegraphCanvas,
                     uiCanvas: event.uiCanvas,
                     chunkCanvases: {},
                     uiWebGPUManager: event.uiWebGPUManager,
-                    telegraphWebGPUManager: event.telegraphWebGPUManager,
+                    pixelTelegraphWebGPUManager:
+                        event.pixelTelegraphWebGPUManager,
+                    uiTelegraphWebGPUManager: event.uiTelegraphWebGPUManager,
                     device: event.device,
                 },
                 queryClient: event.queryClient,
@@ -371,7 +378,8 @@ export const store = createStore({
 
         resizeRealtimeAndTelegraphCanvases: (context) => {
             if (isInitialStore(context)) return;
-            resizeFullsizeCanvas(context.canvas.telegraphCanvas);
+            resizeFullsizeCanvas(context.canvas.pixelTelegraphCanvas);
+            resizeFullsizeCanvas(context.canvas.uiTelegraphCanvas);
             resizeFullsizeCanvas(context.canvas.uiCanvas);
         },
 

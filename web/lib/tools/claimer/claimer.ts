@@ -83,8 +83,8 @@ function updateCursor(context: InitializedStore): void {
 }
 
 function redrawTelegraph(context: InitializedStore) {
-    const telegraphWebGPUManager = context.canvas.telegraphWebGPUManager;
-    if (!telegraphWebGPUManager) {
+    const uiTelegraphWebGPUManager = context.canvas.uiTelegraphWebGPUManager;
+    if (!uiTelegraphWebGPUManager) {
         console.error(
             'Telegraph WebGPU manager not available for claimer telegraph rendering',
         );
@@ -145,7 +145,7 @@ function redrawTelegraph(context: InitializedStore) {
     // Draw the simplified polygon outline
     const webGPUPolygons = polygons.map((polygon) => ({ polygon }));
 
-    telegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
+    uiTelegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
         xOffset,
         yOffset,
         xCamera: context.camera.x,
@@ -165,7 +165,7 @@ function redrawTelegraph(context: InitializedStore) {
             thickness: 0.45,
         }));
 
-        telegraphWebGPUManager.redrawLines(lines, {
+        uiTelegraphWebGPUManager.redrawLines(lines, {
             xOffset,
             yOffset,
             xCamera: context.camera.x,

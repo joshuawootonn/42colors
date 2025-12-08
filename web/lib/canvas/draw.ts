@@ -7,7 +7,7 @@ import {
 import { InitializedStore } from '../store';
 import { canvasToClient } from '../utils/clientToCanvasConversion';
 import { FULLSIZE_CANVAS_BLEED } from './fullsize';
-import { renderTelegraph } from './telegraph';
+import { renderPixelTelegraph, renderUITelegraph } from './telegraph';
 import { renderUI } from './ui';
 
 export function draw(context: InitializedStore) {
@@ -69,9 +69,9 @@ export function draw(context: InitializedStore) {
         );
     });
 
-    renderTelegraph(context);
+    renderPixelTelegraph(context);
     context.canvas.rootCanvasContext.drawImage(
-        context.canvas.telegraphCanvas,
+        context.canvas.pixelTelegraphCanvas,
         x,
         y,
         window.innerWidth + FULLSIZE_CANVAS_BLEED,
@@ -96,6 +96,15 @@ export function draw(context: InitializedStore) {
     renderUI(context);
     context.canvas.rootCanvasContext.drawImage(
         context.canvas.uiCanvas,
+        x,
+        y,
+        window.innerWidth + FULLSIZE_CANVAS_BLEED,
+        window.innerHeight + FULLSIZE_CANVAS_BLEED,
+    );
+
+    renderUITelegraph(context);
+    context.canvas.rootCanvasContext.drawImage(
+        context.canvas.uiTelegraphCanvas,
         x,
         y,
         window.innerWidth + FULLSIZE_CANVAS_BLEED,

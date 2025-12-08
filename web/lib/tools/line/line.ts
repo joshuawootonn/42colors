@@ -46,8 +46,9 @@ export type LineComplete = {
 };
 
 function redrawTelegraph(context: InitializedStore) {
-    const telegraphWebGPUManager = context.canvas.telegraphWebGPUManager;
-    if (!telegraphWebGPUManager) {
+    const pixelTelegraphWebGPUManager =
+        context.canvas.pixelTelegraphWebGPUManager;
+    if (!pixelTelegraphWebGPUManager) {
         console.error(
             'Telegraph WebGPU manager not available for line telegraph rendering',
         );
@@ -78,7 +79,7 @@ function redrawTelegraph(context: InitializedStore) {
                 polygon,
             }));
 
-            telegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
+            pixelTelegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
                 xOffset,
                 yOffset,
                 xCamera: context.camera.x,
@@ -116,7 +117,7 @@ function redrawTelegraph(context: InitializedStore) {
         },
     ];
 
-    telegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
+    pixelTelegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
         xOffset,
         yOffset,
         xCamera: context.camera.x,

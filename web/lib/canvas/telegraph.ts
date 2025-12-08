@@ -7,10 +7,10 @@ import { ErasureTool } from '../tools/erasure/erasure';
 import { LineTool } from '../tools/line/line';
 import { isInitialStore } from '../utils/is-initial-store';
 
-export function renderTelegraph(context: InitializedStore) {
+export function renderPixelTelegraph(context: InitializedStore) {
     if (isInitialStore(context)) return;
 
-    context.canvas.telegraphWebGPUManager?.clear();
+    context.canvas.pixelTelegraphWebGPUManager?.clear();
     const tool = context.toolSettings.currentTool;
 
     switch (tool) {
@@ -23,13 +23,21 @@ export function renderTelegraph(context: InitializedStore) {
         case Tool.Line:
             LineTool.redrawTelegraph(context);
             break;
-        case Tool.Claimer:
-            ClaimerTool.redrawTelegraph(context);
-            break;
         case Tool.Bucket:
             BucketTool.redrawTelegraph(context);
             break;
-        default:
-            console.log('No telegraph rendering for tool:', tool);
+    }
+}
+
+export function renderUITelegraph(context: InitializedStore) {
+    if (isInitialStore(context)) return;
+
+    context.canvas.uiTelegraphWebGPUManager?.clear();
+    const tool = context.toolSettings.currentTool;
+
+    switch (tool) {
+        case Tool.Claimer:
+            ClaimerTool.redrawTelegraph(context);
+            break;
     }
 }

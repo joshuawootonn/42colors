@@ -284,8 +284,9 @@ function onPointerMove(
 }
 
 function redrawTelegraph(context: InitializedStore) {
-    const telegraphWebGPUManager = context.canvas.telegraphWebGPUManager;
-    if (telegraphWebGPUManager == null) {
+    const pixelTelegraphWebGPUManager =
+        context.canvas.pixelTelegraphWebGPUManager;
+    if (pixelTelegraphWebGPUManager == null) {
         console.error(
             'Telegraph WebGPU manager not available for brush telegraph rendering',
         );
@@ -345,7 +346,7 @@ function redrawTelegraph(context: InitializedStore) {
 
     const { xOffset, yOffset } = getCameraOffset(context.camera);
 
-    telegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
+    pixelTelegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
         xOffset,
         yOffset,
         xCamera: context.camera.x,
