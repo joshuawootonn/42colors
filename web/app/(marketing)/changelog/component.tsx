@@ -29,6 +29,40 @@ export default function Changelog() {
             <hr className="w-full border-t-2 border-border" />
             <ul>
                 <li>
+                    <DateComponent date={new Date('12/08/2025')} />
+                    <ul>
+                        <li>
+                            Added an upvoting system.
+                            <ul>
+                                <li>
+                                    Votes are aggregated at EOD, and 100 pixels
+                                    per vote are awarded to the plot owners. If
+                                    you make great art your influence will
+                                    increase.
+                                </li>
+                                <li>
+                                    The daily aggregation numbers are easy to
+                                    track in the log book.
+                                </li>
+                                <li>
+                                    Leaderboard coming soon on top plots and top
+                                    users!
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <DateComponent date={new Date('12/07/2025')} /> - Added
+                    social links in the footer menu — find us on{' '}
+                    <Link href="https://discord.gg/CbnfaUnbm6">Discord</Link>,{' '}
+                    <Link href="https://x.com/42_colors">Twitter</Link>, and{' '}
+                    <Link href="https://bsky.app/profile/42colors.bsky.social">
+                        Bluesky
+                    </Link>
+                    !
+                </li>
+                <li>
                     <DateComponent date={new Date('12/02/2025')} />
                     <ul>
                         <li>
