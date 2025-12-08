@@ -9,6 +9,7 @@ defmodule Api.Logs.Log do
     field :new_balance, :integer
     field :log_type, :string
     field :diffs, :map
+    field :metadata, :map
 
     belongs_to :user, Api.Accounts.User
     belongs_to :plot, Api.Canvas.Plot
@@ -18,7 +19,7 @@ defmodule Api.Logs.Log do
 
   def changeset(log, attrs) do
     log
-    |> cast(attrs, [:user_id, :old_balance, :new_balance, :log_type, :plot_id, :diffs])
+    |> cast(attrs, [:user_id, :old_balance, :new_balance, :log_type, :plot_id, :diffs, :metadata])
     |> validate_required([:user_id, :old_balance, :new_balance, :log_type])
     |> validate_inclusion(:log_type, @log_types)
     |> validate_balance_change()

@@ -67,6 +67,13 @@ reset-test-force:
 dev:
   kill $(lsof -t -i:4000) || true && orb start && docker compose --project-directory ../docker up -d && export $(xargs <.env.dev) && mix phx.server
 
+# Vote settlement
+settle-votes:
+  export $(xargs <.env.dev) && mix settle_votes
+
+settle-votes-date date:
+  export $(xargs <.env.dev) && mix settle_votes {{date}}
+
 # Code quality
 format:
   mix format

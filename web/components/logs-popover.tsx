@@ -60,7 +60,7 @@ function getBalanceChangeDisplay(
     return { amount, isPositive, display };
 }
 
-function getLogDescription(log: Log): string {
+function getLogDescription(log: Log): ReactNode {
     switch (log.logType) {
         case 'initial_grant':
             return 'A small loan of 1 million dollars';
@@ -74,6 +74,37 @@ function getLogDescription(log: Log): string {
             return log.plot ? `Updated "${log.plot.name}"` : 'Plot updated';
         case 'plot_deleted':
             return log.plot ? `Deleted "${log.plot.name}"` : 'Plot deleted';
+        case 'daily_vote_aggregate':
+            return (
+                <div>
+                    {(log.diffs?.votesCast?.length ?? 0) > 0 && (
+                        <div className="mt-1">
+                            <div>Votes Cast</div>
+                            <ul>
+                                {log.diffs?.votesCast?.map((vote) => (
+                                    <li key={vote.name}>
+                                        - {vote.name} {vote.oldScore} →{' '}
+                                        {vote.newScore}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    {(log.diffs?.votesReceived?.length ?? 0) > 0 && (
+                        <div className="mt-1">
+                            <div>Votes Received</div>
+                            <ul>
+                                {log.diffs?.votesReceived?.map((vote) => (
+                                    <li key={vote.name}>
+                                        - {vote.name} {vote.oldScore} →{' '}
+                                        {vote.newScore}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+            );
         default:
             return 'Transaction';
     }

@@ -5,6 +5,7 @@ defmodule Api.Canvas.Vote do
   schema "votes" do
     field :settled_at, :utc_datetime
     field :settlement_date, :date
+    field :old_score, :integer
     belongs_to :user, Api.Accounts.User
     belongs_to :plot, Api.Canvas.Plot
 
@@ -13,10 +14,10 @@ defmodule Api.Canvas.Vote do
 
   def changeset(vote, attrs) do
     vote
-    |> cast(attrs, [:user_id, :plot_id, :settled_at, :settlement_date])
+    |> cast(attrs, [:user_id, :plot_id, :settled_at, :settlement_date, :old_score])
     |> validate_required([:user_id, :plot_id])
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:plot_id)
-    |> unique_constraint([:user_id, :plot_id], name: :votes_user_id_plot_id_index)
+    |> unique_constraint([:user_id, :plot_id], name: :votes_user_id_plot_id_unique_index)
   end
 end

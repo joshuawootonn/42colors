@@ -30,6 +30,7 @@ const baseLogSchema = z.object({
             description: z.string().nullable(),
         })
         .nullable(),
+    metadata: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
 const initialGrantLogSchema = baseLogSchema.extend({
@@ -112,20 +113,34 @@ const plotDeletedLogSchema = baseLogSchema.extend({
         .nullable(),
 });
 
-const voteDiffSchema = z.object({
+const voteCastSchema = z.object({
+    plotId: z.number(),
     name: z.string(),
-    old_score: z.number(),
-    new_score: z.number(),
+    oldScore: z.number(),
+    newScore: z.number(),
+});
+
+const voteReceivedSchema = z.object({
+    plotId: z.number(),
+    name: z.string(),
+    oldScore: z.number(),
+    newScore: z.number(),
+    voteCount: z.number(),
 });
 
 const dailyVoteAggregateLogSchema = baseLogSchema.extend({
     logType: z.literal('daily_vote_aggregate'),
     diffs: z
         .object({
-            cast_diffs: z.array(voteDiffSchema).optional(),
-            received_diffs: z.array(voteDiffSchema).optional(),
+            votesCast: z.array(voteCastSchema).optional(),
+            votesReceived: z.array(voteReceivedSchema).optional(),
         })
         .nullable(),
+    metadata: z
+        .object({
+            settledAt: z.string().optional(),
+        })
+        .nullish(),
 });
 
 // Union type for all log types

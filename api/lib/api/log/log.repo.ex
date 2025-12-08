@@ -286,4 +286,18 @@ defmodule Api.Logs.Log.Repo do
       preloads -> preload(query, ^preloads)
     end
   end
+
+  @doc """
+  Gets an existing daily_vote_aggregate log for a user on a specific date.
+  Returns nil if not found.
+  """
+  def get_vote_aggregate_for_date(user_id, date) do
+    date_string = Date.to_iso8601(date)
+
+    Log
+    |> where([l], l.user_id == ^user_id)
+    |> where([l], l.log_type == "daily_vote_aggregate")
+    |> where([l], fragment("metadata->>'settledAt' = ?", ^date_string))
+    |> Repo.one()
+  end
 end
