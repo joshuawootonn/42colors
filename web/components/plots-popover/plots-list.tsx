@@ -80,22 +80,28 @@ export function PlotsList({
                 >
                     <button
                         className={cn(
-                            'svg-outline-inset group peer relative z-0 block w-full border-transparent bg-transparent p-2 text-left text-foreground outline-none',
+                            'svg-outline-inset group peer relative z-0 flex w-full items-start justify-between gap-2 border-transparent bg-transparent p-2 text-left text-foreground outline-none',
                             selectedPlotId === plot.id && 'bg-secondary',
                         )}
                         onClick={() => selectPlot(plot.id)}
                         disabled={!plot.polygon}
                     >
-                        <div>{plot.name}</div>
-                        <div className="text-left text-xs">
-                            {plot.description && (
-                                <div className="mt-0.5 line-clamp-2 text-muted-foreground">
-                                    {plot.description}
+                        <div className="min-w-0 flex-1">
+                            <div>{plot.name}</div>
+                            <div className="text-left text-xs">
+                                {plot.description && (
+                                    <div className="mt-0.5 line-clamp-2 text-muted-foreground">
+                                        {plot.description}
+                                    </div>
+                                )}
+                                <div className="mt-1 text-muted-foreground">
+                                    {formatDate(plot.insertedAt)}
                                 </div>
-                            )}
-                            <div className="mt-1 text-muted-foreground">
-                                {formatDate(plot.insertedAt)}
                             </div>
+                        </div>
+                        <div className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                            <span className="pr-0.5">↑</span>
+                            {plot.score}
                         </div>
                     </button>
                 </div>
