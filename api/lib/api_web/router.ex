@@ -72,21 +72,35 @@ defmodule ApiWeb.Router do
     get "/votes/:plot_id", VoteController, :show
   end
 
-  # Enable LiveDashboard and Swoosh mailbox preview in development
-  if Application.compile_env(:api, :dev_routes) do
-    # If you want to use the LiveDashboard in production, you should put
-    # it behind authentication and allow only admins to access it.
-    # If your application does not have an admins-only section yet,
-    # you can use Plug.BasicAuth to set up some basic authentication
-    # as long as you are also using SSL (which you should anyway).
-    import Phoenix.LiveDashboard.Router
+  # LiveDashboard with basic auth (available in all environments)
+  import Phoenix.LiveDashboard.Router
 
+  pipeline :admins_only do
+    plug :admin_basic_auth
+  end
+
+  scope "/admin" do
+    pipe_through [:browser, :admins_only]
+    live_dashboard "/dashboard", metrics: ApiWeb.Telemetry
+  end
+
+  # Swoosh mailbox preview in development only
+  if Application.compile_env(:api, :dev_routes) do
     scope "/dev" do
       pipe_through :browser
-
-      live_dashboard "/dashboard", metrics: ApiWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
+  end
+
+  defp admin_basic_auth(conn, _opts) do
+    username = System.get_env("ADMIN_USERNAME")
+    password = System.get_env("ADMIN_PASSWORD")
+
+    if username == nil or password == nil do
+      raise "DASHBOARD_USERNAME and ADMIN_PASSWORD must be set"
+    end
+
+    Plug.BasicAuth.basic_auth(conn, username: username, password: password)
   end
 
   defp put_channel_token(conn, _) do
