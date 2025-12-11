@@ -52,6 +52,8 @@ env:
     - SECRET_KEY_BASE
     - DATABASE_URL
     - MAILPACE_API_KEY
+    - ADMIN_USERNAME
+    - ADMIN_PASSWORD
 # Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:
 # "bin/kamal app logs -r job" will tail logs from the first server in the job section.
 #
