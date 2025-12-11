@@ -18,7 +18,7 @@ defmodule Api.Workers.VoteSettlementWorker do
   def perform(%Oban.Job{args: args}) do
     date =
       case Map.get(args, "date") do
-        nil -> Date.utc_today() |> Date.add(-1)
+        nil -> Date.utc_today()
         date_string -> Date.from_iso8601!(date_string)
       end
 

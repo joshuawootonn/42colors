@@ -108,7 +108,7 @@ defmodule Mix.Tasks.ObanStatus do
 
     if Enum.empty?(jobs) do
       Mix.shell().info(
-        "No upcoming jobs scheduled. The cron plugin will insert the next job at midnight UTC."
+        "No upcoming jobs scheduled. The cron plugin will insert the next job within 5 minutes."
       )
     else
       Enum.each(jobs, fn job ->
@@ -122,7 +122,7 @@ defmodule Mix.Tasks.ObanStatus do
 
     # Show cron config
     Mix.shell().info("\n#{IO.ANSI.bright()}Cron Configuration#{IO.ANSI.reset()}")
-    Mix.shell().info("  VoteSettlementWorker: 0 0 * * * (daily at midnight UTC)\n")
+    Mix.shell().info("  VoteSettlementWorker: */5 * * * * (every 5 minutes)\n")
   end
 
   defp state_color("completed"), do: IO.ANSI.green()
