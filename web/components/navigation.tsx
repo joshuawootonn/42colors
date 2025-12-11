@@ -72,8 +72,12 @@ export function Navigation() {
 
     const state = useSelector(store, (state) => state.context.state);
     const user = useSelector(store, (state) => state.context.user);
-    const isAdmin = isAdminUser(user);
-    const zoomMin = isAdmin ? ZOOM_MIN_ADMIN : ZOOM_MIN;
+    const isAdminZoomEnabled = useSelector(
+        store,
+        (state) => state.context.adminSettings?.isAdminZoomEnabled,
+    );
+    const zoomMin =
+        isAdminUser(user) && isAdminZoomEnabled ? ZOOM_MIN_ADMIN : ZOOM_MIN;
 
     if (state !== 'initialized') return null;
 

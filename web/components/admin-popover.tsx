@@ -33,6 +33,10 @@ export function AdminPopover({ children }: { children: ReactNode }) {
         store,
         (state) => state.context?.adminSettings?.isAdminPlotEditingEnabled,
     );
+    const isAdminZoomEnabled = useSelector(
+        store,
+        (state) => state.context?.adminSettings?.isAdminZoomEnabled,
+    );
 
     // Only show for admin user
     const isAdmin = isAdminUser(currentUser);
@@ -132,6 +136,27 @@ export function AdminPopover({ children }: { children: ReactNode }) {
                     {isAdminPlotEditingEnabled && (
                         <p className="px-2 text-xs text-amber-600">
                             Warning: You can edit/delete any plot
+                        </p>
+                    )}
+                    <div className="border-t-1.5 border-border"></div>
+                    <div className="flex items-center justify-between px-2">
+                        <label
+                            htmlFor="admin-zoom"
+                            className="text-sm font-medium"
+                        >
+                            Enable admin zoom levels
+                        </label>
+                        <Switch
+                            id="admin-zoom"
+                            checked={isAdminZoomEnabled ?? false}
+                            onCheckedChange={() =>
+                                store.trigger.toggleAdminZoom()
+                            }
+                        />
+                    </div>
+                    {isAdminZoomEnabled && (
+                        <p className="px-2 text-xs text-muted-foreground">
+                            Extended zoom range: 10-800
                         </p>
                     )}
                     <div className="space-y-2 border-t-1.5 px-2 pt-2">

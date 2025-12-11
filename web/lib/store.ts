@@ -110,6 +110,7 @@ type AdminSettings = {
     chunkBordersVisible: boolean;
     isAdminCanvasEditingEnabled: boolean;
     isAdminPlotEditingEnabled: boolean;
+    isAdminZoomEnabled: boolean;
 };
 
 export type InitialStore = {
@@ -186,6 +187,7 @@ const defaultAdminSettings: AdminSettings = {
     chunkBordersVisible: true,
     isAdminCanvasEditingEnabled: false,
     isAdminPlotEditingEnabled: false,
+    isAdminZoomEnabled: false,
 };
 
 const initialialStoreContext: Store = {
@@ -1058,6 +1060,20 @@ export const store = createStore({
             };
         },
 
+        toggleAdminZoom: (context) => {
+            if (isInitialStore(context)) return;
+            if (!isAdminUser(context.user)) return context;
+
+            return {
+                ...context,
+                adminSettings: {
+                    ...context.adminSettings,
+                    isAdminZoomEnabled:
+                        !context.adminSettings.isAdminZoomEnabled,
+                },
+            };
+        },
+
         //////////////// Claim events//////////////////
 
         clearClaim: (context) => {
@@ -1447,10 +1463,12 @@ export const store = createStore({
                 const centerX = window.innerWidth / 2;
                 const centerY = window.innerHeight / 2;
 
-                // Non-linear zoom stops (extended for admins)
-                const isAdmin = isAdminUser(context.user);
-                const zoomMin = isAdmin ? ZOOM_MIN_ADMIN : ZOOM_MIN;
-                const zoomStops = isAdmin
+                // Non-linear zoom stops (extended for admins when enabled)
+                const isAdminZoomEnabled =
+                    isAdminUser(context.user) &&
+                    context.adminSettings.isAdminZoomEnabled;
+                const zoomMin = isAdminZoomEnabled ? ZOOM_MIN_ADMIN : ZOOM_MIN;
+                const zoomStops = isAdminZoomEnabled
                     ? [
                           10, 15, 20, 30, 40, 50, 60, 75, 100, 150, 200, 300,
                           400, 600, 800,

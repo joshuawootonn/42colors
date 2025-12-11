@@ -21,7 +21,9 @@ function onWheel(
 ) {
     if (isInitialStore(context)) return;
 
-    const zoomMin = isAdminUser(context.user) ? ZOOM_MIN_ADMIN : ZOOM_MIN;
+    const isAdminZoomEnabled =
+        isAdminUser(context.user) && context.adminSettings.isAdminZoomEnabled;
+    const zoomMin = isAdminZoomEnabled ? ZOOM_MIN_ADMIN : ZOOM_MIN;
     const pixelWidth = context.camera.zoom / 20;
 
     // Differentiating pinch gestures from scroll wheels doesn't look possible.
