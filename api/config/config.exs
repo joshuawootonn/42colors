@@ -90,8 +90,8 @@ config :api, Oban,
     # Cron-scheduled jobs
     {Oban.Plugins.Cron,
      crontab: [
-       # Daily vote settlement at midnight UTC (settles previous day's votes)
-       {"0 0 * * *", Api.Workers.VoteSettlementWorker}
+       # Vote settlement every 5 minutes (settles unsettled votes from last hour)
+       {"*/5 * * * *", Api.Workers.VoteSettlementWorker}
      ]}
   ]
 

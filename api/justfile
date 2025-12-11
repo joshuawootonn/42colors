@@ -76,13 +76,13 @@ settle-votes-date date:
 
 # Oban job monitoring
 oban-status:
-  export $(xargs <.env.dev) && mix oban_status
+  mix oban_status
 
 oban-failed:
-  export $(xargs <.env.dev) && mix oban_status --failed
+  mix oban_status --failed
 
 oban-scheduled:
-  export $(xargs <.env.dev) && mix oban_status --scheduled
+  mix oban_status --scheduled
 
 # Code quality
 format:
