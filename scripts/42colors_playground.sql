@@ -1,6 +1,7 @@
 select count(*) from pixels;
 select count(*) from users u;
 
+select * from "votes" order by "votes"."inserted_at" desc;
 
 
 ALTER TABLE public.users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
