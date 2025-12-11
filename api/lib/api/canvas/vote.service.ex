@@ -116,7 +116,7 @@ defmodule Api.Canvas.Vote.Service do
   @doc """
   Settle daily votes for all users, optionally for a specific date.
 
-  Called by the Quantum scheduler at midnight UTC or manually via Mix task.
+  Called by the Oban VoteSettlementWorker at midnight UTC or manually via Mix task.
   Marks votes as settled and creates/updates log entries.
 
   If re-settling for a date that was already settled, the existing logs

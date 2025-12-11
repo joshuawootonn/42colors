@@ -80,11 +80,19 @@ config :api, :env, env
 require Logger
 Logger.info("Config loaded with #{app_url} / #{api_url} / #{client_secret} / #{client_id}")
 
-# Configure Quantum scheduler
-config :api, Api.Scheduler,
-  jobs: [
-    # Daily vote settlement at midnight UTC
-    {"0 0 * * *", {Api.Canvas.Vote.Service, :settle_daily_votes, []}}
+# Configure Oban for background jobs
+config :api, Oban,
+  repo: Api.Repo,
+  queues: [default: 10],
+  plugins: [
+    # Prune completed/cancelled/discarded jobs after 7 days
+    {Oban.Plugins.Pruner, max_age: 60 * 60 * 24 * 7},
+    # Cron-scheduled jobs
+    {Oban.Plugins.Cron,
+     crontab: [
+       # Daily vote settlement at midnight UTC (settles previous day's votes)
+       {"0 0 * * *", Api.Workers.VoteSettlementWorker}
+     ]}
   ]
 
 # Import environment specific config. This must remain at the bottom
