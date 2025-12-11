@@ -60,7 +60,10 @@ function getBalanceChangeDisplay(
     return { amount, isPositive, display };
 }
 
-function getLogDescription(log: Log): ReactNode {
+function getLogDescription(
+    log: Log,
+    selectPlot: (id: number) => void,
+): ReactNode {
     switch (log.logType) {
         case 'initial_grant':
             return 'A small loan of 1 million dollars';
@@ -78,29 +81,49 @@ function getLogDescription(log: Log): ReactNode {
             return (
                 <div>
                     {(log.diffs?.votesCast?.length ?? 0) > 0 && (
-                        <div className="mt-1">
-                            <div>Votes Cast</div>
-                            <ul>
+                        <div className="mt-1.5">
+                            <div className="mb-1">Votes Cast</div>
+                            <div className="space-y-0.5">
                                 {log.diffs?.votesCast?.map((vote) => (
-                                    <li key={vote.name}>
-                                        - {vote.name} {vote.oldScore} →{' '}
-                                        {vote.newScore}
-                                    </li>
+                                    <button
+                                        key={vote.name}
+                                        className="group/vote-button flex w-full whitespace-nowrap text-left"
+                                        onClick={() => selectPlot(vote.plotId)}
+                                    >
+                                        <div className="mr-1 shrink-0 translate-y-[-1px]">
+                                            -
+                                        </div>
+                                        <span className="truncate group-hover/vote-button:underline group-focus-visible/vote-button:underline">
+                                            {vote.name}
+                                        </span>{' '}
+                                        <div>(#{vote.newScore})</div>
+                                    </button>
                                 ))}
-                            </ul>
+                            </div>
                         </div>
                     )}
                     {(log.diffs?.votesReceived?.length ?? 0) > 0 && (
-                        <div className="mt-1">
-                            <div>Votes Received</div>
-                            <ul>
-                                {log.diffs?.votesReceived?.map((vote) => (
-                                    <li key={vote.name}>
-                                        - {vote.name} {vote.oldScore} →{' '}
-                                        {vote.newScore}
-                                    </li>
-                                ))}
-                            </ul>
+                        <div className="mt-2">
+                            <div className="mt-1.5 space-y-1">
+                                Votes Received
+                            </div>
+                            {log.diffs?.votesReceived?.map((vote) => (
+                                <button
+                                    key={vote.name}
+                                    className="group/vote-button flex w-full whitespace-nowrap text-left"
+                                    onClick={() => selectPlot(vote.plotId)}
+                                >
+                                    <div className="mr-1 shrink-0 translate-y-[-1px]">
+                                        -
+                                    </div>
+                                    <span className="truncate group-hover/vote-button:underline group-focus-visible/vote-button:underline">
+                                        {vote.name}
+                                    </span>{' '}
+                                    <div>
+                                        (+{vote.newScore - vote.oldScore})
+                                    </div>
+                                </button>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -212,15 +235,15 @@ export function LogsPopoverMarkup({
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="mt-0.5 text-xs text-muted-foreground group-hover:text-muted">
-                                                    {getLogDescription(log)}
-                                                </div>
                                             </div>
                                             <div className="text-right">
                                                 <div className="font-mono text-xs text-muted-foreground group-hover:text-muted">
                                                     Balance: {log.newBalance}
                                                 </div>
                                             </div>
+                                        </div>
+                                        <div className="mt-0.5 text-xs text-muted-foreground group-hover:text-muted">
+                                            {getLogDescription(log, selectPlot)}
                                         </div>
                                         <div className="mt-2 text-xs text-muted-foreground group-hover:text-muted">
                                             {formatDate(log.insertedAt)}

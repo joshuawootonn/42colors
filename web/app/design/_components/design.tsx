@@ -387,7 +387,7 @@ export function DesignPage() {
                                     },
                                     {
                                         plotId: 3,
-                                        name: 'Sunset Landscape',
+                                        name: 'Sunset LandscapSunset LandscapSunset LandscapSunset LandscapSunset LandscapeeeeeSunset Landscape',
                                         oldScore: 5,
                                         newScore: 6,
                                     },
