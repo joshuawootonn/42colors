@@ -91,3 +91,13 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+# Override Oban cron to run vote settlement every minute in dev
+config :api, Oban,
+  plugins: [
+    {Oban.Plugins.Pruner, max_age: 60 * 60 * 24 * 7},
+    {Oban.Plugins.Cron,
+     crontab: [
+       {"* * * * *", Api.Workers.VoteSettlementWorker}
+     ]}
+  ]
