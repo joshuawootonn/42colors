@@ -97,7 +97,7 @@ defmodule ApiWeb.Router do
     password = System.get_env("ADMIN_PASSWORD")
 
     if username == nil or password == nil do
-      raise "DASHBOARD_USERNAME and ADMIN_PASSWORD must be set"
+      raise "ADMIN_USERNAME and ADMIN_PASSWORD must be set"
     end
 
     Plug.BasicAuth.basic_auth(conn, username: username, password: password)
