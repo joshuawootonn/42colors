@@ -43,66 +43,48 @@ defmodule ApiWeb.Telemetry do
   end
 
   def metrics do
-    [
-      # Phoenix Metrics
-      # summary("phoenix.endpoint.start.system_time",
-      #   unit: {:native, :millisecond}
-      # ),
-      # summary("phoenix.endpoint.stop.duration",
-      #   unit: {:native, :millisecond}
-      # ),
-      # summary("phoenix.router_dispatch.start.system_time",
-      #   tags: [:route],
-      #   unit: {:native, :millisecond}
-      # ),
-      # summary("phoenix.router_dispatch.exception.duration",
-      #   tags: [:route],
-      #   unit: {:native, :millisecond}
-      # ),
-      # summary("phoenix.router_dispatch.stop.duration",
-      #   tags: [:route],
-      #   unit: {:native, :millisecond}
-      # ),
-      # summary("phoenix.socket_connected.duration",
-      #   unit: {:native, :millisecond}
-      # ),
-      # summary("phoenix.channel_joined.duration",
-      #   unit: {:native, :millisecond}
-      # ),
-      # summary("phoenix.channel_handled_in.duration",
-      #   tags: [:event],
-      #   unit: {:native, :millisecond}
-      # ),
-      #
-      # # Database Metrics
-      # summary("api.repo.query.total_time",
-      #   unit: {:native, :millisecond},
-      #   description: "The sum of the other measurements"
-      # ),
-      # summary("api.repo.query.decode_time",
-      #   unit: {:native, :millisecond},
-      #   description: "The time spent decoding the data received from the database"
-      # ),
-      # summary("api.repo.query.query_time",
-      #   unit: {:native, :millisecond},
-      #   description: "The time spent executing the query"
-      # ),
-      # summary("api.repo.query.queue_time",
-      #   unit: {:native, :millisecond},
-      #   description: "The time spent waiting for a database connection"
-      # ),
-      # summary("api.repo.query.idle_time",
-      #   unit: {:native, :millisecond},
-      #   description:
-      #     "The time the connection spent waiting before being checked out for the query"
-      # ),
-      #
-      # # VM Metrics
-      # summary("vm.memory.total", unit: {:byte, :kilobyte}),
-      # summary("vm.total_run_queue_lengths.total"),
-      # summary("vm.total_run_queue_lengths.cpu"),
-      # summary("vm.total_run_queue_lengths.io")
+    import Telemetry.Metrics
+
+    base_metrics = [
+      # Minimal metric required for LiveDashboard to render
+      summary("vm.memory.total", unit: {:byte, :kilobyte})
     ]
+
+    prod_metrics = [
+      # Phoenix Metrics
+      summary("phoenix.endpoint.stop.duration",
+        unit: {:native, :millisecond}
+      ),
+      summary("phoenix.router_dispatch.stop.duration",
+        tags: [:route],
+        unit: {:native, :millisecond}
+      ),
+
+      # Database Metrics
+      summary("api.repo.query.total_time",
+        unit: {:native, :millisecond},
+        description: "The sum of the other measurements"
+      ),
+      summary("api.repo.query.query_time",
+        unit: {:native, :millisecond},
+        description: "The time spent executing the query"
+      ),
+      summary("api.repo.query.queue_time",
+        unit: {:native, :millisecond},
+        description: "The time spent waiting for a database connection"
+      ),
+
+      # VM Metrics
+      summary("vm.total_run_queue_lengths.total"),
+      summary("vm.total_run_queue_lengths.cpu"),
+      summary("vm.total_run_queue_lengths.io")
+    ]
+
+    if Application.get_env(:api, :env) == "prod" do
+      base_metrics ++ prod_metrics
+    else
+      base_metrics
+    end
   end
 
   defp periodic_measurements do
