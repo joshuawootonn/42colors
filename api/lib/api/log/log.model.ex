@@ -2,7 +2,7 @@ defmodule Api.Logs.Log do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @log_types ~w(initial_grant bailout_grant daily_visit_grant fun_money_grant plot_created plot_updated plot_deleted daily_vote_aggregate)
+  @log_types ~w(initial_grant bailout_grant daily_visit_grant fun_money_grant plot_created plot_updated plot_deleted vote_aggregate)
 
   schema "logs" do
     field :old_balance, :integer
@@ -34,12 +34,9 @@ defmodule Api.Logs.Log do
     new_balance = get_field(changeset, :new_balance)
 
     case {log_type, old_balance, new_balance} do
-      {"plot_updated", old_bal, new_bal} when old_bal == new_bal ->
-        # Allow zero balance changes for plot updates (metadata-only changes)
-        changeset
-
-      {"daily_vote_aggregate", old_bal, new_bal} when old_bal == new_bal ->
-        # Allow zero balance changes for vote aggregates (e.g., only received downvotes)
+      {log_type, old_bal, new_bal}
+      when log_type in ["plot_updated", "vote_aggregate"] and old_bal == new_bal ->
+        # Allow zero balance changes for vote aggregates (e.g., only cast votes, received none)
         changeset
 
       {"daily_visit_grant", _old_bal, _new_bal} ->

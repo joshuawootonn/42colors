@@ -288,16 +288,14 @@ defmodule Api.Logs.Log.Repo do
   end
 
   @doc """
-  Gets an existing daily_vote_aggregate log for a user on a specific date.
-  Returns nil if not found.
+  Gets the most recent log for a user.
+  Returns nil if the user has no logs.
   """
-  def get_vote_aggregate_for_date(user_id, date) do
-    date_string = Date.to_iso8601(date)
-
+  def get_last_log(user_id) do
     Log
     |> where([l], l.user_id == ^user_id)
-    |> where([l], l.log_type == "daily_vote_aggregate")
-    |> where([l], fragment("metadata->>'settledAt' = ?", ^date_string))
+    |> order_by([l], desc: l.inserted_at, desc: l.id)
+    |> limit(1)
     |> Repo.one()
   end
 end

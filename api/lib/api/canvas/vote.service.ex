@@ -114,29 +114,23 @@ defmodule Api.Canvas.Vote.Service do
   end
 
   @doc """
-  Settle daily votes for all users, optionally for a specific date.
+  Settle unsettled votes for all users.
 
-  Called by the Oban VoteSettlementWorker at midnight UTC or manually via Mix task.
+  Called by the Oban VoteSettlementWorker or manually via Mix task.
   Marks votes as settled and creates/updates log entries.
 
-  If re-settling for a date that was already settled, the existing logs
-  will be updated rather than creating duplicates.
-
-  ## Parameters
-
-    * `date` - Optional. The date to settle votes for. Defaults to today.
-               When specified, only settles votes created on that date.
+  If the user's last log is a vote_aggregate from the same day, the new votes
+  will be appended to that log. Otherwise, a new vote_aggregate log is created.
   """
-  def settle_daily_votes(date \\ nil) do
-    settlement_date = date || Date.utc_today()
-
-    # Get votes for the specific date
-    votes = get_votes_for_date(settlement_date)
+  def settle_votes do
+    # Get all unsettled votes
+    votes = Vote.Repo.get_unsettled_votes()
 
     if Enum.empty?(votes) do
       {:ok, :no_votes_to_settle}
     else
       settled_at = DateTime.utc_now()
+      today = Date.utc_today()
 
       # Group votes by voter
       votes_by_voter = Enum.group_by(votes, & &1.user_id)
@@ -154,12 +148,12 @@ defmodule Api.Canvas.Vote.Service do
       results =
         Enum.map(all_user_ids, fn user_id ->
           user_cast_votes = Map.get(votes_by_voter, user_id, [])
-          settle_user_votes(user_id, user_cast_votes, votes, plots_by_id, settlement_date)
+          settle_user_votes(user_id, user_cast_votes, votes, plots_by_id)
         end)
 
-      # Mark all votes as settled for this date
+      # Mark all votes as settled
       vote_ids = Enum.map(votes, & &1.id)
-      Vote.Repo.mark_votes_settled(vote_ids, settled_at, settlement_date)
+      Vote.Repo.mark_votes_settled(vote_ids, settled_at, today)
 
       failures =
         Enum.filter(results, fn
@@ -171,8 +165,7 @@ defmodule Api.Canvas.Vote.Service do
         {:ok,
          %{
            processed_users: length(all_user_ids),
-           total_votes: length(votes),
-           date: settlement_date
+           total_votes: length(votes)
          }}
       else
         {:error, %{failures: failures, processed_users: length(all_user_ids)}}
@@ -180,20 +173,9 @@ defmodule Api.Canvas.Vote.Service do
     end
   end
 
-  defp get_votes_for_date(date) do
-    start_of_day = DateTime.new!(date, ~T[00:00:00], "Etc/UTC")
-    end_of_day = DateTime.new!(date, ~T[23:59:59], "Etc/UTC")
-
-    from(v in Vote,
-      where: v.inserted_at >= ^start_of_day and v.inserted_at <= ^end_of_day,
-      preload: [:user, :plot]
-    )
-    |> Repo.all()
-  end
-
   @pixels_per_vote 100
 
-  defp settle_user_votes(user_id, user_cast_votes, all_votes, plots_by_id, settlement_date) do
+  defp settle_user_votes(user_id, user_cast_votes, all_votes, plots_by_id) do
     user = Repo.get!(Api.Accounts.User, user_id)
 
     # Calculate votes this user cast - use old_score captured at cast time
@@ -245,21 +227,34 @@ defmodule Api.Canvas.Vote.Service do
       # Calculate balance change: +100 pixels per vote received
       pixels_earned = total_votes_received * @pixels_per_vote
 
-      # Check if a log already exists for this user/date (re-aggregation)
-      existing_log = Api.Logs.Log.Repo.get_vote_aggregate_for_date(user_id, settlement_date)
+      # Check if last log is a vote_aggregate from today - if so, update it
+      last_log = Api.Logs.Log.Repo.get_last_log(user_id)
+      today = Date.utc_today()
+
+      existing_log =
+        case last_log do
+          %{log_type: "vote_aggregate", inserted_at: inserted_at} ->
+            if Date.compare(DateTime.to_date(inserted_at), today) == :eq do
+              last_log
+            else
+              nil
+            end
+
+          _ ->
+            nil
+        end
 
       upsert_vote_aggregate_log(
         user,
         existing_log,
         pixels_earned,
         votes_cast,
-        votes_received,
-        settlement_date
+        votes_received
       )
     end
   end
 
-  defp upsert_vote_aggregate_log(user, nil, pixels_earned, votes_cast, votes_received, date) do
+  defp upsert_vote_aggregate_log(user, nil, pixels_earned, votes_cast, votes_received) do
     # No existing log - create new one
     new_balance = user.balance + pixels_earned
 
@@ -267,10 +262,7 @@ defmodule Api.Canvas.Vote.Service do
       user_id: user.id,
       old_balance: user.balance,
       new_balance: new_balance,
-      log_type: "daily_vote_aggregate",
-      metadata: %{
-        settledAt: Date.to_iso8601(date)
-      },
+      log_type: "vote_aggregate",
       diffs: %{
         votesCast: votes_cast,
         votesReceived: votes_received
@@ -283,36 +275,34 @@ defmodule Api.Canvas.Vote.Service do
          existing_log,
          pixels_earned,
          votes_cast,
-         votes_received,
-         date
+         votes_received
        ) do
-    # Existing log found - update it
-    # First, reverse the old balance change
-    old_pixels_earned = existing_log.new_balance - existing_log.old_balance
-    base_balance = user.balance - old_pixels_earned
+    # Existing log found - append new votes to existing arrays
+    existing_diffs = existing_log.diffs || %{}
+    existing_votes_cast = Map.get(existing_diffs, "votesCast", [])
+    existing_votes_received = Map.get(existing_diffs, "votesReceived", [])
 
-    # Then apply new balance change
-    new_balance = base_balance + pixels_earned
+    merged_votes_cast = existing_votes_cast ++ votes_cast
+    merged_votes_received = existing_votes_received ++ votes_received
+
+    # Keep old_balance from original log, update new_balance with additional pixels
+    new_balance = existing_log.new_balance + pixels_earned
 
     # Update the log and user balance
     Multi.new()
     |> Multi.update(
       :log,
       Api.Logs.Log.changeset(existing_log, %{
-        old_balance: base_balance,
         new_balance: new_balance,
-        metadata: %{
-          settledAt: Date.to_iso8601(date)
-        },
         diffs: %{
-          votesCast: votes_cast,
-          votesReceived: votes_received
+          votesCast: merged_votes_cast,
+          votesReceived: merged_votes_received
         }
       })
     )
     |> Multi.run(:update_balance, fn _repo, _changes ->
       user
-      |> Ecto.Changeset.change(balance: new_balance)
+      |> Ecto.Changeset.change(balance: user.balance + pixels_earned)
       |> Repo.update()
     end)
     |> Repo.transaction()

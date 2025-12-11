@@ -38,8 +38,8 @@ function getLogTypeDisplay(logType: Log['logType']): string {
             return 'Plot Updated';
         case 'plot_deleted':
             return 'Plot Deleted';
-        case 'daily_vote_aggregate':
-            return 'Daily Vote Count';
+        case 'vote_aggregate':
+            return 'Votes';
         default:
             return logType;
     }
@@ -74,7 +74,7 @@ function getLogDescription(log: Log): ReactNode {
             return log.plot ? `Updated "${log.plot.name}"` : 'Plot updated';
         case 'plot_deleted':
             return log.plot ? `Deleted "${log.plot.name}"` : 'Plot deleted';
-        case 'daily_vote_aggregate':
+        case 'vote_aggregate':
             return (
                 <div>
                     {(log.diffs?.votesCast?.length ?? 0) > 0 && (

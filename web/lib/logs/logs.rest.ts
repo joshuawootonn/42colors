@@ -18,7 +18,7 @@ const baseLogSchema = z.object({
         'plot_created',
         'plot_updated',
         'plot_deleted',
-        'daily_vote_aggregate',
+        'vote_aggregate',
     ]),
     plotId: z.number().nullable(),
     insertedAt: z.string(),
@@ -129,7 +129,7 @@ const voteReceivedSchema = z.object({
 });
 
 const dailyVoteAggregateLogSchema = baseLogSchema.extend({
-    logType: z.literal('daily_vote_aggregate'),
+    logType: z.literal('vote_aggregate'),
     diffs: z
         .object({
             votesCast: z.array(voteCastSchema).optional(),

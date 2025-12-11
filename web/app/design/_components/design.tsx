@@ -370,6 +370,42 @@ export function DesignPage() {
                             plotId: null,
                             userId: 1,
                         },
+                        {
+                            id: 5,
+                            logType: 'vote_aggregate',
+                            oldBalance: 55,
+                            newBalance: 255,
+                            insertedAt: '2024-01-01T14:00:00Z',
+                            plot: null,
+                            diffs: {
+                                votesCast: [
+                                    {
+                                        plotId: 2,
+                                        name: 'Cool Art',
+                                        oldScore: 10,
+                                        newScore: 11,
+                                    },
+                                    {
+                                        plotId: 3,
+                                        name: 'Sunset Landscape',
+                                        oldScore: 5,
+                                        newScore: 6,
+                                    },
+                                ],
+                                votesReceived: [
+                                    {
+                                        plotId: 1,
+                                        name: 'My First Plot',
+                                        oldScore: 0,
+                                        newScore: 2,
+                                        voteCount: 2,
+                                    },
+                                ],
+                            },
+                            updatedAt: '2024-01-01T14:00:00Z',
+                            plotId: null,
+                            userId: 1,
+                        },
                     ]}
                     anchor={{ current: null }}
                 >

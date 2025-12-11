@@ -1,28 +1,21 @@
 defmodule Mix.Tasks.SettleVotes do
   @moduledoc """
-  Manually run vote aggregation/settlement for a specific date.
+  Manually run vote settlement.
 
-  This task settles votes created on the specified date (or today if not specified),
-  marks them as settled, and creates/updates daily_vote_aggregate log entries.
+  This task settles all unsettled votes, marks them as settled, and
+  creates/updates vote_aggregate log entries.
 
-  If run multiple times for the same date, it will update existing logs
-  rather than creating duplicates.
+  If the user's last log is a vote_aggregate from the same day, new votes
+  are appended to that log. Otherwise, a new vote_aggregate log is created.
 
   ## Usage
 
-      # Settle today's votes
       mix settle_votes
-
-      # Settle votes for a specific date
-      mix settle_votes 2025-12-07
 
   ## Examples
 
       # Run in dev environment
       export $(xargs <.env.dev) && mix settle_votes
-
-      # Settle a specific date in dev
-      export $(xargs <.env.dev) && mix settle_votes 2025-12-07
 
       # Run in test environment
       export $(xargs <.env.test) && mix settle_votes
@@ -30,23 +23,21 @@ defmodule Mix.Tasks.SettleVotes do
 
   use Mix.Task
 
-  @shortdoc "Settle votes for a specific date and create/update log entries"
+  @shortdoc "Settle all unsettled votes and create/update log entries"
 
   @impl Mix.Task
-  def run(args) do
+  def run(_args) do
     # Start the application
     Mix.Task.run("app.start")
 
-    date = parse_date(args)
+    IO.puts("Starting vote settlement...")
 
-    IO.puts("Starting vote settlement for #{date}...")
-
-    case Api.Canvas.Vote.Service.settle_daily_votes(date) do
+    case Api.Canvas.Vote.Service.settle_votes() do
       {:ok, :no_votes_to_settle} ->
-        IO.puts("No votes found for #{date}.")
+        IO.puts("No unsettled votes found.")
 
-      {:ok, %{processed_users: users, total_votes: votes, date: settled_date}} ->
-        IO.puts("✓ Settlement complete for #{settled_date}!")
+      {:ok, %{processed_users: users, total_votes: votes}} ->
+        IO.puts("✓ Settlement complete!")
         IO.puts("  - Processed #{users} users")
         IO.puts("  - Settled #{votes} votes")
 
@@ -61,20 +52,6 @@ defmodule Mix.Tasks.SettleVotes do
 
       {:error, reason} ->
         IO.puts("✗ Settlement failed: #{inspect(reason)}")
-    end
-  end
-
-  defp parse_date([]), do: Date.utc_today()
-
-  defp parse_date([date_string | _]) do
-    case Date.from_iso8601(date_string) do
-      {:ok, date} ->
-        date
-
-      {:error, _} ->
-        IO.puts("Invalid date format: #{date_string}")
-        IO.puts("Expected format: YYYY-MM-DD (e.g., 2025-12-07)")
-        System.halt(1)
     end
   end
 end

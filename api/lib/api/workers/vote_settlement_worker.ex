@@ -1,9 +1,9 @@
 defmodule Api.Workers.VoteSettlementWorker do
   @moduledoc """
-  Oban worker for daily vote settlement.
+  Oban worker for vote settlement.
 
-  Runs at midnight UTC to aggregate votes from the previous day,
-  update user balances, and create settlement logs.
+  Settles all unsettled votes, updating user balances and creating/updating
+  vote_aggregate log entries.
 
   This replaces the previous Quantum scheduler job and provides:
   - Job persistence and retry logic
@@ -15,29 +15,23 @@ defmodule Api.Workers.VoteSettlementWorker do
   require Logger
 
   @impl Oban.Worker
-  def perform(%Oban.Job{args: args}) do
-    date =
-      case Map.get(args, "date") do
-        nil -> Date.utc_today()
-        date_string -> Date.from_iso8601!(date_string)
-      end
+  def perform(%Oban.Job{}) do
+    Logger.info("Starting vote settlement")
 
-    Logger.info("Starting vote settlement for #{date}")
-
-    case Api.Canvas.Vote.Service.settle_daily_votes(date) do
+    case Api.Canvas.Vote.Service.settle_votes() do
       {:ok, :no_votes_to_settle} ->
-        Logger.info("No votes to settle for #{date}")
+        Logger.info("No votes to settle")
         :ok
 
       {:ok, result} ->
         Logger.info(
-          "Vote settlement completed for #{date}: #{result.processed_users} users, #{result.total_votes} votes"
+          "Vote settlement completed: #{result.processed_users} users, #{result.total_votes} votes"
         )
 
         :ok
 
       {:error, reason} ->
-        Logger.error("Vote settlement failed for #{date}: #{inspect(reason)}")
+        Logger.error("Vote settlement failed: #{inspect(reason)}")
         {:error, reason}
     end
   end
