@@ -19,7 +19,6 @@ export function useSelectedPlot(): Plot | null {
         queryKey: selectedPlotQueryKey(selectedPlotId),
         queryFn: selectedPlotId ? () => getPlot(selectedPlotId) : skipToken,
     });
-    console.log({ selectedPlot });
 
     return selectedPlot ?? null;
 }
