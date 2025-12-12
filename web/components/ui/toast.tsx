@@ -126,6 +126,14 @@ export const TOASTS = {
         title: 'Vote failed',
         description: message || 'Something went wrong.',
     }),
+    plotDeleted: (deletedAt: string) => ({
+        title: 'Plot was deleted',
+        description: `This plot was deleted on ${new Date(deletedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}.`,
+    }),
+    plotNotFound: {
+        title: 'Plot not found',
+        description: "We couldn't find that plot. It may have never existed.",
+    },
 } as const;
 
 export type ToastKey = keyof typeof TOASTS;
@@ -147,6 +155,8 @@ export const toasts = {
     voteUnauthorized: () => toast(TOASTS.voteUnauthorized),
     alreadyVoted: () => toast(TOASTS.alreadyVoted),
     voteFailed: (message?: string) => toast(TOASTS.voteFailed(message)),
+    plotDeleted: (deletedAt: string) => toast(TOASTS.plotDeleted(deletedAt)),
+    plotNotFound: () => toast(TOASTS.plotNotFound),
 } as const;
 
 const _closeButtonVariants = {

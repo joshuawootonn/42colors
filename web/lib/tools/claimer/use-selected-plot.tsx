@@ -16,5 +16,5 @@ export function useSelectedPlot(): Plot | null {
         queryFn: selectedPlotId ? () => getPlot(selectedPlotId) : skipToken,
     });
 
-    return selectedPlot ?? null;
+    return selectedPlot?.status === 'found' ? selectedPlot.plot : null;
 }

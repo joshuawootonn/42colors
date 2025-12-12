@@ -984,4 +984,49 @@ defmodule ApiWeb.PlotControllerTest do
       assert response(conn, 404)
     end
   end
+
+  describe "show with include_deleted" do
+    test "returns 404 for deleted plot without include_deleted param", %{conn: conn, user: user} do
+      plot = plot_fixture(%{user_id: user.id})
+
+      # Delete the plot
+      conn = delete(conn, ~p"/api/plots/#{plot.id}")
+      assert response(conn, 204)
+
+      # Try to get it without include_deleted
+      conn = get(conn, ~p"/api/plots/#{plot.id}")
+      assert response(conn, 404)
+    end
+
+    test "returns deleted plot with include_deleted=true", %{conn: conn, user: user} do
+      plot = plot_fixture(%{user_id: user.id})
+
+      # Delete the plot
+      conn = delete(conn, ~p"/api/plots/#{plot.id}")
+      assert response(conn, 204)
+
+      # Get it with include_deleted=true
+      conn = get(conn, ~p"/api/plots/#{plot.id}?include_deleted=true")
+      response = json_response(conn, 200)["data"]
+
+      assert response["id"] == plot.id
+      assert response["name"] == plot.name
+      assert response["deletedAt"] != nil
+    end
+
+    test "returns 404 for non-existent plot even with include_deleted=true", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots/999999?include_deleted=true")
+      assert response(conn, 404)
+    end
+
+    test "returns active plot with include_deleted=true", %{conn: conn, user: user} do
+      plot = plot_fixture(%{user_id: user.id})
+
+      conn = get(conn, ~p"/api/plots/#{plot.id}?include_deleted=true")
+      response = json_response(conn, 200)["data"]
+
+      assert response["id"] == plot.id
+      assert response["deletedAt"] == nil
+    end
+  end
 end

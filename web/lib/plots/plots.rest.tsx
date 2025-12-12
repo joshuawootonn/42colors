@@ -12,25 +12,50 @@ import {
     plotResponseSchema,
 } from '../tools/claimer/claimer.rest';
 
-export async function getPlot(id: number): Promise<Plot> {
+type GetPlotOptions = {
+    include_deleted?: boolean;
+};
+
+export type GetPlotResult =
+    | { status: 'found'; plot: Plot }
+    | { status: 'deleted'; plot: Plot }
+    | { status: 'not_found' };
+
+export async function getPlot(
+    id: number,
+    options: GetPlotOptions = {},
+): Promise<GetPlotResult> {
     const context = store.getSnapshot().context;
     if (isInitialStore(context)) {
         throw new Error('Server context is not initialized');
     }
 
-    const response = await fetch(
-        new URL(`/api/plots/${id}`, context.server.apiOrigin),
-        {
-            method: 'GET',
-        },
-    );
+    const search = new URLSearchParams();
+    if (options.include_deleted) {
+        search.set('include_deleted', 'true');
+    }
+
+    const url = new URL(`/api/plots/${id}`, context.server.apiOrigin);
+    if (search.toString()) {
+        url.search = search.toString();
+    }
+
+    const response = await fetch(url, {
+        method: 'GET',
+    });
+
     if (!response.ok) {
-        throw new Error('Failed to fetch plot');
+        return { status: 'not_found' };
     }
 
     const json = await response.json();
+    const plot = plotResponseSchema.parse(json).data;
 
-    return plotResponseSchema.parse(json).data;
+    if (plot.deletedAt != null) {
+        return { status: 'deleted', plot };
+    }
+
+    return { status: 'found', plot };
 }
 
 type GetPlotsOptions = {

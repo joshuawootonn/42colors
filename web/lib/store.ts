@@ -1,6 +1,7 @@
 import isHotkey from 'is-hotkey';
 import { Channel, Socket } from 'phoenix';
 
+import { toasts } from '@/components/ui/toast';
 import { QueryClient } from '@tanstack/react-query';
 import { createStore } from '@xstate/store';
 
@@ -1151,7 +1152,21 @@ export const store = createStore({
                     console.trace(
                         'Plot with id of ${plotId} not found locally. Fetching it',
                     );
-                    polygon = (await getPlot(plotId)).polygon;
+                    const result = await getPlot(plotId, {
+                        include_deleted: true,
+                    });
+
+                    if (result.status === 'deleted') {
+                        toasts.plotDeleted(result.plot.deletedAt!);
+                        return;
+                    }
+
+                    if (result.status === 'not_found') {
+                        toasts.plotNotFound();
+                        return;
+                    }
+
+                    polygon = result.plot.polygon;
                 }
 
                 if (polygon != null) {

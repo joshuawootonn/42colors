@@ -17,6 +17,7 @@ export const plotSchema = z.object({
     polygon: polygonSchema,
     insertedAt: z.string(),
     updatedAt: z.string(),
+    deletedAt: z.string().nullable(),
     userId: z.number(),
     score: z.number().optional().default(0),
 });

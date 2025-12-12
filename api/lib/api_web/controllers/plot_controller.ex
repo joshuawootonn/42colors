@@ -140,13 +140,22 @@ defmodule ApiWeb.PlotController do
     end
   end
 
-  def show(conn, %{"id" => id}) do
-    try do
-      plot = Plot.Repo.get_plot!(id)
-      render(conn, :show, plot: plot)
-    rescue
-      Ecto.NoResultsError ->
-        send_resp(conn, :not_found, "Not found")
+  def show(conn, %{"id" => id} = params) do
+    include_deleted = Map.get(params, "include_deleted") == "true"
+
+    if include_deleted do
+      case Plot.Repo.get_plot_including_deleted(id) do
+        nil -> send_resp(conn, :not_found, "Not found")
+        plot -> render(conn, :show, plot: plot)
+      end
+    else
+      try do
+        plot = Plot.Repo.get_plot!(id)
+        render(conn, :show, plot: plot)
+      rescue
+        Ecto.NoResultsError ->
+          send_resp(conn, :not_found, "Not found")
+      end
     end
   end
 

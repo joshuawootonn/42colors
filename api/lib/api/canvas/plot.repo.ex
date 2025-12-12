@@ -47,6 +47,26 @@ defmodule Api.Canvas.Plot.Repo do
   end
 
   @doc """
+  Gets a single plot by ID, including deleted plots.
+
+  Returns nil if the Plot does not exist.
+
+  ## Examples
+
+      iex> get_plot_including_deleted(123)
+      %Plot{}
+
+      iex> get_plot_including_deleted(456)
+      nil
+
+  """
+  def get_plot_including_deleted(id) do
+    Plot
+    |> where([p], p.id == ^id)
+    |> Repo.one()
+  end
+
+  @doc """
   Gets a single plot for a specific user.
 
   Returns nil if the Plot does not exist or doesn't belong to the user.
