@@ -95,7 +95,8 @@ function getLogDescription(
                                         </div>
                                         <span className="truncate group-hover/vote-button:underline group-focus-visible/vote-button:underline">
                                             {vote.name}
-                                        </span>{' '}
+                                        </span>
+                                        &nbsp;
                                         <div>(#{vote.newScore})</div>
                                     </button>
                                 ))}
@@ -118,9 +119,9 @@ function getLogDescription(
                                     </div>
                                     <span className="truncate group-hover/vote-button:underline group-focus-visible/vote-button:underline">
                                         {vote.name}
-                                    </span>{' '}
+                                    </span>
                                     <div>
-                                        (+{vote.newScore - vote.oldScore})
+                                        &nbsp;(+{vote.newScore - vote.oldScore})
                                     </div>
                                 </button>
                             ))}
