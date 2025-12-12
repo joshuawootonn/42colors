@@ -13,13 +13,12 @@ defmodule ApiWeb.PlotController do
       {nil, nil} ->
         # No x,y provided - return global list of plots
         limit_param = Map.get(params, "limit")
+        order_by_param = Map.get(params, "order_by")
 
         list_opts =
-          case parse_limit(limit_param) do
-            {:ok, limit} -> %{limit: limit}
-            # Use default limit
-            {:error, _} -> %{}
-          end
+          %{}
+          |> maybe_add_limit(limit_param)
+          |> maybe_add_order_by(order_by_param)
 
         plots = Plot.Service.list_plots(list_opts)
         render(conn, :index, plots: plots)
@@ -338,4 +337,18 @@ defmodule ApiWeb.PlotController do
   end
 
   defp parse_limit(_), do: {:error, :invalid_limit}
+
+  defp maybe_add_limit(opts, nil), do: opts
+
+  defp maybe_add_limit(opts, limit_param) do
+    case parse_limit(limit_param) do
+      {:ok, limit} -> Map.put(opts, :limit, limit)
+      {:error, _} -> opts
+    end
+  end
+
+  defp maybe_add_order_by(opts, nil), do: opts
+  defp maybe_add_order_by(opts, "top"), do: Map.put(opts, :order_by, "top")
+  defp maybe_add_order_by(opts, "recent"), do: Map.put(opts, :order_by, "recent")
+  defp maybe_add_order_by(opts, _), do: opts
 end

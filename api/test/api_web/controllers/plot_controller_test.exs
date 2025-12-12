@@ -231,6 +231,168 @@ defmodule ApiWeb.PlotControllerTest do
       response = json_response(conn, 200)["data"]
       assert response == []
     end
+
+    test "returns plots sorted by score when order_by=top", %{conn: conn} do
+      user = user_fixture()
+
+      {:ok, low_score} =
+        Plot.Repo.create_plot(%{
+          name: "Low Score",
+          description: "Low score plot",
+          user_id: user.id,
+          score: 10,
+          polygon: %Geo.Polygon{
+            coordinates: [[{100, 100}, {100, 110}, {110, 110}, {110, 100}, {100, 100}]],
+            srid: 4326
+          }
+        })
+
+      {:ok, high_score} =
+        Plot.Repo.create_plot(%{
+          name: "High Score",
+          description: "High score plot",
+          user_id: user.id,
+          score: 100,
+          polygon: %Geo.Polygon{
+            coordinates: [[{200, 200}, {200, 210}, {210, 210}, {210, 200}, {200, 200}]],
+            srid: 4326
+          }
+        })
+
+      {:ok, medium_score} =
+        Plot.Repo.create_plot(%{
+          name: "Medium Score",
+          description: "Medium score plot",
+          user_id: user.id,
+          score: 50,
+          polygon: %Geo.Polygon{
+            coordinates: [[{300, 300}, {300, 310}, {310, 310}, {310, 300}, {300, 300}]],
+            srid: 4326
+          }
+        })
+
+      conn = get(conn, ~p"/api/plots?order_by=top")
+      response = json_response(conn, 200)["data"]
+
+      # Find positions of our test plots
+      ids = Enum.map(response, & &1["id"])
+      high_pos = Enum.find_index(ids, &(&1 == high_score.id))
+      medium_pos = Enum.find_index(ids, &(&1 == medium_score.id))
+      low_pos = Enum.find_index(ids, &(&1 == low_score.id))
+
+      # High score should come first, then medium, then low
+      assert high_pos < medium_pos
+      assert medium_pos < low_pos
+    end
+
+    test "returns plots sorted by date when order_by=recent", %{conn: conn} do
+      user = user_fixture()
+
+      {:ok, _oldest} =
+        Plot.Repo.create_plot(%{
+          name: "Oldest",
+          description: "Oldest plot",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{100, 100}, {100, 110}, {110, 110}, {110, 100}, {100, 100}]],
+            srid: 4326
+          }
+        })
+
+      Process.sleep(10)
+
+      {:ok, _newest} =
+        Plot.Repo.create_plot(%{
+          name: "Newest",
+          description: "Newest plot",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{200, 200}, {200, 210}, {210, 210}, {210, 200}, {200, 200}]],
+            srid: 4326
+          }
+        })
+
+      conn = get(conn, ~p"/api/plots?order_by=recent")
+      response = json_response(conn, 200)["data"]
+
+      # Should be sorted by date (newest first)
+      timestamps = Enum.map(response, & &1["insertedAt"])
+      sorted_timestamps = Enum.sort(timestamps, :desc)
+      assert timestamps == sorted_timestamps
+    end
+
+    test "ignores invalid order_by parameter and uses default (recent)", %{conn: conn} do
+      user = user_fixture()
+
+      {:ok, _plot1} =
+        Plot.Repo.create_plot(%{
+          name: "First",
+          description: "First plot",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{100, 100}, {100, 110}, {110, 110}, {110, 100}, {100, 100}]],
+            srid: 4326
+          }
+        })
+
+      Process.sleep(10)
+
+      {:ok, _plot2} =
+        Plot.Repo.create_plot(%{
+          name: "Second",
+          description: "Second plot",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{200, 200}, {200, 210}, {210, 210}, {210, 200}, {200, 200}]],
+            srid: 4326
+          }
+        })
+
+      conn = get(conn, ~p"/api/plots?order_by=invalid_value")
+      response = json_response(conn, 200)["data"]
+
+      # Should work and return sorted by date (default)
+      assert is_list(response)
+      timestamps = Enum.map(response, & &1["insertedAt"])
+      sorted_timestamps = Enum.sort(timestamps, :desc)
+      assert timestamps == sorted_timestamps
+    end
+
+    test "combines order_by and limit parameters", %{conn: conn} do
+      user = user_fixture()
+
+      for i <- 1..5 do
+        Plot.Repo.create_plot(%{
+          name: "Plot #{i}",
+          description: "Plot #{i}",
+          user_id: user.id,
+          score: i * 10,
+          polygon: %Geo.Polygon{
+            coordinates: [
+              [
+                {i * 100, i * 100},
+                {i * 100, i * 100 + 10},
+                {i * 100 + 10, i * 100 + 10},
+                {i * 100 + 10, i * 100},
+                {i * 100, i * 100}
+              ]
+            ],
+            srid: 4326
+          }
+        })
+      end
+
+      conn = get(conn, ~p"/api/plots?order_by=top&limit=3")
+      response = json_response(conn, 200)["data"]
+
+      # Should return only 3 plots
+      assert length(response) == 3
+
+      # Should be sorted by score descending
+      scores = Enum.map(response, & &1["score"])
+      assert Enum.at(scores, 0) >= Enum.at(scores, 1)
+      assert Enum.at(scores, 1) >= Enum.at(scores, 2)
+    end
   end
 
   describe "me_plots" do

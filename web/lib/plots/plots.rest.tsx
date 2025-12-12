@@ -33,14 +33,20 @@ export async function getPlot(id: number): Promise<Plot> {
     return plotResponseSchema.parse(json).data;
 }
 
-export async function getPlots(limit: number = 10): Promise<Plot[]> {
+type GetPlotsOptions = {
+    limit?: number;
+    order_by?: 'recent' | 'top';
+};
+
+export async function getPlots(options: GetPlotsOptions = {}): Promise<Plot[]> {
     const context = store.getSnapshot().context;
     if (isInitialStore(context)) {
         throw new Error('Server context is not initialized');
     }
 
     const search = new URLSearchParams();
-    search.set('limit', limit.toString());
+    if (options.limit != null) search.set('limit', options.limit.toString());
+    if (options.order_by != null) search.set('order_by', options.order_by);
 
     const response = await fetch(
         new URL(`/api/plots?${search}`, context.server.apiOrigin),
@@ -50,7 +56,7 @@ export async function getPlots(limit: number = 10): Promise<Plot[]> {
     );
 
     if (!response.ok) {
-        throw new Error('Failed to fetch recent plots');
+        throw new Error('Failed to fetch plots');
     }
 
     const json = await response.json();
@@ -58,13 +64,26 @@ export async function getPlots(limit: number = 10): Promise<Plot[]> {
     return arrayPlotResponseSchema.parse(json).data;
 }
 
-export function usePlots(
-    limit: number = 10,
+export function useRecentPlots(
+    limit: number = 20,
     queryOptions?: Omit<UseQueryOptions<Plot[], Error>, 'queryKey' | 'queryFn'>,
 ) {
     const { data, isLoading, error } = useQuery({
         queryKey: ['plots', 'list'],
-        queryFn: () => getPlots(limit),
+        queryFn: () => getPlots({ limit }),
+        ...queryOptions,
+    });
+
+    return { data, isLoading, error };
+}
+
+export function useTopPlots(
+    limit: number = 20,
+    queryOptions?: Omit<UseQueryOptions<Plot[], Error>, 'queryKey' | 'queryFn'>,
+) {
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['plots', 'top'],
+        queryFn: () => getPlots({ limit, order_by: 'top' }),
         ...queryOptions,
     });
 

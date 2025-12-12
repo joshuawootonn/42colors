@@ -12,6 +12,7 @@ import { store } from '@/lib/store';
 import { useSelector } from '@xstate/store/react';
 
 import { RecentPlots } from './recent-plots';
+import { TopPlots } from './top-plots';
 import { UserPlots } from './user-plots';
 
 export function PlotsPopoverMarkup({
@@ -50,6 +51,7 @@ export function PlotsPopoverMarkup({
                 <Tabs defaultValue="recent" className="flex h-80 flex-col">
                     <TabsList className="border-b-1.5">
                         <TabsTab value="recent">recent</TabsTab>
+                        <TabsTab value="top">top</TabsTab>
                         <TabsTab value="user">user</TabsTab>
                     </TabsList>
 
@@ -59,6 +61,20 @@ export function PlotsPopoverMarkup({
                                 children
                             ) : (
                                 <RecentPlots
+                                    selectedPlotId={selectedPlotId}
+                                    selectPlot={selectPlot}
+                                    enabled={isOpen}
+                                />
+                            )}
+                        </div>
+                    </TabsPanel>
+
+                    <TabsPanel value="top">
+                        <div className="h-72 overflow-auto">
+                            {children ? (
+                                children
+                            ) : (
+                                <TopPlots
                                     selectedPlotId={selectedPlotId}
                                     selectPlot={selectPlot}
                                     enabled={isOpen}

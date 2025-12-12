@@ -1,25 +1,25 @@
 'use client';
 
-import { useRecentPlots } from '@/lib/plots/plots.rest';
+import { useTopPlots } from '@/lib/plots/plots.rest';
 
 import { PlotsList } from './plots-list';
 
-interface RecentPlotsProps {
+type TopPlotsProps = {
     selectedPlotId: number | undefined;
     selectPlot: (plotId: number) => void;
     enabled?: boolean;
-}
+};
 
-export function RecentPlots({
+export function TopPlots({
     selectedPlotId,
     selectPlot,
     enabled = true,
-}: RecentPlotsProps) {
+}: TopPlotsProps) {
     const {
         data: plots,
         isLoading,
         error,
-    } = useRecentPlots(100, {
+    } = useTopPlots(100, {
         enabled,
     });
 
@@ -31,7 +31,7 @@ export function RecentPlots({
             selectedPlotId={selectedPlotId}
             selectPlot={selectPlot}
             emptyMessage="No plots found"
-            loadingMessage="Loading plots..."
+            loadingMessage="Loading top plots..."
         />
     );
 }

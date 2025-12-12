@@ -139,10 +139,10 @@ defmodule Api.Canvas.Plot.Repo do
 
   ## Options
   - `limit`: Maximum number of plots to return (default: 10, max: 100)
-  - Future options will include user_id filtering, different sort orders, etc.
+  - `order_by`: Sort order - "recent" (default) or "top" (by score descending)
 
   ## Returns
-  - List of %Plot{} structs sorted by creation date (newest first)
+  - List of %Plot{} structs sorted by the specified order
 
   ## Examples
 
@@ -152,15 +152,26 @@ defmodule Api.Canvas.Plot.Repo do
       iex> list_plots(%{limit: 5})
       [%Plot{}, ...]
 
+      iex> list_plots(%{order_by: "top"})
+      [%Plot{}, ...]
+
   """
   def list_plots(opts \\ %{}) do
     limit = get_list_limit(opts)
 
     Plot
     |> where([p], is_nil(p.deleted_at))
-    |> order_by([p], desc: p.inserted_at)
+    |> apply_order_by(opts)
     |> limit(^limit)
     |> Repo.all()
+  end
+
+  defp apply_order_by(query, %{order_by: "top"}) do
+    order_by(query, [p], desc: p.score, desc: p.inserted_at)
+  end
+
+  defp apply_order_by(query, _opts) do
+    order_by(query, [p], desc: p.inserted_at)
   end
 
   # Private function to handle limit validation

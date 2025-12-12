@@ -501,6 +501,154 @@ defmodule Api.Canvas.Plot.ServiceTest do
       # We should have some bulk plots in the top 10 results
       assert bulk_plots_in_results > 0
     end
+
+    test "returns plots sorted by score when order_by is 'top'" do
+      user = user_fixture()
+
+      # Create plots with different scores
+      {:ok, low_score_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Low Score Plot",
+          description: "Low score",
+          user_id: user.id,
+          score: 5,
+          polygon: %Geo.Polygon{
+            coordinates: [[{100, 100}, {100, 110}, {110, 110}, {110, 100}, {100, 100}]],
+            srid: 4326
+          }
+        })
+
+      Process.sleep(10)
+
+      {:ok, high_score_plot} =
+        Plot.Repo.create_plot(%{
+          name: "High Score Plot",
+          description: "High score",
+          user_id: user.id,
+          score: 100,
+          polygon: %Geo.Polygon{
+            coordinates: [[{200, 200}, {200, 210}, {210, 210}, {210, 200}, {200, 200}]],
+            srid: 4326
+          }
+        })
+
+      Process.sleep(10)
+
+      {:ok, medium_score_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Medium Score Plot",
+          description: "Medium score",
+          user_id: user.id,
+          score: 50,
+          polygon: %Geo.Polygon{
+            coordinates: [[{300, 300}, {300, 310}, {310, 310}, {310, 300}, {300, 300}]],
+            srid: 4326
+          }
+        })
+
+      # Get plots sorted by score (top)
+      results = Plot.Service.list_plots(%{order_by: "top"})
+
+      # Find positions of our test plots
+      result_ids = Enum.map(results, & &1.id)
+      high_pos = Enum.find_index(result_ids, &(&1 == high_score_plot.id))
+      medium_pos = Enum.find_index(result_ids, &(&1 == medium_score_plot.id))
+      low_pos = Enum.find_index(result_ids, &(&1 == low_score_plot.id))
+
+      # High score should come before medium, medium before low
+      assert high_pos < medium_pos
+      assert medium_pos < low_pos
+    end
+
+    test "groups plots with equal scores together with order_by 'top'" do
+      user = user_fixture()
+
+      {:ok, first_plot} =
+        Plot.Repo.create_plot(%{
+          name: "First Same Score",
+          description: "Same score first",
+          user_id: user.id,
+          score: 42,
+          polygon: %Geo.Polygon{
+            coordinates: [[{400, 400}, {400, 410}, {410, 410}, {410, 400}, {400, 400}]],
+            srid: 4326
+          }
+        })
+
+      Process.sleep(10)
+
+      {:ok, second_plot} =
+        Plot.Repo.create_plot(%{
+          name: "Second Same Score",
+          description: "Same score second",
+          user_id: user.id,
+          score: 42,
+          polygon: %Geo.Polygon{
+            coordinates: [[{500, 500}, {500, 510}, {510, 510}, {510, 500}, {500, 500}]],
+            srid: 4326
+          }
+        })
+
+      results = Plot.Service.list_plots(%{order_by: "top"})
+
+      result_ids = Enum.map(results, & &1.id)
+      first_pos = Enum.find_index(result_ids, &(&1 == first_plot.id))
+      second_pos = Enum.find_index(result_ids, &(&1 == second_plot.id))
+
+      # Both plots with score 42 should come before the setup plots with score 0
+      # They should be in the first two positions
+      assert first_pos in [0, 1]
+      assert second_pos in [0, 1]
+
+      # Both should be adjacent (grouped by same score)
+      assert abs(first_pos - second_pos) == 1
+    end
+
+    test "order_by 'recent' returns same result as default (no order_by)" do
+      results_default = Plot.Service.list_plots(%{})
+      results_recent = Plot.Service.list_plots(%{order_by: "recent"})
+
+      # Should return same plots in same order
+      default_ids = Enum.map(results_default, & &1.id)
+      recent_ids = Enum.map(results_recent, & &1.id)
+
+      assert default_ids == recent_ids
+    end
+
+    test "order_by 'top' respects limit parameter" do
+      user = user_fixture()
+
+      for i <- 1..5 do
+        Plot.Repo.create_plot(%{
+          name: "Score Plot #{i}",
+          description: "Score plot",
+          user_id: user.id,
+          score: i * 10,
+          polygon: %Geo.Polygon{
+            coordinates: [
+              [
+                {i * 100, i * 100},
+                {i * 100, i * 100 + 10},
+                {i * 100 + 10, i * 100 + 10},
+                {i * 100 + 10, i * 100},
+                {i * 100, i * 100}
+              ]
+            ],
+            srid: 4326
+          }
+        })
+      end
+
+      results = Plot.Service.list_plots(%{order_by: "top", limit: 3})
+
+      # Should only return 3 plots
+      assert length(results) == 3
+
+      # First 3 should be highest scores (50, 40, 30)
+      scores = Enum.map(results, & &1.score)
+      assert Enum.at(scores, 0) >= Enum.at(scores, 1)
+      assert Enum.at(scores, 1) >= Enum.at(scores, 2)
+    end
   end
 
   describe "create_plot/1" do
