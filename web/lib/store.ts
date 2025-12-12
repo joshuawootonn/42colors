@@ -65,7 +65,7 @@ import { getCenterPoint, polygonSchema } from './geometry/polygon';
 import { KeyboardCode } from './keyboard-codes';
 import { absolutePointTupleToPixels } from './line';
 import { TRANSPARENT_REF, getNextColor, getPreviousColor } from './palette';
-import { findPlotAtPoint } from './plots/plots.rest';
+import { findPlotAtPoint, findPlotById } from './plots/plots.rest';
 import { roundTo1Place } from './round-to-five';
 import { newPixels, setupChannel, setupSocketConnection } from './sockets';
 import {
@@ -1131,6 +1131,7 @@ export const store = createStore({
         /////////////// Plot events /////////////////
         moveToPlot: (context, { plotId }: { plotId: number }, enqueue) => {
             if (isInitialStore(context)) return;
+
             const userPlots = (context.queryClient.getQueryData([
                 'user',
                 'plots',
@@ -1143,7 +1144,8 @@ export const store = createStore({
 
             const polygon =
                 userPlots.find((plot) => plot.id === plotId)?.polygon ??
-                recentPlots.find((plot) => plot.id === plotId)?.polygon;
+                recentPlots.find((plot) => plot.id === plotId)?.polygon ??
+                findPlotById(plotId, context)?.polygon;
             enqueue.effect(() => {
                 if (polygon != null) {
                     store.trigger.moveCamera({
@@ -1154,8 +1156,6 @@ export const store = createStore({
                         options: { deselectPlot: false, autoSelectPlot: false },
                     });
                 } else {
-                    console.log('userPlots', userPlots);
-                    console.log('recentPlots', recentPlots);
                     console.log(
                         'No polygon found for plot, so not moving camera',
                         plotId,

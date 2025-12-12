@@ -123,3 +123,21 @@ export function findPlotAtPoint(
 
     return null;
 }
+
+export function findPlotById(
+    id: number,
+    context: InitializedStore,
+): Plot | null {
+    for (const chunkKey in context.canvas.chunkCanvases) {
+        const chunk = context.canvas.chunkCanvases[chunkKey];
+        if (chunk && chunk.plots) {
+            for (const plot of chunk.plots) {
+                if (plot.id === id) {
+                    return plot;
+                }
+            }
+        }
+    }
+
+    return null;
+}
