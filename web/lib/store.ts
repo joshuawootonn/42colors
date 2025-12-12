@@ -1157,7 +1157,7 @@ export const store = createStore({
                     });
 
                     if (result.status === 'deleted') {
-                        toasts.plotDeleted(result.plot.deletedAt!);
+                        toasts.cantMoveToDeletedPlot(result.plot.deletedAt!);
                         return;
                     }
 

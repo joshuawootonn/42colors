@@ -126,9 +126,9 @@ export const TOASTS = {
         title: 'Vote failed',
         description: message || 'Something went wrong.',
     }),
-    plotDeleted: (deletedAt: string) => ({
-        title: 'Plot was deleted',
-        description: `This plot was deleted on ${new Date(deletedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}.`,
+    cantMoveToDeletedPlot: (deletedAt: string) => ({
+        title: 'Cannot move to deleted plot',
+        description: `This plot was deleted on ${new Date(deletedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}. Pour one out 🫗 `,
     }),
     plotNotFound: {
         title: 'Plot not found',
@@ -155,7 +155,8 @@ export const toasts = {
     voteUnauthorized: () => toast(TOASTS.voteUnauthorized),
     alreadyVoted: () => toast(TOASTS.alreadyVoted),
     voteFailed: (message?: string) => toast(TOASTS.voteFailed(message)),
-    plotDeleted: (deletedAt: string) => toast(TOASTS.plotDeleted(deletedAt)),
+    cantMoveToDeletedPlot: (deletedAt: string) =>
+        toast(TOASTS.cantMoveToDeletedPlot(deletedAt)),
     plotNotFound: () => toast(TOASTS.plotNotFound),
 } as const;
 
