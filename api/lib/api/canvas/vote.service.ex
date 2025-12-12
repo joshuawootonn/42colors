@@ -173,7 +173,7 @@ defmodule Api.Canvas.Vote.Service do
     end
   end
 
-  @pixels_per_vote 100
+  @pixels_per_vote 1000
 
   defp settle_user_votes(user_id, user_cast_votes, all_votes, plots_by_id) do
     user = Repo.get!(Api.Accounts.User, user_id)

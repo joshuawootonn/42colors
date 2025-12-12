@@ -194,7 +194,7 @@ defmodule Api.Canvas.VoteServiceTest do
       assert initial_balance == final_balance
     end
 
-    test "plot owner receives 100 pixels per vote", %{
+    test "plot owner receives 1000 pixels per vote", %{
       voter: voter,
       plot_owner: plot_owner,
       target_plot: target_plot
@@ -205,10 +205,10 @@ defmodule Api.Canvas.VoteServiceTest do
       {:ok, _} = VoteService.settle_votes()
 
       final_owner_balance = Repo.get!(Api.Accounts.User, plot_owner.id).balance
-      assert final_owner_balance == initial_owner_balance + 100
+      assert final_owner_balance == initial_owner_balance + 1000
     end
 
-    test "plot owner receives 100 pixels per vote from multiple voters", %{
+    test "plot owner receives 1000 pixels per vote from multiple voters", %{
       voter: voter,
       voter2: voter2,
       plot_owner: plot_owner,
@@ -228,8 +228,8 @@ defmodule Api.Canvas.VoteServiceTest do
       {:ok, _} = VoteService.settle_votes()
 
       final_owner_balance = Repo.get!(Api.Accounts.User, plot_owner.id).balance
-      # 3 votes * 100 pixels = 300
-      assert final_owner_balance == initial_owner_balance + 300
+      # 3 votes * 1000 pixels = 3000
+      assert final_owner_balance == initial_owner_balance + 3000
     end
 
     test "only settles unsettled votes", %{voter: voter, target_plot: target_plot} do
@@ -318,17 +318,17 @@ defmodule Api.Canvas.VoteServiceTest do
     } do
       initial_owner_balance = Repo.get!(Api.Accounts.User, plot_owner.id).balance
 
-      # First vote and settle - owner gets +100
+      # First vote and settle - owner gets +1000
       {:ok, _} = VoteService.cast_vote(voter.id, target_plot.id)
       {:ok, _} = VoteService.settle_votes()
       balance_after_first = Repo.get!(Api.Accounts.User, plot_owner.id).balance
-      assert balance_after_first == initial_owner_balance + 100
+      assert balance_after_first == initial_owner_balance + 1000
 
-      # Second vote and settle - owner gets another +100
+      # Second vote and settle - owner gets another +1000
       {:ok, _} = VoteService.cast_vote(voter2.id, target_plot.id)
       {:ok, _} = VoteService.settle_votes()
       balance_after_second = Repo.get!(Api.Accounts.User, plot_owner.id).balance
-      assert balance_after_second == initial_owner_balance + 200
+      assert balance_after_second == initial_owner_balance + 2000
 
       # Check log has correct old/new balance (single log with accumulated values)
       owner_log =
@@ -336,7 +336,7 @@ defmodule Api.Canvas.VoteServiceTest do
         |> Enum.find(&(&1.log_type == "vote_aggregate"))
 
       assert owner_log.old_balance == initial_owner_balance
-      assert owner_log.new_balance == initial_owner_balance + 200
+      assert owner_log.new_balance == initial_owner_balance + 2000
     end
   end
 
