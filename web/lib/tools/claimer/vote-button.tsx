@@ -53,11 +53,13 @@ export function VoteButton({ plot }: VoteButtonsProps) {
                 ['votes', plot.id],
                 () => ({ has_voted: true }),
             );
-            if (previousPlot != null)
+            if (previousPlot != null) {
+                console.log(previousPlot.score);
                 queryClient.setQueryData<Plot>(['plots', plot.id], () => ({
                     ...previousPlot,
                     score: previousPlot.score + 1,
                 }));
+            }
 
             return { previousVote, previousPlot };
         },
@@ -95,6 +97,19 @@ export function VoteButton({ plot }: VoteButtonsProps) {
         },
     });
 
+    const handleVote = () => {
+        if (!user) {
+            toasts.loginToVote({
+                label: 'Log in',
+                onClick: () => {
+                    window.location.href = '/login';
+                },
+            });
+            return;
+        }
+        vote();
+    };
+
     const hasVoted = userVote?.has_voted ?? false;
 
     return (
@@ -130,7 +145,7 @@ export function VoteButton({ plot }: VoteButtonsProps) {
                 </Tooltip.Root>
             ) : (
                 <Button
-                    onClick={() => vote()}
+                    onClick={handleVote}
                     disabled={isPending}
                     variant="outline"
                     className={cn(

@@ -94,6 +94,12 @@ export const TOASTS = {
             'Powerful tools are reserved for pixels you have claimed. To use the bucket tool, create an account, claim some land, and try again.',
         button: buttonOptions,
     }),
+    loginToVote: (buttonOptions: { label: string; onClick: () => void }) => ({
+        title: 'Login to vote',
+        description:
+            'Voting helps artists get discovered and rewards them with pixels. Log in to start supporting the art you love.',
+        button: buttonOptions,
+    }),
     dailyGrantClaimed: {
         title: 'Daily grant claimed (+1000)',
         description:
@@ -149,6 +155,8 @@ export const toasts = {
     }) => toast(TOASTS.loginToSavePixels(buttonOptions)),
     loginToUseBucket: (buttonOptions: { label: string; onClick: () => void }) =>
         toast(TOASTS.loginToUseBucket(buttonOptions)),
+    loginToVote: (buttonOptions: { label: string; onClick: () => void }) =>
+        toast(TOASTS.loginToVote(buttonOptions)),
     cannotDrawOnPlot: () => toast(TOASTS.cannotDrawOnPlot),
     cannotBucketOtherPlot: () => toast(TOASTS.cannotBucketOtherPlot),
     cannotBucketOutsidePlot: () => toast(TOASTS.cannotBucketOutsidePlot),
