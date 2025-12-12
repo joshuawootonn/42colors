@@ -1148,6 +1148,7 @@ export const store = createStore({
                 recentPlots.find((plot) => plot.id === plotId)?.polygon ??
                 findPlotById(plotId, context)?.polygon;
             enqueue.effect(async () => {
+                console.log('polygon1', polygon);
                 if (polygon == null) {
                     console.trace(
                         'Plot with id of ${plotId} not found locally. Fetching it',
@@ -1163,6 +1164,15 @@ export const store = createStore({
 
                     polygon = plot.polygon;
                 }
+                console.log('polygon2', polygon);
+                console.log('getCenterPoint(polygon)', getCenterPoint(polygon));
+                console.log(
+                    'centerCameraOnPoint(getCenterPoint(polygon), store.getSnapshot().context.camera)',
+                    centerCameraOnPoint(
+                        getCenterPoint(polygon),
+                        store.getSnapshot().context.camera,
+                    ),
+                );
 
                 if (polygon != null) {
                     store.trigger.moveCamera({
