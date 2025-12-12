@@ -5,7 +5,11 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-    'relative svg-outline inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm outline-none disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0',
+    cn(
+        'relative svg-outline inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm outline-none  [&_svg]:pointer-events-none [&_svg]:shrink-0',
+        // specifying aria-disabled since we want to be able to "disable without disabling" to enable tooltips
+        'disabled:pointer-events-none aria-[disabled]:pointer-events-none',
+    ),
     {
         variants: {
             variant: {
@@ -39,12 +43,34 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-    ({ className, variant, size, ...props }, ref) => {
+    (
+        {
+            className,
+            variant,
+            size,
+            onClick,
+            ['aria-disabled']: ariaDisabled,
+            ...props
+        },
+        ref,
+    ) => {
+        const handleOnClick = React.useCallback(
+            (e: React.PointerEvent<HTMLButtonElement>) => {
+                if (ariaDisabled) {
+                    e.preventDefault();
+                }
+                onClick?.(e);
+            },
+            [ariaDisabled, onClick],
+        );
+
         const Comp = 'button';
+
         return (
             <Comp
                 className={cn(buttonVariants({ variant, size, className }))}
                 ref={ref}
+                onClick={handleOnClick}
                 {...props}
             />
         );
