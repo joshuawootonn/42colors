@@ -2,9 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { ArrowUp12 } from '@/components/icons/arrow_up_12';
 import { X32 } from '@/components/icons/x_32';
+import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
 import { Popover, PopoverContent } from '@/components/ui/popover';
+import * as Tooltip from '@/components/ui/tooltip';
 import { isAdminUser } from '@/lib/admin';
 import { isScrollingAtom } from '@/lib/events';
 import { canvasToClient } from '@/lib/utils/clientToCanvasConversion';
@@ -137,9 +140,28 @@ export function SelectedPlotPopover() {
                                 plot={selectedPlot}
                                 triggerProps={{ className: 'px-2 py-1' }}
                             />
+                            <Tooltip.Root>
+                                <Tooltip.Trigger
+                                    className="flex h-8 items-center border-1.5 border-border bg-secondary px-2 text-sm tabular-nums text-muted-foreground"
+                                    render={(props) => (
+                                        <Button {...props} aria-disabled={true}>
+                                            <ArrowUp12 />
+                                            {selectedPlot.score}
+                                        </Button>
+                                    )}
+                                />
+                                <Tooltip.Portal>
+                                    <Tooltip.Positioner>
+                                        <Tooltip.Popup>
+                                            You can&apos;t vote for your own
+                                            plot
+                                        </Tooltip.Popup>
+                                    </Tooltip.Positioner>
+                                </Tooltip.Portal>
+                            </Tooltip.Root>
                         </>
                     ) : (
-                        user && <VoteButton plot={selectedPlot} />
+                        <VoteButton plot={selectedPlot} />
                     )}
                     <IconButton
                         onClick={() => {
