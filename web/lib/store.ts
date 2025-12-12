@@ -1152,21 +1152,16 @@ export const store = createStore({
                     console.trace(
                         'Plot with id of ${plotId} not found locally. Fetching it',
                     );
-                    const result = await getPlot(plotId, {
+                    const plot = await getPlot(plotId, {
                         include_deleted: true,
                     });
 
-                    if (result.status === 'deleted') {
-                        toasts.cantMoveToDeletedPlot(result.plot.deletedAt!);
+                    if (plot.deletedAt != null) {
+                        toasts.cantMoveToDeletedPlot(plot.deletedAt);
                         return;
                     }
 
-                    if (result.status === 'not_found') {
-                        toasts.plotNotFound();
-                        return;
-                    }
-
-                    polygon = result.plot.polygon;
+                    polygon = plot.polygon;
                 }
 
                 if (polygon != null) {

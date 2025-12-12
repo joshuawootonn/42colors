@@ -5,6 +5,10 @@ import { useSelector } from '@xstate/store/react';
 
 import { Plot } from './claimer.rest';
 
+export function selectedPlotQueryKey(id: number | undefined) {
+    return ['plots', id];
+}
+
 export function useSelectedPlot(): Plot | null {
     const selectedPlotId = useSelector(
         store,
@@ -12,9 +16,10 @@ export function useSelectedPlot(): Plot | null {
     );
 
     const { data: selectedPlot } = useQuery({
-        queryKey: ['plots', selectedPlotId],
+        queryKey: selectedPlotQueryKey(selectedPlotId),
         queryFn: selectedPlotId ? () => getPlot(selectedPlotId) : skipToken,
     });
+    console.log({ selectedPlot });
 
-    return selectedPlot?.status === 'found' ? selectedPlot.plot : null;
+    return selectedPlot ?? null;
 }

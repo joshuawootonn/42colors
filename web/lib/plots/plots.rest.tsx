@@ -16,15 +16,10 @@ type GetPlotOptions = {
     include_deleted?: boolean;
 };
 
-export type GetPlotResult =
-    | { status: 'found'; plot: Plot }
-    | { status: 'deleted'; plot: Plot }
-    | { status: 'not_found' };
-
 export async function getPlot(
     id: number,
     options: GetPlotOptions = {},
-): Promise<GetPlotResult> {
+): Promise<Plot> {
     const context = store.getSnapshot().context;
     if (isInitialStore(context)) {
         throw new Error('Server context is not initialized');
@@ -45,17 +40,13 @@ export async function getPlot(
     });
 
     if (!response.ok) {
-        return { status: 'not_found' };
+        throw new Error('Failed to fetch plot');
     }
 
     const json = await response.json();
     const plot = plotResponseSchema.parse(json).data;
 
-    if (plot.deletedAt != null) {
-        return { status: 'deleted', plot };
-    }
-
-    return { status: 'found', plot };
+    return plot;
 }
 
 type GetPlotsOptions = {

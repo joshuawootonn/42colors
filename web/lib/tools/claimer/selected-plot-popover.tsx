@@ -50,8 +50,6 @@ export function SelectedPlotPopover() {
 
     const selectedPlot = useSelectedPlot();
 
-    console.log({ selectedPlot });
-
     useEffect(() => {
         if (
             selectedPlot &&
