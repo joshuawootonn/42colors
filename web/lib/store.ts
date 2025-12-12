@@ -65,7 +65,7 @@ import { getCenterPoint, polygonSchema } from './geometry/polygon';
 import { KeyboardCode } from './keyboard-codes';
 import { absolutePointTupleToPixels } from './line';
 import { TRANSPARENT_REF, getNextColor, getPreviousColor } from './palette';
-import { findPlotAtPoint, findPlotById } from './plots/plots.rest';
+import { findPlotAtPoint, findPlotById, getPlot } from './plots/plots.rest';
 import { roundTo1Place } from './round-to-five';
 import { newPixels, setupChannel, setupSocketConnection } from './sockets';
 import {
@@ -1142,11 +1142,18 @@ export const store = createStore({
                 'list',
             ]) ?? []) as Plot[];
 
-            const polygon =
+            let polygon =
                 userPlots.find((plot) => plot.id === plotId)?.polygon ??
                 recentPlots.find((plot) => plot.id === plotId)?.polygon ??
                 findPlotById(plotId, context)?.polygon;
-            enqueue.effect(() => {
+            enqueue.effect(async () => {
+                if (polygon == null) {
+                    console.trace(
+                        'Plot with id of ${plotId} not found locally. Fetching it',
+                    );
+                    polygon = (await getPlot(plotId)).polygon;
+                }
+
                 if (polygon != null) {
                     store.trigger.moveCamera({
                         camera: centerCameraOnPoint(
