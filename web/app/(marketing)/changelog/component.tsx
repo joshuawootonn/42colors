@@ -25,30 +25,64 @@ export default function Changelog() {
                     (Updated <DateComponent date={changelogUpdatedAt} />)
                 </span>
             </div>
-            <p>A list of all that new and improved in 42colors.</p>
+            <p>A list of all that&apos;s new and improved in 42colors.</p>
             <hr className="w-full border-t-2 border-border" />
             <ul>
                 <li>
-                    <DateComponent date={new Date('12/08/2025')} />
+                    <DateComponent date={new Date('12/12/2025')} /> - Created
+                    the voting system.
+                    <video
+                        src="/changelog/2025-12-12-voting.mp4"
+                        muted
+                        controls
+                        className="mt-4 border border-border"
+                    />
+                    You can now vote on your favorite plots to encourage the
+                    artist, propel them up the leaderboard, and give them more
+                    pixels.
+                    <br />
+                    <br />
+                    Key features:
                     <ul>
                         <li>
-                            Added an upvoting system.
-                            <ul>
-                                <li>
-                                    Votes are aggregated at EOD, and 100 pixels
-                                    per vote are awarded to the plot owners. If
-                                    you make great art your influence will
-                                    increase.
-                                </li>
-                                <li>
-                                    The daily aggregation numbers are easy to
-                                    track in the log book.
-                                </li>
-                                <li>
-                                    Leaderboard coming soon on top plots and top
-                                    users!
-                                </li>
-                            </ul>
+                            Your personal log now shows aggregated vote data for
+                            who you vote for and for the votes you receive. It
+                            even has a way to quickly navigate to the plots in
+                            question.
+                            <video
+                                src="/changelog/2025-12-12-voting-in-log.mp4"
+                                muted
+                                controls
+                                className="mt-4 border border-border"
+                            />
+                        </li>
+                        <li>
+                            There is a new &quot;top&quot; tab in the plots
+                            popover that ranks plots by the number of votes they
+                            have. Soon I&apos;ll build a proper leaderboard with
+                            time based filters, but for now this is the best way
+                            to find the top art on the platform.{' '}
+                            <video
+                                src="/changelog/2025-12-12-voting-top-plot-filter.mp4"
+                                muted
+                                controls
+                                className="mt-4 border border-border"
+                            />
+                        </li>
+                    </ul>
+                    Little details:
+                    <ul>
+                        <li>
+                            Voting for a plot gives the author 1000 pixels.
+                            I&apos;ll probably tweak this as the economy for
+                            pixels evolves, but wanted it to be very
+                            incentivizing even with the current low user count.
+                        </li>
+                        <li>You can only vote for a plot once.</li>
+                        <li>You can&apos;t vote for your own plot.</li>
+                        <li>
+                            You can&apos;t vote until you have published art of
+                            your own.
                         </li>
                     </ul>
                 </li>
