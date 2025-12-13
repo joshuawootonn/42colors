@@ -10,6 +10,12 @@ defmodule AssertionTest do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
     # Setting the shared mode must be done only after checkout
     Ecto.Adapters.SQL.Sandbox.mode(Repo, {:shared, self()})
+
+    # Delete the test cache file to ensure a fresh state for each test
+    file_path = Application.get_env(:api, Api.PixelCache)[:pixel_cache_file_name]
+    File.rm(file_path)
+
+    :ok
   end
 
   describe "initialize_file when the file does not exist" do

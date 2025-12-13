@@ -6,11 +6,15 @@ defmodule Api.PixelCacheOptions do
 end
 
 defmodule Api.PixelCache do
+  @spec initialize_file() :: :ok | {:error, atom()}
   def initialize_file(options \\ %Api.PixelCacheOptions{}) do
-    size = options.canvas_width * options.canvas_height * 8
-    zeros = <<0::size(size)>>
-
-    File.write(options.file_path, zeros)
+    if File.exists?(options.file_path) do
+      :ok
+    else
+      size = options.canvas_width * options.canvas_height * 8
+      zeros = <<0::size(size)>>
+      File.write(options.file_path, zeros)
+    end
   end
 
   defp write_coord(coord, file, options \\ %Api.PixelCacheOptions{}) do
