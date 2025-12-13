@@ -26,9 +26,19 @@ export default function Changelog() {
       <hr className="w-full border-t-2 border-border" />
       <ul>
         <li>
+          <DateComponent date={new Date("12/12/2025")} /> - Disabled all complex tools when you
+          aren't logged in.
+          <video
+            src="/changelog/2025-12-12-restrict-non-authed-users.mp4"
+            muted
+            controls
+            className="mt-4 border border-border"
+          />
+        </li>
+        <li>
           <DateComponent date={new Date("12/12/2025")} /> - Created the voting system.
           <video
-            src="/changelog/2025-12-12-voting.mp4"
+            src="/changelog/25-12-12-voting.mp4"
             muted
             controls
             className="mt-4 border border-border"
