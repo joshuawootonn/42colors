@@ -26,17 +26,17 @@ export default function Changelog() {
       <hr className="w-full border-t-2 border-border" />
       <ul>
         <li>
-          <DateComponent date={new Date("12/12/2025")} /> - Disabled all complex tools when you
+          <DateComponent date={new Date("12/13/2025")} /> - Disabled all complex tools when you
           aren't logged in.
           <video
-            src="/changelog/2025-12-12-restrict-non-authed-users.mp4"
+            src="/changelog/25-12-12-restrict-non-authed-users.mp4"
             muted
             controls
             className="mt-4 border border-border"
           />
         </li>
         <li>
-          <DateComponent date={new Date("12/12/2025")} /> - Created the voting system.
+          <DateComponent date={new Date("12/12/25")} /> - Created the voting system.
           <video
             src="/changelog/25-12-12-voting.mp4"
             muted
@@ -53,7 +53,7 @@ export default function Changelog() {
               Your personal log now shows aggregated vote data for who you vote for and for the
               votes you receive. It even has a way to quickly navigate to the plots in question.
               <video
-                src="/changelog/2025-12-12-voting-in-log.mp4"
+                src="/changelog/25-12-12-voting-in-log.mp4"
                 muted
                 controls
                 className="mt-4 border border-border"
@@ -64,7 +64,7 @@ export default function Changelog() {
               of votes they have. Soon I&apos;ll build a proper leaderboard with time based filters,
               but for now this is the best way to find the top art on the platform.{" "}
               <video
-                src="/changelog/2025-12-12-voting-top-plot-filter.mp4"
+                src="/changelog/25-12-12-voting-top-plot-filter.mp4"
                 muted
                 controls
                 className="mt-4 border border-border"
