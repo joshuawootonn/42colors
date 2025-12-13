@@ -29,7 +29,7 @@ export default function Changelog() {
           <DateComponent date={new Date("12/13/2025")} /> - Disabled all complex tools when you
           aren't logged in.
           <video
-            src="/changelog/25-12-12-restrict-non-authed-users.mp4"
+            src="/changelog/25-12-13-restrict-non-authed-users.mp4"
             muted
             controls
             className="mt-4 border border-border"
