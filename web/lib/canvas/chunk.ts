@@ -72,6 +72,9 @@ export class Chunk {
   public readonly pixelCanvas: HTMLCanvasElement;
   public readonly uiCanvas: HTMLCanvasElement;
   public readonly realtimeCanvas: HTMLCanvasElement;
+  public pixelBitmap: ImageBitmap | null = null;
+  public uiBitmap: ImageBitmap | null = null;
+  public realtimeBitmap: ImageBitmap | null = null;
   private pixels: Pixel[] = [];
   private pixelMap: Map<string, Pixel> = new Map();
 
@@ -83,6 +86,18 @@ export class Chunk {
 
   private relatedActions: Action[] = [];
   private relatedActiveAction: Action | null = null;
+  private pixelBitmapUpdate: { promise: Promise<void> | null; needsUpdate: boolean } = {
+    promise: null,
+    needsUpdate: false,
+  };
+  private uiBitmapUpdate: { promise: Promise<void> | null; needsUpdate: boolean } = {
+    promise: null,
+    needsUpdate: false,
+  };
+  private realtimeBitmapUpdate: { promise: Promise<void> | null; needsUpdate: boolean } = {
+    promise: null,
+    needsUpdate: false,
+  };
 
   public isInitialized(): boolean {
     return this.pixelWebGPUManager != null && this.uiWebGPUManager != null;
@@ -170,6 +185,8 @@ export class Chunk {
       },
       true,
     );
+
+    this.schedulePixelBitmapUpdate();
   }
 
   // todo(josh): This is bad. We shouldn't have a method for unsetting pixels.
@@ -190,6 +207,8 @@ export class Chunk {
       },
       false,
     );
+
+    this.schedulePixelBitmapUpdate();
   }
 
   private updatePersistentPixels(_pixels: Pixel[], _unsetPixels: Pixel[]): void {
@@ -208,6 +227,8 @@ export class Chunk {
       { xCamera: 0, yCamera: 0 },
       false,
     );
+
+    this.schedulePixelBitmapUpdate();
   }
 
   getPixelValue(x: number, y: number): Pixel | null {
@@ -314,16 +335,20 @@ export class Chunk {
         },
       );
     }
+
+    this.scheduleUIBitmapUpdate();
   }
 
   upsertPlots(plots: Plot[]): void {
     this.plots = [...this.plots.filter((plot) => !plots.some((p) => p.id === plot.id)), ...plots];
     this.plotRender();
+    this.scheduleUIBitmapUpdate();
   }
 
   deletePlots(plotIds: number[]): void {
     this.plots = this.plots.filter((plot) => !plotIds.includes(plot.id));
     this.plotRender();
+    this.scheduleUIBitmapUpdate();
   }
 
   //////////////// Action management methods ////////////////
@@ -362,6 +387,7 @@ export class Chunk {
 
     if (actions.length === 0) {
       this.realtimeWebGPUManager?.clear();
+      this.scheduleRealtimeBitmapUpdate();
       return;
     }
 
@@ -399,6 +425,7 @@ export class Chunk {
 
     if (chunkPixels.length === 0) {
       this.realtimeWebGPUManager?.clear();
+      this.scheduleRealtimeBitmapUpdate();
       return;
     }
 
@@ -406,11 +433,87 @@ export class Chunk {
       xCamera: 0,
       yCamera: 0,
     });
+
+    this.scheduleRealtimeBitmapUpdate();
   }
 
   public destroy(): void {
     this.pixelWebGPUManager?.destroy();
     this.uiWebGPUManager?.destroy();
     this.realtimeWebGPUManager?.destroy();
+    this.pixelBitmap?.close?.();
+    this.uiBitmap?.close?.();
+    this.realtimeBitmap?.close?.();
+  }
+
+  private schedulePixelBitmapUpdate(): void {
+    this.scheduleBitmapUpdate("pixel");
+  }
+
+  private scheduleUIBitmapUpdate(): void {
+    this.scheduleBitmapUpdate("ui");
+  }
+
+  private scheduleRealtimeBitmapUpdate(): void {
+    this.scheduleBitmapUpdate("realtime");
+  }
+
+  private scheduleBitmapUpdate(kind: "pixel" | "ui" | "realtime"): void {
+    if (typeof createImageBitmap !== "function") {
+      return;
+    }
+
+    const state =
+      kind === "pixel"
+        ? this.pixelBitmapUpdate
+        : kind === "ui"
+          ? this.uiBitmapUpdate
+          : this.realtimeBitmapUpdate;
+    if (state.promise) {
+      state.needsUpdate = true;
+      return;
+    }
+
+    const sourceCanvas =
+      kind === "pixel" ? this.pixelCanvas : kind === "ui" ? this.uiCanvas : this.realtimeCanvas;
+
+    state.promise = this.createBitmapFromCanvas(sourceCanvas)
+      .then((bitmap) => {
+        if (!bitmap) return;
+
+        if (kind === "pixel") {
+          this.pixelBitmap?.close?.();
+          this.pixelBitmap = bitmap;
+        } else if (kind === "ui") {
+          this.uiBitmap?.close?.();
+          this.uiBitmap = bitmap;
+        } else {
+          this.realtimeBitmap?.close?.();
+          this.realtimeBitmap = bitmap;
+        }
+      })
+      .catch((error) => {
+        console.error(`Failed to update ${kind} bitmap for chunk ${this.key()}`, error);
+      })
+      .finally(() => {
+        state.promise = null;
+        if (state.needsUpdate) {
+          state.needsUpdate = false;
+          this.scheduleBitmapUpdate(kind);
+        }
+      });
+  }
+
+  private async createBitmapFromCanvas(canvas: HTMLCanvasElement): Promise<ImageBitmap | null> {
+    if (canvas.width === 0 || canvas.height === 0) {
+      return null;
+    }
+
+    await this.device.queue.onSubmittedWorkDone?.();
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => resolve());
+    });
+
+    return createImageBitmap(canvas);
   }
 }
