@@ -3,16 +3,16 @@ defmodule Api.Accounts.User do
   import Ecto.Changeset
 
   @color_names ~w(
-    Coral Crimson Scarlet Ruby Rose Blush Salmon Cherry Garnet Burgundy
-    Maroon Raspberry Cerise Carmine Amber Tangerine Peach Apricot Ginger
-    Paprika Rust Copper Bronze Sienna Terra Gold Honey Marigold Lemon
-    Canary Buttercup Goldenrod Flax Lime Mint Jade Emerald Forest Olive
-    Sage Pine Moss Fern Clover Hunter Willow Basil Teal Cyan Azure Cobalt
-    Navy Sky Ocean Sapphire Denim Steel Arctic Cerulean Admiral Periwinkle
-    Indigo Violet Plum Lavender Orchid Grape Iris Mulberry Amethyst Royal
-    Wisteria Slate Charcoal Onyx Ivory Pearl Silver Ash Stone Cloud Snow
-    Smoke Graphite Pewter Dusk Chestnut Walnut Cocoa Mocha Espresso Caramel
-    Cinnamon Auburn Mahogany Hazel Maple Acorn Magenta Powder
+    coral crimson scarlet ruby rose blush salmon cherry garnet burgundy
+    maroon raspberry cerise carmine amber tangerine peach apricot ginger
+    paprika rust copper bronze sienna terra gold honey marigold lemon
+    canary buttercup goldenrod flax lime mint jade emerald forest olive
+    sage pine moss fern clover hunter willow basil teal cyan azure cobalt
+    navy sky ocean sapphire denim steel arctic cerulean admiral periwinkle
+    indigo violet plum lavender orchid grape iris mulberry amethyst royal
+    wisteria slate charcoal onyx ivory pearl silver ash stone cloud snow
+    smoke graphite pewter dusk chestnut walnut cocoa mocha espresso caramel
+    cinnamon auburn mahogany hazel maple acorn magenta powder
   )
 
   schema "users" do
