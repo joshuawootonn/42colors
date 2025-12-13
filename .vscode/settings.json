@@ -1,4 +1,6 @@
 {
-    "elixir.projectPath": "./api",
-    "elixirLS.projectDir": "./api"
+  "elixir.projectPath": "./api",
+  "elixirLS.projectDir": "./api",
+  "oxc.configPath": "./api/oxlint.json",
+  "oxc.fmt.configPath": "./web/oxfmt.json"
 }
