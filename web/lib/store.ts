@@ -1615,14 +1615,22 @@ export const store = createStore({
         return context;
       }
 
+      // Space key: toggle pan mode
       if (e.code === KeyboardCode.Space) {
-        return {
-          ...context,
-          interaction: {
-            ...context.interaction,
-            isSpacePressed: true,
-          },
-        };
+        if (!context.interaction.isSpacePressed) {
+          return {
+            ...context,
+            interaction: {
+              ...context.interaction,
+              isSpacePressed: true,
+              previousTool: context.interaction.previousTool ?? context.toolSettings.currentTool,
+            },
+            toolSettings: {
+              ...context.toolSettings,
+              currentTool: Tool.Pan,
+            },
+          };
+        }
       }
 
       // Alt/Option key: toggle eyedropper mode
@@ -1651,14 +1659,22 @@ export const store = createStore({
       if (isInitialStore(context)) return;
       if (e.defaultPrevented) return;
 
+      // Space key: restore previous tool
       if (e.code === KeyboardCode.Space) {
-        return {
-          ...context,
-          interaction: {
-            ...context.interaction,
-            isSpacePressed: false,
-          },
-        };
+        if (context.interaction.isSpacePressed && context.interaction.previousTool !== null) {
+          return {
+            ...context,
+            interaction: {
+              ...context.interaction,
+              isSpacePressed: false,
+              previousTool: null,
+            },
+            toolSettings: {
+              ...context.toolSettings,
+              currentTool: context.interaction.previousTool,
+            },
+          };
+        }
       }
 
       // Alt/Option key: restore previous tool and cursor
