@@ -4,7 +4,7 @@ import * as React from 'react';
 import { createContext, useContext } from 'react';
 
 import { cn } from '@/lib/utils';
-import { Dialog as DialogPrimitive } from '@base-ui-components/react/dialog';
+import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 
 import { X32 } from '../icons/x_32';
 

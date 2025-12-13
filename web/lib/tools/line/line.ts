@@ -1,3 +1,4 @@
+import { toasts } from '@/components/ui/toast';
 import { getUniqueChunksFromPoints } from '@/lib/canvas/chunk';
 
 import { ACTION_TYPES } from '../../action-types';
@@ -204,6 +205,18 @@ function onPointerDown(
     context: InitializedStore,
     enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
+    if (context.user == null) {
+        enqueue.effect(() => {
+            toasts.loginToUseLine({
+                label: 'Log in',
+                onClick: () => {
+                    window.location.href = '/login';
+                },
+            });
+        });
+        return context;
+    }
+
     const startPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
     // Alt + click for color picking

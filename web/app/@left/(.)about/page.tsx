@@ -25,9 +25,7 @@ export default function Page() {
             }}
         >
             <DialogContent
-                initialFocus={() => {
-                    return { current: null };
-                }}
+                initialFocus={() => null}
                 className={cn(...dialogProse, 'w-157 pt-2')}
             >
                 <About />

@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { useTheme } from 'next-themes';
 
 import { cn } from '@/lib/utils';
-import { Collapsible } from '@base-ui-components/react/collapsible';
+import { Collapsible } from '@base-ui/react/collapsible';
 
 import { X24 } from '../icons/x_24';
 import { Button } from './button';
@@ -94,6 +94,24 @@ export const TOASTS = {
             'Powerful tools are reserved for pixels you have claimed. To use the bucket tool, create an account, claim some land, and try again.',
         button: buttonOptions,
     }),
+    loginToUseLine: (buttonOptions: {
+        label: string;
+        onClick: () => void;
+    }) => ({
+        title: 'Login to enable the line tool',
+        description:
+            'Powerful tools are reserved for logged-in users. To use the line tool, create an account and try again.',
+        button: buttonOptions,
+    }),
+    loginToUseEyedropper: (buttonOptions: {
+        label: string;
+        onClick: () => void;
+    }) => ({
+        title: 'Login to enable the eyedropper',
+        description:
+            'The eyedropper tool is reserved for logged-in users. Create an account to pick colors from the canvas.',
+        button: buttonOptions,
+    }),
     loginToVote: (buttonOptions: { label: string; onClick: () => void }) => ({
         title: 'Login to vote',
         description:
@@ -155,6 +173,12 @@ export const toasts = {
     }) => toast(TOASTS.loginToSavePixels(buttonOptions)),
     loginToUseBucket: (buttonOptions: { label: string; onClick: () => void }) =>
         toast(TOASTS.loginToUseBucket(buttonOptions)),
+    loginToUseLine: (buttonOptions: { label: string; onClick: () => void }) =>
+        toast(TOASTS.loginToUseLine(buttonOptions)),
+    loginToUseEyedropper: (buttonOptions: {
+        label: string;
+        onClick: () => void;
+    }) => toast(TOASTS.loginToUseEyedropper(buttonOptions)),
     loginToVote: (buttonOptions: { label: string; onClick: () => void }) =>
         toast(TOASTS.loginToVote(buttonOptions)),
     cannotDrawOnPlot: () => toast(TOASTS.cannotDrawOnPlot),

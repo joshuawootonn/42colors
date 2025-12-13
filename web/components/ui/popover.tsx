@@ -5,24 +5,15 @@ import { useCallback, useRef } from 'react';
 
 import { useForwardedRef } from '@/components/ui/hooks/use-forwarded-ref';
 import { cn } from '@/lib/utils';
-import { Popover as PopoverPrimitive } from '@base-ui-components/react/popover';
+import { Popover as PopoverPrimitive } from '@base-ui/react/popover';
 
 import { X32 } from '../icons/x_32';
 import { useCornerAnchor } from './hooks/use-corner-anchor';
 import { useDraggablePosition } from './hooks/use-draggable-position';
 
-// internal type from base-ui-components/react/popover that is not exported
-export type BaseOpenChangeReason =
-    | 'trigger-press'
-    | 'trigger-hover'
-    | 'trigger-focus'
-    | 'focus-out'
-    | 'escape-key'
-    | 'outside-press'
-    | 'list-navigation'
-    | 'item-press'
-    | 'cancel-open'
-    | 'close-press';
+type PopoverOnOpenChange = NonNullable<
+    React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Root>['onOpenChange']
+>;
 
 const Popover = function ({
     onOpenChange,
@@ -31,21 +22,17 @@ const Popover = function ({
 }: React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Root> & {
     type: 'temporary' | 'persistent';
 }) {
-    const handleOpenChange = useCallback(
-        (
-            open: boolean,
-            event: Event | undefined,
-            reason: BaseOpenChangeReason | undefined,
-        ) => {
+    const handleOpenChange = useCallback<PopoverOnOpenChange>(
+        (open, eventDetails) => {
             if (
                 type === 'persistent' &&
-                reason !== 'close-press' &&
-                reason !== 'trigger-press' &&
+                eventDetails.reason !== 'close-press' &&
+                eventDetails.reason !== 'trigger-press' &&
                 open === false
             ) {
                 return;
             }
-            onOpenChange?.(open, event, reason);
+            onOpenChange?.(open, eventDetails);
         },
         [onOpenChange, type],
     );
@@ -133,7 +120,7 @@ const PopoverContent = React.forwardRef<
                     className={cn(
                         positionerClassName,
                         'z-50',
-                        hasDragged && 'fixed left-0 top-0',
+                        hasDragged && '!fixed !left-0 !top-0',
                     )}
                     sideOffset={sideOffset}
                     align={align}

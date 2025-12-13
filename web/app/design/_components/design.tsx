@@ -155,6 +155,28 @@ export function DesignPage() {
                         })}
                     />
                 </div>
+                <div className="space-y-2">
+                    <h3 className="text-sm font-medium">Login to Use Line</h3>
+                    <Toast
+                        id="toast-login-to-use-line"
+                        {...TOASTS.loginToUseLine({
+                            label: 'Log in',
+                            onClick: () => {},
+                        })}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <h3 className="text-sm font-medium">
+                        Login to Use Eyedropper
+                    </h3>
+                    <Toast
+                        id="toast-login-to-use-eyedropper"
+                        {...TOASTS.loginToUseEyedropper({
+                            label: 'Log in',
+                            onClick: () => {},
+                        })}
+                    />
+                </div>
             </div>
             <h2>Plots Popover</h2>
             <div className="not-prose wrap mt-120 flex w-full items-center justify-between gap-4">

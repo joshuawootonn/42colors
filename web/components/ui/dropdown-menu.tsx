@@ -3,7 +3,7 @@
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
-import { Menu as DropdownMenuPrimitive } from '@base-ui-components/react/menu';
+import { Menu as DropdownMenuPrimitive } from '@base-ui/react/menu';
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 
@@ -17,7 +17,7 @@ const DropdownMenuTrigger = React.forwardRef<
         {...props}
     />
 ));
-DropdownMenuTrigger.displayName = DropdownMenuPrimitive.Trigger.displayName;
+DropdownMenuTrigger.displayName = 'DropdownMenuTrigger';
 
 const DropdownMenuGroup = DropdownMenuPrimitive.Group;
 
@@ -61,7 +61,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
         </svg>
     </DropdownMenuPrimitive.SubmenuTrigger>
 ));
-DropdownMenuSubTrigger.displayName = DropdownMenuPrimitive.Trigger.displayName;
+DropdownMenuSubTrigger.displayName = 'DropdownMenuSubTrigger';
 
 const DropdownMenuSubContent = React.forwardRef<
     React.ElementRef<typeof DropdownMenuPrimitive.Popup>,

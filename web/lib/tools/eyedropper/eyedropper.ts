@@ -1,3 +1,5 @@
+import { toasts } from '@/components/ui/toast';
+
 import { getChunkKey, getChunkOrigin } from '../../canvas/chunk';
 import { getCachedPixelsFromActions } from '../../canvas/realtime';
 import { Pixel, getLastPixelValue } from '../../geometry/coord';
@@ -47,6 +49,18 @@ function onPointerDown(
     context: InitializedStore,
     enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
+    if (context.user == null) {
+        enqueue.effect(() => {
+            toasts.loginToUseEyedropper({
+                label: 'Log in',
+                onClick: () => {
+                    window.location.href = '/login';
+                },
+            });
+        });
+        return context;
+    }
+
     const absolutePoint = getAbsolutePoint(e.clientX, e.clientY, context);
     const colorRef = getPixelColor(absolutePoint.x, absolutePoint.y, context);
 
