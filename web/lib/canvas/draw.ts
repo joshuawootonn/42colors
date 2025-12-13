@@ -45,7 +45,7 @@ export function draw(context: InitializedStore) {
   Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
     context.canvas.rootCanvasContext.imageSmoothingEnabled = false;
     context.canvas.rootCanvasContext.drawImage(
-      chunk.pixelCanvas,
+      chunk.pixelBitmap ?? chunk.pixelCanvas,
       canvasToClient(chunk.x, context.camera.zoom),
       canvasToClient(chunk.y, context.camera.zoom),
       CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
@@ -57,7 +57,7 @@ export function draw(context: InitializedStore) {
   Object.values(context.canvas.chunkCanvases).forEach((chunk) => {
     context.canvas.rootCanvasContext.imageSmoothingEnabled = false;
     context.canvas.rootCanvasContext.drawImage(
-      chunk.realtimeCanvas,
+      chunk.realtimeBitmap ?? chunk.realtimeCanvas,
       canvasToClient(chunk.x, context.camera.zoom),
       canvasToClient(chunk.y, context.camera.zoom),
       CANVAS_PIXEL_RATIO * CHUNK_LENGTH * zoomMultiplier,
