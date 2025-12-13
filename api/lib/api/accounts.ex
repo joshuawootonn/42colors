@@ -106,15 +106,20 @@ defmodule Api.Accounts do
          end)
          |> Repo.transaction() do
       {:ok, %{user: user}} ->
-        # Get the user's current balance outside of the transaction
-        current_user = Repo.get!(User, user.id)
+        # Generate and set the username using the new user's ID
+        username = User.generate_username(user.id)
+
+        {:ok, user_with_username} =
+          user
+          |> Ecto.Changeset.change(username: username)
+          |> Repo.update()
 
         # Calculate balance change using the public function
-        balance_change = LogService.calculate_balance_change(current_user.balance, 2000)
+        balance_change = LogService.calculate_balance_change(user_with_username.balance, 2000)
 
         # Create the initial grant log
         case LogService.create_log(%{
-               user_id: user.id,
+               user_id: user_with_username.id,
                old_balance: balance_change.old_balance,
                new_balance: balance_change.new_balance,
                log_type: "initial_grant",

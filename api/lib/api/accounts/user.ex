@@ -2,8 +2,22 @@ defmodule Api.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @color_names ~w(
+    Coral Crimson Scarlet Ruby Rose Blush Salmon Cherry Garnet Burgundy
+    Maroon Raspberry Cerise Carmine Amber Tangerine Peach Apricot Ginger
+    Paprika Rust Copper Bronze Sienna Terra Gold Honey Marigold Lemon
+    Canary Buttercup Goldenrod Flax Lime Mint Jade Emerald Forest Olive
+    Sage Pine Moss Fern Clover Hunter Willow Basil Teal Cyan Azure Cobalt
+    Navy Sky Ocean Sapphire Denim Steel Arctic Cerulean Admiral Periwinkle
+    Indigo Violet Plum Lavender Orchid Grape Iris Mulberry Amethyst Royal
+    Wisteria Slate Charcoal Onyx Ivory Pearl Silver Ash Stone Cloud Snow
+    Smoke Graphite Pewter Dusk Chestnut Walnut Cocoa Mocha Espresso Caramel
+    Cinnamon Auburn Mahogany Hazel Maple Acorn Magenta Powder
+  )
+
   schema "users" do
     field :email, :string
+    field :username, :string
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
@@ -12,6 +26,11 @@ defmodule Api.Accounts.User do
     field :last_visit_grant_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
+  end
+
+  def generate_username(user_id) do
+    color = Enum.random(@color_names)
+    "#{color}-#{user_id}"
   end
 
   @doc """
@@ -40,8 +59,16 @@ defmodule Api.Accounts.User do
   def registration_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:email, :password])
+    |> put_temporary_username()
     |> validate_email(opts)
     |> validate_password(opts)
+  end
+
+  defp put_temporary_username(changeset) do
+    # Generate a temporary username using a UUID prefix
+    # This will be replaced with the proper Color-ID format after insert
+    temp_username = "temp-#{:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)}"
+    put_change(changeset, :username, temp_username)
   end
 
   @doc """
