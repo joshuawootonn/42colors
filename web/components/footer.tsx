@@ -24,6 +24,7 @@ import { Link } from "./link";
 import { LogsPopover } from "./logs-popover";
 import { PlotsPopover } from "./plots-popover/plots-popover";
 import { PopoverTrigger } from "./ui/popover";
+import { isAdminUser } from "@/lib/admin";
 
 export function Footer() {
   const searchParams = useSearchParams();
@@ -87,7 +88,7 @@ export function Footer() {
             />
           }
         ></PlotsPopover>
-        {user?.email === "jose56wonton@gmail.com" && (
+        {isAdminUser(user) && (
           <>
             <div>/</div>
             <AdminPopover>
