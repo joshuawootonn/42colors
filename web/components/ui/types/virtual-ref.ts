@@ -1,3 +1,3 @@
 export interface VirtualRef {
-    getBoundingClientRect(): DOMRect;
+  getBoundingClientRect(): DOMRect;
 }

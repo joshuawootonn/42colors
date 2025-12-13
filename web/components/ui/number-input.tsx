@@ -1,192 +1,184 @@
-import * as React from 'react';
+import * as React from "react";
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
-import styles from './number-input.module.css';
+import styles from "./number-input.module.css";
 
 function NumberInputButton({
-    className,
-    onHold,
-    ...props
-}: React.ComponentPropsWithoutRef<'button'> & { onHold: () => void }) {
-    const timerID = React.useRef<number | null>(null);
-    const counter = React.useRef(0);
+  className,
+  onHold,
+  ...props
+}: React.ComponentPropsWithoutRef<"button"> & { onHold: () => void }) {
+  const timerID = React.useRef<number | null>(null);
+  const counter = React.useRef(0);
 
-    const pressHoldDuration = 20;
+  const pressHoldDuration = 20;
 
-    function pressingDown(e: React.PointerEvent | React.TouchEvent) {
-        requestAnimationFrame(timer);
-        e.preventDefault();
+  function pressingDown(e: React.PointerEvent | React.TouchEvent) {
+    requestAnimationFrame(timer);
+    e.preventDefault();
+  }
+
+  function notPressingDown() {
+    if (timerID.current != null) cancelAnimationFrame(timerID.current);
+    counter.current = 0;
+  }
+
+  function timer() {
+    if (counter.current < pressHoldDuration) {
+      timerID.current = requestAnimationFrame(timer);
+      counter.current++;
+    } else if (counter.current === pressHoldDuration) {
+      timerID.current = requestAnimationFrame(timer);
+      onHold();
     }
+  }
 
-    function notPressingDown() {
-        if (timerID.current != null) cancelAnimationFrame(timerID.current);
-        counter.current = 0;
-    }
-
-    function timer() {
-        if (counter.current < pressHoldDuration) {
-            timerID.current = requestAnimationFrame(timer);
-            counter.current++;
-        } else if (counter.current === pressHoldDuration) {
-            timerID.current = requestAnimationFrame(timer);
-            onHold();
-        }
-    }
-
-    return (
-        <button
-            tabIndex={-10}
-            className={cn(
-                'flex aspect-square h-1/2 items-center justify-center',
-                className,
-            )}
-            onPointerDown={pressingDown}
-            onTouchStart={pressingDown}
-            onPointerUp={notPressingDown}
-            onPointerLeave={notPressingDown}
-            onTouchEnd={notPressingDown}
-            {...props}
-        />
-    );
+  return (
+    <button
+      tabIndex={-10}
+      className={cn("flex aspect-square h-1/2 items-center justify-center", className)}
+      onPointerDown={pressingDown}
+      onTouchStart={pressingDown}
+      onPointerUp={notPressingDown}
+      onPointerLeave={notPressingDown}
+      onTouchEnd={notPressingDown}
+      {...props}
+    />
+  );
 }
 
 function valueToWidth(value: number | string) {
-    return `${String(value).length.toString()}ch`;
+  return `${String(value).length.toString()}ch`;
 }
 
 const NumberInput = React.forwardRef<
-    HTMLInputElement,
-    Omit<React.ComponentProps<'input'>, 'type' | 'step' | 'min' | 'max'> & {
-        step: number;
-        min: number;
-        max: number;
-    }
+  HTMLInputElement,
+  Omit<React.ComponentProps<"input">, "type" | "step" | "min" | "max"> & {
+    step: number;
+    min: number;
+    max: number;
+  }
 >(({ className, value, ...props }, parentRef) => {
-    if (typeof value !== 'number') {
-        throw new Error("Number Input value must be type 'number'");
-    }
+  if (typeof value !== "number") {
+    throw new Error("Number Input value must be type 'number'");
+  }
 
-    const buttonRef = React.useRef<HTMLInputElement | null>(null);
+  const buttonRef = React.useRef<HTMLInputElement | null>(null);
 
-    const onStep = React.useCallback(
-        (step: number) => {
-            buttonRef.current?.focus();
+  const onStep = React.useCallback(
+    (step: number) => {
+      buttonRef.current?.focus();
 
-            const next = parseInt(buttonRef.current!.value) + step;
+      const next = parseInt(buttonRef.current!.value) + step;
 
-            if (next >= props.max) {
-                props.onChange?.({
-                    currentTarget: {
-                        name: props.name,
-                        value: `${props.max}`,
-                    },
-                } as React.ChangeEvent<HTMLInputElement>);
-                return;
-            }
+      if (next >= props.max) {
+        props.onChange?.({
+          currentTarget: {
+            name: props.name,
+            value: `${props.max}`,
+          },
+        } as React.ChangeEvent<HTMLInputElement>);
+        return;
+      }
 
-            if (next <= props.min) {
-                props.onChange?.({
-                    currentTarget: {
-                        name: props.name,
-                        value: `${props.min}`,
-                    },
-                } as React.ChangeEvent<HTMLInputElement>);
-                return;
-            }
+      if (next <= props.min) {
+        props.onChange?.({
+          currentTarget: {
+            name: props.name,
+            value: `${props.min}`,
+          },
+        } as React.ChangeEvent<HTMLInputElement>);
+        return;
+      }
 
-            props.onChange?.({
-                currentTarget: {
-                    name: props.name,
-                    value: `${parseInt(buttonRef.current!.value) + step}`,
-                },
-            } as React.ChangeEvent<HTMLInputElement>);
+      props.onChange?.({
+        currentTarget: {
+          name: props.name,
+          value: `${parseInt(buttonRef.current!.value) + step}`,
         },
-        [props],
-    );
+      } as React.ChangeEvent<HTMLInputElement>);
+    },
+    [props],
+  );
 
-    const visualValue = Math.trunc(value);
+  const visualValue = Math.trunc(value);
 
-    return (
-        <div
-            className={cn(
-                'svg-outline-within-sm relative z-0 bg-white',
-                className,
-            )}
+  return (
+    <div className={cn("svg-outline-within-sm relative z-0 bg-white", className)}>
+      <input
+        ref={(ref) => {
+          if (typeof parentRef === "function") parentRef(ref);
+          else if (parentRef !== null) parentRef.current = ref;
+          buttonRef.current = ref;
+        }}
+        type="number"
+        className={cn(
+          styles.input,
+          "flex h-7.5 min-w-0 border-[1.5px] border-input bg-transparent text-base",
+          "w-[calc(var(--number-input-width)+30px)]",
+          "[input[type=number]::-webkit-outer-spin-button]:appearance-[textfield]",
+          "pl-1",
+          "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
+          "outline-none placeholder:text-muted-foreground",
+          "disabled:cursor-not-allowed disabled:opacity-50",
+        )}
+        onInput={(e) => props.onInput?.(e)}
+        value={visualValue}
+        style={
+          {
+            "--number-input-width": valueToWidth(visualValue),
+          } as React.CSSProperties
+        }
+        {...props}
+      />
+      <div className="absolute right-[1.5px] top-0 z-10 flex h-full flex-col divide-y-1.5 divide-primary border-l-1.5 border-l-primary">
+        <NumberInputButton
+          className="group hover:bg-black"
+          value={value}
+          onClick={() => onStep(props.step)}
+          onHold={() => onStep(props.step)}
         >
-            <input
-                ref={(ref) => {
-                    if (typeof parentRef === 'function') parentRef(ref);
-                    else if (parentRef !== null) parentRef.current = ref;
-                    buttonRef.current = ref;
-                }}
-                type="number"
-                className={cn(
-                    styles.input,
-                    'flex h-7.5 min-w-0 border-[1.5px] border-input bg-transparent text-base',
-                    'w-[calc(var(--number-input-width)+30px)]',
-                    '[input\[type=number\]::-webkit-outer-spin-button]:appearance-[textfield]',
-                    'pl-1',
-                    'file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground',
-                    'outline-none placeholder:text-muted-foreground',
-                    'disabled:cursor-not-allowed disabled:opacity-50',
-                )}
-                onInput={(e) => props.onInput?.(e)}
-                value={visualValue}
-                style={
-                    {
-                        '--number-input-width': valueToWidth(visualValue),
-                    } as React.CSSProperties
-                }
-                {...props}
+          <svg
+            width="6"
+            height="6"
+            viewBox="0 0 6 6"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="translate-y-[1px] text-black group-hover:text-white"
+          >
+            <path
+              d="M0.994293 3.75L3.04978 2.25L5.0057 3.75"
+              stroke="currentColor"
+              strokeWidth="1.5"
             />
-            <div className="absolute right-[1.5px] top-0 z-10 flex h-full flex-col divide-y-1.5 divide-primary border-l-1.5 border-l-primary">
-                <NumberInputButton
-                    className="group hover:bg-black"
-                    value={value}
-                    onClick={() => onStep(props.step)}
-                    onHold={() => onStep(props.step)}
-                >
-                    <svg
-                        width="6"
-                        height="6"
-                        viewBox="0 0 6 6"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="translate-y-[1px] text-black group-hover:text-white"
-                    >
-                        <path
-                            d="M0.994293 3.75L3.04978 2.25L5.0057 3.75"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                        />
-                    </svg>
-                </NumberInputButton>
+          </svg>
+        </NumberInputButton>
 
-                <NumberInputButton
-                    className="group hover:bg-black"
-                    onClick={() => onStep(props.step * -1)}
-                    onHold={() => onStep(props.step * -1)}
-                >
-                    <svg
-                        width="6"
-                        height="6"
-                        viewBox="0 0 6 6"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="translate-y-[-1px] text-black group-hover:text-white"
-                    >
-                        <path
-                            d="M0.994293 2.16843L3.04978 3.83156L5.0057 2.16843"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                        />
-                    </svg>
-                </NumberInputButton>
-            </div>
-        </div>
-    );
+        <NumberInputButton
+          className="group hover:bg-black"
+          onClick={() => onStep(props.step * -1)}
+          onHold={() => onStep(props.step * -1)}
+        >
+          <svg
+            width="6"
+            height="6"
+            viewBox="0 0 6 6"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="translate-y-[-1px] text-black group-hover:text-white"
+          >
+            <path
+              d="M0.994293 2.16843L3.04978 3.83156L5.0057 2.16843"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+          </svg>
+        </NumberInputButton>
+      </div>
+    </div>
+  );
 });
-NumberInput.displayName = 'NumberInput';
+NumberInput.displayName = "NumberInput";
 
 export { NumberInput };

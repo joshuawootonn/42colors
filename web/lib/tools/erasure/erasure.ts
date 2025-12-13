@@ -1,271 +1,240 @@
-import { getUniqueChunksFromPoints } from '@/lib/canvas/chunk';
+import { getUniqueChunksFromPoints } from "@/lib/canvas/chunk";
 
-import { ACTION_TYPES } from '../../action-types';
-import { getZoomMultiplier } from '../../camera';
-import { getPixelSize } from '../../canvas/canvas';
-import { bresenhamLine } from '../../geometry/bresenham-line';
-import { AbsolutePoint } from '../../geometry/coord';
-import { getCanvasPolygon } from '../../geometry/polygon';
-import { BLACK_REF, COLOR_TABLE, TRANSPARENT_REF } from '../../palette';
-import { InitializedStore, store } from '../../store';
-import { newNewCoords } from '../../utils/net-new-coords';
-import { uuid } from '../../utils/uuid';
-import { hexToRgbaColor } from '../../webgpu/colors';
-import { EnqueueObject } from '../../xstate-internal-types';
+import { ACTION_TYPES } from "../../action-types";
+import { getZoomMultiplier } from "../../camera";
+import { getPixelSize } from "../../canvas/canvas";
+import { bresenhamLine } from "../../geometry/bresenham-line";
+import { AbsolutePoint } from "../../geometry/coord";
+import { getCanvasPolygon } from "../../geometry/polygon";
+import { BLACK_REF, COLOR_TABLE, TRANSPARENT_REF } from "../../palette";
+import { InitializedStore, store } from "../../store";
+import { newNewCoords } from "../../utils/net-new-coords";
+import { uuid } from "../../utils/uuid";
+import { hexToRgbaColor } from "../../webgpu/colors";
+import { EnqueueObject } from "../../xstate-internal-types";
 import {
-    getAbsolutePoint,
-    getBrushPoints,
-    getCameraOffset,
-    isDuplicatePoint,
-    pointsToPixels,
-} from '../brush/brush';
+  getAbsolutePoint,
+  getBrushPoints,
+  getCameraOffset,
+  isDuplicatePoint,
+  pointsToPixels,
+} from "../brush/brush";
 
 export type ErasureSettings = {
-    size: number;
+  size: number;
 };
 
 function redrawTelegraph(context: InitializedStore) {
-    const pixelTelegraphWebGPUManager =
-        context.canvas.pixelTelegraphWebGPUManager;
-    if (!pixelTelegraphWebGPUManager) {
-        console.error(
-            'Telegraph WebGPU manager not available for eraser telegraph rendering',
-        );
-        return;
-    }
+  const pixelTelegraphWebGPUManager = context.canvas.pixelTelegraphWebGPUManager;
+  if (!pixelTelegraphWebGPUManager) {
+    console.error("Telegraph WebGPU manager not available for eraser telegraph rendering");
+    return;
+  }
 
-    if (context.interaction.cursorPosition == null) {
-        return;
-    }
+  if (context.interaction.cursorPosition == null) {
+    return;
+  }
 
-    const clientX = context.interaction.cursorPosition.clientX;
-    const clientY = context.interaction.cursorPosition.clientY;
-    const absolutePoint = getAbsolutePoint(clientX, clientY, context);
+  const clientX = context.interaction.cursorPosition.clientX;
+  const clientY = context.interaction.cursorPosition.clientY;
+  const absolutePoint = getAbsolutePoint(clientX, clientY, context);
 
-    const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
+  const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
 
-    const colorHex = COLOR_TABLE[BLACK_REF];
-    const color = hexToRgbaColor(colorHex);
+  const colorHex = COLOR_TABLE[BLACK_REF];
+  const color = hexToRgbaColor(colorHex);
 
-    const eraserPolygon = getCanvasPolygon(
-        absolutePoint.x,
-        absolutePoint.y,
-        context.toolSettings.erasure.size,
-    );
+  const eraserPolygon = getCanvasPolygon(
+    absolutePoint.x,
+    absolutePoint.y,
+    context.toolSettings.erasure.size,
+  );
 
-    const { xOffset, yOffset } = getCameraOffset(context.camera);
+  const { xOffset, yOffset } = getCameraOffset(context.camera);
 
-    const webGPUPolygons = [
-        {
-            polygon: eraserPolygon,
-        },
-    ];
+  const webGPUPolygons = [
+    {
+      polygon: eraserPolygon,
+    },
+  ];
 
-    pixelTelegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
-        xOffset,
-        yOffset,
-        xCamera: context.camera.x,
-        yCamera: context.camera.y,
-        pixelSize,
-        color,
-        filled: false,
-    });
+  pixelTelegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
+    xOffset,
+    yOffset,
+    xCamera: context.camera.x,
+    yCamera: context.camera.y,
+    pixelSize,
+    color,
+    filled: false,
+  });
 }
 
 export type ErasureActive = {
-    type: typeof ACTION_TYPES.ERASURE_ACTIVE;
-    action_id: string;
-    points: AbsolutePoint[];
-    anchorPoints: AbsolutePoint[];
-    chunkKeys: string[];
+  type: typeof ACTION_TYPES.ERASURE_ACTIVE;
+  action_id: string;
+  points: AbsolutePoint[];
+  anchorPoints: AbsolutePoint[];
+  chunkKeys: string[];
 };
 
 export function startErasureAction(
-    anchorPoint: AbsolutePoint,
-    erasurePoints: AbsolutePoint[],
+  anchorPoint: AbsolutePoint,
+  erasurePoints: AbsolutePoint[],
 ): ErasureActive {
-    return {
-        type: ACTION_TYPES.ERASURE_ACTIVE,
-        action_id: uuid(),
-        points: erasurePoints,
-        anchorPoints: [anchorPoint],
-        chunkKeys: getUniqueChunksFromPoints(erasurePoints),
-    };
+  return {
+    type: ACTION_TYPES.ERASURE_ACTIVE,
+    action_id: uuid(),
+    points: erasurePoints,
+    anchorPoints: [anchorPoint],
+    chunkKeys: getUniqueChunksFromPoints(erasurePoints),
+  };
 }
 
 export function nextErasureAction(
-    activeBrushAction: ErasureActive,
-    newAnchorPoints: AbsolutePoint[],
-    newErasurePoints: AbsolutePoint[],
+  activeBrushAction: ErasureActive,
+  newAnchorPoints: AbsolutePoint[],
+  newErasurePoints: AbsolutePoint[],
 ): ErasureActive {
-    return {
-        ...activeBrushAction,
-        anchorPoints: activeBrushAction.anchorPoints.concat(newAnchorPoints),
-        points: activeBrushAction.points.concat(newErasurePoints),
-        chunkKeys: getUniqueChunksFromPoints(newAnchorPoints),
-    };
+  return {
+    ...activeBrushAction,
+    anchorPoints: activeBrushAction.anchorPoints.concat(newAnchorPoints),
+    points: activeBrushAction.points.concat(newErasurePoints),
+    chunkKeys: getUniqueChunksFromPoints(newAnchorPoints),
+  };
 }
 
 function onPointerDown(
-    e: PointerEvent,
-    context: InitializedStore,
-    enqueue: EnqueueObject<{ type: string }>,
+  e: PointerEvent,
+  context: InitializedStore,
+  enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-    const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
+  const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
-    const brushPoints = getBrushPoints(
-        [anchorPoint],
-        context.toolSettings.erasure.size,
-        1,
-    );
+  const brushPoints = getBrushPoints([anchorPoint], context.toolSettings.erasure.size, 1);
 
-    const nextActiveAction = startErasureAction(anchorPoint, brushPoints);
+  const nextActiveAction = startErasureAction(anchorPoint, brushPoints);
 
-    enqueue.effect(() => {
-        store.trigger.updateCurrentAction({ action: nextActiveAction });
-    });
-    return context;
+  enqueue.effect(() => {
+    store.trigger.updateCurrentAction({ action: nextActiveAction });
+  });
+  return context;
 }
 
 function onPointerMove(
-    e: PointerEvent,
-    context: InitializedStore,
-    enqueue: EnqueueObject<{ type: string }>,
+  e: PointerEvent,
+  context: InitializedStore,
+  enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-    const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
+  const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
-    if (
-        context.activeAction?.type !== ACTION_TYPES.ERASURE_ACTIVE ||
-        isDuplicatePoint(anchorPoint.x, anchorPoint.y, context)
-    ) {
-        return context;
-    }
-
-    const newAnchorPoints = bresenhamLine(
-        context.activeAction.anchorPoints.at(-1)!.x,
-        context.activeAction.anchorPoints.at(-1)!.y,
-        anchorPoint.x,
-        anchorPoint.y,
-    );
-
-    const netNewAnchors = newNewCoords(
-        context.activeAction.anchorPoints,
-        newAnchorPoints,
-    );
-
-    const newBrushPoints = getBrushPoints(
-        netNewAnchors,
-        context.toolSettings.erasure.size,
-        1,
-    );
-
-    const nextActiveAction = nextErasureAction(
-        context.activeAction,
-        newAnchorPoints,
-        newBrushPoints,
-    );
-
-    enqueue.effect(() => {
-        store.trigger.updateCurrentAction({ action: nextActiveAction });
-    });
+  if (
+    context.activeAction?.type !== ACTION_TYPES.ERASURE_ACTIVE ||
+    isDuplicatePoint(anchorPoint.x, anchorPoint.y, context)
+  ) {
     return context;
+  }
+
+  const newAnchorPoints = bresenhamLine(
+    context.activeAction.anchorPoints.at(-1)!.x,
+    context.activeAction.anchorPoints.at(-1)!.y,
+    anchorPoint.x,
+    anchorPoint.y,
+  );
+
+  const netNewAnchors = newNewCoords(context.activeAction.anchorPoints, newAnchorPoints);
+
+  const newBrushPoints = getBrushPoints(netNewAnchors, context.toolSettings.erasure.size, 1);
+
+  const nextActiveAction = nextErasureAction(context.activeAction, newAnchorPoints, newBrushPoints);
+
+  enqueue.effect(() => {
+    store.trigger.updateCurrentAction({ action: nextActiveAction });
+  });
+  return context;
 }
 
 function onWheel(
-    e: WheelEvent,
-    context: InitializedStore,
-    enqueue: EnqueueObject<{ type: string }>,
+  e: WheelEvent,
+  context: InitializedStore,
+  enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-    const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
+  const anchorPoint = getAbsolutePoint(e.clientX, e.clientY, context);
 
-    if (
-        context.activeAction?.type !== ACTION_TYPES.ERASURE_ACTIVE ||
-        isDuplicatePoint(anchorPoint.x, anchorPoint.y, context)
-    ) {
-        return context;
-    }
-
-    const newAnchorPoints = bresenhamLine(
-        context.activeAction.anchorPoints.at(-1)!.x,
-        context.activeAction.anchorPoints.at(-1)!.y,
-        anchorPoint.x,
-        anchorPoint.y,
-    );
-
-    const netNewAnchors = newNewCoords(
-        context.activeAction.anchorPoints,
-        newAnchorPoints,
-    );
-
-    const newBrushPoints = getBrushPoints(
-        netNewAnchors,
-        context.toolSettings.erasure.size,
-        1,
-    );
-
-    const nextActiveAction = nextErasureAction(
-        context.activeAction,
-        newAnchorPoints,
-        newBrushPoints,
-    );
-
-    enqueue.effect(() => {
-        store.trigger.updateCurrentAction({ action: nextActiveAction });
-    });
+  if (
+    context.activeAction?.type !== ACTION_TYPES.ERASURE_ACTIVE ||
+    isDuplicatePoint(anchorPoint.x, anchorPoint.y, context)
+  ) {
     return context;
+  }
+
+  const newAnchorPoints = bresenhamLine(
+    context.activeAction.anchorPoints.at(-1)!.x,
+    context.activeAction.anchorPoints.at(-1)!.y,
+    anchorPoint.x,
+    anchorPoint.y,
+  );
+
+  const netNewAnchors = newNewCoords(context.activeAction.anchorPoints, newAnchorPoints);
+
+  const newBrushPoints = getBrushPoints(netNewAnchors, context.toolSettings.erasure.size, 1);
+
+  const nextActiveAction = nextErasureAction(context.activeAction, newAnchorPoints, newBrushPoints);
+
+  enqueue.effect(() => {
+    store.trigger.updateCurrentAction({ action: nextActiveAction });
+  });
+  return context;
 }
 
 function onPointerOut(
-    _: PointerEvent,
-    context: InitializedStore,
-    enqueue: EnqueueObject<{ type: string }>,
+  _: PointerEvent,
+  context: InitializedStore,
+  enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-    if (context.activeAction?.type !== ACTION_TYPES.ERASURE_ACTIVE)
-        return context;
+  if (context.activeAction?.type !== ACTION_TYPES.ERASURE_ACTIVE) return context;
 
-    const points = context.activeAction.points;
-    const action_id = context.activeAction.action_id;
-    const completedAction = context.activeAction;
-    enqueue.effect(() => {
-        store.trigger.completeCurrentAction({ action: completedAction });
-        store.trigger.newPixels({
-            pixels: pointsToPixels(points, TRANSPARENT_REF),
-            action_id,
-        });
+  const points = context.activeAction.points;
+  const action_id = context.activeAction.action_id;
+  const completedAction = context.activeAction;
+  enqueue.effect(() => {
+    store.trigger.completeCurrentAction({ action: completedAction });
+    store.trigger.newPixels({
+      pixels: pointsToPixels(points, TRANSPARENT_REF),
+      action_id,
     });
+  });
 
-    return context;
+  return context;
 }
 
 function onPointerUp(
-    _: PointerEvent,
-    context: InitializedStore,
-    enqueue: EnqueueObject<{ type: string }>,
+  _: PointerEvent,
+  context: InitializedStore,
+  enqueue: EnqueueObject<{ type: string }>,
 ): InitializedStore {
-    if (context.activeAction?.type !== ACTION_TYPES.ERASURE_ACTIVE)
-        return context;
+  if (context.activeAction?.type !== ACTION_TYPES.ERASURE_ACTIVE) return context;
 
-    const points = context.activeAction.points;
-    const action_id = context.activeAction.action_id;
-    const completedAction = context.activeAction;
-    enqueue.effect(() => {
-        store.trigger.completeCurrentAction({ action: completedAction });
-        store.trigger.newPixels({
-            pixels: pointsToPixels(points, TRANSPARENT_REF),
-            action_id,
-        });
+  const points = context.activeAction.points;
+  const action_id = context.activeAction.action_id;
+  const completedAction = context.activeAction;
+  enqueue.effect(() => {
+    store.trigger.completeCurrentAction({ action: completedAction });
+    store.trigger.newPixels({
+      pixels: pointsToPixels(points, TRANSPARENT_REF),
+      action_id,
     });
+  });
 
-    return context;
+  return context;
 }
 
 export const ErasureTool = {
-    onPointerMove,
-    onPointerDown,
-    onPointerUp,
-    onPointerOut,
-    onWheel,
-    redrawTelegraph,
+  onPointerMove,
+  onPointerDown,
+  onPointerUp,
+  onPointerOut,
+  onWheel,
+  redrawTelegraph,
 };
 
 export type ErasureTool = typeof ErasureTool;

@@ -28,13 +28,13 @@ test-ui *ARGS:
 
 # Code quality
 lint:
-  bun run lint --fix
+  bun run lint:fix
 
 lint-check:
   bun run lint
 
 format:
-  bun run format --write
+  bun run format:fix 
 
 format-check:
   bun run format 

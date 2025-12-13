@@ -1,103 +1,97 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
 
-import { X32 } from '@/components/icons/x_32';
-import { IconButton } from '@/components/ui/icon-button';
-import { Popover, PopoverContent } from '@/components/ui/popover';
-import { isScrollingAtom } from '@/lib/events';
-import { canvasToClient } from '@/lib/utils/clientToCanvasConversion';
-import { useAtom, useSelector } from '@xstate/store/react';
+import { X32 } from "@/components/icons/x_32";
+import { IconButton } from "@/components/ui/icon-button";
+import { Popover, PopoverContent } from "@/components/ui/popover";
+import { isScrollingAtom } from "@/lib/events";
+import { canvasToClient } from "@/lib/utils/clientToCanvasConversion";
+import { useAtom, useSelector } from "@xstate/store/react";
 
-import { ACTION_TYPES } from '../../action-types';
-import { store } from '../../store';
-import { CreatePlotForm } from './create-plot-form';
-import { getPlotOverlayPositionForActiveAction } from './get-plot-overlay-position';
+import { ACTION_TYPES } from "../../action-types";
+import { store } from "../../store";
+import { CreatePlotForm } from "./create-plot-form";
+import { getPlotOverlayPositionForActiveAction } from "./get-plot-overlay-position";
 
 export function NewPlotPopover() {
-    const activeAction = useSelector(
-        store,
-        (state) => state.context.activeAction,
-    );
-    const camera = useSelector(store, (state) => state.context.camera);
-    const user = useSelector(store, (state) => state.context?.user);
+  const activeAction = useSelector(store, (state) => state.context.activeAction);
+  const camera = useSelector(store, (state) => state.context.camera);
+  const user = useSelector(store, (state) => state.context?.user);
 
-    const transform = useMemo(
-        () => `translate(-50%, ${canvasToClient(0.2, camera.zoom)}px)`,
-        [camera.zoom],
-    );
+  const transform = useMemo(
+    () => `translate(-50%, ${canvasToClient(0.2, camera.zoom)}px)`,
+    [camera.zoom],
+  );
 
-    const [isOpen, setIsOpen] = useState(false);
-    const [triggerPosition, setTriggerPosition] = useState({ x: 0, y: 0 });
-    const isScrolling = useAtom(isScrollingAtom);
+  const [isOpen, setIsOpen] = useState(false);
+  const [triggerPosition, setTriggerPosition] = useState({ x: 0, y: 0 });
+  const isScrolling = useAtom(isScrollingAtom);
 
-    useEffect(() => {
-        if (
-            (activeAction?.type === ACTION_TYPES.CLAIMER_CREATE ||
-                activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_CREATE ||
-                activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_CREATE) &&
-            camera &&
-            typeof window !== 'undefined'
-        ) {
-            const center = getPlotOverlayPositionForActiveAction(
-                activeAction,
-                camera,
-            );
-            setTriggerPosition(center);
-            setIsOpen(true);
-        } else {
-            setIsOpen(false);
-        }
-    }, [activeAction, camera]);
-
+  useEffect(() => {
     if (
-        user == null ||
-        (activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE &&
-            activeAction?.type !== ACTION_TYPES.CLAIMER_NEW_RECT_CREATE &&
-            activeAction?.type !== ACTION_TYPES.CLAIMER_RESIZE_CREATE)
+      (activeAction?.type === ACTION_TYPES.CLAIMER_CREATE ||
+        activeAction?.type === ACTION_TYPES.CLAIMER_NEW_RECT_CREATE ||
+        activeAction?.type === ACTION_TYPES.CLAIMER_RESIZE_CREATE) &&
+      camera &&
+      typeof window !== "undefined"
     ) {
-        return null;
+      const center = getPlotOverlayPositionForActiveAction(activeAction, camera);
+      setTriggerPosition(center);
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
     }
+  }, [activeAction, camera]);
 
-    return (
-        <Popover
-            type="persistent"
-            modal={false}
-            open={isOpen}
-            onOpenChange={(open) => {
-                if (!open) {
-                    store.trigger.clearClaim();
-                }
-                setIsOpen(open);
+  if (
+    user == null ||
+    (activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE &&
+      activeAction?.type !== ACTION_TYPES.CLAIMER_NEW_RECT_CREATE &&
+      activeAction?.type !== ACTION_TYPES.CLAIMER_RESIZE_CREATE)
+  ) {
+    return null;
+  }
+
+  return (
+    <Popover
+      type="persistent"
+      modal={false}
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          store.trigger.clearClaim();
+        }
+        setIsOpen(open);
+      }}
+    >
+      <PopoverContent
+        className="w-auto border-none"
+        isDraggable={false}
+        positionerProps={{
+          side: "top",
+          align: "center",
+          sideOffset: 8,
+          style: {
+            left: triggerPosition.x,
+            top: triggerPosition.y,
+            transform,
+            pointerEvents: isScrolling ? "none" : "auto",
+          },
+        }}
+        hideCloseButton={true}
+      >
+        <div className="flex items-start">
+          <CreatePlotForm />
+          <IconButton
+            onClick={() => {
+              store.trigger.clearClaim();
             }}
-        >
-            <PopoverContent
-                className="w-auto border-none"
-                isDraggable={false}
-                positionerProps={{
-                    side: 'top',
-                    align: 'center',
-                    sideOffset: 8,
-                    style: {
-                        left: triggerPosition.x,
-                        top: triggerPosition.y,
-                        transform,
-                        pointerEvents: isScrolling ? 'none' : 'auto',
-                    },
-                }}
-                hideCloseButton={true}
-            >
-                <div className="flex items-start">
-                    <CreatePlotForm />
-                    <IconButton
-                        onClick={() => {
-                            store.trigger.clearClaim();
-                        }}
-                    >
-                        <X32 />
-                    </IconButton>
-                </div>
-            </PopoverContent>
-        </Popover>
-    );
+          >
+            <X32 />
+          </IconButton>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }

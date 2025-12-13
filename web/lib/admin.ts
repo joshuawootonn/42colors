@@ -1,19 +1,16 @@
-export const ADMIN_EMAILS = [
-    'jose56wonton@gmail.com',
-    'anders.almberg@gmail.com',
-];
+export const ADMIN_EMAILS = ["jose56wonton@gmail.com", "anders.almberg@gmail.com"];
 
 type MaybeUser =
-    | {
-          email?: string | null;
-      }
-    | null
-    | undefined;
+  | {
+      email?: string | null;
+    }
+  | null
+  | undefined;
 
 export function isAdminUser(user: MaybeUser): boolean {
-    if (!user?.email) {
-        return false;
-    }
+  if (!user?.email) {
+    return false;
+  }
 
-    return ADMIN_EMAILS.includes(user.email);
+  return ADMIN_EMAILS.includes(user.email);
 }

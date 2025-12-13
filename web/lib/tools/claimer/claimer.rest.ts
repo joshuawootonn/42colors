@@ -1,226 +1,194 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-import { ACTION_TYPES } from '../../action-types';
-import {
-    completePolygonRing,
-    getPolygonSize,
-    polygonSchema,
-} from '../../geometry/polygon';
-import { store } from '../../store';
-import { isInitialStore } from '../../utils/is-initial-store';
-import { completeRectangleClaimerAction } from './claimer';
+import { ACTION_TYPES } from "../../action-types";
+import { completePolygonRing, getPolygonSize, polygonSchema } from "../../geometry/polygon";
+import { store } from "../../store";
+import { isInitialStore } from "../../utils/is-initial-store";
+import { completeRectangleClaimerAction } from "./claimer";
 
 export const plotSchema = z.object({
-    id: z.number(),
-    name: z.string(),
-    description: z.string().nullable(),
-    polygon: polygonSchema,
-    insertedAt: z.string(),
-    updatedAt: z.string(),
-    deletedAt: z.string().nullable(),
-    userId: z.number(),
-    score: z.number().optional().default(0),
+  id: z.number(),
+  name: z.string(),
+  description: z.string().nullable(),
+  polygon: polygonSchema,
+  insertedAt: z.string(),
+  updatedAt: z.string(),
+  deletedAt: z.string().nullable(),
+  userId: z.number(),
+  score: z.number().optional().default(0),
 });
 
 export const plotResponseSchema = z.object({
-    data: plotSchema,
+  data: plotSchema,
 });
 
 export const arrayPlotResponseSchema = z.object({ data: z.array(plotSchema) });
 
 const errorResponseSchema = z.object({
-    status: z.literal('error'),
-    message: z.string(),
-    errors: z.record(z.array(z.string())),
+  status: z.literal("error"),
+  message: z.string(),
+  errors: z.record(z.array(z.string())),
 });
 
 const successPlotResponseSchema = z.object({
-    status: z.literal('success').optional(),
-    data: plotSchema,
+  status: z.literal("success").optional(),
+  data: plotSchema,
 });
 
-const plotCreateResponseSchema = z.union([
-    successPlotResponseSchema,
-    errorResponseSchema,
-]);
+const plotCreateResponseSchema = z.union([successPlotResponseSchema, errorResponseSchema]);
 
-const plotUpdateResponseSchema = z.union([
-    successPlotResponseSchema,
-    errorResponseSchema,
-]);
+const plotUpdateResponseSchema = z.union([successPlotResponseSchema, errorResponseSchema]);
 
 export class PlotError extends Error {
-    constructor(
-        message: string,
-        public errors: Record<string, string[]>,
-    ) {
-        super(message);
-        this.name = 'PlotError';
-    }
+  constructor(
+    message: string,
+    public errors: Record<string, string[]>,
+  ) {
+    super(message);
+    this.name = "PlotError";
+  }
 }
 
 export type Plot = z.infer<typeof plotSchema>;
 
-export async function createPlot(plotData: {
-    name: string;
-    description?: string;
-}): Promise<Plot> {
-    const context = store.getSnapshot().context;
-    if (
-        isInitialStore(context) ||
-        context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE
-    ) {
-        throw new Error(
-            "Attempted to create a plot when there isn't an active action",
-        );
-    }
+export async function createPlot(plotData: { name: string; description?: string }): Promise<Plot> {
+  const context = store.getSnapshot().context;
+  if (isInitialStore(context) || context.activeAction?.type !== ACTION_TYPES.CLAIMER_CREATE) {
+    throw new Error("Attempted to create a plot when there isn't an active action");
+  }
 
-    const polygon = context.activeAction.polygon;
+  const polygon = context.activeAction.polygon;
 
-    if (polygon == null) {
-        throw new Error('No polygon to create plot from');
-    }
+  if (polygon == null) {
+    throw new Error("No polygon to create plot from");
+  }
 
-    const polygons = completeRectangleClaimerAction([polygon]).polygons;
+  const polygons = completeRectangleClaimerAction([polygon]).polygons;
 
-    // Validate polygon size before sending to backend
-    if (polygons.length === 0 || getPolygonSize(polygons[0]) < 1) {
-        throw new PlotError('Polygon must have an area of at least 1 pixel', {
-            polygon: ['Polygon must have an area of at least 1 pixel'],
-        });
-    }
+  // Validate polygon size before sending to backend
+  if (polygons.length === 0 || getPolygonSize(polygons[0]) < 1) {
+    throw new PlotError("Polygon must have an area of at least 1 pixel", {
+      polygon: ["Polygon must have an area of at least 1 pixel"],
+    });
+  }
 
-    const response = await fetch(
-        new URL(`/api/plots`, context.server.apiOrigin),
-        {
-            body: JSON.stringify({
-                plot: {
-                    name: plotData.name,
-                    description: plotData.description,
-                    // todo(josh): we should add some sort of notice to the user that only their first polygon is going to be used
-                    polygon: completePolygonRing(polygons[0]),
-                },
-            }),
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            method: 'POST',
-            credentials: 'include',
-        },
-    );
+  const response = await fetch(new URL(`/api/plots`, context.server.apiOrigin), {
+    body: JSON.stringify({
+      plot: {
+        name: plotData.name,
+        description: plotData.description,
+        // todo(josh): we should add some sort of notice to the user that only their first polygon is going to be used
+        polygon: completePolygonRing(polygons[0]),
+      },
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+    credentials: "include",
+  });
 
-    const json = await response.json();
-    const parsedResponse = plotCreateResponseSchema.parse(json);
+  const json = await response.json();
+  const parsedResponse = plotCreateResponseSchema.parse(json);
 
-    if ('status' in parsedResponse && parsedResponse.status === 'error') {
-        throw new PlotError(parsedResponse.message, parsedResponse.errors);
-    }
+  if ("status" in parsedResponse && parsedResponse.status === "error") {
+    throw new PlotError(parsedResponse.message, parsedResponse.errors);
+  }
 
-    return parsedResponse.data;
+  return parsedResponse.data;
 }
 
 export async function getUserPlots(): Promise<Plot[]> {
-    const context = store.getSnapshot().context;
-    if (isInitialStore(context)) {
-        throw new Error('Server context is not initialized');
-    }
+  const context = store.getSnapshot().context;
+  if (isInitialStore(context)) {
+    throw new Error("Server context is not initialized");
+  }
 
-    const response = await fetch(
-        new URL(`/api/plots/me`, context.server.apiOrigin),
-        {
-            method: 'GET',
-            credentials: 'include',
-        },
-    );
+  const response = await fetch(new URL(`/api/plots/me`, context.server.apiOrigin), {
+    method: "GET",
+    credentials: "include",
+  });
 
-    const json = await response.json();
+  const json = await response.json();
 
-    const parsedResponse = arrayPlotResponseSchema.safeParse(json);
+  const parsedResponse = arrayPlotResponseSchema.safeParse(json);
 
-    if (!parsedResponse.success) {
-        return [];
-    }
+  if (!parsedResponse.success) {
+    return [];
+  }
 
-    return parsedResponse.data.data;
+  return parsedResponse.data.data;
 }
 
 export async function deletePlot(plotId: number): Promise<void> {
-    const context = store.getSnapshot().context;
-    if (isInitialStore(context)) {
-        throw new Error('Server context is not initialized');
-    }
+  const context = store.getSnapshot().context;
+  if (isInitialStore(context)) {
+    throw new Error("Server context is not initialized");
+  }
 
-    await fetch(new URL(`/api/plots/${plotId}`, context.server.apiOrigin), {
-        method: 'DELETE',
-        credentials: 'include',
-    });
+  await fetch(new URL(`/api/plots/${plotId}`, context.server.apiOrigin), {
+    method: "DELETE",
+    credentials: "include",
+  });
 
-    return;
+  return;
 }
 
 export async function updatePlot(
-    plotId: number,
-    plot: Partial<Pick<Plot, 'name' | 'description' | 'polygon'>>,
+  plotId: number,
+  plot: Partial<Pick<Plot, "name" | "description" | "polygon">>,
 ): Promise<Plot> {
-    const context = store.getSnapshot().context;
-    if (isInitialStore(context)) {
-        throw new Error('Server context is not initialized');
-    }
+  const context = store.getSnapshot().context;
+  if (isInitialStore(context)) {
+    throw new Error("Server context is not initialized");
+  }
 
-    // Validate polygon size before sending to backend
-    if (plot.polygon && getPolygonSize(plot.polygon) < 1) {
-        throw new PlotError('Polygon must have an area of at least 1 pixel', {
-            polygon: ['Polygon must have an area of at least 1 pixel'],
-        });
-    }
+  // Validate polygon size before sending to backend
+  if (plot.polygon && getPolygonSize(plot.polygon) < 1) {
+    throw new PlotError("Polygon must have an area of at least 1 pixel", {
+      polygon: ["Polygon must have an area of at least 1 pixel"],
+    });
+  }
 
-    // Complete the polygon ring if polygon is provided
-    const plotData = plot.polygon
-        ? { ...plot, polygon: completePolygonRing(plot.polygon) }
-        : plot;
+  // Complete the polygon ring if polygon is provided
+  const plotData = plot.polygon ? { ...plot, polygon: completePolygonRing(plot.polygon) } : plot;
 
-    const response = await fetch(
-        new URL(`/api/plots/${plotId}`, context.server.apiOrigin),
-        {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-                plot: plotData,
-            }),
-        },
-    );
+  const response = await fetch(new URL(`/api/plots/${plotId}`, context.server.apiOrigin), {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({
+      plot: plotData,
+    }),
+  });
 
-    const json = await response.json();
-    const parsedResponse = plotUpdateResponseSchema.parse(json);
+  const json = await response.json();
+  const parsedResponse = plotUpdateResponseSchema.parse(json);
 
-    if ('status' in parsedResponse && parsedResponse.status === 'error') {
-        throw new PlotError(parsedResponse.message, parsedResponse.errors);
-    }
+  if ("status" in parsedResponse && parsedResponse.status === "error") {
+    throw new PlotError(parsedResponse.message, parsedResponse.errors);
+  }
 
-    return parsedResponse.data;
+  return parsedResponse.data;
 }
 
 export async function getPlotsByChunk(x: number, y: number): Promise<Plot[]> {
-    const context = store.getSnapshot().context;
-    if (isInitialStore(context)) {
-        throw new Error('Server context is not initialized');
-    }
+  const context = store.getSnapshot().context;
+  if (isInitialStore(context)) {
+    throw new Error("Server context is not initialized");
+  }
 
-    const search = new URLSearchParams();
-    search.set('x', x.toString());
-    search.set('y', y.toString());
+  const search = new URLSearchParams();
+  search.set("x", x.toString());
+  search.set("y", y.toString());
 
-    const response = await fetch(
-        new URL(`/api/plots?${search}`, context.server.apiOrigin),
-        {
-            method: 'GET',
-        },
-    );
+  const response = await fetch(new URL(`/api/plots?${search}`, context.server.apiOrigin), {
+    method: "GET",
+  });
 
-    const json = await response.json();
+  const json = await response.json();
 
-    return arrayPlotResponseSchema.parse(json).data;
+  return arrayPlotResponseSchema.parse(json).data;
 }

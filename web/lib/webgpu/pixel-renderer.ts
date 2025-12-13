@@ -1,30 +1,30 @@
-import { Pixel } from '../geometry/coord';
-import { WebGPUBufferPool } from './buffer-pool';
-import { getColorFromRef } from './colors';
+import { Pixel } from "../geometry/coord";
+import { WebGPUBufferPool } from "./buffer-pool";
+import { getColorFromRef } from "./colors";
 
 export type WebGPUPixelRenderer = {
-    device: GPUDevice;
-    renderPipeline: GPURenderPipeline;
-    transformBuffer: GPUBuffer;
-    transformBindGroup: GPUBindGroup;
-    bufferPool: WebGPUBufferPool;
+  device: GPUDevice;
+  renderPipeline: GPURenderPipeline;
+  transformBuffer: GPUBuffer;
+  transformBindGroup: GPUBindGroup;
+  bufferPool: WebGPUBufferPool;
 };
 
 export type PixelRenderOptions = {
-    xCamera?: number;
-    yCamera?: number;
-    pixelSize?: number;
-    canvasWidth: number;
-    canvasHeight: number;
+  xCamera?: number;
+  yCamera?: number;
+  pixelSize?: number;
+  canvasWidth: number;
+  canvasHeight: number;
 };
 
 export async function createWebGPUPixelRenderer(
-    device: GPUDevice,
-    canvasFormat: GPUTextureFormat,
+  device: GPUDevice,
+  canvasFormat: GPUTextureFormat,
 ): Promise<WebGPUPixelRenderer> {
-    // Vertex shader for pixel rendering
-    const vertexShader = device.createShaderModule({
-        code: `
+  // Vertex shader for pixel rendering
+  const vertexShader = device.createShaderModule({
+    code: `
             struct Transform {
                 camera_x: f32,
                 camera_y: f32,
@@ -66,11 +66,11 @@ export async function createWebGPUPixelRenderer(
                 return output;
             }
         `,
-    });
+  });
 
-    // Fragment shader for pixel rendering
-    const fragmentShader = device.createShaderModule({
-        code: `
+  // Fragment shader for pixel rendering
+  const fragmentShader = device.createShaderModule({
+    code: `
             struct VertexOutput {
                 @builtin(position) position: vec4<f32>,
                 @location(0) color: vec4<f32>,
@@ -81,184 +81,172 @@ export async function createWebGPUPixelRenderer(
                 return input.color;
             }
         `,
-    });
+  });
 
-    // Create bind group layout
-    const transformBindGroupLayout = device.createBindGroupLayout({
-        entries: [
+  // Create bind group layout
+  const transformBindGroupLayout = device.createBindGroupLayout({
+    entries: [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX,
+        buffer: { type: "uniform" },
+      },
+    ],
+  });
+
+  const pipelineLayout = device.createPipelineLayout({
+    bindGroupLayouts: [transformBindGroupLayout],
+  });
+
+  // Create render pipeline for pixel rendering
+  const renderPipeline = device.createRenderPipeline({
+    layout: pipelineLayout,
+    vertex: {
+      module: vertexShader,
+      entryPoint: "main",
+      buffers: [
+        {
+          arrayStride: 24, // 6 floats * 4 bytes (position + color)
+          attributes: [
             {
-                binding: 0,
-                visibility: GPUShaderStage.VERTEX,
-                buffer: { type: 'uniform' },
+              format: "float32x2",
+              offset: 0,
+              shaderLocation: 0, // position
             },
-        ],
-    });
-
-    const pipelineLayout = device.createPipelineLayout({
-        bindGroupLayouts: [transformBindGroupLayout],
-    });
-
-    // Create render pipeline for pixel rendering
-    const renderPipeline = device.createRenderPipeline({
-        layout: pipelineLayout,
-        vertex: {
-            module: vertexShader,
-            entryPoint: 'main',
-            buffers: [
-                {
-                    arrayStride: 24, // 6 floats * 4 bytes (position + color)
-                    attributes: [
-                        {
-                            format: 'float32x2',
-                            offset: 0,
-                            shaderLocation: 0, // position
-                        },
-                        {
-                            format: 'float32x4',
-                            offset: 8,
-                            shaderLocation: 1, // color
-                        },
-                    ],
-                },
-            ],
-        },
-        fragment: {
-            module: fragmentShader,
-            entryPoint: 'main',
-            targets: [{ format: canvasFormat }],
-        },
-        primitive: {
-            topology: 'triangle-list',
-            stripIndexFormat: undefined,
-        },
-    });
-
-    // Create uniform buffer
-    const transformBuffer = device.createBuffer({
-        size: 32, // 8 floats * 4 bytes (padded for alignment)
-        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    });
-
-    // Create bind group
-    const transformBindGroup = device.createBindGroup({
-        layout: transformBindGroupLayout,
-        entries: [
             {
-                binding: 0,
-                resource: { buffer: transformBuffer },
+              format: "float32x4",
+              offset: 8,
+              shaderLocation: 1, // color
             },
-        ],
-    });
+          ],
+        },
+      ],
+    },
+    fragment: {
+      module: fragmentShader,
+      entryPoint: "main",
+      targets: [{ format: canvasFormat }],
+    },
+    primitive: {
+      topology: "triangle-list",
+      stripIndexFormat: undefined,
+    },
+  });
 
-    // Create buffer pool for efficient vertex buffer management
-    const bufferPool = new WebGPUBufferPool(device);
+  // Create uniform buffer
+  const transformBuffer = device.createBuffer({
+    size: 32, // 8 floats * 4 bytes (padded for alignment)
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
 
-    return {
-        device,
-        renderPipeline,
-        transformBuffer,
-        transformBindGroup,
-        bufferPool,
-    };
+  // Create bind group
+  const transformBindGroup = device.createBindGroup({
+    layout: transformBindGroupLayout,
+    entries: [
+      {
+        binding: 0,
+        resource: { buffer: transformBuffer },
+      },
+    ],
+  });
+
+  // Create buffer pool for efficient vertex buffer management
+  const bufferPool = new WebGPUBufferPool(device);
+
+  return {
+    device,
+    renderPipeline,
+    transformBuffer,
+    transformBindGroup,
+    bufferPool,
+  };
 }
 
 function generatePixelQuads(pixels: Pixel[]): Float32Array {
-    const vertices: number[] = [];
+  const vertices: number[] = [];
 
-    for (const pixel of pixels) {
-        const color = getColorFromRef(pixel.color_ref);
+  for (const pixel of pixels) {
+    const color = getColorFromRef(pixel.color_ref);
 
-        // Create a 1x1 pixel quad
-        const x = pixel.x;
-        const y = pixel.y;
-        const x1 = x + 1;
-        const y1 = y + 1;
+    // Create a 1x1 pixel quad
+    const x = pixel.x;
+    const y = pixel.y;
+    const x1 = x + 1;
+    const y1 = y + 1;
 
-        // Triangle 1: top-left, bottom-left, top-right
-        vertices.push(
-            x,
-            y,
-            ...color, // top-left
-            x,
-            y1,
-            ...color, // bottom-left
-            x1,
-            y,
-            ...color, // top-right
-        );
+    // Triangle 1: top-left, bottom-left, top-right
+    vertices.push(
+      x,
+      y,
+      ...color, // top-left
+      x,
+      y1,
+      ...color, // bottom-left
+      x1,
+      y,
+      ...color, // top-right
+    );
 
-        // Triangle 2: bottom-left, bottom-right, top-right
-        vertices.push(
-            x,
-            y1,
-            ...color, // bottom-left
-            x1,
-            y1,
-            ...color, // bottom-right
-            x1,
-            y,
-            ...color, // top-right
-        );
-    }
+    // Triangle 2: bottom-left, bottom-right, top-right
+    vertices.push(
+      x,
+      y1,
+      ...color, // bottom-left
+      x1,
+      y1,
+      ...color, // bottom-right
+      x1,
+      y,
+      ...color, // top-right
+    );
+  }
 
-    return new Float32Array(vertices);
+  return new Float32Array(vertices);
 }
 
 export function renderPixels(
-    renderer: WebGPUPixelRenderer,
-    pixels: Pixel[],
-    options: PixelRenderOptions,
-    renderPass: GPURenderPassEncoder,
+  renderer: WebGPUPixelRenderer,
+  pixels: Pixel[],
+  options: PixelRenderOptions,
+  renderPass: GPURenderPassEncoder,
 ): void {
-    const {
-        xCamera = 0,
-        yCamera = 0,
-        pixelSize = 1,
-        canvasWidth,
-        canvasHeight,
-    } = options;
+  const { xCamera = 0, yCamera = 0, pixelSize = 1, canvasWidth, canvasHeight } = options;
 
-    // Update transform uniform buffer
-    const transformData = new Float32Array([
-        Math.floor(xCamera),
-        Math.floor(yCamera),
-        pixelSize,
-        canvasWidth,
-        canvasHeight,
-        0, // padding
-        0, // padding
-        0, // padding
-    ]);
-    renderer.device.queue.writeBuffer(
-        renderer.transformBuffer,
-        0,
-        transformData,
-    );
+  // Update transform uniform buffer
+  const transformData = new Float32Array([
+    Math.floor(xCamera),
+    Math.floor(yCamera),
+    pixelSize,
+    canvasWidth,
+    canvasHeight,
+    0, // padding
+    0, // padding
+    0, // padding
+  ]);
+  renderer.device.queue.writeBuffer(renderer.transformBuffer, 0, transformData);
 
-    // Generate vertex data for all pixels
-    const vertexData = generatePixelQuads(pixels);
+  // Generate vertex data for all pixels
+  const vertexData = generatePixelQuads(pixels);
 
-    if (vertexData.length === 0) {
-        return;
-    }
+  if (vertexData.length === 0) {
+    return;
+  }
 
-    // Get a buffer from the pool
-    const vertexBuffer = renderer.bufferPool.getBuffer(vertexData.byteLength);
-    renderer.device.queue.writeBuffer(vertexBuffer, 0, vertexData);
+  // Get a buffer from the pool
+  const vertexBuffer = renderer.bufferPool.getBuffer(vertexData.byteLength);
+  renderer.device.queue.writeBuffer(vertexBuffer, 0, vertexData);
 
-    // Render pixels
-    renderPass.setPipeline(renderer.renderPipeline);
-    renderPass.setBindGroup(0, renderer.transformBindGroup);
-    renderPass.setVertexBuffer(0, vertexBuffer);
-    renderPass.draw(vertexData.length / 6); // 6 floats per vertex
+  // Render pixels
+  renderPass.setPipeline(renderer.renderPipeline);
+  renderPass.setBindGroup(0, renderer.transformBindGroup);
+  renderPass.setVertexBuffer(0, vertexBuffer);
+  renderPass.draw(vertexData.length / 6); // 6 floats per vertex
 
-    // Schedule buffer to be returned after GPU work completes
-    renderer.bufferPool.returnBufferAfterFrame(vertexBuffer);
+  // Schedule buffer to be returned after GPU work completes
+  renderer.bufferPool.returnBufferAfterFrame(vertexBuffer);
 }
 
-export function destroyWebGPUPixelRenderer(
-    renderer: WebGPUPixelRenderer,
-): void {
-    renderer.transformBuffer.destroy();
-    renderer.bufferPool.destroy();
+export function destroyWebGPUPixelRenderer(renderer: WebGPUPixelRenderer): void {
+  renderer.transformBuffer.destroy();
+  renderer.bufferPool.destroy();
 }

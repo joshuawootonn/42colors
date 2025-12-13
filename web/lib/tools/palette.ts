@@ -1,7 +1,7 @@
-import { ColorRef } from '../palette';
+import { ColorRef } from "../palette";
 
 export type PaletteSettings = {
-    isOpen: boolean;
-    foregroundColorRef: ColorRef;
-    backgroundColorRef: ColorRef;
+  isOpen: boolean;
+  foregroundColorRef: ColorRef;
+  backgroundColorRef: ColorRef;
 };

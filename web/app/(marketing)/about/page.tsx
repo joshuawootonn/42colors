@@ -1,19 +1,19 @@
-import { Metadata } from 'next';
+import { Metadata } from "next";
 
-import { pageProse } from '@/components/page-prose';
-import { cn } from '@/lib/utils';
+import { pageProse } from "@/components/page-prose";
+import { cn } from "@/lib/utils";
 
-import { About } from './component';
+import { About } from "./component";
 
 export const metadata: Metadata = {
-    title: '42colors - about',
-    description: 'What is 42colors?',
+  title: "42colors - about",
+  description: "What is 42colors?",
 };
 
 export default function Page() {
-    return (
-        <div className={cn(...pageProse)}>
-            <About />
-        </div>
-    );
+  return (
+    <div className={cn(...pageProse)}>
+      <About />
+    </div>
+  );
 }

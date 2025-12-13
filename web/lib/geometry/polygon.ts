@@ -1,14 +1,14 @@
-import { clipArray } from 'polyclip-js';
-import { z } from 'zod';
+import { clipArray } from "polyclip-js";
+import { z } from "zod";
 
-import { AbsolutePointTuple, absolutePointTupleSchema } from '../line';
-import { rectSchema } from './rect';
+import { AbsolutePointTuple, absolutePointTupleSchema } from "../line";
+import { rectSchema } from "./rect";
 
 export const polygonSchema = z
-    .object({
-        vertices: z.array(absolutePointTupleSchema),
-    })
-    .brand<'Polygon'>();
+  .object({
+    vertices: z.array(absolutePointTupleSchema),
+  })
+  .brand<"Polygon">();
 
 export type Polygon = z.infer<typeof polygonSchema>;
 
@@ -21,31 +21,29 @@ export type Polygon = z.infer<typeof polygonSchema>;
  * @throws Error if the polygon has no vertices
  */
 export function getCenterPoint(polygon: Polygon): AbsolutePointTuple {
-    if (polygon.vertices.length === 0) {
-        throw new Error(
-            'Cannot calculate center point of polygon with no vertices',
-        );
-    }
+  if (polygon.vertices.length === 0) {
+    throw new Error("Cannot calculate center point of polygon with no vertices");
+  }
 
-    // Find the bounding box of the polygon
-    let minX = polygon.vertices[0][0];
-    let maxX = polygon.vertices[0][0];
-    let minY = polygon.vertices[0][1];
-    let maxY = polygon.vertices[0][1];
+  // Find the bounding box of the polygon
+  let minX = polygon.vertices[0][0];
+  let maxX = polygon.vertices[0][0];
+  let minY = polygon.vertices[0][1];
+  let maxY = polygon.vertices[0][1];
 
-    for (const vertex of polygon.vertices) {
-        const [x, y] = vertex;
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-    }
+  for (const vertex of polygon.vertices) {
+    const [x, y] = vertex;
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
 
-    // Calculate the center of the bounding box
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
+  // Calculate the center of the bounding box
+  const centerX = (minX + maxX) / 2;
+  const centerY = (minY + maxY) / 2;
 
-    return absolutePointTupleSchema.parse([centerX, centerY]);
+  return absolutePointTupleSchema.parse([centerX, centerY]);
 }
 
 /**
@@ -57,90 +55,81 @@ export function getCenterPoint(polygon: Polygon): AbsolutePointTuple {
  * @throws Error if the polygon has fewer than 3 vertices
  */
 export function getPolygonSize(polygon: Polygon): number {
-    if (polygon.vertices.length < 3) {
-        throw new Error(
-            'Cannot calculate area of polygon with fewer than 3 vertices',
-        );
-    }
+  if (polygon.vertices.length < 3) {
+    throw new Error("Cannot calculate area of polygon with fewer than 3 vertices");
+  }
 
-    let area = 0;
-    const vertices = polygon.vertices;
-    const n = vertices.length;
+  let area = 0;
+  const vertices = polygon.vertices;
+  const n = vertices.length;
 
-    // Apply the shoelace formula
-    for (let i = 0; i < n; i++) {
-        const j = (i + 1) % n;
-        area += vertices[i][0] * vertices[j][1];
-        area -= vertices[j][0] * vertices[i][1];
-    }
+  // Apply the shoelace formula
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    area += vertices[i][0] * vertices[j][1];
+    area -= vertices[j][0] * vertices[i][1];
+  }
 
-    // Return the absolute value to ensure positive area
-    return Math.abs(area) / 2;
+  // Return the absolute value to ensure positive area
+  return Math.abs(area) / 2;
 }
 
 export function sortIntoClockwiseOrder(points: AbsolutePointTuple[]) {
-    const centerX = points.reduce((p, c) => p + c[0], 0) / points.length;
-    const centerY = points.reduce((p, c) => p + c[1], 0) / points.length;
+  const centerX = points.reduce((p, c) => p + c[0], 0) / points.length;
+  const centerY = points.reduce((p, c) => p + c[1], 0) / points.length;
 
-    // Compute angle of each point with respect to the center coordinate
-    const pointsAndAngs = points.map((p) => ({
-        p: p,
-        ang: Math.atan2(centerX - p[0], centerY - p[1]),
-    }));
+  // Compute angle of each point with respect to the center coordinate
+  const pointsAndAngs = points.map((p) => ({
+    p: p,
+    ang: Math.atan2(centerX - p[0], centerY - p[1]),
+  }));
 
-    // Sort points by angular value
-    const sorted = pointsAndAngs.sort((a, b) => b.ang - a.ang).map((a) => a.p);
+  // Sort points by angular value
+  const sorted = pointsAndAngs.sort((a, b) => b.ang - a.ang).map((a) => a.p);
 
-    return sorted;
+  return sorted;
 }
 
-export function sortPolygonVerticesIntoClockwiseOrder(
-    polygon: Polygon,
-): Polygon {
-    if (polygon.vertices.length < 3) {
-        return polygon;
-    }
-
-    const p1 = polygon.vertices[0];
-    const p2 = polygon.vertices[1];
-    const p3 = polygon.vertices[2];
-
-    const avgPoint = absolutePointTupleSchema.parse([
-        (p1[0] + p3[0]) / 2,
-        (p1[1] + p3[1]) / 2,
-    ]);
-
-    const isAvgPointInside = inside(avgPoint, polygon);
-
-    const crossProduct =
-        (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
-
-    // If cross product is positive (counterclockwise) and avg point is outside,
-    // or if cross product is negative (clockwise) and avg point is inside,
-    // then we need to reverse the vertices
-    const shouldReverse =
-        (crossProduct > 0 && !isAvgPointInside) ||
-        (crossProduct < 0 && isAvgPointInside);
-
-    if (shouldReverse) {
-        return {
-            ...polygon,
-            vertices: [...polygon.vertices].reverse(),
-        };
-    }
-
+export function sortPolygonVerticesIntoClockwiseOrder(polygon: Polygon): Polygon {
+  if (polygon.vertices.length < 3) {
     return polygon;
+  }
+
+  const p1 = polygon.vertices[0];
+  const p2 = polygon.vertices[1];
+  const p3 = polygon.vertices[2];
+
+  const avgPoint = absolutePointTupleSchema.parse([(p1[0] + p3[0]) / 2, (p1[1] + p3[1]) / 2]);
+
+  const isAvgPointInside = inside(avgPoint, polygon);
+
+  const crossProduct = (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]);
+
+  // If cross product is positive (counterclockwise) and avg point is outside,
+  // or if cross product is negative (clockwise) and avg point is inside,
+  // then we need to reverse the vertices
+  const shouldReverse =
+    (crossProduct > 0 && !isAvgPointInside) || (crossProduct < 0 && isAvgPointInside);
+
+  if (shouldReverse) {
+    return {
+      ...polygon,
+      vertices: [...polygon.vertices].reverse(),
+    };
+  }
+
+  return polygon;
 }
 
 export const rectToPolygonSchema = rectSchema.transform((rect) => {
-    const p1 = absolutePointTupleSchema.parse([rect.origin.x, rect.origin.y]);
-    const p2 = absolutePointTupleSchema.parse([rect.target.x, rect.origin.y]);
-    const p3 = absolutePointTupleSchema.parse([rect.target.x, rect.target.y]);
-    const p4 = absolutePointTupleSchema.parse([rect.origin.x, rect.target.y]);
-    return polygonSchema.parse({
-        ...rect,
-        vertices: sortIntoClockwiseOrder([p1, p2, p3, p4]),
-    });
+  const p1 = absolutePointTupleSchema.parse([rect.origin.x, rect.origin.y]);
+  const p2 = absolutePointTupleSchema.parse([rect.target.x, rect.origin.y]);
+  const p3 = absolutePointTupleSchema.parse([rect.target.x, rect.target.y]);
+  const p4 = absolutePointTupleSchema.parse([rect.origin.x, rect.target.y]);
+  return polygonSchema.parse({
+    ...rect,
+    vertices: sortIntoClockwiseOrder([p1, p2, p3, p4]),
+  });
 });
 
 /*
@@ -148,294 +137,275 @@ export const rectToPolygonSchema = rectSchema.transform((rect) => {
   https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html
 */
 export function inside(point: AbsolutePointTuple, polygon: Polygon) {
-    const x = point[0],
-        y = point[1];
-    const vs = polygon.vertices;
+  const x = point[0],
+    y = point[1];
+  const vs = polygon.vertices;
 
-    let inside = false;
-    for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-        const xi = vs[i][0],
-            yi = vs[i][1];
-        const xj = vs[j][0],
-            yj = vs[j][1];
+  let inside = false;
+  for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+    const xi = vs[i][0],
+      yi = vs[i][1];
+    const xj = vs[j][0],
+      yj = vs[j][1];
 
-        const intersect =
-            yi > y != yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
-        if (intersect) inside = !inside;
-    }
+    const intersect = yi > y != yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+    if (intersect) inside = !inside;
+  }
 
-    return inside;
+  return inside;
 }
 
 /**
  * This function should only be used before sending polygons to the backend.
  */
 export function completePolygonRing(polygon: Polygon): Polygon {
-    return { ...polygon, vertices: [...polygon.vertices, polygon.vertices[0]] };
+  return { ...polygon, vertices: [...polygon.vertices, polygon.vertices[0]] };
 }
 
-export function getCompositePolygon(
-    polygon1: Polygon,
-    polygon2: Polygon,
-): Polygon | null {
-    if (isIneligiblePolygon(polygon1) || isIneligiblePolygon(polygon2))
-        return null;
+export function getCompositePolygon(polygon1: Polygon, polygon2: Polygon): Polygon | null {
+  if (isIneligiblePolygon(polygon1) || isIneligiblePolygon(polygon2)) return null;
 
-    try {
-        const result = clipArray(
-            [polygon1.vertices],
-            [polygon2.vertices],
-            true,
-        );
+  try {
+    const result = clipArray([polygon1.vertices], [polygon2.vertices], true);
 
-        if (result.length !== 1) return null;
+    if (result.length !== 1) return null;
 
-        const compo = result[0];
+    const compo = result[0];
 
-        return sortPolygonVerticesIntoClockwiseOrder(
-            polygonSchema.parse({
-                vertices: compo,
-            }),
-        );
-    } catch {
-        console.log(`Failed to find polygon union of:
+    return sortPolygonVerticesIntoClockwiseOrder(
+      polygonSchema.parse({
+        vertices: compo,
+      }),
+    );
+  } catch {
+    console.log(`Failed to find polygon union of:
 
     ${JSON.stringify(polygon1)}
 
     ${JSON.stringify(polygon2)}
 
     `);
-    }
+  }
 
-    return null;
+  return null;
 }
 
 export function getCompositePolygons(_polygons: Polygon[]): Polygon[] {
-    const polygons = _polygons.slice();
+  const polygons = _polygons.slice();
 
-    if (polygons.length < 2) return polygons;
+  if (polygons.length < 2) return polygons;
 
-    for (let i = 0; i < polygons.length; i++) {
-        const iPolygon = polygons[i];
-        for (let j = 0; j < polygons.length; j++) {
-            const jPolygon = polygons[j];
+  for (let i = 0; i < polygons.length; i++) {
+    const iPolygon = polygons[i];
+    for (let j = 0; j < polygons.length; j++) {
+      const jPolygon = polygons[j];
 
-            if (i === j) continue;
+      if (i === j) continue;
 
-            const combo = getCompositePolygon(iPolygon, jPolygon);
+      const combo = getCompositePolygon(iPolygon, jPolygon);
 
-            if (combo != null) {
-                // delete the later one first
-                polygons.splice(Math.max(i, j), 1);
-                polygons.splice(Math.min(i, j), 1);
+      if (combo != null) {
+        // delete the later one first
+        polygons.splice(Math.max(i, j), 1);
+        polygons.splice(Math.min(i, j), 1);
 
-                return getCompositePolygons([combo, ...polygons]);
-            }
-        }
+        return getCompositePolygons([combo, ...polygons]);
+      }
     }
-    return polygons;
+  }
+  return polygons;
 }
 
 export function getMostComplexPolygon(polygons: Polygon[]): Polygon {
-    return polygons.reduce((max, curr) => {
-        return curr.vertices.length > max.vertices.length ? curr : max;
-    }, polygons[0]);
+  return polygons.reduce((max, curr) => {
+    return curr.vertices.length > max.vertices.length ? curr : max;
+  }, polygons[0]);
 }
 
 export function isEligiblePolygon(p: Polygon): boolean {
-    const firstX = p.vertices[0][0],
-        firstY = p.vertices[0][1];
+  const firstX = p.vertices[0][0],
+    firstY = p.vertices[0][1];
 
-    const pointsToCheck = p.vertices.slice(1);
+  const pointsToCheck = p.vertices.slice(1);
 
-    return (
-        pointsToCheck.some((v) => v[0] !== firstX) &&
-        pointsToCheck.some((v) => v[1] !== firstY)
-    );
+  return pointsToCheck.some((v) => v[0] !== firstX) && pointsToCheck.some((v) => v[1] !== firstY);
 }
 
 export function isIneligiblePolygon(p: Polygon): boolean {
-    const firstX = p.vertices[0][0],
-        firstY = p.vertices[0][1];
-    const pointsToCheck = p.vertices.slice(1);
-    return (
-        pointsToCheck.every((v) => v[0] === firstX) ||
-        pointsToCheck.every((v) => v[1] === firstY)
-    );
+  const firstX = p.vertices[0][0],
+    firstY = p.vertices[0][1];
+  const pointsToCheck = p.vertices.slice(1);
+  return pointsToCheck.every((v) => v[0] === firstX) || pointsToCheck.every((v) => v[1] === firstY);
 }
 
-export function getCanvasPolygon(
-    centerX: number,
-    centerY: number,
-    size: number,
-): Polygon {
-    const vertices: AbsolutePointTuple[] = [];
+export function getCanvasPolygon(centerX: number, centerY: number, size: number): Polygon {
+  const vertices: AbsolutePointTuple[] = [];
 
-    switch (size) {
-        case 1:
-            vertices.push(
-                [centerX, centerY] as AbsolutePointTuple,
-                [centerX + 1, centerY] as AbsolutePointTuple,
-                [centerX + 1, centerY + 1] as AbsolutePointTuple,
-                [centerX, centerY + 1] as AbsolutePointTuple,
-            );
-            break;
+  switch (size) {
+    case 1:
+      vertices.push(
+        [centerX, centerY] as AbsolutePointTuple,
+        [centerX + 1, centerY] as AbsolutePointTuple,
+        [centerX + 1, centerY + 1] as AbsolutePointTuple,
+        [centerX, centerY + 1] as AbsolutePointTuple,
+      );
+      break;
 
-        case 2:
-            vertices.push(
-                [centerX - 1, centerY - 1] as AbsolutePointTuple,
-                [centerX + 1, centerY - 1] as AbsolutePointTuple,
-                [centerX + 1, centerY + 1] as AbsolutePointTuple,
-                [centerX - 1, centerY + 1] as AbsolutePointTuple,
-            );
-            break;
+    case 2:
+      vertices.push(
+        [centerX - 1, centerY - 1] as AbsolutePointTuple,
+        [centerX + 1, centerY - 1] as AbsolutePointTuple,
+        [centerX + 1, centerY + 1] as AbsolutePointTuple,
+        [centerX - 1, centerY + 1] as AbsolutePointTuple,
+      );
+      break;
 
-        case 3:
-            vertices.push(
-                [centerX, centerY - 1] as AbsolutePointTuple,
-                [centerX + 1, centerY - 1] as AbsolutePointTuple,
-                [centerX + 1, centerY] as AbsolutePointTuple,
-                [centerX + 1 * 2, centerY] as AbsolutePointTuple,
-                [centerX + 1 * 2, centerY + 1] as AbsolutePointTuple,
-                [centerX + 1, centerY + 1] as AbsolutePointTuple,
-                [centerX + 1, centerY + 1 * 2] as AbsolutePointTuple,
-                [centerX, centerY + 1 * 2] as AbsolutePointTuple,
-                [centerX, centerY + 1] as AbsolutePointTuple,
-                [centerX - 1, centerY + 1] as AbsolutePointTuple,
-                [centerX - 1, centerY] as AbsolutePointTuple,
-                [centerX, centerY] as AbsolutePointTuple,
-            );
-            break;
+    case 3:
+      vertices.push(
+        [centerX, centerY - 1] as AbsolutePointTuple,
+        [centerX + 1, centerY - 1] as AbsolutePointTuple,
+        [centerX + 1, centerY] as AbsolutePointTuple,
+        [centerX + 1 * 2, centerY] as AbsolutePointTuple,
+        [centerX + 1 * 2, centerY + 1] as AbsolutePointTuple,
+        [centerX + 1, centerY + 1] as AbsolutePointTuple,
+        [centerX + 1, centerY + 1 * 2] as AbsolutePointTuple,
+        [centerX, centerY + 1 * 2] as AbsolutePointTuple,
+        [centerX, centerY + 1] as AbsolutePointTuple,
+        [centerX - 1, centerY + 1] as AbsolutePointTuple,
+        [centerX - 1, centerY] as AbsolutePointTuple,
+        [centerX, centerY] as AbsolutePointTuple,
+      );
+      break;
 
-        case 4:
-            vertices.push(
-                [centerX - 1, centerY - 1 * 2] as AbsolutePointTuple,
-                [centerX + 1, centerY - 1 * 2] as AbsolutePointTuple,
-                [centerX + 1, centerY - 1] as AbsolutePointTuple,
-                [centerX + 1 * 2, centerY - 1] as AbsolutePointTuple,
-                [centerX + 1 * 2, centerY + 1] as AbsolutePointTuple,
-                [centerX + 1, centerY + 1] as AbsolutePointTuple,
-                [centerX + 1, centerY + 1 * 2] as AbsolutePointTuple,
-                [centerX - 1, centerY + 1 * 2] as AbsolutePointTuple,
-                [centerX - 1, centerY + 1] as AbsolutePointTuple,
-                [centerX - 1 * 2, centerY + 1] as AbsolutePointTuple,
-                [centerX - 1 * 2, centerY - 1] as AbsolutePointTuple,
-                [centerX - 1, centerY - 1] as AbsolutePointTuple,
-            );
-            break;
+    case 4:
+      vertices.push(
+        [centerX - 1, centerY - 1 * 2] as AbsolutePointTuple,
+        [centerX + 1, centerY - 1 * 2] as AbsolutePointTuple,
+        [centerX + 1, centerY - 1] as AbsolutePointTuple,
+        [centerX + 1 * 2, centerY - 1] as AbsolutePointTuple,
+        [centerX + 1 * 2, centerY + 1] as AbsolutePointTuple,
+        [centerX + 1, centerY + 1] as AbsolutePointTuple,
+        [centerX + 1, centerY + 1 * 2] as AbsolutePointTuple,
+        [centerX - 1, centerY + 1 * 2] as AbsolutePointTuple,
+        [centerX - 1, centerY + 1] as AbsolutePointTuple,
+        [centerX - 1 * 2, centerY + 1] as AbsolutePointTuple,
+        [centerX - 1 * 2, centerY - 1] as AbsolutePointTuple,
+        [centerX - 1, centerY - 1] as AbsolutePointTuple,
+      );
+      break;
 
-        case 5:
-            vertices.push(
-                [centerX - 1, centerY - 1 * 2] as AbsolutePointTuple,
-                [centerX + 1 * 2, centerY - 1 * 2] as AbsolutePointTuple,
-                [centerX + 1 * 2, centerY - 1] as AbsolutePointTuple,
-                [centerX + 1 * 3, centerY - 1] as AbsolutePointTuple,
-                [centerX + 1 * 3, centerY + 1 * 2] as AbsolutePointTuple,
-                [centerX + 1 * 2, centerY + 1 * 2] as AbsolutePointTuple,
-                [centerX + 1 * 2, centerY + 1 * 3] as AbsolutePointTuple,
-                [centerX - 1, centerY + 1 * 3] as AbsolutePointTuple,
-                [centerX - 1, centerY + 1 * 2] as AbsolutePointTuple,
-                [centerX - 1 * 2, centerY + 1 * 2] as AbsolutePointTuple,
-                [centerX - 1 * 2, centerY - 1] as AbsolutePointTuple,
-                [centerX - 1, centerY - 1] as AbsolutePointTuple,
-            );
-            break;
+    case 5:
+      vertices.push(
+        [centerX - 1, centerY - 1 * 2] as AbsolutePointTuple,
+        [centerX + 1 * 2, centerY - 1 * 2] as AbsolutePointTuple,
+        [centerX + 1 * 2, centerY - 1] as AbsolutePointTuple,
+        [centerX + 1 * 3, centerY - 1] as AbsolutePointTuple,
+        [centerX + 1 * 3, centerY + 1 * 2] as AbsolutePointTuple,
+        [centerX + 1 * 2, centerY + 1 * 2] as AbsolutePointTuple,
+        [centerX + 1 * 2, centerY + 1 * 3] as AbsolutePointTuple,
+        [centerX - 1, centerY + 1 * 3] as AbsolutePointTuple,
+        [centerX - 1, centerY + 1 * 2] as AbsolutePointTuple,
+        [centerX - 1 * 2, centerY + 1 * 2] as AbsolutePointTuple,
+        [centerX - 1 * 2, centerY - 1] as AbsolutePointTuple,
+        [centerX - 1, centerY - 1] as AbsolutePointTuple,
+      );
+      break;
 
-        case 6:
-            vertices.push(
-                [centerX - 2, centerY - 3] as AbsolutePointTuple,
-                [centerX + 2, centerY - 3] as AbsolutePointTuple,
-                [centerX + 2, centerY - 2] as AbsolutePointTuple,
-                [centerX + 3, centerY - 2] as AbsolutePointTuple,
-                [centerX + 3, centerY + 2] as AbsolutePointTuple,
-                [centerX + 2, centerY + 2] as AbsolutePointTuple,
-                [centerX + 2, centerY + 3] as AbsolutePointTuple,
-                [centerX - 2, centerY + 3] as AbsolutePointTuple,
-                [centerX - 2, centerY + 2] as AbsolutePointTuple,
-                [centerX - 3, centerY + 2] as AbsolutePointTuple,
-                [centerX - 3, centerY - 2] as AbsolutePointTuple,
-                [centerX - 2, centerY - 2] as AbsolutePointTuple,
-            );
-            break;
+    case 6:
+      vertices.push(
+        [centerX - 2, centerY - 3] as AbsolutePointTuple,
+        [centerX + 2, centerY - 3] as AbsolutePointTuple,
+        [centerX + 2, centerY - 2] as AbsolutePointTuple,
+        [centerX + 3, centerY - 2] as AbsolutePointTuple,
+        [centerX + 3, centerY + 2] as AbsolutePointTuple,
+        [centerX + 2, centerY + 2] as AbsolutePointTuple,
+        [centerX + 2, centerY + 3] as AbsolutePointTuple,
+        [centerX - 2, centerY + 3] as AbsolutePointTuple,
+        [centerX - 2, centerY + 2] as AbsolutePointTuple,
+        [centerX - 3, centerY + 2] as AbsolutePointTuple,
+        [centerX - 3, centerY - 2] as AbsolutePointTuple,
+        [centerX - 2, centerY - 2] as AbsolutePointTuple,
+      );
+      break;
 
-        case 7:
-            vertices.push(
-                [centerX - 2, centerY - 3] as AbsolutePointTuple,
-                [centerX + 3, centerY - 3] as AbsolutePointTuple,
-                [centerX + 3, centerY - 2] as AbsolutePointTuple,
-                [centerX + 4, centerY - 2] as AbsolutePointTuple,
-                [centerX + 4, centerY + 3] as AbsolutePointTuple,
-                [centerX + 3, centerY + 3] as AbsolutePointTuple,
-                [centerX + 3, centerY + 4] as AbsolutePointTuple,
-                [centerX - 2, centerY + 4] as AbsolutePointTuple,
-                [centerX - 2, centerY + 3] as AbsolutePointTuple,
-                [centerX - 3, centerY + 3] as AbsolutePointTuple,
-                [centerX - 3, centerY - 2] as AbsolutePointTuple,
-                [centerX - 2, centerY - 2] as AbsolutePointTuple,
-            );
-            break;
+    case 7:
+      vertices.push(
+        [centerX - 2, centerY - 3] as AbsolutePointTuple,
+        [centerX + 3, centerY - 3] as AbsolutePointTuple,
+        [centerX + 3, centerY - 2] as AbsolutePointTuple,
+        [centerX + 4, centerY - 2] as AbsolutePointTuple,
+        [centerX + 4, centerY + 3] as AbsolutePointTuple,
+        [centerX + 3, centerY + 3] as AbsolutePointTuple,
+        [centerX + 3, centerY + 4] as AbsolutePointTuple,
+        [centerX - 2, centerY + 4] as AbsolutePointTuple,
+        [centerX - 2, centerY + 3] as AbsolutePointTuple,
+        [centerX - 3, centerY + 3] as AbsolutePointTuple,
+        [centerX - 3, centerY - 2] as AbsolutePointTuple,
+        [centerX - 2, centerY - 2] as AbsolutePointTuple,
+      );
+      break;
 
-        case 8:
-            vertices.push(
-                [centerX - 3, centerY - 4] as AbsolutePointTuple,
-                [centerX + 3, centerY - 4] as AbsolutePointTuple,
-                [centerX + 3, centerY - 3] as AbsolutePointTuple,
-                [centerX + 4, centerY - 3] as AbsolutePointTuple,
-                [centerX + 4, centerY + 3] as AbsolutePointTuple,
-                [centerX + 3, centerY + 3] as AbsolutePointTuple,
-                [centerX + 3, centerY + 4] as AbsolutePointTuple,
-                [centerX - 3, centerY + 4] as AbsolutePointTuple,
-                [centerX - 3, centerY + 3] as AbsolutePointTuple,
-                [centerX - 4, centerY + 3] as AbsolutePointTuple,
-                [centerX - 4, centerY - 3] as AbsolutePointTuple,
-                [centerX - 3, centerY - 3] as AbsolutePointTuple,
-            );
-            break;
+    case 8:
+      vertices.push(
+        [centerX - 3, centerY - 4] as AbsolutePointTuple,
+        [centerX + 3, centerY - 4] as AbsolutePointTuple,
+        [centerX + 3, centerY - 3] as AbsolutePointTuple,
+        [centerX + 4, centerY - 3] as AbsolutePointTuple,
+        [centerX + 4, centerY + 3] as AbsolutePointTuple,
+        [centerX + 3, centerY + 3] as AbsolutePointTuple,
+        [centerX + 3, centerY + 4] as AbsolutePointTuple,
+        [centerX - 3, centerY + 4] as AbsolutePointTuple,
+        [centerX - 3, centerY + 3] as AbsolutePointTuple,
+        [centerX - 4, centerY + 3] as AbsolutePointTuple,
+        [centerX - 4, centerY - 3] as AbsolutePointTuple,
+        [centerX - 3, centerY - 3] as AbsolutePointTuple,
+      );
+      break;
 
-        case 9:
-            vertices.push(
-                [centerX - 3, centerY - 4] as AbsolutePointTuple,
-                [centerX + 4, centerY - 4] as AbsolutePointTuple,
-                [centerX + 4, centerY - 3] as AbsolutePointTuple,
-                [centerX + 5, centerY - 3] as AbsolutePointTuple,
-                [centerX + 5, centerY + 4] as AbsolutePointTuple,
-                [centerX + 4, centerY + 4] as AbsolutePointTuple,
-                [centerX + 4, centerY + 5] as AbsolutePointTuple,
-                [centerX - 3, centerY + 5] as AbsolutePointTuple,
-                [centerX - 3, centerY + 4] as AbsolutePointTuple,
-                [centerX - 4, centerY + 4] as AbsolutePointTuple,
-                [centerX - 4, centerY - 3] as AbsolutePointTuple,
-                [centerX - 3, centerY - 3] as AbsolutePointTuple,
-            );
-            break;
+    case 9:
+      vertices.push(
+        [centerX - 3, centerY - 4] as AbsolutePointTuple,
+        [centerX + 4, centerY - 4] as AbsolutePointTuple,
+        [centerX + 4, centerY - 3] as AbsolutePointTuple,
+        [centerX + 5, centerY - 3] as AbsolutePointTuple,
+        [centerX + 5, centerY + 4] as AbsolutePointTuple,
+        [centerX + 4, centerY + 4] as AbsolutePointTuple,
+        [centerX + 4, centerY + 5] as AbsolutePointTuple,
+        [centerX - 3, centerY + 5] as AbsolutePointTuple,
+        [centerX - 3, centerY + 4] as AbsolutePointTuple,
+        [centerX - 4, centerY + 4] as AbsolutePointTuple,
+        [centerX - 4, centerY - 3] as AbsolutePointTuple,
+        [centerX - 3, centerY - 3] as AbsolutePointTuple,
+      );
+      break;
 
-        case 10:
-            vertices.push(
-                [centerX - 4, centerY - 5] as AbsolutePointTuple,
-                [centerX + 4, centerY - 5] as AbsolutePointTuple,
-                [centerX + 4, centerY - 4] as AbsolutePointTuple,
-                [centerX + 5, centerY - 4] as AbsolutePointTuple,
-                [centerX + 5, centerY + 4] as AbsolutePointTuple,
-                [centerX + 4, centerY + 4] as AbsolutePointTuple,
-                [centerX + 4, centerY + 5] as AbsolutePointTuple,
-                [centerX - 4, centerY + 5] as AbsolutePointTuple,
-                [centerX - 4, centerY + 4] as AbsolutePointTuple,
-                [centerX - 5, centerY + 4] as AbsolutePointTuple,
-                [centerX - 5, centerY - 4] as AbsolutePointTuple,
-                [centerX - 4, centerY - 4] as AbsolutePointTuple,
-            );
-            break;
+    case 10:
+      vertices.push(
+        [centerX - 4, centerY - 5] as AbsolutePointTuple,
+        [centerX + 4, centerY - 5] as AbsolutePointTuple,
+        [centerX + 4, centerY - 4] as AbsolutePointTuple,
+        [centerX + 5, centerY - 4] as AbsolutePointTuple,
+        [centerX + 5, centerY + 4] as AbsolutePointTuple,
+        [centerX + 4, centerY + 4] as AbsolutePointTuple,
+        [centerX + 4, centerY + 5] as AbsolutePointTuple,
+        [centerX - 4, centerY + 5] as AbsolutePointTuple,
+        [centerX - 4, centerY + 4] as AbsolutePointTuple,
+        [centerX - 5, centerY + 4] as AbsolutePointTuple,
+        [centerX - 5, centerY - 4] as AbsolutePointTuple,
+        [centerX - 4, centerY - 4] as AbsolutePointTuple,
+      );
+      break;
 
-        default:
-            // Fallback for size 1
-            vertices.push(
-                [centerX, centerY] as AbsolutePointTuple,
-                [centerX + 1, centerY] as AbsolutePointTuple,
-                [centerX + 1, centerY + 1] as AbsolutePointTuple,
-                [centerX, centerY + 1] as AbsolutePointTuple,
-            );
-            break;
-    }
+    default:
+      // Fallback for size 1
+      vertices.push(
+        [centerX, centerY] as AbsolutePointTuple,
+        [centerX + 1, centerY] as AbsolutePointTuple,
+        [centerX + 1, centerY + 1] as AbsolutePointTuple,
+        [centerX, centerY + 1] as AbsolutePointTuple,
+      );
+      break;
+  }
 
-    return { vertices } as Polygon;
+  return { vertices } as Polygon;
 }
