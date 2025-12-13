@@ -1189,6 +1189,10 @@ export const store = createStore({
 
       const tool = context.toolSettings.currentTool;
 
+      if (tool === Tool.Pan) {
+        return PanTool.onPointerDown(e, context);
+      }
+
       if (tool === Tool.Brush) {
         return BrushTool.onPointerDown(e, context, enqueue);
       }
@@ -1404,6 +1408,33 @@ export const store = createStore({
         });
 
         return context;
+      }
+
+      // Arrow key navigation in pan mode (move by 1 pixel)
+      const isPanMode =
+        context.interaction.isSpacePressed || context.toolSettings.currentTool === Tool.Pan;
+
+      if (isPanMode) {
+        const arrowKeys: Record<string, { dx: number; dy: number }> = {
+          ArrowUp: { dx: 0, dy: -1 },
+          ArrowDown: { dx: 0, dy: 1 },
+          ArrowLeft: { dx: -1, dy: 0 },
+          ArrowRight: { dx: 1, dy: 0 },
+        };
+
+        const direction = arrowKeys[e.code];
+        if (direction) {
+          e.preventDefault();
+          enqueue.effect(() => {
+            store.trigger.moveCamera({
+              camera: {
+                x: clamp(context.camera.x + direction.dx, X_MIN, X_MAX),
+                y: clamp(context.camera.y + direction.dy, Y_MIN, Y_MAX),
+              },
+            });
+          });
+          return context;
+        }
       }
 
       // Tool shortcuts (Aseprite-style)

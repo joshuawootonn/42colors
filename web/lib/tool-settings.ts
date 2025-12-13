@@ -67,6 +67,7 @@ export enum Tool {
   Claimer = "claimer",
   Bucket = "bucket",
   Eyedropper = "eyedropper",
+  Pan = "pan",
 }
 
 const toolSchema = z.nativeEnum(Tool);
@@ -113,7 +114,7 @@ export const DEFAULT_TOOL_SETTINGS = toolSettingsSchema.parse({
   claimer: {
     selectedPlotId: undefined,
   },
-  currentTool: Tool.Brush,
+  currentTool: Tool.Pan,
 });
 
 export function getToolSettings(): ToolSettings | undefined {

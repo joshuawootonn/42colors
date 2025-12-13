@@ -1,5 +1,6 @@
-import { ComponentPropsWithoutRef, useCallback } from "react";
+import { ComponentPropsWithoutRef, useCallback, useEffect } from "react";
 
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { store } from "@/lib/store";
 import { Tool } from "@/lib/tool-settings";
 import { cn } from "@/lib/utils";
@@ -51,8 +52,17 @@ export function Toolbar() {
   const state = useSelector(store, (state) => state.context.state);
   const user = useSelector(store, (state) => state.context.user);
   const isLoggedOut = user == null;
+  const isMobile = useIsMobile();
+
+  // Auto-select Pan tool on mobile when the component mounts
+  useEffect(() => {
+    if (isMobile && state === "initialized") {
+      store.trigger.changeTool({ tool: Tool.Pan });
+    }
+  }, [isMobile, state]);
 
   if (state !== "initialized") return null;
+
   return (
     <Tooltip.Provider>
       <div className="flex flex-row items-start justify-end">
@@ -234,6 +244,25 @@ export function Toolbar() {
               </ToolIconButton>
             }
           />
+          <ToolIconButton
+            active={tool === Tool.Pan}
+            onClick={() => store.trigger.changeTool({ tool: Tool.Pan })}
+            className="-translate-y-[3px]"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="stroke-primary"
+              width="30"
+              height="30"
+              viewBox="-4 -4 32 32"
+              fill="none"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M5 9L2 12M2 12L5 15M2 12H22M9 5L12 2M12 2L15 5M12 2V22M15 19L12 22M12 22L9 19M19 9L22 12M22 12L19 15" />
+            </svg>
+          </ToolIconButton>
         </div>
 
         <Tooltip.Root handle={restrictedToolHandle}>

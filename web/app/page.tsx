@@ -157,13 +157,15 @@ export default function Page() {
 
   const currentTool = useSelector(store, (state) => state.context.toolSettings.currentTool);
 
+  const isPanMode = isSpacePressed || currentTool === Tool.Pan;
+
   return (
     <>
       <canvas
         ref={canvasRef}
         className={cn(
           "touch-none",
-          isSpacePressed ? (isPressed ? "cursor-grabbing" : "cursor-grab") : null,
+          isPanMode ? (isPressed ? "cursor-grabbing" : "cursor-grab") : null,
         )}
         height="100vh"
         width="100vw"
@@ -190,7 +192,9 @@ export default function Page() {
         <Toolbar />
       </div>
 
-      <Footer />
+      <div className="fixed left-3 bottom-3 flex">
+        <Footer />
+      </div>
 
       <div className="fixed bottom-3 right-3 flex">
         <Navigation />
