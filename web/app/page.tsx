@@ -157,7 +157,7 @@ export default function Page() {
 
   const currentTool = useSelector(store, (state) => state.context.toolSettings.currentTool);
 
-  const isPanMode = isSpacePressed || currentTool === Tool.Pan;
+  const isMoveMode = isSpacePressed || currentTool === Tool.Move;
 
   return (
     <>
@@ -165,7 +165,7 @@ export default function Page() {
         ref={canvasRef}
         className={cn(
           "touch-none",
-          isPanMode ? (isPressed ? "cursor-grabbing" : "cursor-grab") : null,
+          isMoveMode ? (isPressed ? "cursor-grabbing" : "cursor-grab") : null,
         )}
         height="100vh"
         width="100vw"

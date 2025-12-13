@@ -53,10 +53,10 @@ export function Toolbar() {
   const isLoggedOut = user == null;
   const isMobile = useIsMobile();
 
-  // Auto-select Pan tool on mobile when the component mounts
+  // Auto-select Move tool on mobile when the component mounts
   useEffect(() => {
     if (isMobile && state === "initialized") {
-      store.trigger.changeTool({ tool: Tool.Pan });
+      store.trigger.changeTool({ tool: Tool.Move });
     }
   }, [isMobile, state]);
 
@@ -244,8 +244,8 @@ export function Toolbar() {
             }
           />
           <ToolIconButton
-            active={tool === Tool.Pan}
-            onClick={() => store.trigger.changeTool({ tool: Tool.Pan })}
+            active={tool === Tool.Move}
+            onClick={() => store.trigger.changeTool({ tool: Tool.Move })}
             className="-mt-[3px]"
           >
             <svg

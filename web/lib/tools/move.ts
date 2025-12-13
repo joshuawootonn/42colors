@@ -9,7 +9,7 @@ function onPointerDown(e: PointerEvent, context: Store) {
   const startingX = e.clientX;
   const startingY = e.clientY;
 
-  const pan = (e: PointerEvent) => {
+  const move = (e: PointerEvent) => {
     store.trigger.moveCamera({
       camera: {
         x: startingCamera.x + clientToCanvas(startingX - e.clientX, context.camera.zoom),
@@ -18,10 +18,10 @@ function onPointerDown(e: PointerEvent, context: Store) {
     });
   };
 
-  context.canvas.rootCanvas.addEventListener("pointermove", pan);
+  context.canvas.rootCanvas.addEventListener("pointermove", move);
 
   const cleanUp = () => {
-    context.canvas?.rootCanvas.removeEventListener("pointermove", pan);
+    context.canvas?.rootCanvas.removeEventListener("pointermove", move);
 
     store.trigger.setIsPressed({ isPressed: false });
   };
@@ -35,5 +35,5 @@ function onPointerDown(e: PointerEvent, context: Store) {
   });
 }
 
-export const PanTool = { onPointerDown };
-export type PanTool = typeof PanTool;
+export const MoveTool = { onPointerDown };
+export type MoveTool = typeof MoveTool;

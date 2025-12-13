@@ -77,7 +77,7 @@ import { EyedropperTool } from "./tools/eyedropper/eyedropper";
 import { LineSettings, LineTool } from "./tools/line/line";
 import { clampLineSize } from "./tools/line/line-utils";
 import { PaletteSettings } from "./tools/palette";
-import { PanTool } from "./tools/pan";
+import { MoveTool } from "./tools/move";
 import { WheelTool } from "./tools/wheel";
 import { clamp } from "./utils/clamp";
 import { isInitialStore } from "./utils/is-initial-store";
@@ -1179,7 +1179,7 @@ export const store = createStore({
       enqueue.effect(() => store.trigger.setIsPressed({ isPressed: true }));
 
       if (context.interaction.isSpacePressed) {
-        return PanTool.onPointerDown(e, context);
+        return MoveTool.onPointerDown(e, context);
       }
 
       // Alt/Option key quick mode: temporarily switch to eyedropper
@@ -1189,8 +1189,8 @@ export const store = createStore({
 
       const tool = context.toolSettings.currentTool;
 
-      if (tool === Tool.Pan) {
-        return PanTool.onPointerDown(e, context);
+      if (tool === Tool.Move) {
+        return MoveTool.onPointerDown(e, context);
       }
 
       if (tool === Tool.Brush) {
@@ -1410,11 +1410,11 @@ export const store = createStore({
         return context;
       }
 
-      // Arrow key navigation in pan mode (move by 1 pixel)
-      const isPanMode =
-        context.interaction.isSpacePressed || context.toolSettings.currentTool === Tool.Pan;
+      // Arrow key navigation in move mode (move by 1 pixel)
+      const isMoveMode =
+        context.interaction.isSpacePressed || context.toolSettings.currentTool === Tool.Move;
 
-      if (isPanMode) {
+      if (isMoveMode) {
         const arrowKeys: Record<string, { dx: number; dy: number }> = {
           ArrowUp: { dx: 0, dy: -1 },
           ArrowDown: { dx: 0, dy: 1 },
@@ -1615,7 +1615,7 @@ export const store = createStore({
         return context;
       }
 
-      // Space key: toggle pan mode
+      // Space key: toggle move mode
       if (e.code === KeyboardCode.Space) {
         if (!context.interaction.isSpacePressed) {
           return {
@@ -1627,7 +1627,7 @@ export const store = createStore({
             },
             toolSettings: {
               ...context.toolSettings,
-              currentTool: Tool.Pan,
+              currentTool: Tool.Move,
             },
           };
         }
