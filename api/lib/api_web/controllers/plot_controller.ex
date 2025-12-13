@@ -6,7 +6,7 @@ defmodule ApiWeb.PlotController do
 
   action_fallback ApiWeb.FallbackController
 
-  @admin_emails ["jose56wonton@gmail.com", "anders.almberg@gmail.com"]
+  @admin_emails ["jose56wonton@gmail.com", "anders.almberg@gmail.com", "joshuawootonn@gmail.com"]
 
   def index(conn, params) do
     case {Map.get(params, "x"), Map.get(params, "y")} do

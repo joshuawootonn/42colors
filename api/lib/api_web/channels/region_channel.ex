@@ -6,7 +6,7 @@ defmodule ApiWeb.RegionChannel do
   alias Api.Repo
   alias ApiWeb.PixelCacheSupervisor
 
-  @admin_emails ["jose56wonton@gmail.com", "anders.almberg@gmail.com"]
+  @admin_emails ["jose56wonton@gmail.com", "anders.almberg@gmail.com", "joshuawootonn@gmail.com"]
 
   def join("region:general", _message, socket) do
     {:ok, socket}
