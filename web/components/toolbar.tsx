@@ -33,9 +33,8 @@ export function ToolIconButton({
       onClick={handleClick}
       className={cn(
         "group flex size-8 items-center justify-center border-1.5 border-border bg-white text-white",
-        "relative",
-        "rounded-none outline-none focus-visible:border-border",
-        active && "border-white ring-white invert",
+        "rounded-none focus-visible:relative outline-none svg-outline",
+        active && "[&>div]:bg-white [&_*]:invert",
         "aria-disabled:cursor-not-allowed",
         className,
       )}
@@ -66,7 +65,7 @@ export function Toolbar() {
   return (
     <Tooltip.Provider>
       <div className="flex flex-row items-start justify-end">
-        <div className={cn("grid grid-cols-2")}>
+        <div className={cn("grid grid-cols-2 z-0 relative")}>
           <ToolIconButton
             active={tool === Tool.Brush}
             onClick={() => store.trigger.changeTool({ tool: Tool.Brush })}
@@ -98,7 +97,7 @@ export function Toolbar() {
           <ToolIconButton
             active={tool === Tool.Erasure}
             onClick={() => store.trigger.changeTool({ tool: Tool.Erasure })}
-            className="-translate-x-[1px]"
+            className="-ml-[1px]"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -128,7 +127,7 @@ export function Toolbar() {
                     tool: Tool.Line,
                   })
                 }
-                className="-translate-y-[1px]"
+                className="-mt-[1px]"
                 aria-disabled={isLoggedOut}
               >
                 <svg
@@ -159,7 +158,7 @@ export function Toolbar() {
                     tool: Tool.Claimer,
                   })
                 }
-                className="-translate-x-[1px] -translate-y-[1px]"
+                className="-ml-[1px] -mt-[1px]"
                 aria-disabled={isLoggedOut}
               >
                 <svg
@@ -192,7 +191,7 @@ export function Toolbar() {
                     tool: Tool.Bucket,
                   })
                 }
-                className="-translate-y-[2px]"
+                className="-mt-[2px]"
                 aria-disabled={isLoggedOut}
               >
                 <svg
@@ -225,7 +224,7 @@ export function Toolbar() {
                     tool: Tool.Eyedropper,
                   })
                 }
-                className="-translate-x-[1px] -translate-y-[2px]"
+                className="-ml-[1px] -mt-[2px]"
                 aria-disabled={isLoggedOut}
               >
                 <svg
@@ -247,7 +246,7 @@ export function Toolbar() {
           <ToolIconButton
             active={tool === Tool.Pan}
             onClick={() => store.trigger.changeTool({ tool: Tool.Pan })}
-            className="-translate-y-[3px]"
+            className="-mt-[3px]"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
