@@ -48,7 +48,7 @@ function PaletteIconButton({
     >
       {isForeground && (
         <svg
-          className="absolute -left-[1px] -top-[1px]"
+          className="absolute -left-[0.5px] -top-[0.5px]"
           width="19"
           height="19"
           viewBox="0 0 19 19"
@@ -65,7 +65,7 @@ function PaletteIconButton({
 
       {isBackground && (
         <svg
-          className="absolute -bottom-[1px] -right-[1px]"
+          className="absolute -bottom-[0.5px] -right-[0.5px]"
           width="13"
           height="13"
           viewBox="0 0 13 13"
