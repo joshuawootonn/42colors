@@ -12,7 +12,7 @@ function PlusIcon(props: React.ComponentProps<"svg">) {
       viewBox="0 0 10 10"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.6"
+      strokeWidth="1.5"
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
@@ -29,7 +29,7 @@ function MinusIcon(props: React.ComponentProps<"svg">) {
       viewBox="0 0 10 10"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.6"
+      strokeWidth="1.5"
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
@@ -101,7 +101,7 @@ export function NumberField({
         <BaseNumberField.Input
           style={{ width: inputWidth }}
           className={cn(
-            "flex h-7.5 border-[1.5px] border-input bg-white text-center text-base outline-none",
+            "flex h-7.5 border-[1.5px] border-input bg-white text-center text-sm outline-none",
             "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
           )}
         />
