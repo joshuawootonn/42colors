@@ -49,13 +49,18 @@ function MobileMenu() {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger ref={ref} className="whitespace-nowrap">
-          menu
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          ref={ref}
+          render={(props) => (
+            <Button {...props} variant="outline">
+              menu
+            </Button>
+          )}
+        />
         <DropdownMenuContent>
           <DropdownMenuItem
             render={(props) => (
-              <NextLink
+              <Link
                 {...props}
                 href={{
                   pathname: "/login",
@@ -63,12 +68,12 @@ function MobileMenu() {
                 }}
               >
                 login
-              </NextLink>
+              </Link>
             )}
           />
           <DropdownMenuItem
             render={(props) => (
-              <NextLink
+              <Link
                 {...props}
                 href={{
                   pathname: "/signup",
@@ -76,7 +81,7 @@ function MobileMenu() {
                 }}
               >
                 signup
-              </NextLink>
+              </Link>
             )}
           />
           <DropdownMenuSeparator />
@@ -125,11 +130,14 @@ function MobileUserMenu() {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger ref={ref}>
-          <span className="truncate whitespace-nowrap">
-            {user.email} (<BalanceDiff />)
-          </span>
-        </DropdownMenuTrigger>
+        <DropdownMenuTrigger
+          render={(props) => (
+            <Button {...props} variant="outline">
+              {user.email} - <BalanceDiff />
+            </Button>
+          )}
+          ref={ref}
+        />
         <DropdownMenuContent>
           <DropdownMenuItem onClick={() => setOpenPopover("logs")}>logs</DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -317,7 +325,7 @@ export function Footer() {
                     ref={ref}
                     render={(props) => (
                       <Button {...props} variant="outline">
-                        {user.email} (<BalanceDiff />)
+                        {user.email} - <BalanceDiff />
                       </Button>
                     )}
                   />
