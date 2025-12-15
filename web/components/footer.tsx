@@ -23,10 +23,11 @@ import { useSelector } from "@xstate/store/react";
 
 import { AdminPopover, AdminPopoverMarkup } from "./admin-popover";
 import { BalanceDiff } from "./balance-diff";
-import { Link } from "./link";
+import { Link } from "./ui/link";
 import { LogsPopover, LogsPopoverMarkup } from "./logs-popover";
 import { PlotsPopover, PlotsPopoverMarkup } from "./plots-popover/plots-popover";
 import { PopoverTrigger } from "./ui/popover";
+import { Button } from "./ui/button";
 
 type OpenPopover = "logs" | "plots" | "admin" | null;
 
@@ -184,7 +185,7 @@ function GeneralMenuItems() {
     <>
       <DropdownMenuItem
         render={(props) => (
-          <NextLink
+          <Link
             {...props}
             href={{
               pathname: "/about",
@@ -192,12 +193,12 @@ function GeneralMenuItems() {
             }}
           >
             about
-          </NextLink>
+          </Link>
         )}
       />
       <DropdownMenuItem
         render={(props) => (
-          <NextLink
+          <Link
             {...props}
             href={{
               pathname: "/changelog",
@@ -205,7 +206,7 @@ function GeneralMenuItems() {
             }}
           >
             changelog
-          </NextLink>
+          </Link>
         )}
       />
       <DropdownMenuSubRoot>
@@ -300,8 +301,8 @@ export function Footer() {
   const user = useSelector(store, (state) => state.context.user);
   const ref = useRef<HTMLButtonElement>(null);
   return (
-    <footer className="text-md flex w-min flex-col items-center justify-between font-medium text-primary sm:flex-row">
-      <div className="flex items-center justify-between space-x-3">
+    <footer className="text-md flex w-min flex-col items-center justify-between  bg-background font-medium text-primary sm:flex-row gap-[-1.5px]">
+      <div className="flex items-center justify-between space-x-[-1.5px]">
         {user != null ? (
           <>
             {/* Mobile: use controlled state for popovers */}
@@ -312,11 +313,14 @@ export function Footer() {
             <div className="hidden sm:block">
               <LogsPopover anchor={ref}>
                 <DropdownMenu>
-                  <DropdownMenuTrigger ref={ref}>
-                    <span className="truncate whitespace-nowrap">
-                      {user.email} (<BalanceDiff />)
-                    </span>
-                  </DropdownMenuTrigger>
+                  <DropdownMenuTrigger
+                    ref={ref}
+                    render={(props) => (
+                      <Button {...props} variant="outline">
+                        {user.email} (<BalanceDiff />)
+                      </Button>
+                    )}
+                  />
                   <DropdownMenuContent>
                     <PopoverTrigger
                       nativeButton={false}
@@ -335,8 +339,10 @@ export function Footer() {
               <MobileMenu />
             </div>
             {/* Desktop: show login/signup links */}
-            <div className="hidden sm:flex sm:items-center sm:space-x-3">
+            <div className="hidden sm:flex sm:items-center sm:space-x-[-1.5px]">
               <Link
+                variant="outline"
+                size="default"
                 href={{
                   pathname: "/login",
                   query: searchParams.toString(),
@@ -344,8 +350,9 @@ export function Footer() {
               >
                 login
               </Link>
-              <div>or</div>
               <Link
+                variant="outline"
+                size="default"
                 href={{
                   pathname: "/signup",
                   query: searchParams.toString(),
@@ -358,40 +365,41 @@ export function Footer() {
         )}
 
         {/* Desktop: show plots, admin, and general menu */}
-        <div className="hidden sm:flex sm:items-center sm:space-x-3">
-          <div>/</div>
-
-          <PlotsPopover
-            trigger={
-              <PopoverTrigger
-                render={(props) => (
-                  <button {...props} className="svg-outline-sm relative no-underline">
-                    plots
-                  </button>
-                )}
-              />
-            }
-          />
+        <div className="hidden sm:flex sm:items-center">
           {isAdminUser(user) && (
             <>
-              <div>/</div>
               <AdminPopover>
                 <PopoverTrigger
                   render={(props) => (
-                    <button {...props} className="svg-outline-sm relative no-underline">
+                    <Button {...props} className="ml-[-1.5px]" variant="outline">
                       admin
-                    </button>
+                    </Button>
                   )}
                 />
               </AdminPopover>
             </>
           )}
-          <div>/</div>
+
+          <PlotsPopover
+            trigger={
+              <PopoverTrigger
+                render={(props) => (
+                  <Button {...props} className="ml-[-1.5px]" variant="outline">
+                    plots
+                  </Button>
+                )}
+              />
+            }
+          />
 
           <DropdownMenu>
-            <DropdownMenuTrigger className="whitespace-nowrap" aria-label="Open menu">
-              menu
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={(props) => (
+                <Button {...props} className="ml-[-1.5px]" variant="outline">
+                  menu
+                </Button>
+              )}
+            />
             <DropdownMenuContent>
               <GeneralMenuItems />
             </DropdownMenuContent>

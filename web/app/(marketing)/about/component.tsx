@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 
 import { H1 } from "@/components/dialog-headings";
 import { EmailLink } from "@/components/email-link";
-import { Link } from "@/components/link";
+import { Link } from "@/components/ui/link";
 import { Logo } from "@/components/logo";
 
 export function About() {

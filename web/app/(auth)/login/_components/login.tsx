@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 
 import { useSearchParams } from "next/navigation";
 
-import { Link } from "@/components/link";
+import { Link } from "@/components/ui/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import authService, { AuthError } from "@/lib/auth";

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 import { H1 } from "./dialog-headings";
 import { dialogProse } from "./dialog-prose";
-import { Link } from "./link";
+import { Link } from "./ui/link";
 import { Dialog, DialogContent } from "./ui/dialog";
 
 export function WebGPUWarning() {

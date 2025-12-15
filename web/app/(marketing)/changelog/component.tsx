@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 
 import { H1 } from "@/components/dialog-headings";
-import { Link } from "@/components/link";
+import { Link } from "@/components/ui/link";
 
 import { changelogUpdatedAt } from "./updated-at";
 

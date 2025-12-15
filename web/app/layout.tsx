@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 
 import { Fathom } from "@/components/fathom";
 import { Intro } from "@/components/intro";
-import { Link } from "@/components/link";
+import { Link } from "@/components/ui/link";
 import { Logo } from "@/components/logo";
 import { Toaster } from "@/components/ui/toast";
 import { INTRO_SEEN } from "@/lib/storage-keys";

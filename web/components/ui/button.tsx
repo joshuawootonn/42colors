@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
   cn(
-    "relative svg-outline inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm outline-none  [&_svg]:pointer-events-none [&_svg]:shrink-0",
+    "relative svg-outline inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm outline-none [&_svg]:pointer-events-none [&_svg]:shrink-0",
     // specifying aria-disabled since we want to be able to "disable without disabling" to enable tooltips
     "disabled:pointer-events-none aria-[disabled]:pointer-events-none",
   ),
@@ -16,14 +16,11 @@ const buttonVariants = cva(
         default: "border-1.5 border-primary bg-primary text-primary-foreground shadow",
         destructive: "bg-destructive text-destructive-foreground shadow-sm",
         outline: "border-1.5 border-primary bg-background shadow-sm",
-        // secondary: "bg-secondary text-secondary-foreground shadow-sm",
-        // ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary relative svg-outline-xs",
       },
       size: {
         sm: "h-8 px-3 text-xs",
         default: "h-8 px-4",
-        // lg: "h-10 px-8",
         icon: "h-9 w-9",
       },
     },

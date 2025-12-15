@@ -88,9 +88,9 @@ const DropdownMenuContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Popup> & {
     positionerProps?: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Positioner>;
   }
->(({ className, positionerProps, ...props }, ref) => (
+>(({ className, positionerProps: { sideOffset = 4, ...positionerProps } = {}, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal>
-    <DropdownMenuPrimitive.Positioner {...positionerProps}>
+    <DropdownMenuPrimitive.Positioner sideOffset={sideOffset} {...positionerProps}>
       <DropdownMenuPrimitive.Popup
         ref={ref}
         className={cn(
