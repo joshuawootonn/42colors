@@ -1,6 +1,6 @@
-import { z } from "zod";
+import { useCallback, useId } from "react";
 
-import { ChangeEvent, useCallback } from "react";
+import { NumberField } from "@base-ui/react/number-field";
 
 import { isAdminUser } from "@/lib/admin";
 import { X_MAX, X_MIN, Y_MAX, Y_MIN, ZOOM_MIN, ZOOM_MIN_ADMIN } from "@/lib/constants";
@@ -10,53 +10,141 @@ import { cn } from "@/lib/utils";
 import { clamp } from "@/lib/utils/clamp";
 import { useSelector } from "@xstate/store/react";
 
-import { NumberInput } from "./ui/number-input";
 import { useCameraSearchParams } from "./use-camera-search-params";
 
-const numberSchema = z.number();
-
 const camera = store.select((store) => store.camera);
+
+interface NavigationNumberFieldProps {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onValueChange: (value: number | null) => void;
+}
+
+function NavigationNumberField({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onValueChange,
+}: NavigationNumberFieldProps) {
+  const id = useId();
+
+  return (
+    <NumberField.Root
+      id={id}
+      value={value}
+      min={min}
+      max={max}
+      step={step}
+      largeStep={step * 10}
+      onValueChange={onValueChange}
+      className="flex flex-row items-center gap-0.5"
+    >
+      <NumberField.ScrubArea className="!cursor-ew-resize">
+        <label htmlFor={id} className="text-sm text-primary select-none block !cursor-ew-resize">
+          {label}:
+        </label>
+      </NumberField.ScrubArea>
+
+      <NumberField.Group className="flex items-center">
+        <NumberField.Decrement className="flex h-7.5 w-7 items-center justify-center border-[1.5px] border-r-0 border-primary bg-white hover:bg-black hover:text-white active:bg-black active:text-white">
+          <MinusIcon />
+        </NumberField.Decrement>
+        <NumberField.Input
+          className={cn(
+            "flex h-7.5 w-16 border-[1.5px] border-input bg-white text-center text-base outline-none",
+            "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+          )}
+        />
+        <NumberField.Increment className="flex h-7.5 w-7 items-center justify-center border-[1.5px] border-l-0 border-primary bg-white hover:bg-black hover:text-white active:bg-black active:text-white">
+          <PlusIcon />
+        </NumberField.Increment>
+      </NumberField.Group>
+    </NumberField.Root>
+  );
+}
+
+function PlusIcon(props: React.ComponentProps<"svg">) {
+  return (
+    <svg
+      width="10"
+      height="10"
+      viewBox="0 0 10 10"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path d="M0 5H5M10 5H5M5 5V0M5 5V10" />
+    </svg>
+  );
+}
+
+function MinusIcon(props: React.ComponentProps<"svg">) {
+  return (
+    <svg
+      width="10"
+      height="10"
+      viewBox="0 0 10 10"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path d="M0 5H10" />
+    </svg>
+  );
+}
 
 export function Navigation() {
   const { x, y, zoom } = useSelector(store, (state) => state.context.camera);
 
-  const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+  const onXChange = useCallback((value: number | null) => {
+    if (value === null) return;
+    store.trigger.moveCamera({
+      camera: { x: roundTo1Place(clamp(value, X_MIN, X_MAX)) },
+    });
+  }, []);
+
+  const onYChange = useCallback((value: number | null) => {
+    if (value === null) return;
+    store.trigger.moveCamera({
+      camera: { y: roundTo1Place(clamp(value, Y_MIN, Y_MAX)) },
+    });
+  }, []);
+
+  const onZoomChange = useCallback((value: number | null) => {
+    if (value === null) return;
     const { x, y, zoom } = camera.get();
-    const parsedNumber = numberSchema.safeParse(parseInt(e.currentTarget.value));
-    const next = parsedNumber.success ? parsedNumber.data : 0;
 
-    if (e.currentTarget.name === "x") {
-      store.trigger.moveCamera({
-        camera: { x: roundTo1Place(clamp(next, X_MIN, X_MAX)) },
-      });
-    } else if (e.currentTarget.name === "y") {
-      store.trigger.moveCamera({
-        camera: { y: roundTo1Place(clamp(next, Y_MIN, Y_MAX)) },
-      });
-    } else if (e.currentTarget.name === "zoom") {
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
 
-      const pixelWidth = zoom / 20;
-      const pixelX = centerX / pixelWidth;
-      const pixelY = centerY / pixelWidth;
+    const pixelWidth = zoom / 20;
+    const pixelX = centerX / pixelWidth;
+    const pixelY = centerY / pixelWidth;
 
-      const nextPixelWidth = next / 20;
+    const nextPixelWidth = value / 20;
 
-      const nextPixelX = centerX / nextPixelWidth;
-      const nextPixelY = centerY / nextPixelWidth;
+    const nextPixelX = centerX / nextPixelWidth;
+    const nextPixelY = centerY / nextPixelWidth;
 
-      const deltaXFromZoom = pixelX - nextPixelX;
-      const deltaYFromZoom = pixelY - nextPixelY;
+    const deltaXFromZoom = pixelX - nextPixelX;
+    const deltaYFromZoom = pixelY - nextPixelY;
 
-      store.trigger.moveCamera({
-        camera: {
-          zoom: roundTo1Place(next),
-          x: roundTo1Place(clamp(x + deltaXFromZoom, X_MIN, X_MAX)),
-          y: roundTo1Place(clamp(y + deltaYFromZoom, Y_MIN, Y_MAX)),
-        },
-      });
-    }
+    store.trigger.moveCamera({
+      camera: {
+        zoom: roundTo1Place(value),
+        x: roundTo1Place(clamp(x + deltaXFromZoom, X_MIN, X_MAX)),
+        y: roundTo1Place(clamp(y + deltaYFromZoom, Y_MIN, Y_MAX)),
+      },
+    });
   }, []);
 
   useCameraSearchParams(x, y, zoom);
@@ -72,7 +160,9 @@ export function Navigation() {
   if (state !== "initialized") return null;
 
   return (
-    <div className={cn("flex select-none items-center justify-center space-x-1.5 text-xl")}>
+    <div
+      className={cn("flex flex-col flex-wrap select-none items-end justify-center gap-3 text-xl")}
+    >
       <button
         onClick={() => {
           store.trigger.moveCamera({
@@ -86,40 +176,42 @@ export function Navigation() {
         <svg
           width="30"
           height="30"
-          viewBox="0 0 30 30"
-          className="fill-secondary"
+          viewBox="-4 -4 32 32"
+          fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
-            d="M26.1429 2L3.85715 9.42857V23.5429L26.1429 17.6V2Z"
-            className="stroke-primary"
-            strokeWidth="1.5"
+            d="M9 21V13.6C9 13.0399 9 12.7599 9.109 12.546C9.20487 12.3578 9.35785 12.2049 9.54601 12.109C9.75993 12 10.04 12 10.6 12H13.4C13.9601 12 14.2401 12 14.454 12.109C14.6422 12.2049 14.7951 12.3578 14.891 12.546C15 12.7599 15 13.0399 15 13.6V21M2 9.5L11.04 2.72C11.3843 2.46181 11.5564 2.33271 11.7454 2.28294C11.9123 2.23902 12.0877 2.23902 12.2546 2.28295C12.4436 2.33271 12.6157 2.46181 12.96 2.72L22 9.5M4 8V17.8C4 18.9201 4 19.4802 4.21799 19.908C4.40974 20.2843 4.7157 20.5903 5.09202 20.782C5.51985 21 6.0799 21 7.2 21H16.8C17.9201 21 18.4802 21 18.908 20.782C19.2843 20.5903 19.5903 20.2843 19.782 19.908C20 19.4802 20 18.9201 20 17.8V8L13.92 3.44C13.2315 2.92361 12.8872 2.66542 12.5091 2.56589C12.1754 2.47804 11.8246 2.47804 11.4909 2.56589C11.1128 2.66542 10.7685 2.92361 10.08 3.44L4 8Z"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
-          <path
-            d="M6.08575 22.8V28H12.0286C12.0286 27.4058 12.0286 25.7715 12.0286 25.0286H16.4858V28H24.6572V18.3429"
-            className="stroke-primary"
-            strokeWidth="1.5"
-          />
-          <path
-            d="M19.4642 22.8071H21.6785V25.0214H19.4642V22.8071Z"
-            className="stroke-primary"
-            strokeWidth="1.5"
-          />
-          <rect x="15.3714" y="8.06854" width="3.50898" height="1.30551" className="fill-primary" />
-          <rect x="9.42819" y="16.2648" width="3.50898" height="1.30551" className="fill-primary" />
-          <rect x="5.91922" y="17.6901" width="3.50898" height="1.30551" className="fill-primary" />
-          <rect x="11.8625" y="9.37408" width="3.50898" height="1.30551" className="fill-primary" />
         </svg>
       </button>
-      <NumberInput name="x" value={x} min={-50500} max={50500} step={5} onChange={onChange} />
-      <NumberInput name="y" value={y} step={5} min={-50500} max={50500} onChange={onChange} />
-      <NumberInput
-        name="zoom"
-        value={zoom}
-        step={10}
+      <NavigationNumberField
+        label="X"
+        value={Math.trunc(x)}
+        min={X_MIN}
+        max={X_MAX}
+        step={5}
+        onValueChange={onXChange}
+      />
+      <NavigationNumberField
+        label="Y"
+        value={Math.trunc(y)}
+        min={Y_MIN}
+        max={Y_MAX}
+        step={5}
+        onValueChange={onYChange}
+      />
+      <NavigationNumberField
+        label="Zoom"
+        value={Math.trunc(zoom)}
         min={zoomMin}
         max={1000}
-        onChange={onChange}
+        step={10}
+        onValueChange={onZoomChange}
       />
     </div>
   );

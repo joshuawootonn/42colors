@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, RefObject, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,8 +14,17 @@ import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useSelector } from "@xstate/store/react";
 
-export function AdminPopover({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
+export function AdminPopoverMarkup({
+  children,
+  anchor,
+  isOpen,
+  setIsOpen,
+}: {
+  children?: ReactNode;
+  anchor?: RefObject<HTMLElement | null>;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<SearchedUser | null>(null);
   const [grantAmount, setGrantAmount] = useState("");
@@ -34,7 +43,6 @@ export function AdminPopover({ children }: { children: ReactNode }) {
     (state) => state.context?.adminSettings?.isAdminZoomEnabled,
   );
 
-  // Only show for admin user
   const isAdmin = isAdminUser(currentUser);
 
   const {
@@ -78,6 +86,14 @@ export function AdminPopover({ children }: { children: ReactNode }) {
     }
   }, [isOpen]);
 
+  const positionerProps = useMemo(() => {
+    return {
+      anchor,
+      side: "top" as const,
+      align: "center" as const,
+    };
+  }, [anchor]);
+
   if (!isAdmin) {
     return null;
   }
@@ -85,7 +101,7 @@ export function AdminPopover({ children }: { children: ReactNode }) {
   return (
     <Popover type="persistent" modal={false} open={isOpen} onOpenChange={setIsOpen}>
       {children}
-      <PopoverContent className="w-96">
+      <PopoverContent className="w-96" positionerProps={positionerProps}>
         <PopoverHeading>Admin</PopoverHeading>
         <div className="space-y-2 py-2">
           <div className="flex items-center justify-between px-2">
@@ -219,5 +235,15 @@ export function AdminPopover({ children }: { children: ReactNode }) {
         </div>
       </PopoverContent>
     </Popover>
+  );
+}
+
+export function AdminPopover({ children }: { children: ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <AdminPopoverMarkup isOpen={isOpen} setIsOpen={setIsOpen}>
+      {children}
+    </AdminPopoverMarkup>
   );
 }

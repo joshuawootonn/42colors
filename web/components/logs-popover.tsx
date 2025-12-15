@@ -130,13 +130,13 @@ export function LogsPopoverMarkup({
   selectedPlotId,
   selectPlot,
 }: {
-  children: ReactNode;
+  children?: ReactNode;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   isLoading: boolean;
   error: Error | null;
   logs: Log[] | undefined;
-  anchor: RefObject<HTMLElement | null>;
+  anchor?: RefObject<HTMLElement | null>;
   selectedPlotId?: number;
   selectPlot: (plotId: number) => void;
 }) {

@@ -192,12 +192,13 @@ export default function Page() {
         <Toolbar />
       </div>
 
-      <div className="fixed left-3 bottom-3 flex">
-        <Footer />
-      </div>
-
-      <div className="fixed bottom-3 right-3 flex">
-        <Navigation />
+      <div className="fixed w-full overflow-hidden inset-x-0 bottom-3 px-3 flex flex-col justify-between items-end gap-2 sm:flex-row sm:items-end sm:justify-between sm:px-3">
+        <div className="order-2 sm:order-1">
+          <Footer />
+        </div>
+        <div className="order-1 sm:order-2 min-w-40">
+          <Navigation />
+        </div>
       </div>
 
       {!isWebGPUAvailable && <WebGPUWarning />}
