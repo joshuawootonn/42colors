@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { chunk } from "@/lib/utils/chunk";
 import { useSelector } from "@xstate/store/react";
 
-function IconButton({
+function PaletteIconButton({
   color_ref,
   isForeground,
   isBackground,
@@ -37,8 +37,9 @@ function IconButton({
     <motion.button
       {...props}
       className={cn(
-        "border-1 group relative flex size-8 items-center justify-center border-border bg-white text-white ring-2 ring-black",
+        "border-1 group relative flex size-8 items-center justify-center border-border bg-white text-white ring-[1.5px] ring-black",
         "rounded-none outline-none focus-visible:border-border",
+        (color_ref === 1 || color_ref === 2) && "w-16",
         className,
       )}
       initial={{ backgroundColor: colorString }}
@@ -141,11 +142,10 @@ export function Palette() {
         initial="show"
         animate={"show"}
       >
-        <div></div>
         {chunk(COLOR_ORDER, 4).map((colorChunk, i) => (
           <motion.div variants={row} key={i} className="flex flex-row">
             {colorChunk.map((color_ref) => (
-              <IconButton
+              <PaletteIconButton
                 onClick={() => {
                   store.trigger.updatePaletteSettings({
                     palette: {
