@@ -154,7 +154,9 @@ export function Navigation() {
         >
           <UndoIcon />
         </IconButton>
-        <div className="bg-primary h-[32px]  w-[1.5px]" />
+        <div
+          className={cn("bg-primary h-[32px] w-[1.5px]", !canUndo && !canRedo && "opacity-30")}
+        />
         <IconButton
           onClick={() => store.trigger.redo()}
           disabled={!canRedo}
