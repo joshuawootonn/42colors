@@ -99,6 +99,18 @@ export function Login() {
           Forgot password?
         </Link>
       </div>
+
+      <div className="pt-4 text-center text-sm">
+        Don&apos;t have an account?{" "}
+        <Link
+          href={{
+            pathname: "/signup",
+            query: searchParams.toString(),
+          }}
+        >
+          Sign up
+        </Link>
+      </div>
     </form>
   );
 }

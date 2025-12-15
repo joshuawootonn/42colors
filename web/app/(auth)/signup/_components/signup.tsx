@@ -4,9 +4,10 @@ import { z } from "zod";
 
 import { useForm } from "react-hook-form";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Link } from "@/components/ui/link";
 import { Input } from "@/components/ui/input";
 import authService, { AuthError } from "@/lib/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,6 +32,7 @@ type SignupFormData = z.infer<typeof signupSchema>;
 
 export function Signup() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     register,
     handleSubmit,
@@ -111,6 +113,18 @@ export function Signup() {
         <Button type="submit" className="flex-grow" disabled={isSubmitting}>
           {isSubmitting ? "Creating account..." : "Create account"}
         </Button>
+      </div>
+
+      <div className="pt-4 text-center text-sm">
+        Already have an account?{" "}
+        <Link
+          href={{
+            pathname: "/login",
+            query: searchParams.toString(),
+          }}
+        >
+          Log in
+        </Link>
       </div>
     </form>
   );
