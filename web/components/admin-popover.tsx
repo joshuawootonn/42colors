@@ -102,7 +102,7 @@ export function AdminPopoverMarkup({
     <Popover type="persistent" modal={false} open={isOpen} onOpenChange={setIsOpen}>
       {children}
       <PopoverContent className="w-96" positionerProps={positionerProps}>
-        <PopoverHeading>Admin</PopoverHeading>
+        <PopoverHeading>admin</PopoverHeading>
         <div className="space-y-2 py-2">
           <div className="flex items-center justify-between px-2">
             <label htmlFor="admin-override" className="text-sm font-medium">
