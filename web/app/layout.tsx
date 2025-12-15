@@ -43,7 +43,7 @@ export default async function RootLayout({
       </head>
       <body className={`${space.variable} font-sans`}>
         <div className="isolate">
-          <div className="fixed left-[10px] top-[10px] flex">
+          <div className="fixed left-[10px] top-[10px] flex border-1.5 -translate-x-[1.5px] -translate-y-[1.5px] border-black bg-background p-[5px]">
             <h1 className="flex gap-2 text-2xl font-bold">
               <Link href="/">
                 <Logo />
