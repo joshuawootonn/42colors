@@ -1,8 +1,7 @@
-import { useCallback, useId } from "react";
-
-import { NumberField } from "@base-ui/react/number-field";
+import { useCallback } from "react";
 
 import { IconButton } from "@/components/ui/icon-button";
+import { NumberField } from "@/components/ui/number-field";
 import { type Action, getActionToRedo, getActionToUndo } from "@/lib/actions";
 import { isAdminUser } from "@/lib/admin";
 import { X_MAX, X_MIN, Y_MAX, Y_MIN, ZOOM_MIN, ZOOM_MIN_ADMIN } from "@/lib/constants";
@@ -19,97 +18,6 @@ const camera = store.select((store) => store.camera);
 const EMPTY_ACTIONS: Action[] = [];
 const selectActions = (state: { context: { state: string; actions?: Action[] } }) =>
   state.context.state === "initialized" ? (state.context.actions ?? EMPTY_ACTIONS) : EMPTY_ACTIONS;
-
-interface NavigationNumberFieldProps {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  onValueChange: (value: number | null) => void;
-}
-
-function NavigationNumberField({
-  label,
-  value,
-  min,
-  max,
-  step,
-  onValueChange,
-}: NavigationNumberFieldProps) {
-  const id = useId();
-
-  return (
-    <NumberField.Root
-      id={id}
-      value={value}
-      min={min}
-      max={max}
-      step={step}
-      largeStep={step * 10}
-      onValueChange={onValueChange}
-      className="flex flex-row items-center"
-    >
-      <NumberField.ScrubArea className="!cursor-ew-resize border-[1.5px] border-r-0 border-primary bg-background px-2 h-[30px]">
-        <label
-          htmlFor={id}
-          className="text-sm text-primary leading-[28px] select-none block !cursor-ew-resize"
-        >
-          {label}
-        </label>
-      </NumberField.ScrubArea>
-
-      <NumberField.Group className="flex items-center">
-        <NumberField.Decrement className="flex h-7.5 w-7 items-center justify-center border-[1.5px] border-r-0 border-primary bg-white hover:bg-black hover:text-white active:bg-black active:text-white">
-          <MinusIcon />
-        </NumberField.Decrement>
-        <NumberField.Input
-          className={cn(
-            "flex h-7.5 w-16 border-[1.5px] border-input bg-white text-center text-base outline-none",
-            "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
-          )}
-        />
-        <NumberField.Increment className="flex h-7.5 w-7 items-center justify-center border-[1.5px] border-l-0 border-primary bg-white hover:bg-black hover:text-white active:bg-black active:text-white">
-          <PlusIcon />
-        </NumberField.Increment>
-      </NumberField.Group>
-    </NumberField.Root>
-  );
-}
-
-function PlusIcon(props: React.ComponentProps<"svg">) {
-  return (
-    <svg
-      width="10"
-      height="10"
-      viewBox="0 0 10 10"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-    >
-      <path d="M0 5H5M10 5H5M5 5V0M5 5V10" />
-    </svg>
-  );
-}
-
-function MinusIcon(props: React.ComponentProps<"svg">) {
-  return (
-    <svg
-      width="10"
-      height="10"
-      viewBox="0 0 10 10"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-    >
-      <path d="M0 5H10" />
-    </svg>
-  );
-}
 
 function UndoIcon(props: React.ComponentProps<"svg">) {
   return (
@@ -266,7 +174,7 @@ export function Navigation() {
           <HomeIcon />
         </IconButton>
       </div>
-      <NavigationNumberField
+      <NumberField
         label="X"
         value={Math.trunc(x)}
         min={X_MIN}
@@ -274,7 +182,7 @@ export function Navigation() {
         step={5}
         onValueChange={onXChange}
       />
-      <NavigationNumberField
+      <NumberField
         label="Y"
         value={Math.trunc(y)}
         min={Y_MIN}
@@ -282,7 +190,7 @@ export function Navigation() {
         step={5}
         onValueChange={onYChange}
       />
-      <NavigationNumberField
+      <NumberField
         label="Zoom"
         value={Math.trunc(zoom)}
         min={zoomMin}

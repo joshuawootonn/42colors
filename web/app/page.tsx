@@ -171,7 +171,7 @@ export default function Page() {
         width="100vw"
       ></canvas>
 
-      <div className="fixed left-3 top-16 flex flex-col items-start space-y-3">
+      <div className="fixed left-3 top-[69px] flex flex-col items-start space-y-[5px]">
         {isWebGPUAvailable && (
           <>
             {(currentTool === Tool.Brush ||
