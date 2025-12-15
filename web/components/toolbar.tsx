@@ -34,7 +34,7 @@ export function ToolIconButton({
       className={cn(
         "group flex size-8 items-center justify-center border-1.5 border-border bg-white text-white",
         "rounded-none focus-visible:relative outline-none svg-outline",
-        active && "[&>div]:bg-white [&_*]:invert",
+        active && "[&>div]:bg-primary [&_svg]:invert",
         "aria-disabled:cursor-not-allowed",
         className,
       )}
