@@ -1,11 +1,45 @@
 "use client";
 
 import * as React from "react";
+import { useCallback, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Menu as DropdownMenuPrimitive } from "@base-ui/react/menu";
 
-const DropdownMenu = DropdownMenuPrimitive.Root;
+import { OverlayZIndexProvider, useOverlayZIndex } from "./hooks/overlay-z-index-context";
+
+type DropdownMenuOnOpenChange = NonNullable<
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Root>["onOpenChange"]
+>;
+
+const DropdownMenu = function ({
+  onOpenChange,
+  open: controlledOpen,
+  defaultOpen = false,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Root>) {
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const isOpen = controlledOpen ?? internalOpen;
+
+  const handleOpenChange = useCallback<DropdownMenuOnOpenChange>(
+    (open, eventDetails) => {
+      setInternalOpen(open);
+      onOpenChange?.(open, eventDetails);
+    },
+    [onOpenChange],
+  );
+
+  return (
+    <OverlayZIndexProvider isOpen={isOpen}>
+      <DropdownMenuPrimitive.Root
+        {...props}
+        open={controlledOpen}
+        defaultOpen={defaultOpen}
+        onOpenChange={handleOpenChange}
+      />
+    </OverlayZIndexProvider>
+  );
+};
 
 const DropdownMenuTrigger = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Trigger>,
@@ -66,21 +100,25 @@ const DropdownMenuSubContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Popup> & {
     positionerProps?: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Positioner>;
   }
->(({ className, positionerProps, ...props }, ref) => (
-  <DropdownMenuPrimitive.Portal>
-    <DropdownMenuPrimitive.Positioner {...positionerProps}>
-      <DropdownMenuPrimitive.Popup
-        ref={ref}
-        className={cn(
-          "z-50 flex min-w-[8rem] flex-col overflow-hidden border-1.5 border-primary bg-popover text-popover-foreground shadow-md",
-          "svg-outline-border relative",
-          className,
-        )}
-        {...props}
-      />
-    </DropdownMenuPrimitive.Positioner>
-  </DropdownMenuPrimitive.Portal>
-));
+>(({ className, positionerProps, ...props }, ref) => {
+  const zIndex = useOverlayZIndex();
+
+  return (
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.Positioner style={{ zIndex }} {...positionerProps}>
+        <DropdownMenuPrimitive.Popup
+          ref={ref}
+          className={cn(
+            "flex min-w-[8rem] flex-col overflow-hidden border-1.5 border-primary bg-popover text-popover-foreground shadow-md",
+            "svg-outline-border relative",
+            className,
+          )}
+          {...props}
+        />
+      </DropdownMenuPrimitive.Positioner>
+    </DropdownMenuPrimitive.Portal>
+  );
+});
 DropdownMenuSubContent.displayName = DropdownMenuPrimitive.Popup.displayName;
 
 const DropdownMenuContent = React.forwardRef<
@@ -88,21 +126,29 @@ const DropdownMenuContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Popup> & {
     positionerProps?: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Positioner>;
   }
->(({ className, positionerProps: { sideOffset = 4, ...positionerProps } = {}, ...props }, ref) => (
-  <DropdownMenuPrimitive.Portal>
-    <DropdownMenuPrimitive.Positioner sideOffset={sideOffset} {...positionerProps}>
-      <DropdownMenuPrimitive.Popup
-        ref={ref}
-        className={cn(
-          "z-50 flex min-w-[8rem] flex-col overflow-hidden border-1.5 border-primary bg-popover text-popover-foreground shadow-md",
-          "svg-outline-border relative",
-          className,
-        )}
-        {...props}
-      />
-    </DropdownMenuPrimitive.Positioner>
-  </DropdownMenuPrimitive.Portal>
-));
+>(({ className, positionerProps: { sideOffset = 4, ...positionerProps } = {}, ...props }, ref) => {
+  const zIndex = useOverlayZIndex();
+
+  return (
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.Positioner
+        style={{ zIndex }}
+        sideOffset={sideOffset}
+        {...positionerProps}
+      >
+        <DropdownMenuPrimitive.Popup
+          ref={ref}
+          className={cn(
+            "flex min-w-[8rem] flex-col overflow-hidden border-1.5 border-primary bg-popover text-popover-foreground shadow-md",
+            "svg-outline-border relative",
+            className,
+          )}
+          {...props}
+        />
+      </DropdownMenuPrimitive.Positioner>
+    </DropdownMenuPrimitive.Portal>
+  );
+});
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Popup.displayName;
 
 const DropdownMenuItem = React.forwardRef<

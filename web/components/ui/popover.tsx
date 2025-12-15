@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { useForwardedRef } from "@/components/ui/hooks/use-forwarded-ref";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ import { Popover as PopoverPrimitive } from "@base-ui/react/popover";
 import { X32 } from "../icons/x_32";
 import { useCornerAnchor } from "./hooks/use-corner-anchor";
 import { useDraggablePosition } from "./hooks/use-draggable-position";
+import { OverlayZIndexProvider, useOverlayZIndex } from "./hooks/overlay-z-index-context";
 
 type PopoverOnOpenChange = NonNullable<
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Root>["onOpenChange"]
@@ -17,11 +18,16 @@ type PopoverOnOpenChange = NonNullable<
 
 const Popover = function ({
   onOpenChange,
+  open: controlledOpen,
+  defaultOpen = false,
   type = "temporary",
   ...props
 }: React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Root> & {
   type: "temporary" | "persistent";
 }) {
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const isOpen = controlledOpen ?? internalOpen;
+
   const handleOpenChange = useCallback<PopoverOnOpenChange>(
     (open, eventDetails) => {
       if (
@@ -32,12 +38,22 @@ const Popover = function ({
       ) {
         return;
       }
+      setInternalOpen(open);
       onOpenChange?.(open, eventDetails);
     },
     [onOpenChange, type],
   );
 
-  return <PopoverPrimitive.Root {...props} onOpenChange={handleOpenChange} />;
+  return (
+    <OverlayZIndexProvider isOpen={isOpen}>
+      <PopoverPrimitive.Root
+        {...props}
+        open={controlledOpen}
+        defaultOpen={defaultOpen}
+        onOpenChange={handleOpenChange}
+      />
+    </OverlayZIndexProvider>
+  );
 };
 
 const PopoverTrigger = PopoverPrimitive.Trigger;
@@ -90,6 +106,7 @@ const PopoverContent = React.forwardRef<
   ) => {
     const contentRef = useRef<HTMLDivElement>(null);
     const combinedRef = useForwardedRef(contentRef, ref);
+    const zIndex = useOverlayZIndex();
 
     const { position, isDragging, onPointerDown, hasDragged } = useDraggablePosition({
       isEnabled: isDraggable,
@@ -107,14 +124,13 @@ const PopoverContent = React.forwardRef<
     return (
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Positioner
-          style={
-            hasDragged
-              ? {
-                  transform: `translate(${anchoredPosition.x}px, ${anchoredPosition.y}px)`,
-                }
-              : undefined
-          }
-          className={cn(positionerClassName, "z-50", hasDragged && "!fixed !left-0 !top-0")}
+          style={{
+            zIndex,
+            ...(hasDragged && {
+              transform: `translate(${anchoredPosition.x}px, ${anchoredPosition.y}px)`,
+            }),
+          }}
+          className={cn(positionerClassName, hasDragged && "!fixed !left-0 !top-0")}
           sideOffset={sideOffset}
           align={align}
           side={side}
