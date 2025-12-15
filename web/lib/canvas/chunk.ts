@@ -186,7 +186,7 @@ export class Chunk {
       true,
     );
 
-    this.schedulePixelBitmapUpdate();
+    this.scheduleBitmapUpdate("pixel");
   }
 
   // todo(josh): This is bad. We shouldn't have a method for unsetting pixels.
@@ -208,7 +208,7 @@ export class Chunk {
       false,
     );
 
-    this.schedulePixelBitmapUpdate();
+    this.scheduleBitmapUpdate("pixel");
   }
 
   private updatePersistentPixels(_pixels: Pixel[], _unsetPixels: Pixel[]): void {
@@ -228,7 +228,7 @@ export class Chunk {
       false,
     );
 
-    this.schedulePixelBitmapUpdate();
+    this.scheduleBitmapUpdate("pixel");
   }
 
   getPixelValue(x: number, y: number): Pixel | null {
@@ -336,19 +336,19 @@ export class Chunk {
       );
     }
 
-    this.scheduleUIBitmapUpdate();
+    this.scheduleBitmapUpdate("ui");
   }
 
   upsertPlots(plots: Plot[]): void {
     this.plots = [...this.plots.filter((plot) => !plots.some((p) => p.id === plot.id)), ...plots];
     this.plotRender();
-    this.scheduleUIBitmapUpdate();
+    this.scheduleBitmapUpdate("ui");
   }
 
   deletePlots(plotIds: number[]): void {
     this.plots = this.plots.filter((plot) => !plotIds.includes(plot.id));
     this.plotRender();
-    this.scheduleUIBitmapUpdate();
+    this.scheduleBitmapUpdate("ui");
   }
 
   //////////////// Action management methods ////////////////
@@ -387,7 +387,7 @@ export class Chunk {
 
     if (actions.length === 0) {
       this.realtimeWebGPUManager?.clear();
-      this.scheduleRealtimeBitmapUpdate();
+      this.scheduleBitmapUpdate("realtime");
       return;
     }
 
@@ -425,7 +425,7 @@ export class Chunk {
 
     if (chunkPixels.length === 0) {
       this.realtimeWebGPUManager?.clear();
-      this.scheduleRealtimeBitmapUpdate();
+      this.scheduleBitmapUpdate("realtime");
       return;
     }
 
@@ -434,7 +434,7 @@ export class Chunk {
       yCamera: 0,
     });
 
-    this.scheduleRealtimeBitmapUpdate();
+    this.scheduleBitmapUpdate("realtime");
   }
 
   public destroy(): void {
@@ -444,18 +444,6 @@ export class Chunk {
     this.pixelBitmap?.close?.();
     this.uiBitmap?.close?.();
     this.realtimeBitmap?.close?.();
-  }
-
-  private schedulePixelBitmapUpdate(): void {
-    this.scheduleBitmapUpdate("pixel");
-  }
-
-  private scheduleUIBitmapUpdate(): void {
-    this.scheduleBitmapUpdate("ui");
-  }
-
-  private scheduleRealtimeBitmapUpdate(): void {
-    this.scheduleBitmapUpdate("realtime");
   }
 
   private scheduleBitmapUpdate(kind: "pixel" | "ui" | "realtime"): void {
