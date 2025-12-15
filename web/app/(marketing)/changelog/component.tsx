@@ -26,6 +26,52 @@ export default function Changelog() {
       <hr className="w-full border-t-2 border-border" />
       <ul>
         <li>
+          <video
+            src="/changelog/25-12-15-mobile-responsive.mp4"
+            muted
+            controls
+            className="mt-4 border border-border max-w-[250px]  mx-auto float-right"
+          />
+          <DateComponent date={new Date("12/15/2025")} /> - Made 42colors.com responsive. It&apos;s
+          important to be able to share your art with friends when you're in person. Now you can!{" "}
+          <ul>
+            <li>
+              Fixed the canvas flickering that was happening on iOS devices due to how I was using
+              `drawImage` from a webgpu canvas to a 2d canvas.
+            </li>
+            <li>Made the footer and navigation mobile responsive.</li>
+            <li>
+              Added undo and redo buttons so that those operations are available on touch devices.
+            </li>
+          </ul>
+        </li>
+        <li className="clear-both">
+          <DateComponent date={new Date("12/15/2025")} /> - Updated the number field component to
+          work with touch inputs. Thanks{" "}
+          <Link href="https://base-ui.com/react/components/number-field" target="_blank">
+            Base UI
+          </Link>
+          !
+          <video
+            src="/changelog/25-12-15-number-input.mp4"
+            muted
+            controls
+            className="mt-4 border border-border"
+          />
+        </li>
+        <li>
+          <DateComponent date={new Date("12/14/2025")} /> - Added a move tool to 42colors.com so
+          it's more intuitive how you can navigate around the canvas. You can either select this
+          tool in the top right toolbar or toggle into it by holding the spacebar.
+          <video
+            src="/changelog/25-12-14-move-tool.mp4"
+            muted
+            controls
+            className="mt-4 border border-border"
+          />
+          Once selected it enables moving around the canvas with arrow keys too.
+        </li>
+        <li>
           <DateComponent date={new Date("12/13/2025")} /> - Disabled all complex tools when you
           aren't logged in.
           <video
