@@ -1437,112 +1437,107 @@ export const store = createStore({
         }
       }
 
-      // Tool shortcuts (Aseprite-style)
-      // Only trigger if target is not an input or contenteditable element
+      // Don't trigger shortcuts when typing in input elements
       const target = e.target as HTMLElement;
       const isInputElement = target.tagName === "INPUT" || target.tagName === "TEXTAREA";
       const isContentEditable = target.contentEditable === "true";
+      if (isInputElement || isContentEditable) return context;
 
-      if (!isInputElement && !isContentEditable) {
-        if (isHotkey("b", e)) {
-          e.preventDefault();
-          enqueue.effect(() => store.trigger.changeTool({ tool: Tool.Brush }));
-          return context;
-        }
+      // Tool shortcuts (Aseprite-style)
+      if (isHotkey("b", e)) {
+        e.preventDefault();
+        enqueue.effect(() => store.trigger.changeTool({ tool: Tool.Brush }));
+        return context;
+      }
 
-        if (isHotkey("e", e)) {
-          e.preventDefault();
-          enqueue.effect(() => store.trigger.changeTool({ tool: Tool.Erasure }));
-          return context;
-        }
+      if (isHotkey("e", e)) {
+        e.preventDefault();
+        enqueue.effect(() => store.trigger.changeTool({ tool: Tool.Erasure }));
+        return context;
+      }
 
-        if (isHotkey("c", e)) {
-          e.preventDefault();
-          enqueue.effect(() => store.trigger.changeTool({ tool: Tool.Claimer }));
-          return context;
-        }
+      if (isHotkey("c", e)) {
+        e.preventDefault();
+        enqueue.effect(() => store.trigger.changeTool({ tool: Tool.Claimer }));
+        return context;
+      }
 
-        if (isHotkey("l", e)) {
-          e.preventDefault();
-          enqueue.effect(() => store.trigger.changeTool({ tool: Tool.Line }));
-          return context;
-        }
+      if (isHotkey("l", e)) {
+        e.preventDefault();
+        enqueue.effect(() => store.trigger.changeTool({ tool: Tool.Line }));
+        return context;
+      }
 
-        if (isHotkey("g", e)) {
-          e.preventDefault();
-          enqueue.effect(() => store.trigger.changeTool({ tool: Tool.Bucket }));
-          return context;
-        }
+      if (isHotkey("g", e)) {
+        e.preventDefault();
+        enqueue.effect(() => store.trigger.changeTool({ tool: Tool.Bucket }));
+        return context;
+      }
 
-        // Palette navigation shortcuts (now for foreground color)
-        if (isHotkey("[", e)) {
-          e.preventDefault();
-          enqueue.effect(() =>
-            store.trigger.updatePaletteSettings({
-              palette: {
-                foregroundColorRef: getPreviousColor(
-                  context.toolSettings.palette.foregroundColorRef,
-                ),
-              },
-            }),
-          );
-          return context;
-        }
+      // Palette navigation shortcuts (now for foreground color)
+      if (isHotkey("[", e)) {
+        e.preventDefault();
+        enqueue.effect(() =>
+          store.trigger.updatePaletteSettings({
+            palette: {
+              foregroundColorRef: getPreviousColor(context.toolSettings.palette.foregroundColorRef),
+            },
+          }),
+        );
+        return context;
+      }
 
-        if (isHotkey("]", e)) {
-          e.preventDefault();
-          enqueue.effect(() =>
-            store.trigger.updatePaletteSettings({
-              palette: {
-                foregroundColorRef: getNextColor(context.toolSettings.palette.foregroundColorRef),
-              },
-            }),
-          );
-          return context;
-        }
+      if (isHotkey("]", e)) {
+        e.preventDefault();
+        enqueue.effect(() =>
+          store.trigger.updatePaletteSettings({
+            palette: {
+              foregroundColorRef: getNextColor(context.toolSettings.palette.foregroundColorRef),
+            },
+          }),
+        );
+        return context;
+      }
 
-        // Swap foreground and background colors
-        if (isHotkey("x", e)) {
-          e.preventDefault();
-          const foregroundColorRef = context.toolSettings.palette.foregroundColorRef;
-          const backgroundColorRef = context.toolSettings.palette.backgroundColorRef;
-          enqueue.effect(() =>
-            store.trigger.updatePaletteSettings({
-              palette: {
-                foregroundColorRef: backgroundColorRef,
-                backgroundColorRef: foregroundColorRef,
-              },
-            }),
-          );
-          return context;
-        }
+      // Swap foreground and background colors
+      if (isHotkey("x", e)) {
+        e.preventDefault();
+        const foregroundColorRef = context.toolSettings.palette.foregroundColorRef;
+        const backgroundColorRef = context.toolSettings.palette.backgroundColorRef;
+        enqueue.effect(() =>
+          store.trigger.updatePaletteSettings({
+            palette: {
+              foregroundColorRef: backgroundColorRef,
+              backgroundColorRef: foregroundColorRef,
+            },
+          }),
+        );
+        return context;
+      }
 
-        // Cycle through foreground colors with 9 and 0 keys
-        if (isHotkey("9", e)) {
-          e.preventDefault();
-          enqueue.effect(() =>
-            store.trigger.updatePaletteSettings({
-              palette: {
-                foregroundColorRef: getPreviousColor(
-                  context.toolSettings.palette.foregroundColorRef,
-                ),
-              },
-            }),
-          );
-          return context;
-        }
+      // Cycle through foreground colors with 9 and 0 keys
+      if (isHotkey("9", e)) {
+        e.preventDefault();
+        enqueue.effect(() =>
+          store.trigger.updatePaletteSettings({
+            palette: {
+              foregroundColorRef: getPreviousColor(context.toolSettings.palette.foregroundColorRef),
+            },
+          }),
+        );
+        return context;
+      }
 
-        if (isHotkey("0", e)) {
-          e.preventDefault();
-          enqueue.effect(() =>
-            store.trigger.updatePaletteSettings({
-              palette: {
-                foregroundColorRef: getNextColor(context.toolSettings.palette.foregroundColorRef),
-              },
-            }),
-          );
-          return context;
-        }
+      if (isHotkey("0", e)) {
+        e.preventDefault();
+        enqueue.effect(() =>
+          store.trigger.updatePaletteSettings({
+            palette: {
+              foregroundColorRef: getNextColor(context.toolSettings.palette.foregroundColorRef),
+            },
+          }),
+        );
+        return context;
       }
 
       // Tool size shortcuts (plus/minus)
