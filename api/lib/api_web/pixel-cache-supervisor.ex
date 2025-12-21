@@ -3,7 +3,7 @@ defmodule ApiWeb.PixelCacheSupervisor do
   use GenServer
   alias ApiWeb.TelemetryHelper
   alias Api.Canvas.Pixel
-  alias Api.PixelCache
+  alias Api.PixelCache.Redis, as: RedisCache
 
   # Capture Mix.env at compile time since Mix is not available at runtime in releases
   @env Mix.env()
@@ -12,77 +12,154 @@ defmodule ApiWeb.PixelCacheSupervisor do
     GenServer.start_link(__MODULE__, arg, name: __MODULE__)
   end
 
-  def list_pixel_subsection_from_file do
-    GenServer.call(__MODULE__, :sub_section_of_pixels)
-    |> Map.get(:sub_section_of_pixels)
-  end
-
   def list_pixel_subsection_from_file_as_binary(x, y) do
     GenServer.call(__MODULE__, {:sub_section_of_pixels_as_binary, x, y})
     |> Map.get(:sub_section_of_pixels_as_binary)
   end
 
-  def write_pixels_to_file(pixels) do
+  def write_pixels_to_cache(pixels) do
     GenServer.call(__MODULE__, {:write_pixels, pixels})
   end
 
-  @batch_size 100_000
+  # Keep the old function name for backwards compatibility
+  def write_pixels_to_file(pixels) do
+    write_pixels_to_cache(pixels)
+  end
 
   @impl true
   def init(_init_args) do
-    TelemetryHelper.instrument(:initialize_file, fn -> PixelCache.initialize_file() end)
-
-    # Skip loading pixels from DB in test environment to avoid sandbox issues
-    unless @env == :test do
-      spawn(fn -> load_and_write_pixels_in_batches(0, 0) end)
-    end
-
+    # No longer need to load all pixels on startup - Redis cache is persistent
+    # and chunks are loaded on-demand
+    Logger.info("PixelCacheSupervisor started - using Redis-based chunk cache")
     {:ok, %{}}
   end
 
-  defp load_and_write_pixels_in_batches(offset, total_count) do
-    batch = Pixel.Repo.list_pixels(limit: @batch_size, offset: offset)
-    batch_size = length(batch)
+  @impl true
+  def handle_call({:sub_section_of_pixels_as_binary, x, y}, _from, state) do
+    chunk_size = get_chunk_size()
+    {chunk_x, chunk_y} = get_chunk_origin(x, y, chunk_size)
 
-    if batch_size > 0 do
-      TelemetryHelper.instrument(:write_matrix_to_file, fn ->
-        PixelCache.write_coordinates_to_file(batch)
+    binary_data =
+      TelemetryHelper.instrument(:get_chunk_from_cache, fn ->
+        case RedisCache.get_chunk(chunk_x, chunk_y) do
+          {:ok, nil} ->
+            # Chunk not in cache - load from database and cache it
+            load_and_cache_chunk(chunk_x, chunk_y, chunk_size)
+
+          {:ok, data} ->
+            data
+
+          {:error, reason} ->
+            Logger.error("Failed to get chunk from Redis: #{inspect(reason)}")
+            # Fallback to loading from database
+            load_and_cache_chunk(chunk_x, chunk_y, chunk_size)
+        end
       end)
 
-      new_total = total_count + batch_size
-      IO.puts("Processed batch: #{batch_size} pixels (total: #{new_total})")
+    # Extract the requested subsection from the chunk
+    # The request coordinates (x, y) are the top-left corner of the viewport
+    subsection = extract_subsection(binary_data, x, y, chunk_x, chunk_y, chunk_size)
 
-      if batch_size == @batch_size do
-        load_and_write_pixels_in_batches(offset + @batch_size, new_total)
-      else
-        IO.puts("Cache population complete: #{new_total} pixels")
-        new_total
-      end
-    else
-      IO.puts("Cache population complete: #{total_count} pixels")
-      total_count
-    end
-  end
-
-  @impl true
-  def handle_call(:sub_section_of_pixels, _from, state) do
-    sub_section_of_pixels = PixelCache.read_sub_section_of_file(%{x: 500, y: 500})
-
-    {:reply, %{sub_section_of_pixels: sub_section_of_pixels}, state}
-  end
-
-  def handle_call({:sub_section_of_pixels_as_binary, x, y}, _from, state) do
-    sub_section_of_pixels_as_binary =
-      PixelCache.read_sub_section_of_file_as_binary(%{x: x, y: y})
-
-    {:reply, %{sub_section_of_pixels_as_binary: sub_section_of_pixels_as_binary}, state}
+    {:reply, %{sub_section_of_pixels_as_binary: subsection}, state}
   end
 
   def handle_call({:write_pixels, pixels}, _from, state) do
-    TelemetryHelper.instrument(:write_matrix_to_file, fn ->
-      PixelCache.write_coordinates_to_file(pixels)
+    TelemetryHelper.instrument(:write_pixels_to_cache, fn ->
+      RedisCache.update_pixels_in_chunks(pixels)
     end)
 
     {:reply, :ok, state}
+  end
+
+  defp load_and_cache_chunk(chunk_x, chunk_y, chunk_size) do
+    # Skip database loading in test environment
+    if @env == :test do
+      :binary.copy(<<0>>, chunk_size * chunk_size)
+    else
+      pixels = load_pixels_for_chunk(chunk_x, chunk_y, chunk_size)
+      binary_data = pixels_to_binary(pixels, chunk_x, chunk_y, chunk_size)
+
+      # Cache the chunk
+      case RedisCache.set_chunk(chunk_x, chunk_y, binary_data) do
+        :ok -> :ok
+        {:error, reason} -> Logger.error("Failed to cache chunk: #{inspect(reason)}")
+      end
+
+      binary_data
+    end
+  end
+
+  defp load_pixels_for_chunk(chunk_x, chunk_y, chunk_size) do
+    Pixel.Repo.list_pixels_in_chunk(chunk_x, chunk_y, chunk_size)
+  end
+
+  defp pixels_to_binary(pixels, chunk_x, chunk_y, chunk_size) do
+    # Create empty chunk
+    empty_chunk = :binary.copy(<<0>>, chunk_size * chunk_size)
+
+    # Fill in pixel data
+    Enum.reduce(pixels, empty_chunk, fn pixel, acc ->
+      local_x = pixel.x - chunk_x
+      local_y = pixel.y - chunk_y
+
+      if local_x >= 0 and local_x < chunk_size and local_y >= 0 and local_y < chunk_size do
+        offset = local_y * chunk_size + local_x
+        set_byte_at(acc, offset, pixel.color_ref)
+      else
+        acc
+      end
+    end)
+  end
+
+  defp set_byte_at(binary, offset, value) when offset >= 0 and offset < byte_size(binary) do
+    <<prefix::binary-size(offset), _::8, suffix::binary>> = binary
+    <<prefix::binary, value::8, suffix::binary>>
+  end
+
+  defp set_byte_at(binary, _offset, _value), do: binary
+
+  defp extract_subsection(chunk_data, x, y, chunk_x, chunk_y, chunk_size) do
+    # Calculate offset within chunk
+    offset_x = x - chunk_x
+    offset_y = y - chunk_y
+
+    # The viewport size is the same as chunk size in the current implementation
+    viewport_size = chunk_size
+
+    # If the requested viewport aligns with the chunk, return the whole thing
+    if offset_x == 0 and offset_y == 0 do
+      chunk_data
+    else
+      # Extract the subsection row by row
+      # This handles edge cases where viewport spans chunk boundaries
+      # For now, we assume viewport fits within a single chunk
+      extract_rows(chunk_data, offset_x, offset_y, viewport_size, chunk_size)
+    end
+  end
+
+  defp extract_rows(chunk_data, offset_x, offset_y, viewport_size, chunk_size) do
+    0..(viewport_size - 1)
+    |> Enum.reduce(<<>>, fn row, acc ->
+      row_start = (offset_y + row) * chunk_size + offset_x
+
+      # Ensure we don't read past the chunk boundary
+      if row_start >= 0 and row_start + viewport_size <= byte_size(chunk_data) do
+        row_data = :binary.part(chunk_data, row_start, viewport_size)
+        acc <> row_data
+      else
+        # Return zeros for out-of-bounds rows
+        acc <> :binary.copy(<<0>>, viewport_size)
+      end
+    end)
+  end
+
+  defp get_chunk_origin(x, y, chunk_size) do
+    chunk_x = floor(x / chunk_size) * chunk_size
+    chunk_y = floor(y / chunk_size) * chunk_size
+    {chunk_x, chunk_y}
+  end
+
+  defp get_chunk_size do
+    Application.get_env(:api, Api.PixelCache)[:viewport_diameter] || 400
   end
 end

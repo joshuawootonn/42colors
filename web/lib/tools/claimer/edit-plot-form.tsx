@@ -52,11 +52,16 @@ export function EditPlotForm({ plot, triggerProps }: EditPlotFormProps) {
       plotId: number;
       plot: Partial<Pick<Plot, "name" | "description" | "polygon">>;
     }) => updatePlot(plotId, plot),
-    onSuccess: () => {
+    onSuccess: (updatedPlot) => {
       const context = store.getSnapshot().context;
-      context.queryClient?.invalidateQueries({
-        queryKey: ["user", "plots"],
+
+      // Immediately update the user plots cache with the new plot data
+      // This ensures tools like bucket have the correct polygon right away
+      context.queryClient?.setQueryData(["user", "plots"], (oldPlots: Plot[] | undefined) => {
+        if (!oldPlots) return [updatedPlot];
+        return oldPlots.map((p) => (p.id === updatedPlot.id ? updatedPlot : p));
       });
+
       context.queryClient?.invalidateQueries({
         queryKey: ["user", "me"],
       });

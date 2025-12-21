@@ -63,4 +63,90 @@ defmodule Api.PixelTest do
       assert length(pixels) == 10_000
     end
   end
+
+  describe "list_pixels_in_chunk/3" do
+    test "returns pixels within the chunk boundaries" do
+      # Create pixels inside the chunk (0, 0) with size 4
+      {:ok, _} =
+        PixelRepo.create_many_pixels([
+          %{x: 0, y: 0, color_ref: 1},
+          %{x: 1, y: 1, color_ref: 2},
+          %{x: 3, y: 3, color_ref: 3}
+        ])
+
+      result = PixelRepo.list_pixels_in_chunk(0, 0, 4)
+
+      assert length(result) == 3
+      assert Enum.find(result, &(&1.x == 0 and &1.y == 0 and &1.color_ref == 1))
+      assert Enum.find(result, &(&1.x == 1 and &1.y == 1 and &1.color_ref == 2))
+      assert Enum.find(result, &(&1.x == 3 and &1.y == 3 and &1.color_ref == 3))
+    end
+
+    test "excludes pixels outside the chunk boundaries" do
+      {:ok, _} =
+        PixelRepo.create_many_pixels([
+          %{x: 0, y: 0, color_ref: 1},
+          %{x: 5, y: 5, color_ref: 2},
+          %{x: -1, y: 0, color_ref: 3}
+        ])
+
+      result = PixelRepo.list_pixels_in_chunk(0, 0, 4)
+
+      assert length(result) == 1
+      assert Enum.find(result, &(&1.x == 0 and &1.y == 0))
+      refute Enum.find(result, &(&1.x == 5))
+      refute Enum.find(result, &(&1.x == -1))
+    end
+
+    test "returns only the most recent pixel at each position" do
+      # Create first pixel
+      {:ok, _} = PixelRepo.create_many_pixels([%{x: 1, y: 1, color_ref: 5}])
+
+      # Overwrite with new color (higher id wins when timestamps are equal)
+      {:ok, _} = PixelRepo.create_many_pixels([%{x: 1, y: 1, color_ref: 10}])
+
+      result = PixelRepo.list_pixels_in_chunk(0, 0, 4)
+
+      # Should only return one pixel with the most recent color
+      assert length(result) == 1
+      assert hd(result).color_ref == 10
+    end
+
+    test "handles negative coordinates" do
+      {:ok, _} =
+        PixelRepo.create_many_pixels([
+          %{x: -4, y: -4, color_ref: 1},
+          %{x: -2, y: -2, color_ref: 2},
+          %{x: -1, y: -1, color_ref: 3}
+        ])
+
+      result = PixelRepo.list_pixels_in_chunk(-4, -4, 4)
+
+      assert length(result) == 3
+    end
+
+    test "returns empty list when no pixels in chunk" do
+      {:ok, _} = PixelRepo.create_many_pixels([%{x: 100, y: 100, color_ref: 1}])
+
+      result = PixelRepo.list_pixels_in_chunk(0, 0, 4)
+
+      assert result == []
+    end
+
+    test "handles chunk at boundary correctly" do
+      # Pixel at the edge of chunk (0,0) with size 4 -> includes (0,0) to (3,3)
+      {:ok, _} =
+        PixelRepo.create_many_pixels([
+          %{x: 3, y: 3, color_ref: 1},
+          %{x: 4, y: 4, color_ref: 2}
+        ])
+
+      result = PixelRepo.list_pixels_in_chunk(0, 0, 4)
+
+      # Only (3,3) should be included, (4,4) is outside
+      assert length(result) == 1
+      assert hd(result).x == 3
+      assert hd(result).y == 3
+    end
+  end
 end

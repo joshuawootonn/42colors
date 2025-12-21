@@ -22,5 +22,7 @@ config :logger, :console, format: "[$level] $message\n"
 config :api, Api.PixelCache,
   canvas_height: 10000,
   canvas_width: 10000,
-  viewport_diameter: 400,
-  pixel_cache_file_name: "pixel_cache.bin"
+  viewport_diameter: 400
+
+# Redis configuration - actual values come from runtime.exs
+config :api, Api.PixelCache.Redis, []

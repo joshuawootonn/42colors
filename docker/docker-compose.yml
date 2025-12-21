@@ -15,5 +15,16 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: on-failure:3
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+    restart: on-failure:3
+    command: redis-server --appendonly yes --appendfsync everysec --auto-aof-rewrite-percentage 100
+
 volumes:
   pgdata:
+  redis_data:

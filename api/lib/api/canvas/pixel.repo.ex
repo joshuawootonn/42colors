@@ -138,6 +138,23 @@ defmodule Api.Canvas.Pixel.Repo do
   def create_many_pixels(_), do: {:error, :invalid_arguments}
 
   @doc """
+  Returns pixels within a chunk starting at (x, y) with the given chunk_size.
+  Only returns the most recent pixel at each (x, y) position.
+  """
+  def list_pixels_in_chunk(x, y, chunk_size) do
+    max_x = x + chunk_size - 1
+    max_y = y + chunk_size - 1
+
+    from(p in Pixel,
+      where: p.x >= ^x and p.x <= ^max_x and p.y >= ^y and p.y <= ^max_y,
+      distinct: [p.x, p.y],
+      order_by: [asc: p.x, asc: p.y, desc: p.inserted_at, desc: p.id],
+      select: %{x: p.x, y: p.y, color_ref: p.color_ref}
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Updates a pixel.
 
   ## Examples

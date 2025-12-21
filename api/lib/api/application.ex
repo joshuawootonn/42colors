@@ -16,6 +16,8 @@ defmodule Api.Application do
       {Phoenix.PubSub, name: Api.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: Api.Finch},
+      # Start Redis cache before the pixel cache supervisor
+      Api.PixelCache.Redis,
       # Start a worker by calling: Api.Worker.start_link(arg)
       # {Api.Worker, arg},
       # Start to serve requests, typically the last entry

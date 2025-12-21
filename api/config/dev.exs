@@ -34,8 +34,13 @@ config :api, ApiWeb.Endpoint,
 config :api, Api.PixelCache,
   canvas_height: 10000,
   canvas_width: 10000,
-  viewport_diameter: 400,
-  pixel_cache_file_name: "pixel_cache.bin"
+  viewport_diameter: 400
+
+# Redis configuration
+config :api, Api.PixelCache.Redis,
+  host: "localhost",
+  port: 6379,
+  database: 0
 
 # ## SSL Support
 #

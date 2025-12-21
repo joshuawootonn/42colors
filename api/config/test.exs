@@ -21,8 +21,13 @@ config :api, Api.Repo,
 config :api, Api.PixelCache,
   canvas_height: 10,
   canvas_width: 10,
-  viewport_diameter: 4,
-  pixel_cache_file_name: "test_pixel_cache.bin"
+  viewport_diameter: 4
+
+# Redis configuration for tests - uses database 1 to isolate from dev
+config :api, Api.PixelCache.Redis,
+  host: "localhost",
+  port: 6379,
+  database: 1
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.

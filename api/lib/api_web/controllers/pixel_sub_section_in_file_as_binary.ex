@@ -9,7 +9,7 @@ defmodule ApiWeb.PixelSubSectionInFileAsBinary do
     y = String.to_integer(Map.get(conn.params, "y"))
 
     pixels =
-      TelemetryHelper.instrument(:list_pixel_subsection_from_file, fn ->
+      TelemetryHelper.instrument(:list_pixel_subsection_from_cache, fn ->
         PixelCacheSupervisor.list_pixel_subsection_from_file_as_binary(x, y)
       end)
 

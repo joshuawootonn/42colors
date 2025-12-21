@@ -46,6 +46,7 @@ env:
     APP_URL: https://42colors.com
     API_URL: https://api.42colors.com
     MIX_ENV: prod
+    REDIS_URL: redis://42colors-redis:6379/0
   secret:
     - GOOGLE_CLIENT_SECRET
     - GOOGLE_CLIENT_ID
@@ -84,25 +85,13 @@ ssh:
 #   wait: 2
 
 # Use accessory services (secrets come from .kamal/secrets).
-#
-# accessories:
-#   db:
-#     image: mysql:8.0
-#     host: 192.168.0.2
-#     port: 3306
-#     env:
-#       clear:
-#         MYSQL_ROOT_HOST: '%'
-#       secret:
-#         - MYSQL_ROOT_PASSWORD
-#     files:
-#       - config/mysql/production.cnf:/etc/mysql/my.cnf
-#       - db/production.sql:/docker-entrypoint-initdb.d/setup.sql
-#     directories:
-#       - data:/var/lib/mysql
-#   redis:
-#     image: valkey/valkey:8
-#     host: 192.168.0.2
-#     port: 6379
-#     directories:
-#       - data:/data
+accessories:
+  redis:
+    image: redis:7-alpine
+    host: 5.161.205.79
+    # No port exposure - only accessible via Docker network (42colors-redis:6379)
+    cmd: redis-server --appendonly yes --appendfsync everysec --auto-aof-rewrite-percentage 100
+    directories:
+      - data:/data
+    options:
+      memory: 512m

@@ -21,6 +21,16 @@ if System.get_env("PHX_SERVER") do
 end
 
 if config_env() == :prod do
+  # Redis configuration is required in production
+  redis_url =
+    System.get_env("REDIS_URL") ||
+      raise """
+      environment variable REDIS_URL is missing.
+      For example: redis://hostname:6379/0
+      """
+
+  config :api, Api.PixelCache.Redis, url: redis_url
+
   database_url =
     System.get_env("DATABASE_URL") ||
       raise """
