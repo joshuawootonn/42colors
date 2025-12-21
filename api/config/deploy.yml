@@ -89,9 +89,65 @@ accessories:
   redis:
     image: redis:7-alpine
     host: 5.161.205.79
-    # No port exposure - only accessible via Docker network (42colors-redis:6379)
     cmd: redis-server --appendonly yes --appendfsync everysec --auto-aof-rewrite-percentage 100
     directories:
       - data:/data
     options:
       memory: 512m
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.62.0
+    host: 5.161.205.79
+    env:
+      clear:
+        REDIS_ADDR: redis://42colors-redis:6379
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    host: 5.161.205.79
+    cmd: "--path.procfs=/host/proc --path.sysfs=/host/sys --path.rootfs=/rootfs --collector.filesystem.mount-points-exclude='^/(sys|proc|dev|host|etc|run)'"
+    directories:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    host: 5.161.205.79
+    port: 127.0.0.1:9090:9090
+    cmd: >-
+      --config.file=/etc/prometheus/prometheus.yml
+      --storage.tsdb.path=/prometheus
+      --storage.tsdb.retention.time=30d
+      --web.enable-lifecycle
+    directories:
+      - prometheus_data:/prometheus
+    files:
+      - config/prometheus.yml.erb:/etc/prometheus/prometheus.yml
+    options:
+      user: root
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    host: 5.161.205.79
+    port: 127.0.0.1:9080:3000
+    env:
+      secret:
+        - GF_SECURITY_ADMIN_USER
+        - GF_SECURITY_ADMIN_PASSWORD
+      clear:
+        GF_USERS_ALLOW_SIGN_UP: "false"
+        GF_SERVER_ROOT_URL: http://localhost:9080
+    directories:
+      - grafana_data:/var/lib/grafana
+    files:
+      - config/grafana/provisioning/datasources/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - config/grafana/provisioning/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - config/grafana/provisioning/dashboards/json/application.json:/etc/grafana/provisioning/dashboards/json/application.json
+      - config/grafana/provisioning/dashboards/json/beam.json:/etc/grafana/provisioning/dashboards/json/beam.json
+      - config/grafana/provisioning/dashboards/json/ecto.json:/etc/grafana/provisioning/dashboards/json/ecto.json
+      - config/grafana/provisioning/dashboards/json/oban.json:/etc/grafana/provisioning/dashboards/json/oban.json
+      - config/grafana/provisioning/dashboards/json/phoenix.json:/etc/grafana/provisioning/dashboards/json/phoenix.json
+      - config/grafana/provisioning/dashboards/json/redis.json:/etc/grafana/provisioning/dashboards/json/redis.json
+    options:
+      user: root

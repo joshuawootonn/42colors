@@ -106,19 +106,22 @@ dashboards:
   @echo "📉 Grafana:        http://localhost:9080 (ADMIN_USERNAME/ADMIN_PASSWORD)"
   @echo "📊 Metrics:        http://localhost:4000/metrics (requires ADMIN auth)"
 
-# Export PromEx dashboards to Grafana provisioning directory
+# Export PromEx dashboards to Grafana provisioning directory (local + production)
 export-dashboards:
   #!/usr/bin/env bash
   export $(xargs <.env.dev)
-  DASH_DIR="../docker/grafana/provisioning/dashboards/json"
-  mkdir -p $DASH_DIR
+  LOCAL_DIR="../docker/grafana/provisioning/dashboards/json"
+  PROD_DIR="config/grafana/provisioning/dashboards/json"
+  mkdir -p $LOCAL_DIR $PROD_DIR
   echo "📊 Exporting PromEx dashboards..."
-  mix prom_ex.dashboard.export -d application.json -m Api.PromEx -s 2>/dev/null | sed -n '/^{/,$p' > $DASH_DIR/application.json
-  mix prom_ex.dashboard.export -d beam.json -m Api.PromEx -s 2>/dev/null | sed -n '/^{/,$p' > $DASH_DIR/beam.json
-  mix prom_ex.dashboard.export -d phoenix.json -m Api.PromEx -s 2>/dev/null | sed -n '/^{/,$p' > $DASH_DIR/phoenix.json
-  mix prom_ex.dashboard.export -d ecto.json -m Api.PromEx -s 2>/dev/null | sed -n '/^{/,$p' > $DASH_DIR/ecto.json
-  mix prom_ex.dashboard.export -d oban.json -m Api.PromEx -s 2>/dev/null | sed -n '/^{/,$p' > $DASH_DIR/oban.json
-  echo "✅ Dashboards exported to $DASH_DIR"
+  mix prom_ex.dashboard.export -d application.json -m Api.PromEx -s 2>/dev/null | sed -n '/^{/,$p' > $LOCAL_DIR/application.json
+  mix prom_ex.dashboard.export -d beam.json -m Api.PromEx -s 2>/dev/null | sed -n '/^{/,$p' > $LOCAL_DIR/beam.json
+  mix prom_ex.dashboard.export -d phoenix.json -m Api.PromEx -s 2>/dev/null | sed -n '/^{/,$p' > $LOCAL_DIR/phoenix.json
+  mix prom_ex.dashboard.export -d ecto.json -m Api.PromEx -s 2>/dev/null | sed -n '/^{/,$p' > $LOCAL_DIR/ecto.json
+  mix prom_ex.dashboard.export -d oban.json -m Api.PromEx -s 2>/dev/null | sed -n '/^{/,$p' > $LOCAL_DIR/oban.json
+  # Copy to production config directory
+  cp $LOCAL_DIR/*.json $PROD_DIR/
+  echo "✅ Dashboards exported to $LOCAL_DIR and $PROD_DIR"
 
 deploy: 
   export $(xargs < .env.prod) && kamal deploy 

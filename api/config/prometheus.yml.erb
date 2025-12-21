@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Scrape the Elixir/Phoenix app via PromEx metrics endpoint
+  - job_name: 'api'
+    static_configs:
+      # In Kamal, the app container is named 42colors-web
+      - targets: ['42colors-web:4000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    basic_auth:
+      username: '<%= ENV["ADMIN_USERNAME"] %>'
+      password: '<%= ENV["ADMIN_PASSWORD"] %>'
+
+  # Scrape Redis metrics via redis_exporter (internal Docker network)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['42colors-redis-exporter:9121']
+    scrape_interval: 10s
+
+  # Scrape host system metrics via node_exporter (internal Docker network)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['42colors-node-exporter:9100']
+    scrape_interval: 15s
+
+  # Scrape Prometheus itself for monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
