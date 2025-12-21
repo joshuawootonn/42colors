@@ -108,8 +108,8 @@ export const DEFAULT_TOOL_SETTINGS = toolSettingsSchema.parse({
   },
   palette: {
     isOpen: true,
-    foregroundColorRef: 1, // Black
-    backgroundColorRef: 2, // White
+    foregroundColorRef: 5, // Black
+    backgroundColorRef: 1, // White
   },
   claimer: {
     selectedPlotId: undefined,

@@ -3,17 +3,8 @@ import { Variants, motion } from "motion/react";
 
 import { ComponentPropsWithoutRef, useMemo } from "react";
 
-import {
-  COLOR_ORDER,
-  COLOR_TABLE,
-  ColorRef,
-  V2_COLOR_ORDER,
-  V2_COLOR_TABLE,
-  V2ColorRef,
-  mapV1ToV2ColorRef,
-} from "@/lib/palette";
+import { COLOR_ORDER, COLOR_TABLE, ColorRef, WHITE_REF } from "@/lib/palette";
 import { store } from "@/lib/store";
-import { useNewPaletteEnabled } from "@/lib/use-new-palette";
 import { cn } from "@/lib/utils";
 import { chunk } from "@/lib/utils/chunk";
 import { useSelector } from "@xstate/store/react";
@@ -23,20 +14,13 @@ function PaletteIconButton({
   isForeground,
   isBackground,
   className,
-  useNewPalette,
   ...props
 }: ComponentPropsWithoutRef<typeof motion.button> & {
   isForeground: boolean;
   isBackground: boolean;
-  color_ref: ColorRef | V2ColorRef;
-  useNewPalette: boolean;
+  color_ref: ColorRef;
 }) {
-  const colorHex = useMemo(() => {
-    if (useNewPalette) {
-      return V2_COLOR_TABLE[color_ref as keyof typeof V2_COLOR_TABLE];
-    }
-    return COLOR_TABLE[color_ref as keyof typeof COLOR_TABLE];
-  }, [color_ref, useNewPalette]);
+  const colorHex = COLOR_TABLE[color_ref];
 
   const colorString = useMemo(() => new Color(colorHex).to("lch").toString(), [colorHex]);
   const isLight = useMemo(() => new Color(colorHex).lch[0] > 50, [colorHex]);
@@ -46,10 +30,8 @@ function PaletteIconButton({
     return hovered.toString();
   }, [colorHex]);
 
-  // Determine if this is a wide button (black or white)
-  const isWideButton = useNewPalette
-    ? color_ref === 1 || color_ref === 5 // V2: white=1, black=5
-    : color_ref === 1 || color_ref === 2; // V1: black=1, white=2
+  // Only white is wide
+  const isWideButton = color_ref === WHITE_REF;
 
   return (
     <motion.button
@@ -100,6 +82,7 @@ function PaletteIconButton({
     </motion.button>
   );
 }
+
 const container: Variants = {
   hidden: {
     transition: {
@@ -149,18 +132,8 @@ export function Palette() {
     store,
     (state) => state.context.toolSettings.palette.backgroundColorRef,
   );
-  const useNewPalette = useNewPaletteEnabled();
 
   if (state !== "initialized") return null;
-
-  // When using new palette, map v1 refs to v2 for comparison
-  const colorOrder = useNewPalette ? V2_COLOR_ORDER : COLOR_ORDER;
-  const mappedForegroundColor = useNewPalette
-    ? mapV1ToV2ColorRef(foregroundColor)
-    : foregroundColor;
-  const mappedBackgroundColor = useNewPalette
-    ? mapV1ToV2ColorRef(backgroundColor)
-    : backgroundColor;
 
   return (
     <div className="flex flex-row justify-end">
@@ -170,14 +143,14 @@ export function Palette() {
         initial="show"
         animate={"show"}
       >
-        {chunk(colorOrder, 4).map((colorChunk, i) => (
+        {chunk(COLOR_ORDER, 4).map((colorChunk, i) => (
           <motion.div variants={row} key={i} className="flex flex-row">
             {colorChunk.map((color_ref) => (
               <PaletteIconButton
                 onClick={() => {
                   store.trigger.updatePaletteSettings({
                     palette: {
-                      foregroundColorRef: color_ref as ColorRef,
+                      foregroundColorRef: color_ref,
                     },
                   });
                 }}
@@ -186,15 +159,14 @@ export function Palette() {
                   e.preventDefault();
                   store.trigger.updatePaletteSettings({
                     palette: {
-                      backgroundColorRef: color_ref as ColorRef,
+                      backgroundColorRef: color_ref,
                     },
                   });
                 }}
                 key={color_ref}
                 color_ref={color_ref}
-                useNewPalette={useNewPalette}
-                isForeground={mappedForegroundColor === color_ref}
-                isBackground={mappedBackgroundColor === color_ref}
+                isForeground={foregroundColor === color_ref}
+                isBackground={backgroundColor === color_ref}
                 variants={item}
               />
             ))}
