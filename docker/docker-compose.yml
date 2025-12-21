@@ -25,6 +25,67 @@ services:
     restart: on-failure:3
     command: redis-server --appendonly yes --appendfsync everysec --auto-aof-rewrite-percentage 100
 
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.62.0
+    # No public port - only accessible within Docker network
+    expose:
+      - "9121"
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    depends_on:
+      - redis
+    restart: on-failure:3
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    # No public port - only accessible within Docker network
+    expose:
+      - "9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: on-failure:3
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    # Localhost only - access via SSH tunnel in production
+    ports:
+      - 127.0.0.1:9090:9090
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    restart: on-failure:3
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    # Localhost only - access via SSH tunnel in production
+    ports:
+      - 127.0.0.1:9080:3000
+    environment:
+      - GF_SECURITY_ADMIN_USER=${ADMIN_USERNAME:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:9080
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    restart: on-failure:3
+
 volumes:
   pgdata:
   redis_data:
+  prometheus_data:
+  grafana_data:

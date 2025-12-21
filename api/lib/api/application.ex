@@ -1,8 +1,5 @@
 defmodule Api.Application do
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
   @moduledoc false
-  alias ApiWeb.Telemetry
 
   use Application
 
@@ -10,6 +7,7 @@ defmodule Api.Application do
   def start(_type, _args) do
     children = [
       ApiWeb.Telemetry,
+      Api.PromEx,
       Api.Repo,
       {Oban, Application.fetch_env!(:api, Oban)},
       {DNSCluster, query: Application.get_env(:api, :dns_cluster_query) || :ignore},
@@ -18,17 +16,12 @@ defmodule Api.Application do
       {Finch, name: Api.Finch},
       # Start Redis cache before the pixel cache supervisor
       Api.PixelCache.Redis,
-      # Start a worker by calling: Api.Worker.start_link(arg)
-      # {Api.Worker, arg},
       # Start to serve requests, typically the last entry
       ApiWeb.Endpoint,
       ApiWeb.PixelCacheSupervisor
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Api.Supervisor]
-    Telemetry.setup()
     Supervisor.start_link(children, opts)
   end
 

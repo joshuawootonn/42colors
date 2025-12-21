@@ -1,32 +1,8 @@
 defmodule ApiWeb.Telemetry do
-  alias ApiWeb.TelemetryHelper
   use Supervisor
 
   def start_link(arg) do
     Supervisor.start_link(__MODULE__, arg, name: __MODULE__)
-  end
-
-  require Logger
-
-  def setup do
-    events = [
-      [:my_app, :action, :format_pixels],
-      [:my_app, :action, :encode_pixels],
-      [:my_app, :action, :list_pixels],
-      [:my_app, :action, :initialize_file],
-      [:my_app, :action, :write_matrix_to_file],
-      [:my_app, :action, :write_coordinates_to_file],
-      [:my_app, :action, :list_pixel_subsection_from_file],
-      [:my_app, :action, :list_pixel_subsection_from_file_as_binary],
-      [:my_app, :action, :list_pixels_from_file]
-    ]
-
-    :telemetry.attach_many(
-      "action-handler",
-      events,
-      &TelemetryHelper.handle_event/4,
-      nil
-    )
   end
 
   @impl true
@@ -84,10 +60,6 @@ defmodule ApiWeb.Telemetry do
   end
 
   defp periodic_measurements do
-    [
-      # A module, function and arguments to be invoked periodically.
-      # This function must call :telemetry.execute/3 and a metric must be added above.
-      # {ApiWeb, :count_users, []}
-    ]
+    []
   end
 end

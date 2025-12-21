@@ -103,3 +103,9 @@ config :cors_plug,
   origin: [app_url],
   max_age: 86400,
   methods: ["GET", "POST", "DELETE", "PUT"]
+
+# PromEx configuration for Prometheus metrics
+config :api, Api.PromEx,
+  disabled: false,
+  manual_metrics_start_delay: :no_delay,
+  drop_metrics_groups: []

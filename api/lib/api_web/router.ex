@@ -84,6 +84,12 @@ defmodule ApiWeb.Router do
     live_dashboard "/dashboard", metrics: ApiWeb.Telemetry
   end
 
+  # Prometheus metrics endpoint with basic auth
+  scope "/" do
+    pipe_through :admins_only
+    get "/metrics", ApiWeb.MetricsController, :index
+  end
+
   # Swoosh mailbox preview in development only
   if Application.compile_env(:api, :dev_routes) do
     scope "/dev" do

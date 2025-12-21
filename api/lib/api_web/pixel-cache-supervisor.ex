@@ -1,7 +1,6 @@
 defmodule ApiWeb.PixelCacheSupervisor do
   require Logger
   use GenServer
-  alias ApiWeb.TelemetryHelper
   alias Api.Canvas.Pixel
   alias Api.PixelCache.Redis, as: RedisCache
 
@@ -40,21 +39,19 @@ defmodule ApiWeb.PixelCacheSupervisor do
     {chunk_x, chunk_y} = get_chunk_origin(x, y, chunk_size)
 
     binary_data =
-      TelemetryHelper.instrument(:get_chunk_from_cache, fn ->
-        case RedisCache.get_chunk(chunk_x, chunk_y) do
-          {:ok, nil} ->
-            # Chunk not in cache - load from database and cache it
-            load_and_cache_chunk(chunk_x, chunk_y, chunk_size)
+      case RedisCache.get_chunk(chunk_x, chunk_y) do
+        {:ok, nil} ->
+          # Chunk not in cache - load from database and cache it
+          load_and_cache_chunk(chunk_x, chunk_y, chunk_size)
 
-          {:ok, data} ->
-            data
+        {:ok, data} ->
+          data
 
-          {:error, reason} ->
-            Logger.error("Failed to get chunk from Redis: #{inspect(reason)}")
-            # Fallback to loading from database
-            load_and_cache_chunk(chunk_x, chunk_y, chunk_size)
-        end
-      end)
+        {:error, reason} ->
+          Logger.error("Failed to get chunk from Redis: #{inspect(reason)}")
+          # Fallback to loading from database
+          load_and_cache_chunk(chunk_x, chunk_y, chunk_size)
+      end
 
     # Extract the requested subsection from the chunk
     # The request coordinates (x, y) are the top-left corner of the viewport
@@ -64,10 +61,7 @@ defmodule ApiWeb.PixelCacheSupervisor do
   end
 
   def handle_call({:write_pixels, pixels}, _from, state) do
-    TelemetryHelper.instrument(:write_pixels_to_cache, fn ->
-      RedisCache.update_pixels_in_chunks(pixels)
-    end)
-
+    RedisCache.update_pixels_in_chunks(pixels)
     {:reply, :ok, state}
   end
 

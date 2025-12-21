@@ -1,0 +1,4 @@
+# This directory will hold Grafana dashboard JSON files
+# You can export dashboards from PromEx using:
+#   mix prom_ex.dashboard.export --dashboard beam.json --filename docker/grafana/provisioning/dashboards/json/beam.json
+
