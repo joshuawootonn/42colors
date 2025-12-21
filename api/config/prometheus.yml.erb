@@ -3,11 +3,10 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  # Scrape the Elixir/Phoenix app via PromEx metrics endpoint
+  # Scrape the Elixir/Phoenix app via kamal-proxy (stable internal name)
   - job_name: 'api'
     static_configs:
-      # In Kamal, the app container is named 42colors-web
-      - targets: ['42colors-web:4000']
+      - targets: ['kamal-proxy:80']
     metrics_path: '/metrics'
     scrape_interval: 10s
     basic_auth:
