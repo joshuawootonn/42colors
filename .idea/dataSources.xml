@@ -5,14 +5,14 @@
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://us-east-1.pg.psdb.cloud:5432/42colors</jdbc-url>
+      <jdbc-url>jdbc:postgresql://us-east-5.pg.psdb.cloud:5432/42colors</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
     <data-source source="LOCAL" name="PROD-PROD@PS" uuid="f6cb65f4-69c6-49b4-9c85-7087abdbc6b3">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://us-east-1.pg.psdb.cloud:6432/42colors</jdbc-url>
+      <jdbc-url>jdbc:postgresql://us-east-5.pg.psdb.cloud:6432/42colors</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
     <data-source source="LOCAL" name="postgres@localhost" uuid="d4be5951-fc2b-47b6-b5f1-35defde3c63f">
@@ -20,6 +20,13 @@
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://localhost:5434/postgres</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="postgres@us-east-5.pg.psdb.cloud" uuid="308e42b5-8de9-4718-89ce-ffdb707a5325">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://us-east-5.pg.psdb.cloud:5432/postgres</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>
