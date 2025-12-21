@@ -6,6 +6,7 @@ import {
 } from "@/lib/line";
 
 import { ACTION_TYPES } from "../../action-types";
+import { isAdminUser } from "../../admin";
 import { getZoomMultiplier } from "../../camera";
 import { getPixelSize } from "../../canvas/canvas";
 import {
@@ -58,6 +59,9 @@ function getPixelColor(x: number, y: number, context: InitializedStore): ColorRe
   return TRANSPARENT_REF;
 }
 
+const MAX_FLOOD_FILL_PIXELS = 50000;
+const MAX_TELEGRAPH_PREVIEW_PIXELS = 5000;
+
 function floodFill(
   startX: number,
   startY: number,
@@ -65,12 +69,19 @@ function floodFill(
   context: InitializedStore,
   visited: Set<string>,
   plotPolygon?: Polygon,
+  maxPixels: number = MAX_FLOOD_FILL_PIXELS,
 ): AbsolutePointTuple[] {
   const filledPixels: AbsolutePointTuple[] = [];
   const queue: Array<{ x: number; y: number }> = [{ x: startX, y: startY }];
   const visitedSet = visited;
 
   while (queue.length > 0) {
+    // Safety limit to prevent freezing on very large fills
+    if (filledPixels.length >= maxPixels) {
+      console.warn("Flood fill hit max pixel limit:", maxPixels);
+      break;
+    }
+
     const { x, y } = queue.shift()!;
     const absolutePoint = absolutePointTupleSchema.parse([x, y]);
     const key = `${x},${y}`;
@@ -167,18 +178,21 @@ function onPointerDown(
     return context;
   }
 
+  const isAdminOverride =
+    isAdminUser(context.user) && context.adminSettings.isAdminCanvasEditingEnabled;
+
   const absolutePointTuple = absolutePointTupleSchema.parse([startPoint.x, startPoint.y]);
 
   const plotAtPoint = findPlotAtPoint(absolutePointTuple, context);
-  if (plotAtPoint == null) {
+  if (plotAtPoint == null && !isAdminOverride) {
     enqueue.effect(() => {
       toasts.cannotBucketOutsidePlot();
     });
     return context;
   }
 
-  // Verify the plot is owned by the current user
-  if (plotAtPoint.userId !== context.user.id) {
+  // Verify the plot is owned by the current user (unless admin override)
+  if (plotAtPoint != null && plotAtPoint.userId !== context.user.id && !isAdminOverride) {
     console.debug("Bucket: Plot not owned by user", plotAtPoint.userId, context.user.id);
     enqueue.effect(() => {
       toasts.cannotBucketOtherPlot();
@@ -193,7 +207,7 @@ function onPointerDown(
 
   console.debug("Bucket: Starting fill at", startPoint, "with color", color_ref);
 
-  const nextActiveAction = startBucketAction(startPoint, color_ref, context, plotAtPoint.polygon);
+  const nextActiveAction = startBucketAction(startPoint, color_ref, context, plotAtPoint?.polygon);
 
   console.debug("Bucket: Filled", nextActiveAction.points.length, "pixels");
 
@@ -233,6 +247,15 @@ function onPointerMove(
     return context;
   }
 
+  const isAdminOverride =
+    isAdminUser(context.user) && context.adminSettings.isAdminCanvasEditingEnabled;
+
+  // Admin with override can bucket anywhere
+  if (isAdminOverride) {
+    canvas.style.cursor = "pointer";
+    return context;
+  }
+
   const plotAtPoint = findPlotAtPoint(
     absolutePointTupleSchema.parse([absolutePoint.x, absolutePoint.y]),
     context,
@@ -267,15 +290,18 @@ function redrawTelegraph(context: InitializedStore) {
     return;
   }
 
+  const isAdminOverride =
+    isAdminUser(context.user) && context.adminSettings.isAdminCanvasEditingEnabled;
+
   const plotAtPoint = findPlotAtPoint(absolutePointTuple, context);
-  if (plotAtPoint == null || plotAtPoint.userId !== context.user.id) {
+  if (!isAdminOverride && (plotAtPoint == null || plotAtPoint.userId !== context.user.id)) {
     return;
   }
 
   const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
   const color = getColorFromRef(context.toolSettings.palette.foregroundColorRef);
 
-  // Run flood fill to preview what would be filled
+  // Run flood fill to preview what would be filled (with smaller limit for performance)
   const targetColor = getPixelColor(absolutePoint.x, absolutePoint.y, context);
   const visited = new Set<string>();
   const previewPixels = floodFill(
@@ -284,7 +310,8 @@ function redrawTelegraph(context: InitializedStore) {
     targetColor,
     context,
     visited,
-    plotAtPoint.polygon,
+    plotAtPoint?.polygon,
+    MAX_TELEGRAPH_PREVIEW_PIXELS,
   );
 
   // Convert pixels to polygons for rendering
