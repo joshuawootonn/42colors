@@ -12,13 +12,13 @@ import {
   pointSchema,
 } from "../../geometry/coord";
 import { getCanvasPolygon } from "../../geometry/polygon";
-import { COLOR_TABLE, ColorRef } from "../../palette";
+import { ColorRef } from "../../palette";
 import { InitializedStore, store } from "../../store";
 import { clientToCanvas } from "../../utils/clientToCanvasConversion";
 import { dedupeCoords } from "../../utils/dedupe-coords";
 import { newNewCoords } from "../../utils/net-new-coords";
 import { uuid } from "../../utils/uuid";
-import { hexToRgbaColor } from "../../webgpu/colors";
+import { getColorFromRef } from "../../webgpu/colors";
 import { EnqueueObject } from "../../xstate-internal-types";
 
 export type BrushSettings = {
@@ -233,8 +233,7 @@ function redrawTelegraph(context: InitializedStore) {
 
   const absolutePoint = getAbsolutePoint(clientX, clientY, context);
   const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
-  const colorHex = COLOR_TABLE[context.toolSettings.palette.foregroundColorRef];
-  const color = hexToRgbaColor(colorHex);
+  const color = getColorFromRef(context.toolSettings.palette.foregroundColorRef);
 
   const brushPolygon = getCanvasPolygon(
     absolutePoint.x,

@@ -6,11 +6,11 @@ import { getPixelSize } from "../../canvas/canvas";
 import { bresenhamLine } from "../../geometry/bresenham-line";
 import { AbsolutePoint } from "../../geometry/coord";
 import { getCanvasPolygon } from "../../geometry/polygon";
-import { BLACK_REF, COLOR_TABLE, TRANSPARENT_REF } from "../../palette";
+import { BLACK_REF, TRANSPARENT_REF } from "../../palette";
 import { InitializedStore, store } from "../../store";
 import { newNewCoords } from "../../utils/net-new-coords";
 import { uuid } from "../../utils/uuid";
-import { hexToRgbaColor } from "../../webgpu/colors";
+import { getColorFromRef } from "../../webgpu/colors";
 import { EnqueueObject } from "../../xstate-internal-types";
 import {
   getAbsolutePoint,
@@ -41,8 +41,7 @@ function redrawTelegraph(context: InitializedStore) {
 
   const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
 
-  const colorHex = COLOR_TABLE[BLACK_REF];
-  const color = hexToRgbaColor(colorHex);
+  const color = getColorFromRef(BLACK_REF);
 
   const eraserPolygon = getCanvasPolygon(
     absolutePoint.x,

@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+// =============================================================================
+// LEGACY PALETTE (v1)
+// =============================================================================
+
 export const COLOR_TABLE = {
   0: "transparent",
   1: "#000000",
@@ -143,6 +147,210 @@ export const COLOR_ORDER: ColorRef[] = [
   WHITE_REF,
 ];
 
+// =============================================================================
+// V2 PALETTE (feature flagged)
+// =============================================================================
+
+export const V2_COLOR_TABLE = {
+  0: "transparent",
+  1: "#ffffff",
+  2: "#DFDFDF",
+  3: "#ADADAD",
+  4: "#626262",
+  5: "#000000",
+  6: "#E7CFBE",
+  7: "#B97C55",
+  8: "#8A3E08",
+  9: "#623510",
+  10: "#F5BE8C",
+  11: "#F38846",
+  12: "#E75B15",
+  13: "#C4480D",
+  14: "#F6EE96",
+  15: "#F5E826",
+  16: "#F4C72C",
+  17: "#C18817",
+  18: "#E0EC6B",
+  19: "#96B115",
+  20: "#958814",
+  21: "#575308",
+  22: "#B6EBAD",
+  23: "#62D842",
+  24: "#1C9850",
+  25: "#10633D",
+  26: "#ACF6EF",
+  27: "#2BCEC3",
+  28: "#1C9393",
+  29: "#106068",
+  30: "#C5E5F5",
+  31: "#1F8FF2",
+  32: "#1248BD",
+  33: "#09148D",
+  34: "#C7B4F5",
+  35: "#8155D8",
+  36: "#7634A7",
+  37: "#360881",
+  38: "#EE6071",
+  39: "#D51010",
+  40: "#A70D2E",
+  41: "#830819",
+  42: "#F5B3E0",
+  43: "#F375A4",
+};
+
+export const v2ColorRefSchema = z.union([
+  z.literal(0),
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+  z.literal(6),
+  z.literal(7),
+  z.literal(8),
+  z.literal(9),
+  z.literal(10),
+  z.literal(11),
+  z.literal(12),
+  z.literal(13),
+  z.literal(14),
+  z.literal(15),
+  z.literal(16),
+  z.literal(17),
+  z.literal(18),
+  z.literal(19),
+  z.literal(20),
+  z.literal(21),
+  z.literal(22),
+  z.literal(23),
+  z.literal(24),
+  z.literal(25),
+  z.literal(26),
+  z.literal(27),
+  z.literal(28),
+  z.literal(29),
+  z.literal(30),
+  z.literal(31),
+  z.literal(32),
+  z.literal(33),
+  z.literal(34),
+  z.literal(35),
+  z.literal(36),
+  z.literal(37),
+  z.literal(38),
+  z.literal(39),
+  z.literal(40),
+  z.literal(41),
+  z.literal(42),
+  z.literal(43),
+]);
+
+export type V2ColorRef = z.infer<typeof v2ColorRefSchema>;
+
+export const V2_TRANSPARENT_REF = 0;
+export const V2_BLACK_REF = 5;
+export const V2_WHITE_REF = 1;
+
+export const V2_COLOR_ORDER: V2ColorRef[] = [
+  2,
+  3,
+  4,
+  V2_BLACK_REF,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  16,
+  17,
+  18,
+  19,
+  20,
+  21,
+  22,
+  23,
+  24,
+  25,
+  26,
+  27,
+  28,
+  29,
+  30,
+  31,
+  32,
+  33,
+  34,
+  35,
+  36,
+  37,
+  38,
+  39,
+  40,
+  41,
+  42,
+  43,
+  V2_WHITE_REF,
+];
+
+// =============================================================================
+// MIGRATION MAPPING (v1 → v2)
+// =============================================================================
+
+const V1_TO_V2_MAP: Record<ColorRef, V2ColorRef> = {
+  0: 0,
+  1: 5,
+  2: 1,
+  3: 2,
+  4: 3,
+  5: 4,
+  6: 5,
+  7: 6,
+  8: 7,
+  9: 8,
+  10: 9,
+  11: 6,
+  12: 7,
+  13: 8,
+  14: 9,
+  15: 39,
+  16: 40,
+  17: 41,
+  18: 42,
+  19: 10,
+  20: 11,
+  21: 12,
+  22: 13,
+  23: 14,
+  24: 15,
+  25: 16,
+  26: 17,
+  27: 22,
+  28: 23,
+  29: 24,
+  30: 25,
+  31: 26,
+  32: 31,
+  33: 32,
+  34: 33,
+  35: 42,
+  36: 35,
+  37: 36,
+  38: 37,
+  39: 43,
+  40: 39,
+  41: 40,
+  42: 41,
+};
+
+export function mapV1ToV2ColorRef(v1ColorRef: ColorRef): V2ColorRef {
+  return V1_TO_V2_MAP[v1ColorRef];
+}
+
 export function getNextColor(currentColorRef: ColorRef): ColorRef {
   const currentIndex = COLOR_ORDER.indexOf(currentColorRef);
   return COLOR_ORDER[(currentIndex + 1) % COLOR_ORDER.length];
@@ -151,4 +359,14 @@ export function getNextColor(currentColorRef: ColorRef): ColorRef {
 export function getPreviousColor(currentColorRef: ColorRef): ColorRef {
   const currentIndex = COLOR_ORDER.indexOf(currentColorRef);
   return COLOR_ORDER[(currentIndex - 1 + COLOR_ORDER.length) % COLOR_ORDER.length];
+}
+
+export function getNextV2Color(currentColorRef: V2ColorRef): V2ColorRef {
+  const currentIndex = V2_COLOR_ORDER.indexOf(currentColorRef);
+  return V2_COLOR_ORDER[(currentIndex + 1) % V2_COLOR_ORDER.length];
+}
+
+export function getPreviousV2Color(currentColorRef: V2ColorRef): V2ColorRef {
+  const currentIndex = V2_COLOR_ORDER.indexOf(currentColorRef);
+  return V2_COLOR_ORDER[(currentIndex - 1 + V2_COLOR_ORDER.length) % V2_COLOR_ORDER.length];
 }

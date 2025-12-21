@@ -8,10 +8,10 @@ import { bresenhamLine } from "../../geometry/bresenham-line";
 import { AbsolutePoint } from "../../geometry/coord";
 import { getCanvasPolygon } from "../../geometry/polygon";
 import { Vector } from "../../geometry/vector";
-import { COLOR_TABLE, ColorRef } from "../../palette";
+import { ColorRef } from "../../palette";
 import { InitializedStore, store } from "../../store";
 import { uuid } from "../../utils/uuid";
-import { hexToRgbaColor } from "../../webgpu/colors";
+import { getColorFromRef } from "../../webgpu/colors";
 import { EnqueueObject } from "../../xstate-internal-types";
 import { getAbsolutePoint, getBrushPoints, getCameraOffset, pointsToPixels } from "../brush/brush";
 
@@ -54,8 +54,7 @@ function redrawTelegraph(context: InitializedStore) {
   // If actively drawing a line, show the line preview as a polygon
   if (context.activeAction && context.activeAction.type === ACTION_TYPES.LINE_ACTIVE) {
     const activeLineAction = context.activeAction as LineActive;
-    const colorHex = COLOR_TABLE[activeLineAction.color_ref];
-    const color = hexToRgbaColor(colorHex);
+    const color = getColorFromRef(activeLineAction.color_ref);
 
     // Get line points and expand them with brush size
 
@@ -91,8 +90,7 @@ function redrawTelegraph(context: InitializedStore) {
   const clientY = context.interaction.cursorPosition.clientY;
   const absolutePoint = getAbsolutePoint(clientX, clientY, context);
 
-  const colorHex = COLOR_TABLE[context.toolSettings.palette.foregroundColorRef];
-  const color = hexToRgbaColor(colorHex);
+  const color = getColorFromRef(context.toolSettings.palette.foregroundColorRef);
 
   const cursorPolygon = getCanvasPolygon(
     absolutePoint.x,

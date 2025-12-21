@@ -18,11 +18,11 @@ import { X_MAX, X_MIN, Y_MAX, Y_MIN } from "../../constants";
 import { AbsolutePoint, Pixel, getLastPixelValue } from "../../geometry/coord";
 import { Polygon, getCanvasPolygon } from "../../geometry/polygon";
 import { inside } from "../../geometry/polygon";
-import { COLOR_TABLE, ColorRef, TRANSPARENT_REF } from "../../palette";
+import { ColorRef, TRANSPARENT_REF } from "../../palette";
 import { findPlotAtPoint } from "../../plots/plots.rest";
 import { InitializedStore, store } from "../../store";
 import { uuid } from "../../utils/uuid";
-import { hexToRgbaColor } from "../../webgpu/colors";
+import { getColorFromRef } from "../../webgpu/colors";
 import { EnqueueObject } from "../../xstate-internal-types";
 import { getAbsolutePoint, getCameraOffset } from "../brush/brush";
 
@@ -273,8 +273,7 @@ function redrawTelegraph(context: InitializedStore) {
   }
 
   const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
-  const colorHex = COLOR_TABLE[context.toolSettings.palette.foregroundColorRef];
-  const color = hexToRgbaColor(colorHex);
+  const color = getColorFromRef(context.toolSettings.palette.foregroundColorRef);
 
   // Run flood fill to preview what would be filled
   const targetColor = getPixelColor(absolutePoint.x, absolutePoint.y, context);

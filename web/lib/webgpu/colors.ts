@@ -1,4 +1,5 @@
-import { COLOR_TABLE } from "../palette";
+import { isNewPaletteEnabled } from "../new-palette";
+import { COLOR_TABLE, ColorRef, V2_COLOR_TABLE, mapV1ToV2ColorRef } from "../palette";
 
 export type Color = [number, number, number, number];
 
@@ -27,7 +28,15 @@ export function hexToRgbaColor(hex: string): Color {
   return [r, g, b, 1];
 }
 
-export function getColorFromRef(colorRef: number): Color {
+export function getColorFromRef(colorRef: number, useNewPalette?: boolean): Color {
+  const shouldUseNewPalette = useNewPalette ?? isNewPaletteEnabled();
+
+  if (shouldUseNewPalette) {
+    const v2Ref = mapV1ToV2ColorRef(colorRef as ColorRef);
+    const colorHex = V2_COLOR_TABLE[v2Ref as keyof typeof V2_COLOR_TABLE];
+    return hexToRgbaColor(colorHex);
+  }
+
   const colorHex = COLOR_TABLE[colorRef as keyof typeof COLOR_TABLE];
   return hexToRgbaColor(colorHex);
 }

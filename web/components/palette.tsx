@@ -3,8 +3,17 @@ import { Variants, motion } from "motion/react";
 
 import { ComponentPropsWithoutRef, useMemo } from "react";
 
-import { COLOR_ORDER, COLOR_TABLE, ColorRef } from "@/lib/palette";
+import {
+  COLOR_ORDER,
+  COLOR_TABLE,
+  ColorRef,
+  V2_COLOR_ORDER,
+  V2_COLOR_TABLE,
+  V2ColorRef,
+  mapV1ToV2ColorRef,
+} from "@/lib/palette";
 import { store } from "@/lib/store";
+import { useNewPaletteEnabled } from "@/lib/use-new-palette";
 import { cn } from "@/lib/utils";
 import { chunk } from "@/lib/utils/chunk";
 import { useSelector } from "@xstate/store/react";
@@ -14,24 +23,33 @@ function PaletteIconButton({
   isForeground,
   isBackground,
   className,
+  useNewPalette,
   ...props
 }: ComponentPropsWithoutRef<typeof motion.button> & {
   isForeground: boolean;
   isBackground: boolean;
-  color_ref: ColorRef;
+  color_ref: ColorRef | V2ColorRef;
+  useNewPalette: boolean;
 }) {
-  const colorString = useMemo(
-    () => new Color(COLOR_TABLE[color_ref]).to("lch").toString(),
-    [color_ref],
-  );
-  const isLight = useMemo(() => new Color(COLOR_TABLE[color_ref]).lch[0] > 50, [color_ref]);
+  const colorHex = useMemo(() => {
+    if (useNewPalette) {
+      return V2_COLOR_TABLE[color_ref as keyof typeof V2_COLOR_TABLE];
+    }
+    return COLOR_TABLE[color_ref as keyof typeof COLOR_TABLE];
+  }, [color_ref, useNewPalette]);
+
+  const colorString = useMemo(() => new Color(colorHex).to("lch").toString(), [colorHex]);
+  const isLight = useMemo(() => new Color(colorHex).lch[0] > 50, [colorHex]);
   const hoveredColor = useMemo(() => {
-    const hoveredColor = new Color(COLOR_TABLE[color_ref]);
+    const hovered = new Color(colorHex);
+    hovered.lch[0] = hovered.lch[0] + 10;
+    return hovered.toString();
+  }, [colorHex]);
 
-    hoveredColor.lch[0] = hoveredColor.lch[0] + 10;
-
-    return hoveredColor.toString();
-  }, [color_ref]);
+  // Determine if this is a wide button (black or white)
+  const isWideButton = useNewPalette
+    ? color_ref === 1 || color_ref === 5 // V2: white=1, black=5
+    : color_ref === 1 || color_ref === 2; // V1: black=1, white=2
 
   return (
     <motion.button
@@ -39,7 +57,7 @@ function PaletteIconButton({
       className={cn(
         "border-1 group relative flex size-8 items-center justify-center border-border bg-white text-white ring-[1.5px] ring-black",
         "rounded-none outline-none focus-visible:border-border",
-        (color_ref === 1 || color_ref === 2) && "w-16",
+        isWideButton && "w-16",
         className,
       )}
       initial={{ backgroundColor: colorString }}
@@ -131,8 +149,18 @@ export function Palette() {
     store,
     (state) => state.context.toolSettings.palette.backgroundColorRef,
   );
+  const useNewPalette = useNewPaletteEnabled();
 
   if (state !== "initialized") return null;
+
+  // When using new palette, map v1 refs to v2 for comparison
+  const colorOrder = useNewPalette ? V2_COLOR_ORDER : COLOR_ORDER;
+  const mappedForegroundColor = useNewPalette
+    ? mapV1ToV2ColorRef(foregroundColor)
+    : foregroundColor;
+  const mappedBackgroundColor = useNewPalette
+    ? mapV1ToV2ColorRef(backgroundColor)
+    : backgroundColor;
 
   return (
     <div className="flex flex-row justify-end">
@@ -142,14 +170,14 @@ export function Palette() {
         initial="show"
         animate={"show"}
       >
-        {chunk(COLOR_ORDER, 4).map((colorChunk, i) => (
+        {chunk(colorOrder, 4).map((colorChunk, i) => (
           <motion.div variants={row} key={i} className="flex flex-row">
             {colorChunk.map((color_ref) => (
               <PaletteIconButton
                 onClick={() => {
                   store.trigger.updatePaletteSettings({
                     palette: {
-                      foregroundColorRef: color_ref,
+                      foregroundColorRef: color_ref as ColorRef,
                     },
                   });
                 }}
@@ -158,14 +186,15 @@ export function Palette() {
                   e.preventDefault();
                   store.trigger.updatePaletteSettings({
                     palette: {
-                      backgroundColorRef: color_ref,
+                      backgroundColorRef: color_ref as ColorRef,
                     },
                   });
                 }}
                 key={color_ref}
                 color_ref={color_ref}
-                isForeground={foregroundColor === color_ref}
-                isBackground={backgroundColor === color_ref}
+                useNewPalette={useNewPalette}
+                isForeground={mappedForegroundColor === color_ref}
+                isBackground={mappedBackgroundColor === color_ref}
                 variants={item}
               />
             ))}
