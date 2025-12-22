@@ -61,6 +61,12 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# Sentry configuration
+config :sentry,
+  environment_name: Mix.env(),
+  enable_source_code_context: true,
+  root_source_code_paths: [File.cwd!()]
+
 client_id = System.get_env("GOOGLE_CLIENT_ID")
 client_secret = System.get_env("GOOGLE_CLIENT_SECRET")
 # Google Auth Credentials
