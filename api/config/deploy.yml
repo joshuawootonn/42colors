@@ -149,5 +149,6 @@ accessories:
       - config/grafana/provisioning/dashboards/json/oban.json:/etc/grafana/provisioning/dashboards/json/oban.json
       - config/grafana/provisioning/dashboards/json/phoenix.json:/etc/grafana/provisioning/dashboards/json/phoenix.json
       - config/grafana/provisioning/dashboards/json/redis.json:/etc/grafana/provisioning/dashboards/json/redis.json
+      - config/grafana/provisioning/dashboards/json/node-exporter.json:/etc/grafana/provisioning/dashboards/json/node-exporter.json
     options:
       user: root
