@@ -7,7 +7,10 @@ image: joshuawootonn/42colors
 # Deploy to these servers.
 servers:
   web:
-    - 5.161.205.79
+    hosts:
+      - 5.161.205.79
+    options:
+      network-alias: 42colors-app
   # job:
   #   hosts:
   #     - 192.168.0.1
