@@ -1,0 +1,43 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: default-notifications
+    receivers:
+<% if ENV["ALERT_TO_EMAIL"] && !ENV["ALERT_TO_EMAIL"].empty? %>
+      # Email via Mailpace SMTP
+      - uid: email-mailpace
+        type: email
+        settings:
+          addresses: <%= ENV["ALERT_TO_EMAIL"] %>
+          singleEmail: true
+        disableResolveMessage: false
+<% end %>
+<% if ENV["DISCORD_ALERT_WEBHOOK"] && !ENV["DISCORD_ALERT_WEBHOOK"].empty? %>
+      # Discord webhook
+      - uid: discord-alerts
+        type: discord
+        settings:
+          url: <%= ENV["DISCORD_ALERT_WEBHOOK"] %>
+          use_discord_username: true
+        disableResolveMessage: false
+<% end %>
+<% if (!ENV["ALERT_TO_EMAIL"] || ENV["ALERT_TO_EMAIL"].empty?) && (!ENV["DISCORD_ALERT_WEBHOOK"] || ENV["DISCORD_ALERT_WEBHOOK"].empty?) %>
+      # Placeholder - configure contact points in Grafana UI
+      - uid: placeholder
+        type: email
+        settings:
+          addresses: joshuawootonn@gmail.com
+          singleEmail: true
+        disableResolveMessage: false
+<% end %>
+
+# Notification policies - route all alerts to default-notifications
+policies:
+  - orgId: 1
+    receiver: default-notifications
+    group_by:
+      - alertname
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h

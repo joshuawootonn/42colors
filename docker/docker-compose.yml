@@ -77,6 +77,15 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=http://localhost:9080
+      # SMTP via Mailpace (for email alerts)
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=smtp.mailpace.com:587
+      - GF_SMTP_USER=${MAILPACE_API_KEY:-}
+      - GF_SMTP_PASSWORD=${MAILPACE_API_KEY:-}
+      - GF_SMTP_FROM_ADDRESS=alerts@42colors.com
+      - GF_SMTP_FROM_NAME=42colors Alerts
+      # Discord alerts
+      - DISCORD_ALERT_WEBHOOK=${DISCORD_ALERT_WEBHOOK:-}
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
