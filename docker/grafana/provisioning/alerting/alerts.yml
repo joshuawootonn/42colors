@@ -1,5 +1,10 @@
 apiVersion: 1
 
+# Delete previously provisioned test alert
+deleteRules:
+  - orgId: 1
+    uid: test-alert-delete-me
+
 groups:
   - orgId: 1
     name: Infrastructure Alerts
