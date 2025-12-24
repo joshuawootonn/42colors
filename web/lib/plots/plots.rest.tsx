@@ -145,11 +145,38 @@ export function findPlotAtPoint(point: AbsolutePointTuple, context: InitializedS
 }
 
 export function findPlotById(id: number, context: InitializedStore): Plot | null {
+  // Check user plots first (higher priority)
+  const userPlots = (context.queryClient.getQueryData(["user", "plots"]) ?? []) as Plot[];
+  const userPlot = userPlots.find((plot) => plot.id === id);
+  if (userPlot) {
+    return userPlot;
+  }
+
+  // Check recent plots (from other users)
+  const recentPlots = (context.queryClient.getQueryData(["plots", "list"]) ?? []) as Plot[];
+  const recentPlot = recentPlots.find((plot) => plot.id === id);
+  if (recentPlot) {
+    return recentPlot;
+  }
+
+  // Check plots stored in chunks
   for (const chunkKey in context.canvas.chunkCanvases) {
     const chunk = context.canvas.chunkCanvases[chunkKey];
     if (chunk && chunk.plots) {
       for (const plot of chunk.plots) {
         if (plot.id === id) {
+          if (plot.polygon) {
+            // Convert chunk-local polygon back to world coordinates
+            return {
+              ...plot,
+              polygon: polygonSchema.parse({
+                vertices: plot.polygon.vertices.map((vertex) => [
+                  vertex[0] + chunk.x,
+                  vertex[1] + chunk.y,
+                ]),
+              }),
+            };
+          }
           return plot;
         }
       }

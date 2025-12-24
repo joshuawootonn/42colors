@@ -1037,16 +1037,8 @@ export const store = createStore({
     moveToPlot: (context, { plotId }: { plotId: number }, enqueue) => {
       if (isInitialStore(context)) return;
 
-      const userPlots = (context.queryClient.getQueryData(["user", "plots"]) ?? []) as Plot[];
-
-      const recentPlots = (context.queryClient.getQueryData(["plots", "list"]) ?? []) as Plot[];
-
-      let polygon =
-        userPlots.find((plot) => plot.id === plotId)?.polygon ??
-        recentPlots.find((plot) => plot.id === plotId)?.polygon ??
-        findPlotById(plotId, context)?.polygon;
+      let polygon = findPlotById(plotId, context)?.polygon;
       enqueue.effect(async () => {
-        console.log("polygon1", polygon);
         if (polygon == null) {
           console.trace("Plot with id of ${plotId} not found locally. Fetching it");
           const plot = await getPlot(plotId, {
@@ -1060,12 +1052,6 @@ export const store = createStore({
 
           polygon = plot.polygon;
         }
-        console.log("polygon2", polygon);
-        console.log("getCenterPoint(polygon)", getCenterPoint(polygon));
-        console.log(
-          "centerCameraOnPoint(getCenterPoint(polygon), store.getSnapshot().context.camera)",
-          centerCameraOnPoint(getCenterPoint(polygon), store.getSnapshot().context.camera),
-        );
 
         if (polygon != null) {
           store.trigger.moveCamera({
