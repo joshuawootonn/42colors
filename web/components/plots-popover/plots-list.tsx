@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 
 import { Plot } from "@/lib/tools/claimer/claimer.rest";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,9 @@ interface PlotsListProps {
   selectPlot: (plotId: number) => void;
   emptyMessage?: string;
   loadingMessage?: string;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  fetchNextPage?: () => void;
 }
 
 export function PlotsList({
@@ -32,9 +35,14 @@ export function PlotsList({
   selectPlot,
   emptyMessage = "No plots found",
   loadingMessage = "Loading plots...",
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
 }: PlotsListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedPlotRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (selectedPlotId && containerRef.current && selectedPlotRef.current) {
       const selectedElement = selectedPlotRef.current;
@@ -45,6 +53,33 @@ export function PlotsList({
       });
     }
   }, [selectedPlotId]);
+
+  // Intersection observer for infinite scrolling
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [target] = entries;
+      if (target.isIntersecting && hasNextPage && !isFetchingNextPage && fetchNextPage) {
+        fetchNextPage();
+      }
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage],
+  );
+
+  useEffect(() => {
+    const element = loadMoreRef.current;
+    if (!element) return;
+
+    const option = {
+      root: null,
+      rootMargin: "100px",
+      threshold: 0,
+    };
+
+    const observer = new IntersectionObserver(handleObserver, option);
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [handleObserver]);
 
   if (isLoading) {
     return (
@@ -98,6 +133,13 @@ export function PlotsList({
           </button>
         </div>
       ))}
+
+      {/* Load more trigger */}
+      <div ref={loadMoreRef} className="py-2">
+        {isFetchingNextPage && (
+          <div className="text-center text-sm text-muted-foreground">Loading more...</div>
+        )}
+      </div>
     </div>
   );
 }

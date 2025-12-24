@@ -362,10 +362,11 @@ defmodule Api.Canvas.Plot.ServiceTest do
       newest_plot: newest_plot,
       no_polygon_plot: no_polygon_plot
     } do
-      results = Plot.Service.list_plots(%{})
+      {results, has_more} = Plot.Service.list_plots(%{})
 
-      # Should return all plots (4 total) since we're under the default limit of 10
+      # Should return all plots (4 total) since we're under the default limit of 20
       assert length(results) == 4
+      assert has_more == false
 
       # Should be sorted by creation date (newest first)
       # Verify that each subsequent plot has an earlier or equal inserted_at timestamp
@@ -386,8 +387,9 @@ defmodule Api.Canvas.Plot.ServiceTest do
 
     test "respects custom limit parameter", %{} do
       # Test limit of 2
-      results = Plot.Service.list_plots(%{limit: 2})
+      {results, has_more} = Plot.Service.list_plots(%{limit: 2})
       assert length(results) == 2
+      assert has_more == true
 
       # Should return the 2 newest plots, with newest first
       timestamps = Enum.map(results, & &1.inserted_at)
@@ -414,17 +416,18 @@ defmodule Api.Canvas.Plot.ServiceTest do
       end
 
       # Test that requesting more than 100 plots still returns max 100
-      results = Plot.Service.list_plots(%{limit: 150})
+      {results, _has_more} = Plot.Service.list_plots(%{limit: 150})
       assert length(results) <= 100
     end
 
     test "handles limit of 0" do
-      results = Plot.Service.list_plots(%{limit: 0})
+      {results, has_more} = Plot.Service.list_plots(%{limit: 0})
       assert results == []
+      assert has_more == false
     end
 
     test "handles negative limit by using default" do
-      results = Plot.Service.list_plots(%{limit: -5})
+      {results, _has_more} = Plot.Service.list_plots(%{limit: -5})
 
       # Should fall back to default behavior (return all plots up to default limit)
       assert length(results) == 4
@@ -435,7 +438,7 @@ defmodule Api.Canvas.Plot.ServiceTest do
       user2: user2,
       user3: user3
     } do
-      results = Plot.Service.list_plots(%{})
+      {results, _has_more} = Plot.Service.list_plots(%{})
 
       # Should include plots from all users
       user_ids = results |> Enum.map(& &1.user_id) |> Enum.uniq() |> Enum.sort()
@@ -444,7 +447,7 @@ defmodule Api.Canvas.Plot.ServiceTest do
     end
 
     test "includes plots with and without polygons" do
-      results = Plot.Service.list_plots(%{})
+      {results, _has_more} = Plot.Service.list_plots(%{})
 
       # Should include both plots with polygons and without
       plots_with_polygon = Enum.filter(results, &(&1.polygon != nil))
@@ -458,16 +461,17 @@ defmodule Api.Canvas.Plot.ServiceTest do
       # Delete all plots
       Api.Repo.delete_all(Plot)
 
-      results = Plot.Service.list_plots(%{})
+      {results, has_more} = Plot.Service.list_plots(%{})
       assert results == []
+      assert has_more == false
     end
 
     test "handles large dataset efficiently" do
       # Create many plots to test performance and limits
       user = user_fixture()
 
-      # Create 15 additional plots
-      for i <- 1..15 do
+      # Create 25 additional plots (more than default limit of 20)
+      for i <- 1..25 do
         Plot.Repo.create_plot(%{
           name: "Bulk Plot #{i}",
           description: "Bulk created plot #{i}",
@@ -482,23 +486,24 @@ defmodule Api.Canvas.Plot.ServiceTest do
         Process.sleep(1)
       end
 
-      # Test default limit (should return 10 most recent)
-      results_default = Plot.Service.list_plots(%{})
-      assert length(results_default) == 10
+      # Test default limit (should return 20 most recent)
+      {results_default, has_more_default} = Plot.Service.list_plots(%{})
+      assert length(results_default) == 20
+      assert has_more_default == true
 
       # Test custom limit within max
-      results_custom = Plot.Service.list_plots(%{limit: 15})
+      {results_custom, _has_more} = Plot.Service.list_plots(%{limit: 15})
       assert length(results_custom) == 15
 
       # Test that results are properly sorted (newest first)
-      # Since we created 15 bulk plots after the 4 setup plots,
+      # Since we created 25 bulk plots after the 4 setup plots,
       # the bulk plots should be among the most recent
       bulk_plots_in_results =
         Enum.count(results_default, fn plot ->
           String.contains?(plot.name, "Bulk Plot")
         end)
 
-      # We should have some bulk plots in the top 10 results
+      # We should have some bulk plots in the top 20 results
       assert bulk_plots_in_results > 0
     end
 
@@ -547,7 +552,7 @@ defmodule Api.Canvas.Plot.ServiceTest do
         })
 
       # Get plots sorted by score (top)
-      results = Plot.Service.list_plots(%{order_by: "top"})
+      {results, _has_more} = Plot.Service.list_plots(%{order_by: "top"})
 
       # Find positions of our test plots
       result_ids = Enum.map(results, & &1.id)
@@ -589,7 +594,7 @@ defmodule Api.Canvas.Plot.ServiceTest do
           }
         })
 
-      results = Plot.Service.list_plots(%{order_by: "top"})
+      {results, _has_more} = Plot.Service.list_plots(%{order_by: "top"})
 
       result_ids = Enum.map(results, & &1.id)
       first_pos = Enum.find_index(result_ids, &(&1 == first_plot.id))
@@ -605,8 +610,8 @@ defmodule Api.Canvas.Plot.ServiceTest do
     end
 
     test "order_by 'recent' returns same result as default (no order_by)" do
-      results_default = Plot.Service.list_plots(%{})
-      results_recent = Plot.Service.list_plots(%{order_by: "recent"})
+      {results_default, _has_more1} = Plot.Service.list_plots(%{})
+      {results_recent, _has_more2} = Plot.Service.list_plots(%{order_by: "recent"})
 
       # Should return same plots in same order
       default_ids = Enum.map(results_default, & &1.id)
@@ -639,7 +644,7 @@ defmodule Api.Canvas.Plot.ServiceTest do
         })
       end
 
-      results = Plot.Service.list_plots(%{order_by: "top", limit: 3})
+      {results, _has_more} = Plot.Service.list_plots(%{order_by: "top", limit: 3})
 
       # Should only return 3 plots
       assert length(results) == 3
@@ -648,6 +653,103 @@ defmodule Api.Canvas.Plot.ServiceTest do
       scores = Enum.map(results, & &1.score)
       assert Enum.at(scores, 0) >= Enum.at(scores, 1)
       assert Enum.at(scores, 1) >= Enum.at(scores, 2)
+    end
+
+    test "paginates with starting_after cursor for recent ordering" do
+      user = user_fixture()
+
+      # Create 10 plots
+      plots =
+        for i <- 1..10 do
+          {:ok, plot} =
+            Plot.Repo.create_plot(%{
+              name: "Pagination Plot #{i}",
+              description: "Pagination test",
+              user_id: user.id,
+              polygon: %Geo.Polygon{
+                coordinates: [
+                  [
+                    {i * 100, i * 100},
+                    {i * 100, i * 100 + 10},
+                    {i * 100 + 10, i * 100 + 10},
+                    {i * 100 + 10, i * 100},
+                    {i * 100, i * 100}
+                  ]
+                ],
+                srid: 4326
+              }
+            })
+
+          Process.sleep(5)
+          plot
+        end
+
+      # Get first page
+      {first_page, has_more1} = Plot.Service.list_plots(%{limit: 5})
+      assert length(first_page) == 5
+      assert has_more1 == true
+
+      # Get second page using cursor
+      last_id = List.last(first_page).id
+      {second_page, has_more2} = Plot.Service.list_plots(%{limit: 5, starting_after: last_id})
+      assert length(second_page) == 5
+      assert has_more2 == true  # 4 setup plots still exist
+
+      # Verify no overlap
+      first_page_ids = Enum.map(first_page, & &1.id)
+      second_page_ids = Enum.map(second_page, & &1.id)
+      assert Enum.all?(second_page_ids, fn id -> id not in first_page_ids end)
+    end
+
+    test "paginates with starting_after cursor for top ordering" do
+      user = user_fixture()
+
+      # Create 10 plots with different scores
+      for i <- 1..10 do
+        Plot.Repo.create_plot(%{
+          name: "Top Pagination Plot #{i}",
+          description: "Top pagination test",
+          user_id: user.id,
+          score: i * 10,
+          polygon: %Geo.Polygon{
+            coordinates: [
+              [
+                {i * 100, i * 100},
+                {i * 100, i * 100 + 10},
+                {i * 100 + 10, i * 100 + 10},
+                {i * 100 + 10, i * 100},
+                {i * 100, i * 100}
+              ]
+            ],
+            srid: 4326
+          }
+        })
+      end
+
+      # Get first page sorted by top
+      {first_page, has_more1} = Plot.Service.list_plots(%{limit: 5, order_by: "top"})
+      assert length(first_page) == 5
+      assert has_more1 == true
+
+      # Verify first page has highest scores
+      first_page_scores = Enum.map(first_page, & &1.score)
+      assert first_page_scores == Enum.sort(first_page_scores, :desc)
+
+      # Get second page using cursor
+      last_id = List.last(first_page).id
+      {second_page, _has_more2} = Plot.Service.list_plots(%{limit: 5, order_by: "top", starting_after: last_id})
+
+      # Verify second page scores are lower than first page
+      second_page_scores = Enum.map(second_page, & &1.score)
+      first_page_min_score = Enum.min(first_page_scores)
+      second_page_max_score = Enum.max(second_page_scores)
+      assert first_page_min_score >= second_page_max_score
+    end
+
+    test "returns empty list for invalid cursor" do
+      {results, has_more} = Plot.Service.list_plots(%{starting_after: 999999})
+      assert results == []
+      assert has_more == false
     end
   end
 

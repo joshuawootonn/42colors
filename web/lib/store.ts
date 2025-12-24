@@ -58,7 +58,12 @@ import { getCenterPoint, polygonSchema } from "./geometry/polygon";
 import { KeyboardCode } from "./keyboard-codes";
 import { absolutePointTupleToPixels } from "./line";
 import { TRANSPARENT_REF, getNextColor, getPreviousColor } from "./palette";
-import { findPlotAtPoint, findPlotById, getPlot } from "./plots/plots.rest";
+import {
+  findPlotAtPoint,
+  findPlotById,
+  getPlot,
+  getPlotsFromInfiniteCache,
+} from "./plots/plots.rest";
 import { roundTo1Place } from "./round-to-five";
 import { newPixels, setupChannel, setupSocketConnection } from "./sockets";
 import { DEFAULT_TOOL_SETTINGS, Tool, ToolSettings, updateToolSettings } from "./tool-settings";
@@ -70,7 +75,7 @@ import {
   completeRectangleClaimerAction,
   startEditAction,
 } from "./tools/claimer/claimer";
-import { Plot, getPlotsByChunk, getUserPlots } from "./tools/claimer/claimer.rest";
+import { getPlotsByChunk, getUserPlots } from "./tools/claimer/claimer.rest";
 import { ErasureSettings, ErasureTool } from "./tools/erasure/erasure";
 import { clampErasureSize } from "./tools/erasure/erasure-utils";
 import { EyedropperTool } from "./tools/eyedropper/eyedropper";
@@ -220,10 +225,12 @@ export const store = createStore({
         store.trigger.fetchPixels();
         store.trigger.fetchUser();
 
-        // todo(josh): why is this different?
-        event.queryClient.fetchQuery({
+        // Prefetch user plots - using fetchInfiniteQuery for infinite query cache format
+        event.queryClient.fetchInfiniteQuery({
           queryKey: ["user", "plots"],
-          queryFn: getUserPlots,
+          queryFn: ({ pageParam }) =>
+            getUserPlots({ limit: 20, startingAfter: pageParam as number | undefined }),
+          initialPageParam: undefined as number | undefined,
         });
       });
 
@@ -1082,7 +1089,7 @@ export const store = createStore({
     startEditPlot: (context, { plotId }: { plotId: number }, enqueue) => {
       if (isInitialStore(context)) return;
 
-      const userPlots = (context.queryClient.getQueryData(["user", "plots"]) ?? []) as Plot[];
+      const userPlots = getPlotsFromInfiniteCache(context.queryClient, ["user", "plots"]);
 
       const plot = userPlots.find((p) => p.id === plotId);
 

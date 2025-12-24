@@ -1,12 +1,17 @@
 import { InitializedStore, store } from "@/lib/store";
 import { isInitialStore } from "@/lib/utils/is-initial-store";
-import { UseQueryOptions, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, UseInfiniteQueryOptions } from "@tanstack/react-query";
 
 import { getChunkKey, getChunkOrigin } from "../canvas/chunk";
 import { inside } from "../geometry/polygon";
 import { polygonSchema } from "../geometry/polygon";
 import { AbsolutePointTuple } from "../line";
-import { Plot, arrayPlotResponseSchema, plotResponseSchema } from "../tools/claimer/claimer.rest";
+import {
+  Plot,
+  PaginatedPlotsResponse,
+  arrayPlotResponseSchema,
+  plotResponseSchema,
+} from "../tools/claimer/claimer.rest";
 
 type GetPlotOptions = {
   include_deleted?: boolean;
@@ -45,9 +50,10 @@ export async function getPlot(id: number, options: GetPlotOptions = {}): Promise
 type GetPlotsOptions = {
   limit?: number;
   order_by?: "recent" | "top";
+  starting_after?: number;
 };
 
-export async function getPlots(options: GetPlotsOptions = {}): Promise<Plot[]> {
+export async function getPlots(options: GetPlotsOptions = {}): Promise<PaginatedPlotsResponse> {
   const context = store.getSnapshot().context;
   if (isInitialStore(context)) {
     throw new Error("Server context is not initialized");
@@ -56,6 +62,7 @@ export async function getPlots(options: GetPlotsOptions = {}): Promise<Plot[]> {
   const search = new URLSearchParams();
   if (options.limit != null) search.set("limit", options.limit.toString());
   if (options.order_by != null) search.set("order_by", options.order_by);
+  if (options.starting_after != null) search.set("starting_after", options.starting_after.toString());
 
   const response = await fetch(new URL(`/api/plots?${search}`, context.server.apiOrigin), {
     method: "GET",
@@ -67,33 +74,89 @@ export async function getPlots(options: GetPlotsOptions = {}): Promise<Plot[]> {
 
   const json = await response.json();
 
-  return arrayPlotResponseSchema.parse(json).data;
+  return arrayPlotResponseSchema.parse(json);
 }
 
+const DEFAULT_PAGE_SIZE = 20;
+
 export function useRecentPlots(
-  limit: number = 20,
-  queryOptions?: Omit<UseQueryOptions<Plot[], Error>, "queryKey" | "queryFn">,
+  limit: number = DEFAULT_PAGE_SIZE,
+  queryOptions?: Omit<
+    UseInfiniteQueryOptions<PaginatedPlotsResponse, Error, { pages: PaginatedPlotsResponse[] }>,
+    "queryKey" | "queryFn" | "getNextPageParam" | "initialPageParam"
+  >,
 ) {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["plots", "list"],
-    queryFn: () => getPlots({ limit }),
+  const query = useInfiniteQuery({
+    queryKey: ["plots", "list", limit],
+    queryFn: ({ pageParam }) =>
+      getPlots({ limit, starting_after: pageParam as number | undefined }),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.hasMore || lastPage.data.length === 0) return undefined;
+      return lastPage.data[lastPage.data.length - 1].id;
+    },
     ...queryOptions,
   });
 
-  return { data, isLoading, error };
+  // Flatten all pages into a single array
+  const data = query.data?.pages.flatMap((page) => page.data);
+
+  return {
+    data,
+    isLoading: query.isLoading,
+    error: query.error,
+    fetchNextPage: query.fetchNextPage,
+    hasNextPage: query.hasNextPage,
+    isFetchingNextPage: query.isFetchingNextPage,
+  };
 }
 
 export function useTopPlots(
-  limit: number = 20,
-  queryOptions?: Omit<UseQueryOptions<Plot[], Error>, "queryKey" | "queryFn">,
+  limit: number = DEFAULT_PAGE_SIZE,
+  queryOptions?: Omit<
+    UseInfiniteQueryOptions<PaginatedPlotsResponse, Error, { pages: PaginatedPlotsResponse[] }>,
+    "queryKey" | "queryFn" | "getNextPageParam" | "initialPageParam"
+  >,
 ) {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["plots", "top"],
-    queryFn: () => getPlots({ limit, order_by: "top" }),
+  const query = useInfiniteQuery({
+    queryKey: ["plots", "top", limit],
+    queryFn: ({ pageParam }) =>
+      getPlots({ limit, order_by: "top", starting_after: pageParam as number | undefined }),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.hasMore || lastPage.data.length === 0) return undefined;
+      return lastPage.data[lastPage.data.length - 1].id;
+    },
     ...queryOptions,
   });
 
-  return { data, isLoading, error };
+  // Flatten all pages into a single array
+  const data = query.data?.pages.flatMap((page) => page.data);
+
+  return {
+    data,
+    isLoading: query.isLoading,
+    error: query.error,
+    fetchNextPage: query.fetchNextPage,
+    hasNextPage: query.hasNextPage,
+    isFetchingNextPage: query.isFetchingNextPage,
+  };
+}
+
+type InfiniteQueryData<T> = {
+  pages: T[];
+  pageParams: unknown[];
+};
+
+export function getPlotsFromInfiniteCache(
+  queryClient: InitializedStore["queryClient"],
+  queryKey: unknown[],
+): Plot[] {
+  const data = queryClient.getQueryData(queryKey) as
+    | InfiniteQueryData<PaginatedPlotsResponse>
+    | undefined;
+  if (!data?.pages) return [];
+  return data.pages.flatMap((page) => page.data);
 }
 
 /**
@@ -101,7 +164,7 @@ export function useTopPlots(
  */
 export function findPlotAtPoint(point: AbsolutePointTuple, context: InitializedStore): Plot | null {
   // Get user plots first (higher priority)
-  const userPlots = (context.queryClient.getQueryData(["user", "plots"]) ?? []) as Plot[];
+  const userPlots = getPlotsFromInfiniteCache(context.queryClient, ["user", "plots"]);
 
   // Check user plots first
   for (const plot of userPlots) {
@@ -110,11 +173,15 @@ export function findPlotAtPoint(point: AbsolutePointTuple, context: InitializedS
     }
   }
 
-  // Get recent plots (from other users)
-  const recentPlots = (context.queryClient.getQueryData(["plots", "list"]) ?? []) as Plot[];
+  // Get recent plots (from other users) - try both infinite query format and old format
+  const recentPlotsInfinite = getPlotsFromInfiniteCache(context.queryClient, [
+    "plots",
+    "list",
+    DEFAULT_PAGE_SIZE,
+  ]);
 
   // Check recent plots
-  for (const plot of recentPlots) {
+  for (const plot of recentPlotsInfinite) {
     if (plot.polygon && inside(point, plot.polygon)) {
       return plot;
     }
@@ -146,14 +213,18 @@ export function findPlotAtPoint(point: AbsolutePointTuple, context: InitializedS
 
 export function findPlotById(id: number, context: InitializedStore): Plot | null {
   // Check user plots first (higher priority)
-  const userPlots = (context.queryClient.getQueryData(["user", "plots"]) ?? []) as Plot[];
+  const userPlots = getPlotsFromInfiniteCache(context.queryClient, ["user", "plots"]);
   const userPlot = userPlots.find((plot) => plot.id === id);
   if (userPlot) {
     return userPlot;
   }
 
   // Check recent plots (from other users)
-  const recentPlots = (context.queryClient.getQueryData(["plots", "list"]) ?? []) as Plot[];
+  const recentPlots = getPlotsFromInfiniteCache(context.queryClient, [
+    "plots",
+    "list",
+    DEFAULT_PAGE_SIZE,
+  ]);
   const recentPlot = recentPlots.find((plot) => plot.id === id);
   if (recentPlot) {
     return recentPlot;

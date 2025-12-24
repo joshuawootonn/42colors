@@ -393,6 +393,271 @@ defmodule ApiWeb.PlotControllerTest do
       assert Enum.at(scores, 0) >= Enum.at(scores, 1)
       assert Enum.at(scores, 1) >= Enum.at(scores, 2)
     end
+
+    test "returns hasMore in response", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots")
+      response = json_response(conn, 200)
+
+      assert Map.has_key?(response, "hasMore")
+      assert is_boolean(response["hasMore"])
+    end
+  end
+
+  describe "index pagination with starting_after" do
+    test "returns hasMore=true when more results exist", %{conn: conn} do
+      user = user_fixture()
+
+      # Create 25 plots (more than default limit of 20)
+      for i <- 1..25 do
+        Plot.Repo.create_plot(%{
+          name: "Plot #{i}",
+          description: "Plot #{i}",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [
+              [
+                {i * 100, i * 100},
+                {i * 100, i * 100 + 10},
+                {i * 100 + 10, i * 100 + 10},
+                {i * 100 + 10, i * 100},
+                {i * 100, i * 100}
+              ]
+            ],
+            srid: 4326
+          }
+        })
+
+        Process.sleep(1)
+      end
+
+      conn = get(conn, ~p"/api/plots?limit=10")
+      response = json_response(conn, 200)
+
+      assert length(response["data"]) == 10
+      assert response["hasMore"] == true
+    end
+
+    test "returns hasMore=false when no more results exist", %{conn: conn} do
+      user = user_fixture()
+
+      # Create 5 plots (less than limit)
+      for i <- 1..5 do
+        Plot.Repo.create_plot(%{
+          name: "Plot #{i}",
+          description: "Plot #{i}",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [
+              [
+                {i * 100, i * 100},
+                {i * 100, i * 100 + 10},
+                {i * 100 + 10, i * 100 + 10},
+                {i * 100 + 10, i * 100},
+                {i * 100, i * 100}
+              ]
+            ],
+            srid: 4326
+          }
+        })
+      end
+
+      conn = get(conn, ~p"/api/plots?limit=10")
+      response = json_response(conn, 200)
+
+      assert length(response["data"]) == 5
+      assert response["hasMore"] == false
+    end
+
+    test "paginates using starting_after cursor with recent ordering", %{conn: conn} do
+      user = user_fixture()
+
+      # Create 10 plots with known order
+      plots =
+        for i <- 1..10 do
+          {:ok, plot} =
+            Plot.Repo.create_plot(%{
+              name: "Plot #{i}",
+              description: "Plot #{i}",
+              user_id: user.id,
+              polygon: %Geo.Polygon{
+                coordinates: [
+                  [
+                    {i * 100, i * 100},
+                    {i * 100, i * 100 + 10},
+                    {i * 100 + 10, i * 100 + 10},
+                    {i * 100 + 10, i * 100},
+                    {i * 100, i * 100}
+                  ]
+                ],
+                srid: 4326
+              }
+            })
+
+          Process.sleep(5)
+          plot
+        end
+
+      # Get first page
+      conn = get(conn, ~p"/api/plots?limit=5")
+      first_page = json_response(conn, 200)
+
+      assert length(first_page["data"]) == 5
+      assert first_page["hasMore"] == true
+
+      # Get second page using the last plot ID from first page as cursor
+      last_id = List.last(first_page["data"])["id"]
+      conn = get(conn, ~p"/api/plots?limit=5&starting_after=#{last_id}")
+      second_page = json_response(conn, 200)
+
+      assert length(second_page["data"]) == 5
+      assert second_page["hasMore"] == false
+
+      # Verify no overlap between pages
+      first_page_ids = Enum.map(first_page["data"], & &1["id"])
+      second_page_ids = Enum.map(second_page["data"], & &1["id"])
+      assert Enum.all?(second_page_ids, fn id -> id not in first_page_ids end)
+
+      # Verify all plots are covered
+      all_plot_ids = Enum.map(plots, & &1.id)
+      combined_ids = first_page_ids ++ second_page_ids
+      assert Enum.sort(combined_ids) == Enum.sort(all_plot_ids)
+    end
+
+    test "paginates using starting_after cursor with top ordering", %{conn: conn} do
+      user = user_fixture()
+
+      # Create 10 plots with different scores
+      plots =
+        for i <- 1..10 do
+          {:ok, plot} =
+            Plot.Repo.create_plot(%{
+              name: "Plot #{i}",
+              description: "Plot #{i}",
+              user_id: user.id,
+              score: i * 10,
+              polygon: %Geo.Polygon{
+                coordinates: [
+                  [
+                    {i * 100, i * 100},
+                    {i * 100, i * 100 + 10},
+                    {i * 100 + 10, i * 100 + 10},
+                    {i * 100 + 10, i * 100},
+                    {i * 100, i * 100}
+                  ]
+                ],
+                srid: 4326
+              }
+            })
+
+          plot
+        end
+
+      # Get first page sorted by top
+      conn = get(conn, ~p"/api/plots?limit=5&order_by=top")
+      first_page = json_response(conn, 200)
+
+      assert length(first_page["data"]) == 5
+      assert first_page["hasMore"] == true
+
+      # Verify first page has highest scores
+      first_page_scores = Enum.map(first_page["data"], & &1["score"])
+      assert first_page_scores == Enum.sort(first_page_scores, :desc)
+
+      # Get second page using cursor
+      last_id = List.last(first_page["data"])["id"]
+      conn = get(conn, ~p"/api/plots?limit=5&order_by=top&starting_after=#{last_id}")
+      second_page = json_response(conn, 200)
+
+      assert length(second_page["data"]) == 5
+      assert second_page["hasMore"] == false
+
+      # Verify second page scores are lower than first page
+      second_page_scores = Enum.map(second_page["data"], & &1["score"])
+      first_page_min_score = Enum.min(first_page_scores)
+      second_page_max_score = Enum.max(second_page_scores)
+      assert first_page_min_score >= second_page_max_score
+
+      # Verify all plots are covered
+      all_plot_ids = Enum.map(plots, & &1.id)
+      first_page_ids = Enum.map(first_page["data"], & &1["id"])
+      second_page_ids = Enum.map(second_page["data"], & &1["id"])
+      combined_ids = first_page_ids ++ second_page_ids
+      assert Enum.sort(combined_ids) == Enum.sort(all_plot_ids)
+    end
+
+    test "returns empty list for invalid starting_after cursor", %{conn: conn} do
+      user = user_fixture()
+
+      # Create a plot
+      Plot.Repo.create_plot(%{
+        name: "Test Plot",
+        description: "Test",
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{100, 100}, {100, 110}, {110, 110}, {110, 100}, {100, 100}]],
+          srid: 4326
+        }
+      })
+
+      # Use non-existent ID as cursor
+      conn = get(conn, ~p"/api/plots?starting_after=999999")
+      response = json_response(conn, 200)
+
+      assert response["data"] == []
+      assert response["hasMore"] == false
+    end
+
+    test "ignores invalid starting_after parameter format", %{conn: conn} do
+      user = user_fixture()
+
+      Plot.Repo.create_plot(%{
+        name: "Test Plot",
+        description: "Test",
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{100, 100}, {100, 110}, {110, 110}, {110, 100}, {100, 100}]],
+          srid: 4326
+        }
+      })
+
+      # Invalid format should be ignored and return all plots
+      conn = get(conn, ~p"/api/plots?starting_after=invalid")
+      response = json_response(conn, 200)
+
+      assert is_list(response["data"])
+      assert length(response["data"]) >= 1
+    end
+
+    test "handles pagination with exactly limit number of results", %{conn: conn} do
+      user = user_fixture()
+
+      # Create exactly 5 plots
+      for i <- 1..5 do
+        Plot.Repo.create_plot(%{
+          name: "Plot #{i}",
+          description: "Plot #{i}",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [
+              [
+                {i * 100, i * 100},
+                {i * 100, i * 100 + 10},
+                {i * 100 + 10, i * 100 + 10},
+                {i * 100 + 10, i * 100},
+                {i * 100, i * 100}
+              ]
+            ],
+            srid: 4326
+          }
+        })
+      end
+
+      conn = get(conn, ~p"/api/plots?limit=5")
+      response = json_response(conn, 200)
+
+      assert length(response["data"]) == 5
+      assert response["hasMore"] == false
+    end
   end
 
   describe "me_plots" do
@@ -459,6 +724,194 @@ defmodule ApiWeb.PlotControllerTest do
       assert resp_plot["userId"] == user.id
       assert resp_plot["polygon"] != nil
       assert resp_plot["polygon"]["vertices"] == [[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]]
+    end
+
+    test "returns hasMore in response", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots/me")
+      response = json_response(conn, 200)
+
+      assert Map.has_key?(response, "hasMore")
+      assert is_boolean(response["hasMore"])
+    end
+  end
+
+  describe "me_plots pagination with starting_after" do
+    test "returns hasMore=true when more results exist", %{conn: conn, user: user} do
+      # Create 25 plots for the current user
+      for i <- 1..25 do
+        plot_fixture(%{
+          user_id: user.id,
+          name: "User Plot #{i}",
+          polygon: %Geo.Polygon{
+            coordinates: [
+              [
+                {i * 100, i * 100},
+                {i * 100, i * 100 + 10},
+                {i * 100 + 10, i * 100 + 10},
+                {i * 100 + 10, i * 100},
+                {i * 100, i * 100}
+              ]
+            ],
+            srid: 4326
+          }
+        })
+
+        Process.sleep(1)
+      end
+
+      conn = get(conn, ~p"/api/plots/me?limit=10")
+      response = json_response(conn, 200)
+
+      assert length(response["data"]) == 10
+      assert response["hasMore"] == true
+    end
+
+    test "returns hasMore=false when no more results exist", %{conn: conn, user: user} do
+      # Create 5 plots
+      for i <- 1..5 do
+        plot_fixture(%{
+          user_id: user.id,
+          name: "User Plot #{i}",
+          polygon: %Geo.Polygon{
+            coordinates: [
+              [
+                {i * 100, i * 100},
+                {i * 100, i * 100 + 10},
+                {i * 100 + 10, i * 100 + 10},
+                {i * 100 + 10, i * 100},
+                {i * 100, i * 100}
+              ]
+            ],
+            srid: 4326
+          }
+        })
+      end
+
+      conn = get(conn, ~p"/api/plots/me?limit=10")
+      response = json_response(conn, 200)
+
+      assert length(response["data"]) == 5
+      assert response["hasMore"] == false
+    end
+
+    test "paginates user plots using starting_after cursor", %{conn: conn, user: user} do
+      # Create 10 plots
+      plots =
+        for i <- 1..10 do
+          plot =
+            plot_fixture(%{
+              user_id: user.id,
+              name: "User Plot #{i}",
+              polygon: %Geo.Polygon{
+                coordinates: [
+                  [
+                    {i * 100, i * 100},
+                    {i * 100, i * 100 + 10},
+                    {i * 100 + 10, i * 100 + 10},
+                    {i * 100 + 10, i * 100},
+                    {i * 100, i * 100}
+                  ]
+                ],
+                srid: 4326
+              }
+            })
+
+          Process.sleep(5)
+          plot
+        end
+
+      # Get first page
+      conn = get(conn, ~p"/api/plots/me?limit=5")
+      first_page = json_response(conn, 200)
+
+      assert length(first_page["data"]) == 5
+      assert first_page["hasMore"] == true
+
+      # Get second page using cursor
+      last_id = List.last(first_page["data"])["id"]
+      conn = get(conn, ~p"/api/plots/me?limit=5&starting_after=#{last_id}")
+      second_page = json_response(conn, 200)
+
+      assert length(second_page["data"]) == 5
+      assert second_page["hasMore"] == false
+
+      # Verify no overlap
+      first_page_ids = Enum.map(first_page["data"], & &1["id"])
+      second_page_ids = Enum.map(second_page["data"], & &1["id"])
+      assert Enum.all?(second_page_ids, fn id -> id not in first_page_ids end)
+
+      # Verify all user plots are covered
+      all_plot_ids = Enum.map(plots, & &1.id)
+      combined_ids = first_page_ids ++ second_page_ids
+      assert Enum.sort(combined_ids) == Enum.sort(all_plot_ids)
+    end
+
+    test "only returns current user's plots when paginating", %{conn: conn, user: user} do
+      # Create plots for current user
+      for i <- 1..5 do
+        plot_fixture(%{
+          user_id: user.id,
+          name: "My Plot #{i}",
+          polygon: %Geo.Polygon{
+            coordinates: [
+              [
+                {i * 100, i * 100},
+                {i * 100, i * 100 + 10},
+                {i * 100 + 10, i * 100 + 10},
+                {i * 100 + 10, i * 100},
+                {i * 100, i * 100}
+              ]
+            ],
+            srid: 4326
+          }
+        })
+      end
+
+      # Create plots for another user
+      other_user = user_fixture()
+
+      for i <- 1..5 do
+        plot_fixture(%{
+          user_id: other_user.id,
+          name: "Other User Plot #{i}",
+          polygon: %Geo.Polygon{
+            coordinates: [
+              [
+                {(i + 10) * 100, (i + 10) * 100},
+                {(i + 10) * 100, (i + 10) * 100 + 10},
+                {(i + 10) * 100 + 10, (i + 10) * 100 + 10},
+                {(i + 10) * 100 + 10, (i + 10) * 100},
+                {(i + 10) * 100, (i + 10) * 100}
+              ]
+            ],
+            srid: 4326
+          }
+        })
+      end
+
+      conn = get(conn, ~p"/api/plots/me?limit=10")
+      response = json_response(conn, 200)
+
+      # Should only return current user's plots
+      assert length(response["data"]) == 5
+      assert Enum.all?(response["data"], fn plot -> plot["userId"] == user.id end)
+    end
+
+    test "returns empty list for invalid cursor", %{conn: conn, user: user} do
+      plot_fixture(%{
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{100, 100}, {100, 110}, {110, 110}, {110, 100}, {100, 100}]],
+          srid: 4326
+        }
+      })
+
+      # Use non-existent ID as cursor
+      conn = get(conn, ~p"/api/plots/me?starting_after=999999")
+      response = json_response(conn, 200)
+
+      assert response["data"] == []
+      assert response["hasMore"] == false
     end
   end
 

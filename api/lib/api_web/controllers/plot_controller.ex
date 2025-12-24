@@ -11,17 +11,19 @@ defmodule ApiWeb.PlotController do
   def index(conn, params) do
     case {Map.get(params, "x"), Map.get(params, "y")} do
       {nil, nil} ->
-        # No x,y provided - return global list of plots
+        # No x,y provided - return global list of plots with pagination
         limit_param = Map.get(params, "limit")
         order_by_param = Map.get(params, "order_by")
+        starting_after_param = Map.get(params, "starting_after")
 
         list_opts =
           %{}
           |> maybe_add_limit(limit_param)
           |> maybe_add_order_by(order_by_param)
+          |> maybe_add_starting_after(starting_after_param)
 
-        plots = Plot.Service.list_plots(list_opts)
-        render(conn, :index, plots: plots)
+        {plots, has_more} = Plot.Service.list_plots(list_opts)
+        render(conn, :index, plots: plots, has_more: has_more)
 
       {nil, _} ->
         conn
@@ -37,7 +39,7 @@ defmodule ApiWeb.PlotController do
         case {parse_integer(x_str), parse_integer(y_str)} do
           {{:ok, x}, {:ok, y}} ->
             plots = Plot.Service.list_plots_by_chunk(x, y)
-            render(conn, :index, plots: plots)
+            render(conn, :index, plots: plots, has_more: false)
 
           _ ->
             conn
@@ -47,10 +49,18 @@ defmodule ApiWeb.PlotController do
     end
   end
 
-  def me_plots(conn, _params) do
+  def me_plots(conn, params) do
     user = conn.assigns.current_user
-    plots = Plot.Repo.list_user_plots(user.id)
-    render(conn, :index, plots: plots)
+    limit_param = Map.get(params, "limit")
+    starting_after_param = Map.get(params, "starting_after")
+
+    list_opts =
+      %{}
+      |> maybe_add_limit(limit_param)
+      |> maybe_add_starting_after(starting_after_param)
+
+    {plots, has_more} = Plot.Repo.list_user_plots(user.id, list_opts)
+    render(conn, :index, plots: plots, has_more: has_more)
   end
 
   def create(conn, %{"plot" => plot_params}) do
@@ -360,4 +370,13 @@ defmodule ApiWeb.PlotController do
   defp maybe_add_order_by(opts, "top"), do: Map.put(opts, :order_by, "top")
   defp maybe_add_order_by(opts, "recent"), do: Map.put(opts, :order_by, "recent")
   defp maybe_add_order_by(opts, _), do: opts
+
+  defp maybe_add_starting_after(opts, nil), do: opts
+
+  defp maybe_add_starting_after(opts, starting_after_param) do
+    case parse_integer(starting_after_param) do
+      {:ok, starting_after} -> Map.put(opts, :starting_after, starting_after)
+      {:error, _} -> opts
+    end
+  end
 end

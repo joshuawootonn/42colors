@@ -2,10 +2,14 @@ defmodule ApiWeb.PlotJSON do
   alias Api.Canvas.Plot
 
   @doc """
-  Renders a list of plots.
+  Renders a list of plots with pagination metadata.
   """
+  def index(%{plots: plots, has_more: has_more}) do
+    %{data: for(plot <- plots, do: data(plot)), hasMore: has_more}
+  end
+
   def index(%{plots: plots}) do
-    %{data: for(plot <- plots, do: data(plot))}
+    %{data: for(plot <- plots, do: data(plot)), hasMore: false}
   end
 
   @doc """

@@ -9,20 +9,41 @@ defmodule Api.Canvas.Plot.Repo do
   alias Api.Canvas.Plot
 
   @doc """
-  Returns the list of plots for a user.
+  Returns the list of plots for a user with optional cursor-based pagination.
+
+  ## Options
+  - `limit`: Maximum number of plots to return (default: 20, max: 100)
+  - `starting_after`: Cursor for pagination - the ID of the last plot from the previous page
+
+  ## Returns
+  - `{plots, has_more}` tuple where `has_more` indicates if more results exist
 
   ## Examples
 
       iex> list_user_plots(user_id)
-      [%Plot{}, ...]
+      {[%Plot{}, ...], false}
+
+      iex> list_user_plots(user_id, %{limit: 10, starting_after: 42})
+      {[%Plot{}, ...], true}
 
   """
-  def list_user_plots(user_id) do
-    Plot
-    |> where([p], p.user_id == ^user_id)
-    |> where([p], is_nil(p.deleted_at))
-    |> order_by([p], desc: p.inserted_at)
-    |> Repo.all()
+  def list_user_plots(user_id, opts \\ %{}) do
+    limit = get_list_limit(opts)
+
+    query =
+      Plot
+      |> where([p], p.user_id == ^user_id)
+      |> where([p], is_nil(p.deleted_at))
+      |> order_by([p], desc: p.inserted_at)
+      |> apply_cursor(opts, "recent")
+
+    # Fetch one extra to determine if there are more results
+    plots = query |> limit(^(limit + 1)) |> Repo.all()
+
+    has_more = length(plots) > limit
+    plots = Enum.take(plots, limit)
+
+    {plots, has_more}
   end
 
   @doc """
@@ -155,35 +176,45 @@ defmodule Api.Canvas.Plot.Repo do
   end
 
   @doc """
-  Lists plots with configurable options.
+  Lists plots with configurable options and cursor-based pagination.
 
   ## Options
-  - `limit`: Maximum number of plots to return (default: 10, max: 100)
+  - `limit`: Maximum number of plots to return (default: 20, max: 100)
   - `order_by`: Sort order - "recent" (default) or "top" (by score descending)
+  - `starting_after`: Cursor for pagination - the ID of the last plot from the previous page
 
   ## Returns
-  - List of %Plot{} structs sorted by the specified order
+  - `{plots, has_more}` tuple where `has_more` indicates if more results exist
 
   ## Examples
 
       iex> list_plots(%{})
-      [%Plot{}, ...]
+      {[%Plot{}, ...], false}
 
       iex> list_plots(%{limit: 5})
-      [%Plot{}, ...]
+      {[%Plot{}, ...], true}
 
-      iex> list_plots(%{order_by: "top"})
-      [%Plot{}, ...]
+      iex> list_plots(%{order_by: "top", starting_after: 42})
+      {[%Plot{}, ...], false}
 
   """
   def list_plots(opts \\ %{}) do
     limit = get_list_limit(opts)
+    order_by = Map.get(opts, :order_by, "recent")
 
-    Plot
-    |> where([p], is_nil(p.deleted_at))
-    |> apply_order_by(opts)
-    |> limit(^limit)
-    |> Repo.all()
+    query =
+      Plot
+      |> where([p], is_nil(p.deleted_at))
+      |> apply_order_by(opts)
+      |> apply_cursor(opts, order_by)
+
+    # Fetch one extra to determine if there are more results
+    plots = query |> limit(^(limit + 1)) |> Repo.all()
+
+    has_more = length(plots) > limit
+    plots = Enum.take(plots, limit)
+
+    {plots, has_more}
   end
 
   defp apply_order_by(query, %{order_by: "top"}) do
@@ -192,6 +223,43 @@ defmodule Api.Canvas.Plot.Repo do
 
   defp apply_order_by(query, _opts) do
     order_by(query, [p], desc: p.inserted_at)
+  end
+
+  defp apply_cursor(query, %{starting_after: cursor_id}, order_by) when is_integer(cursor_id) do
+    # Get the cursor plot to determine the pagination point
+    case Repo.get(Plot, cursor_id) do
+      nil ->
+        # If cursor not found, return empty result by adding impossible condition
+        where(query, [p], false)
+
+      cursor_plot ->
+        apply_cursor_condition(query, cursor_plot, order_by)
+    end
+  end
+
+  defp apply_cursor(query, _opts, _order_by), do: query
+
+  defp apply_cursor_condition(query, cursor_plot, "top") do
+    # For "top" ordering (score DESC, inserted_at DESC), we need to get plots
+    # that come after the cursor in this ordering
+    where(
+      query,
+      [p],
+      p.score < ^cursor_plot.score or
+        (p.score == ^cursor_plot.score and p.inserted_at < ^cursor_plot.inserted_at) or
+        (p.score == ^cursor_plot.score and p.inserted_at == ^cursor_plot.inserted_at and
+           p.id < ^cursor_plot.id)
+    )
+  end
+
+  defp apply_cursor_condition(query, cursor_plot, _order_by) do
+    # For "recent" ordering (inserted_at DESC), get plots after cursor
+    where(
+      query,
+      [p],
+      p.inserted_at < ^cursor_plot.inserted_at or
+        (p.inserted_at == ^cursor_plot.inserted_at and p.id < ^cursor_plot.id)
+    )
   end
 
   # Private function to handle limit validation
@@ -203,7 +271,7 @@ defmodule Api.Canvas.Plot.Repo do
   defp get_list_limit(%{limit: 0}), do: 0
 
   # Default limit
-  defp get_list_limit(_), do: 10
+  defp get_list_limit(_), do: 20
 
   @doc """
   For a list of points, returns a map from {x, y} to the covering plot's id and owner user_id.

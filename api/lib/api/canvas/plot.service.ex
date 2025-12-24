@@ -320,26 +320,31 @@ defmodule Api.Canvas.Plot.Service do
   end
 
   @doc """
-  Lists plots with configurable options.
+  Lists plots with configurable options and cursor-based pagination.
 
   This function provides a global list of all plots with configurable
-  sorting and filtering options. Currently supports limit configuration,
-  with future extensibility for user filtering, different sort orders, etc.
+  sorting and filtering options. Supports cursor-based pagination using
+  `starting_after` for efficient pagination through large result sets.
 
   ## Parameters
   - `opts`: Map of list options
-    - `limit`: Maximum number of plots to return (default: 10, max: 100)
+    - `limit`: Maximum number of plots to return (default: 20, max: 100)
+    - `order_by`: Sort order - "recent" (default) or "top" (by score descending)
+    - `starting_after`: Cursor for pagination - the ID of the last plot from the previous page
 
   ## Returns
-  - List of %Plot{} structs sorted by creation date (newest first)
+  - `{plots, has_more}` tuple where `has_more` indicates if more results exist
 
   ## Examples
 
       iex> Plot.Service.list_plots(%{})
-      [%Plot{}, ...]
+      {[%Plot{}, ...], false}
 
       iex> Plot.Service.list_plots(%{limit: 5})
-      [%Plot{}, ...]
+      {[%Plot{}, ...], true}
+
+      iex> Plot.Service.list_plots(%{starting_after: 42})
+      {[%Plot{}, ...], false}
 
   """
   def list_plots(opts \\ %{}) do
