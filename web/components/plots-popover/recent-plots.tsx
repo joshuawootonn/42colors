@@ -4,6 +4,8 @@ import { useRecentPlots } from "@/lib/plots/plots.rest";
 
 import { PlotsList } from "./plots-list";
 
+const PAGE_SIZE = 20;
+
 interface RecentPlotsProps {
   selectedPlotId: number | undefined;
   selectPlot: (plotId: number) => void;
@@ -11,13 +13,10 @@ interface RecentPlotsProps {
 }
 
 export function RecentPlots({ selectedPlotId, selectPlot, enabled = true }: RecentPlotsProps) {
-  const {
-    data: plots,
-    isLoading,
-    error,
-  } = useRecentPlots(100, {
-    enabled,
-  });
+  const { data: plots, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useRecentPlots(PAGE_SIZE, {
+      enabled,
+    });
 
   return (
     <PlotsList
@@ -28,6 +27,9 @@ export function RecentPlots({ selectedPlotId, selectPlot, enabled = true }: Rece
       selectPlot={selectPlot}
       emptyMessage="No plots found"
       loadingMessage="Loading plots..."
+      hasNextPage={hasNextPage}
+      isFetchingNextPage={isFetchingNextPage}
+      fetchNextPage={fetchNextPage}
     />
   );
 }

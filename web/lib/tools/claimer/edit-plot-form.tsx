@@ -57,10 +57,23 @@ export function EditPlotForm({ plot, triggerProps }: EditPlotFormProps) {
 
       // Immediately update the user plots cache with the new plot data
       // This ensures tools like bucket have the correct polygon right away
-      context.queryClient?.setQueryData(["user", "plots"], (oldPlots: Plot[] | undefined) => {
-        if (!oldPlots) return [updatedPlot];
-        return oldPlots.map((p) => (p.id === updatedPlot.id ? updatedPlot : p));
-      });
+      type InfiniteData = {
+        pages: { data: Plot[]; hasMore: boolean }[];
+        pageParams: (number | undefined)[];
+      };
+      context.queryClient?.setQueryData(
+        ["user", "plots"],
+        (oldData: InfiniteData | undefined) => {
+          if (!oldData?.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page) => ({
+              ...page,
+              data: page.data.map((p) => (p.id === updatedPlot.id ? updatedPlot : p)),
+            })),
+          };
+        },
+      );
 
       context.queryClient?.invalidateQueries({
         queryKey: ["user", "me"],

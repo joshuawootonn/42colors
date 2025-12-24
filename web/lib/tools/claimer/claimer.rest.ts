@@ -22,7 +22,12 @@ export const plotResponseSchema = z.object({
   data: plotSchema,
 });
 
-export const arrayPlotResponseSchema = z.object({ data: z.array(plotSchema) });
+export const arrayPlotResponseSchema = z.object({
+  data: z.array(plotSchema),
+  hasMore: z.boolean().optional().default(false),
+});
+
+export type PaginatedPlotsResponse = z.infer<typeof arrayPlotResponseSchema>;
 
 const errorResponseSchema = z.object({
   status: z.literal("error"),
@@ -98,26 +103,40 @@ export async function createPlot(plotData: { name: string; description?: string 
   return parsedResponse.data;
 }
 
-export async function getUserPlots(): Promise<Plot[]> {
+type GetUserPlotsOptions = {
+  limit?: number;
+  startingAfter?: number;
+};
+
+export async function getUserPlots(
+  options: GetUserPlotsOptions = {},
+): Promise<PaginatedPlotsResponse> {
   const context = store.getSnapshot().context;
   if (isInitialStore(context)) {
     throw new Error("Server context is not initialized");
   }
 
-  const response = await fetch(new URL(`/api/plots/me`, context.server.apiOrigin), {
-    method: "GET",
-    credentials: "include",
-  });
+  const search = new URLSearchParams();
+  if (options.limit != null) search.set("limit", options.limit.toString());
+  if (options.startingAfter != null) search.set("starting_after", options.startingAfter.toString());
+
+  const response = await fetch(
+    new URL(`/api/plots/me?${search}`, context.server.apiOrigin),
+    {
+      method: "GET",
+      credentials: "include",
+    },
+  );
 
   const json = await response.json();
 
   const parsedResponse = arrayPlotResponseSchema.safeParse(json);
 
   if (!parsedResponse.success) {
-    return [];
+    return { data: [], hasMore: false };
   }
 
-  return parsedResponse.data.data;
+  return parsedResponse.data;
 }
 
 export async function deletePlot(plotId: number): Promise<void> {
