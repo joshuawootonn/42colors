@@ -1,3 +1,5 @@
+import "./sentry.client.config";
+
 import assert from "assert";
 import posthog from "posthog-js";
 

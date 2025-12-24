@@ -71,7 +71,9 @@ defmodule Api.MixProject do
       {:redix, "~> 1.5"},
       {:tidewave, "~> 0.5", only: :dev},
       {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:prom_ex, "~> 1.9"}
+      {:prom_ex, "~> 1.9"},
+      {:sentry, "~> 10.0"},
+      {:hackney, "~> 1.8"}
     ]
   end
 

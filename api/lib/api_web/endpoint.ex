@@ -1,5 +1,6 @@
 defmodule ApiWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :api
+  use Sentry.PlugCapture
 
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
@@ -57,6 +58,7 @@ defmodule ApiWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
+  plug Sentry.PlugContext
   plug CORSPlug
   plug ApiWeb.Router
 end

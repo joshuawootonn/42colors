@@ -21,6 +21,13 @@ if System.get_env("PHX_SERVER") do
 end
 
 if config_env() == :prod do
+  # Sentry configuration for production
+  if sentry_dsn = System.get_env("SENTRY_DSN") do
+    config :sentry,
+      dsn: sentry_dsn,
+      environment_name: :prod
+  end
+
   # Redis configuration is required in production
   redis_url =
     System.get_env("REDIS_URL") ||
