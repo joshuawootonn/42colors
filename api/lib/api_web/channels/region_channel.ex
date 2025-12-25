@@ -2,14 +2,30 @@ defmodule ApiWeb.RegionChannel do
   use Phoenix.Channel
 
   alias Api.Accounts.User
+  alias Api.Canvas.ChunkUtils
   alias Api.Canvas.PixelService
   alias Api.Repo
   alias ApiWeb.PixelCacheSupervisor
 
   @admin_emails ["jose56wonton@gmail.com", "anders.almberg@gmail.com", "joshuawootonn@gmail.com"]
 
+  # Intercept these events so we can filter them by subscribed chunks in handle_out
+  intercept ["new_pixels", "create_plot", "update_plot", "delete_plot"]
+
   def join("region:general", _message, socket) do
-    {:ok, socket}
+    {:ok, assign(socket, :subscribed_chunks, MapSet.new())}
+  end
+
+  def handle_in("subscribe_chunks", %{"chunk_keys" => chunk_keys}, socket) when is_list(chunk_keys) do
+    current_chunks = socket.assigns.subscribed_chunks
+    new_chunks = MapSet.union(current_chunks, MapSet.new(chunk_keys))
+    {:reply, {:ok, %{subscribed: chunk_keys}}, assign(socket, :subscribed_chunks, new_chunks)}
+  end
+
+  def handle_in("unsubscribe_chunks", %{"chunk_keys" => chunk_keys}, socket) when is_list(chunk_keys) do
+    current_chunks = socket.assigns.subscribed_chunks
+    new_chunks = MapSet.difference(current_chunks, MapSet.new(chunk_keys))
+    {:reply, {:ok, %{unsubscribed: chunk_keys}}, assign(socket, :subscribed_chunks, new_chunks)}
   end
 
   def handle_in("new_pixels", %{"pixels" => pixels, "store_id" => store_id} = payload, socket) do
@@ -162,28 +178,72 @@ defmodule ApiWeb.RegionChannel do
     end
   end
 
-  def handle_info(
-        %Phoenix.Socket.Broadcast{event: "create_plot", payload: %{"plot" => plot}},
-        socket
-      ) do
-    push(socket, "create_plot", %{"plot" => plot})
-    {:noreply, socket}
+
+  def handle_out("new_pixels", %{pixels: pixels, store_id: store_id}, socket) do
+    subscribed_chunks = socket.assigns.subscribed_chunks
+
+    # Filter pixels to only those in subscribed chunks
+    filtered_pixels =
+      Enum.filter(pixels, fn pixel ->
+        chunk_key = ChunkUtils.get_chunk_key(pixel["x"], pixel["y"])
+        MapSet.member?(subscribed_chunks, chunk_key)
+      end)
+
+    if Enum.empty?(filtered_pixels) do
+      {:noreply, socket}
+    else
+      push(socket, "new_pixels", %{pixels: filtered_pixels, store_id: store_id})
+      {:noreply, socket}
+    end
   end
 
-  def handle_info(
-        %Phoenix.Socket.Broadcast{event: "update_plot", payload: %{"plot" => plot}},
-        socket
-      ) do
-    push(socket, "update_plot", %{"plot" => plot})
-    {:noreply, socket}
+  def handle_out("create_plot", %{"plot" => plot, "chunk_keys" => chunk_keys}, socket) do
+    subscribed_chunks = socket.assigns.subscribed_chunks
+
+    # Check if any of the plot's chunks are subscribed
+    relevant_chunk_keys =
+      Enum.filter(chunk_keys, fn chunk_key ->
+        MapSet.member?(subscribed_chunks, chunk_key)
+      end)
+
+    if Enum.empty?(relevant_chunk_keys) do
+      {:noreply, socket}
+    else
+      push(socket, "create_plot", %{"plot" => plot, "chunk_keys" => relevant_chunk_keys})
+      {:noreply, socket}
+    end
   end
 
-  def handle_info(
-        %Phoenix.Socket.Broadcast{event: "delete_plot", payload: %{"plot_id" => plot_id}},
-        socket
-      ) do
-    push(socket, "delete_plot", %{"plot_id" => plot_id})
-    {:noreply, socket}
+  def handle_out("update_plot", %{"plot" => plot, "chunk_keys" => chunk_keys}, socket) do
+    subscribed_chunks = socket.assigns.subscribed_chunks
+
+    relevant_chunk_keys =
+      Enum.filter(chunk_keys, fn chunk_key ->
+        MapSet.member?(subscribed_chunks, chunk_key)
+      end)
+
+    if Enum.empty?(relevant_chunk_keys) do
+      {:noreply, socket}
+    else
+      push(socket, "update_plot", %{"plot" => plot, "chunk_keys" => relevant_chunk_keys})
+      {:noreply, socket}
+    end
+  end
+
+  def handle_out("delete_plot", %{"plot_id" => plot_id, "chunk_keys" => chunk_keys}, socket) do
+    subscribed_chunks = socket.assigns.subscribed_chunks
+
+    relevant_chunk_keys =
+      Enum.filter(chunk_keys, fn chunk_key ->
+        MapSet.member?(subscribed_chunks, chunk_key)
+      end)
+
+    if Enum.empty?(relevant_chunk_keys) do
+      {:noreply, socket}
+    else
+      push(socket, "delete_plot", %{"plot_id" => plot_id, "chunk_keys" => relevant_chunk_keys})
+      {:noreply, socket}
+    end
   end
 
   def handle_out(event, payload, socket) do

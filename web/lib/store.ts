@@ -60,7 +60,7 @@ import { absolutePointTupleToPixels } from "./line";
 import { TRANSPARENT_REF, getNextColor, getPreviousColor } from "./palette";
 import { findPlotAtPoint, findPlotById, getPlot } from "./plots/plots.rest";
 import { roundTo1Place } from "./round-to-five";
-import { newPixels, setupChannel, setupSocketConnection } from "./sockets";
+import { newPixels, setupChannel, setupSocketConnection, subscribeToChunks } from "./sockets";
 import { DEFAULT_TOOL_SETTINGS, Tool, ToolSettings, updateToolSettings } from "./tool-settings";
 import { BrushSettings, BrushTool, getBrushPoints, pointsToPixels } from "./tools/brush/brush";
 import { clampBrushSize } from "./tools/brush/brush-utils";
@@ -327,10 +327,19 @@ export const store = createStore({
       event: {
         channel_token?: string;
       },
+      enqueue,
     ) => {
       if (isInitialStore(context)) return;
       const socket = setupSocketConnection(context.server.websocketOriginURL, event.channel_token);
       const channel = setupChannel(socket);
+
+      // Resubscribe to all currently loaded chunks
+      const loadedChunkKeys = Object.keys(context.canvas.chunkCanvases);
+      if (loadedChunkKeys.length > 0) {
+        enqueue.effect(() => {
+          subscribeToChunks(channel, loadedChunkKeys);
+        });
+      }
 
       return {
         ...context,
@@ -725,6 +734,8 @@ export const store = createStore({
       const otherChunkX = Math.floor(otherX / CHUNK_LENGTH);
       const otherChunkY = Math.floor(otherY / CHUNK_LENGTH);
 
+      const newChunkKeys: string[] = [];
+
       for (let i = originChunkX; i <= otherChunkX; i += 1) {
         for (let j = originChunkY; j <= otherChunkY; j += 1) {
           const chunkX = i * CHUNK_LENGTH;
@@ -734,6 +745,7 @@ export const store = createStore({
             continue;
           }
           const chunkKey = getChunkKey(chunkX, chunkY);
+          newChunkKeys.push(chunkKey);
 
           context.canvas.chunkCanvases[chunkKey] = new Chunk(chunkX, chunkY, context.canvas.device);
 
@@ -777,6 +789,16 @@ export const store = createStore({
           });
         }
       }
+
+      // Subscribe to new chunks for realtime updates
+      if (newChunkKeys.length > 0 && context.server.channel) {
+        enqueue.effect(() => {
+          if (context.server.channel) {
+            subscribeToChunks(context.server.channel, newChunkKeys);
+          }
+        });
+      }
+
       return context;
     },
 
