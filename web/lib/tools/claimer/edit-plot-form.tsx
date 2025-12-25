@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverHeading, PopoverTrigger } from "@/components/ui/popover";
+import { invalidatePlotById, invalidateUserPlotCaches } from "@/lib/plots/plots.rest";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 
@@ -54,23 +55,16 @@ export function EditPlotForm({ plot, triggerProps }: EditPlotFormProps) {
     }) => updatePlot(plotId, plot),
     onSuccess: (updatedPlot) => {
       const context = store.getSnapshot().context;
-
+      if (context.queryClient == null) return;
       // Immediately update the user plots cache with the new plot data
       // This ensures tools like bucket have the correct polygon right away
-      context.queryClient?.setQueryData(["user", "plots"], (oldPlots: Plot[] | undefined) => {
+      context.queryClient.setQueryData(["user", "plots"], (oldPlots: Plot[] | undefined) => {
         if (!oldPlots) return [updatedPlot];
         return oldPlots.map((p) => (p.id === updatedPlot.id ? updatedPlot : p));
       });
 
-      context.queryClient?.invalidateQueries({
-        queryKey: ["user", "me"],
-      });
-      context.queryClient?.invalidateQueries({
-        queryKey: ["user", "logs"],
-      });
-      context.queryClient?.invalidateQueries({
-        queryKey: ["plots"],
-      });
+      invalidateUserPlotCaches(context.queryClient);
+      invalidatePlotById(plot.id, context.queryClient, context);
       // Clear the active action after successful save
       store.trigger.clearClaim();
       setIsOpen(false);

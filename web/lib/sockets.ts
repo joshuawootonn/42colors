@@ -9,6 +9,7 @@ import { ErrorCode } from "./error-codes";
 import { Pixel, pixelSchema } from "./geometry/coord";
 import { polygonSchema } from "./geometry/polygon";
 import { colorRefSchema } from "./palette";
+import { invalidatePlotById } from "./plots/plots.rest";
 import { InitializedStore, store } from "./store";
 import { Plot } from "./tools/claimer/claimer.rest";
 import { isInitialStore } from "./utils/is-initial-store";
@@ -142,6 +143,11 @@ export function setupChannel(socket: Socket): Channel {
         },
       });
     });
+
+    const context = store.getSnapshot().context;
+    if (!isInitialStore(context)) {
+      invalidatePlotById(plot.id, context.queryClient, context);
+    }
   });
 
   channel.on("update_plot", (payload: { plot: Plot; chunk_keys: string[] }) => {
@@ -169,6 +175,11 @@ export function setupChannel(socket: Socket): Channel {
         },
       });
     });
+
+    const context = store.getSnapshot().context;
+    if (!isInitialStore(context)) {
+      invalidatePlotById(plot.id, context.queryClient, context);
+    }
   });
 
   channel.on("delete_plot", (payload: { plot_id: number; chunk_keys: string[] }) => {
@@ -183,6 +194,11 @@ export function setupChannel(socket: Socket): Channel {
         },
       });
     });
+
+    const context = store.getSnapshot().context;
+    if (!isInitialStore(context)) {
+      invalidatePlotById(plot_id, context.queryClient, context);
+    }
   });
 
   return channel;

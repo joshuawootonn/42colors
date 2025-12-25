@@ -2,6 +2,7 @@ import { ComponentPropsWithoutRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { invalidatePlotById, invalidateUserPlotCaches } from "@/lib/plots/plots.rest";
 import { useMutation } from "@tanstack/react-query";
 
 import { store } from "../../store";
@@ -19,15 +20,9 @@ export function DeletePlotButton({ plot, triggerProps }: DeletePlotButtonProps) 
     mutationFn: deletePlot,
     onSuccess: () => {
       const context = store.getSnapshot().context;
-      context.queryClient?.invalidateQueries({
-        queryKey: ["user", "plots"],
-      });
-      context.queryClient?.invalidateQueries({
-        queryKey: ["user", "me"],
-      });
-      context.queryClient?.invalidateQueries({
-        queryKey: ["user", "logs"],
-      });
+      if (context.queryClient == null) return;
+      invalidateUserPlotCaches(context.queryClient);
+      invalidatePlotById(plot.id, context.queryClient, context);
       store.trigger.deselectPlot();
       setIsConfirmOpen(false);
     },

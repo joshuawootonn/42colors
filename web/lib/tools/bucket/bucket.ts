@@ -20,8 +20,9 @@ import { AbsolutePoint, Pixel, getLastPixelValue } from "../../geometry/coord";
 import { Polygon, getCanvasPolygon } from "../../geometry/polygon";
 import { inside } from "../../geometry/polygon";
 import { ColorRef, TRANSPARENT_REF } from "../../palette";
-import { findPlotAtPoint } from "../../plots/plots.rest";
+import { findPlotAtPoint, searchPlotAtPoint } from "../../plots/plots.rest";
 import { InitializedStore, store } from "../../store";
+import { isInitialStore } from "../../utils/is-initial-store";
 import { uuid } from "../../utils/uuid";
 import { getColorFromRef } from "../../webgpu/colors";
 import { EnqueueObject } from "../../xstate-internal-types";
@@ -158,6 +159,36 @@ export function startBucketAction(
   };
 }
 
+function executeBucketFill(
+  startPoint: AbsolutePoint,
+  color_ref: ColorRef,
+  context: InitializedStore,
+  plotPolygon: Polygon | null | undefined,
+) {
+  console.debug("Bucket: Starting fill at", startPoint, "with color", color_ref);
+
+  const nextActiveAction = startBucketAction(
+    startPoint,
+    color_ref,
+    context,
+    plotPolygon ?? undefined,
+  );
+
+  console.debug("Bucket: Filled", nextActiveAction.points.length, "pixels");
+
+  if (nextActiveAction.points.length === 0) {
+    console.debug("Bucket: No pixels to fill");
+    return;
+  }
+
+  const action_id = nextActiveAction.action_id;
+  store.trigger.completeCurrentAction({ action: nextActiveAction });
+  store.trigger.newPixels({
+    pixels: absolutePointTupleToPixels(nextActiveAction.points, color_ref),
+    action_id,
+  });
+}
+
 function onPointerDown(
   e: PointerEvent,
   context: InitializedStore,
@@ -182,47 +213,53 @@ function onPointerDown(
     isAdminUser(context.user) && context.adminSettings.isAdminCanvasEditingEnabled;
 
   const absolutePointTuple = absolutePointTupleSchema.parse([startPoint.x, startPoint.y]);
-
-  const plotAtPoint = findPlotAtPoint(absolutePointTuple, context);
-  if (plotAtPoint == null && !isAdminOverride) {
-    enqueue.effect(() => {
-      toasts.cannotBucketOutsidePlot();
-    });
-    return context;
-  }
-
-  // Verify the plot is owned by the current user (unless admin override)
-  if (plotAtPoint != null && plotAtPoint.userId !== context.user.id && !isAdminOverride) {
-    console.debug("Bucket: Plot not owned by user", plotAtPoint.userId, context.user.id);
-    enqueue.effect(() => {
-      toasts.cannotBucketOtherPlot();
-    });
-    return context;
-  }
+  const userId = context.user.id;
 
   const color_ref =
     e.button === 2
       ? context.toolSettings.palette.backgroundColorRef
       : context.toolSettings.palette.foregroundColorRef;
 
-  console.debug("Bucket: Starting fill at", startPoint, "with color", color_ref);
+  const plotAtPoint = findPlotAtPoint(absolutePointTuple, context);
 
-  const nextActiveAction = startBucketAction(startPoint, color_ref, context, plotAtPoint?.polygon);
+  // If not found locally, try searching remotely
+  if (plotAtPoint == null && !isAdminOverride) {
+    enqueue.effect(async () => {
+      const remotePlot = await searchPlotAtPoint(absolutePointTuple[0], absolutePointTuple[1]);
 
-  console.debug("Bucket: Filled", nextActiveAction.points.length, "pixels");
+      if (remotePlot == null) {
+        toasts.cannotBucketOutsidePlot();
+        return;
+      }
 
-  if (nextActiveAction.points.length === 0) {
-    console.debug("Bucket: No pixels to fill");
+      if (remotePlot.userId !== userId) {
+        console.debug("Bucket: Plot not owned by user", remotePlot.userId, userId);
+        toasts.cannotBucketOtherPlot();
+        return;
+      }
+
+      // Found plot remotely, execute bucket fill
+      const currentContext = store.getSnapshot().context;
+      if (isInitialStore(currentContext)) {
+        return;
+      }
+      executeBucketFill(startPoint, color_ref, currentContext, remotePlot.polygon);
+    });
     return context;
   }
 
-  const action_id = nextActiveAction.action_id;
-  enqueue.effect(() => {
-    store.trigger.completeCurrentAction({ action: nextActiveAction });
-    store.trigger.newPixels({
-      pixels: absolutePointTupleToPixels(nextActiveAction.points, color_ref),
-      action_id,
+  // Verify the plot is owned by the current user (unless admin override)
+  if (plotAtPoint != null && plotAtPoint.userId !== userId && !isAdminOverride) {
+    console.debug("Bucket: Plot not owned by user", plotAtPoint.userId, userId);
+    enqueue.effect(() => {
+      toasts.cannotBucketOtherPlot();
     });
+    return context;
+  }
+
+  // Execute bucket fill immediately (found locally)
+  enqueue.effect(() => {
+    executeBucketFill(startPoint, color_ref, context, plotAtPoint?.polygon);
   });
 
   return context;

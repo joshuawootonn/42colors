@@ -1,12 +1,73 @@
 import { InitializedStore, store } from "@/lib/store";
 import { isInitialStore } from "@/lib/utils/is-initial-store";
-import { UseQueryOptions, useQuery } from "@tanstack/react-query";
+import { QueryClient, UseQueryOptions, useQuery } from "@tanstack/react-query";
 
 import { getChunkKey, getChunkOrigin } from "../canvas/chunk";
-import { inside } from "../geometry/polygon";
+import { inside, Polygon } from "../geometry/polygon";
 import { polygonSchema } from "../geometry/polygon";
 import { AbsolutePointTuple } from "../line";
 import { Plot, arrayPlotResponseSchema, plotResponseSchema } from "../tools/claimer/claimer.rest";
+
+// ============================================================================
+// Cache Invalidation Helpers
+// ============================================================================
+
+function getChunkKeysForPolygon(polygon: Polygon): string[] {
+  const chunkKeys = new Set<string>();
+  for (const vertex of polygon.vertices) {
+    chunkKeys.add(getChunkKey(vertex[0], vertex[1]));
+  }
+  return Array.from(chunkKeys);
+}
+
+export function invalidateUserPlotCaches(queryClient: QueryClient) {
+  queryClient.invalidateQueries({ queryKey: ["user", "plots"] });
+  queryClient.invalidateQueries({ queryKey: ["user", "me"] });
+  queryClient.invalidateQueries({ queryKey: ["user", "logs"] });
+}
+
+export function invalidateRecentPlots(queryClient: QueryClient) {
+  queryClient.invalidateQueries({ queryKey: ["plots", "list"] });
+}
+
+export function invalidatePlotChunks(queryClient: QueryClient, polygon: Polygon) {
+  const chunkKeys = getChunkKeysForPolygon(polygon);
+  for (const chunkKey of chunkKeys) {
+    queryClient.invalidateQueries({ queryKey: ["plots", chunkKey] });
+  }
+}
+
+export function invalidatePlotById(
+  plotId: number,
+  queryClient: QueryClient,
+  context: InitializedStore,
+) {
+  // Check if plot is in user plots
+  const userPlots = (queryClient.getQueryData(["user", "plots"]) ?? []) as Plot[];
+  if (userPlots.some((plot) => plot.id === plotId)) {
+    queryClient.invalidateQueries({ queryKey: ["user", "plots"] });
+  }
+
+  // Check if plot is in recent plots
+  const recentPlots = (queryClient.getQueryData(["plots", "list"]) ?? []) as Plot[];
+  if (recentPlots.some((plot) => plot.id === plotId)) {
+    queryClient.invalidateQueries({ queryKey: ["plots", "list"] });
+  }
+
+  // Check if plot is in top plots
+  const topPlots = (queryClient.getQueryData(["plots", "top"]) ?? []) as Plot[];
+  if (topPlots.some((plot) => plot.id === plotId)) {
+    queryClient.invalidateQueries({ queryKey: ["plots", "top"] });
+  }
+
+  // Check chunk caches for this plot
+  for (const chunkKey in context.canvas.chunkCanvases) {
+    const chunk = context.canvas.chunkCanvases[chunkKey];
+    if (chunk?.plots?.some((plot) => plot.id === plotId)) {
+      queryClient.invalidateQueries({ queryKey: ["plots", chunkKey] });
+    }
+  }
+}
 
 type GetPlotOptions = {
   include_deleted?: boolean;
@@ -96,31 +157,15 @@ export function useTopPlots(
   return { data, isLoading, error };
 }
 
+// ============================================================================
+// Local Plot Lookup (chunk plots only - synchronous)
+// ============================================================================
+
 /**
- * Finds a plot at the given point from user plots, recent plots, or chunk plots
+ * Finds a plot at the given point from locally loaded chunk plots.
+ * Only checks plots that have been loaded into memory for visible chunks.
  */
 export function findPlotAtPoint(point: AbsolutePointTuple, context: InitializedStore): Plot | null {
-  // Get user plots first (higher priority)
-  const userPlots = (context.queryClient.getQueryData(["user", "plots"]) ?? []) as Plot[];
-
-  // Check user plots first
-  for (const plot of userPlots) {
-    if (plot.polygon && inside(point, plot.polygon)) {
-      return plot;
-    }
-  }
-
-  // Get recent plots (from other users)
-  const recentPlots = (context.queryClient.getQueryData(["plots", "list"]) ?? []) as Plot[];
-
-  // Check recent plots
-  for (const plot of recentPlots) {
-    if (plot.polygon && inside(point, plot.polygon)) {
-      return plot;
-    }
-  }
-
-  // Check plots stored in chunks (convert chunk-local coordinates back to world coordinates)
   const chunkKey = getChunkKey(point[0], point[1]);
   const chunk = context.canvas.chunkCanvases[chunkKey];
   if (chunk && chunk.plots) {
@@ -135,7 +180,10 @@ export function findPlotAtPoint(point: AbsolutePointTuple, context: InitializedS
           ]),
         });
         if (inside(point, worldPolygon)) {
-          return plot;
+          return {
+            ...plot,
+            polygon: worldPolygon,
+          };
         }
       }
     }
@@ -144,22 +192,11 @@ export function findPlotAtPoint(point: AbsolutePointTuple, context: InitializedS
   return null;
 }
 
+/**
+ * Finds a plot by ID from locally loaded chunk plots.
+ * Only checks plots that have been loaded into memory for visible chunks.
+ */
 export function findPlotById(id: number, context: InitializedStore): Plot | null {
-  // Check user plots first (higher priority)
-  const userPlots = (context.queryClient.getQueryData(["user", "plots"]) ?? []) as Plot[];
-  const userPlot = userPlots.find((plot) => plot.id === id);
-  if (userPlot) {
-    return userPlot;
-  }
-
-  // Check recent plots (from other users)
-  const recentPlots = (context.queryClient.getQueryData(["plots", "list"]) ?? []) as Plot[];
-  const recentPlot = recentPlots.find((plot) => plot.id === id);
-  if (recentPlot) {
-    return recentPlot;
-  }
-
-  // Check plots stored in chunks
   for (const chunkKey in context.canvas.chunkCanvases) {
     const chunk = context.canvas.chunkCanvases[chunkKey];
     if (chunk && chunk.plots) {
@@ -184,4 +221,49 @@ export function findPlotById(id: number, context: InitializedStore): Plot | null
   }
 
   return null;
+}
+
+// ============================================================================
+// Remote Plot Search (API calls - async)
+// ============================================================================
+
+/**
+ * Searches for a plot at the given point via API call.
+ * Use this when findPlotAtPoint returns null but you need to check the server.
+ */
+export async function searchPlotAtPoint(x: number, y: number): Promise<Plot | null> {
+  const context = store.getSnapshot().context;
+  if (isInitialStore(context)) {
+    throw new Error("Server context is not initialized");
+  }
+
+  const search = new URLSearchParams();
+  search.set("x", x.toString());
+  search.set("y", y.toString());
+
+  const response = await fetch(new URL(`/api/plots/search?${search}`, context.server.apiOrigin), {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      return null;
+    }
+    throw new Error("Failed to search for plot");
+  }
+
+  const json = await response.json();
+  return plotResponseSchema.parse(json).data;
+}
+
+/**
+ * Searches for a plot by ID via API call (alias for getPlot).
+ * Use this when findPlotById returns null but you need to check the server.
+ */
+export async function searchPlotById(id: number): Promise<Plot | null> {
+  try {
+    return await getPlot(id);
+  } catch {
+    return null;
+  }
 }

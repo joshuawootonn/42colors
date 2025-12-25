@@ -4,6 +4,7 @@ import { ArrowUp12 } from "@/components/icons/arrow_up_12";
 import { Button } from "@/components/ui/button";
 import { toasts } from "@/components/ui/toast";
 import * as Tooltip from "@/components/ui/tooltip";
+import { invalidatePlotById } from "@/lib/plots/plots.rest";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSelector } from "@xstate/store/react";
@@ -73,7 +74,9 @@ export function VoteButton({ plot }: VoteButtonsProps) {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["votes", plot.id] });
-      queryClient.invalidateQueries({ queryKey: ["plots", plot.id] });
+      const context = store.getSnapshot().context;
+      if (context.queryClient == null) return;
+      invalidatePlotById(plot.id, queryClient, context);
     },
   });
 

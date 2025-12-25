@@ -70,7 +70,7 @@ import {
   completeRectangleClaimerAction,
   startEditAction,
 } from "./tools/claimer/claimer";
-import { Plot, getPlotsByChunk, getUserPlots } from "./tools/claimer/claimer.rest";
+import { getPlotsByChunk, getUserPlots } from "./tools/claimer/claimer.rest";
 import { ErasureSettings, ErasureTool } from "./tools/erasure/erasure";
 import { clampErasureSize } from "./tools/erasure/erasure-utils";
 import { EyedropperTool } from "./tools/eyedropper/eyedropper";
@@ -800,7 +800,7 @@ export const store = createStore({
 
       const newCamera = { ...context.camera, ...event.camera };
 
-      enqueue.effect(() => {
+      enqueue.effect(async () => {
         store.trigger.resizeRealtimeAndTelegraphCanvases();
 
         // Show crosshair at center when camera moves
@@ -811,8 +811,7 @@ export const store = createStore({
           // Get the center point of the new camera position
           const centerPoint = getCameraCenterPoint(newCamera);
 
-          // Find plot at center point
-          const plotAtCenter = findPlotAtPoint(centerPoint, {
+          let plotAtCenter = findPlotAtPoint(centerPoint, {
             ...context,
             camera: newCamera,
           });
@@ -1082,10 +1081,7 @@ export const store = createStore({
     startEditPlot: (context, { plotId }: { plotId: number }, enqueue) => {
       if (isInitialStore(context)) return;
 
-      const userPlots = (context.queryClient.getQueryData(["user", "plots"]) ?? []) as Plot[];
-
-      const plot = userPlots.find((p) => p.id === plotId);
-
+      const plot = findPlotById(plotId, context);
       if (!plot?.polygon) {
         console.error("Cannot edit plot: plot not found or has no polygon");
         return context;

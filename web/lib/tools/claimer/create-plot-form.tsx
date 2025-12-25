@@ -6,6 +6,11 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverHeading, PopoverTrigger } from "@/components/ui/popover";
+import {
+  invalidatePlotChunks,
+  invalidateRecentPlots,
+  invalidateUserPlotCaches,
+} from "@/lib/plots/plots.rest";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 
@@ -41,15 +46,12 @@ export function CreatePlotForm() {
     mutationFn: createPlot,
     onSuccess: (plot) => {
       const context = store.getSnapshot().context;
-      context.queryClient?.invalidateQueries({
-        queryKey: ["user", "plots"],
-      });
-      context.queryClient?.invalidateQueries({
-        queryKey: ["user", "me"],
-      });
-      context.queryClient?.invalidateQueries({
-        queryKey: ["user", "logs"],
-      });
+      if (context.queryClient == null) return;
+      invalidateUserPlotCaches(context.queryClient);
+      invalidateRecentPlots(context.queryClient);
+      if (plot.polygon) {
+        invalidatePlotChunks(context.queryClient, plot.polygon);
+      }
       store.trigger.completeClaim();
       store.trigger.selectPlot({ plotId: plot.id });
       setIsOpen(false);
