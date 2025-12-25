@@ -18,10 +18,7 @@ export default function Page() {
         }
       }}
     >
-      <DialogContent
-        initialFocus={() => null}
-        className={cn(...dialogProse, "max-h-[calc(100vh-100px)] w-157")}
-      >
+      <DialogContent initialFocus={() => null} className={cn(...dialogProse, "max-h-[calc(100vh-100px)] w-157")}>
         <Changelog />
       </DialogContent>
     </Dialog>
