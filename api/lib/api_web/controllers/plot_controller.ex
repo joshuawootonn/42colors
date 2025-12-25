@@ -159,6 +159,36 @@ defmodule ApiWeb.PlotController do
     end
   end
 
+  def search(conn, %{"x" => x_str, "y" => y_str}) do
+    case {parse_number(x_str), parse_number(y_str)} do
+      {{:ok, x}, {:ok, y}} ->
+        case Plot.Repo.get_plot_at_point(x, y) do
+          nil -> send_resp(conn, :not_found, "Not found")
+          plot -> render(conn, :show, plot: plot)
+        end
+
+      _ ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{error: "Invalid x,y coordinates. Must be numbers."})
+    end
+  end
+
+  def search(conn, _params) do
+    conn
+    |> put_status(:bad_request)
+    |> json(%{error: "x and y query parameters are required"})
+  end
+
+  defp parse_number(value) when is_binary(value) do
+    case Float.parse(value) do
+      {num, ""} -> {:ok, num}
+      _ -> {:error, :invalid_number}
+    end
+  end
+
+  defp parse_number(_), do: {:error, :invalid_number}
+
   def update(conn, %{"id" => id, "plot" => plot_params}) do
     user = conn.assigns.current_user
     is_admin = user.email in @admin_emails

@@ -88,6 +88,33 @@ defmodule Api.Canvas.Plot.Repo do
   end
 
   @doc """
+  Gets a single plot at a specific point using PostGIS ST_Contains.
+
+  Returns nil if no plot contains the given point.
+
+  ## Examples
+
+      iex> get_plot_at_point(100, 100)
+      %Plot{}
+
+      iex> get_plot_at_point(0, 0)
+      nil
+
+  """
+  def get_plot_at_point(x, y) when is_number(x) and is_number(y) do
+    point = %Geo.Point{coordinates: {x, y}, srid: 4326}
+
+    Plot
+    |> where([p], not is_nil(p.polygon))
+    |> where([p], is_nil(p.deleted_at))
+    |> where([p], fragment("ST_Contains(?, ?)", p.polygon, ^point))
+    |> limit(1)
+    |> Repo.one()
+  end
+
+  def get_plot_at_point(_, _), do: nil
+
+  @doc """
   Creates a plot.
 
   ## Examples

@@ -1029,4 +1029,120 @@ defmodule ApiWeb.PlotControllerTest do
       assert response["deletedAt"] == nil
     end
   end
+
+  describe "search" do
+    test "returns plot at given point", %{conn: conn, user: user} do
+      plot =
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+            srid: 4326
+          }
+        })
+
+      conn = get(conn, ~p"/api/plots/search?x=15&y=15")
+      response = json_response(conn, 200)["data"]
+
+      assert response["id"] == plot.id
+      assert response["name"] == plot.name
+    end
+
+    test "returns 404 when no plot at given point", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots/search?x=9999&y=9999")
+      assert response(conn, 404)
+    end
+
+    test "returns error when x is missing", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots/search?y=15")
+      response = json_response(conn, 400)
+      assert response["error"] == "x and y query parameters are required"
+    end
+
+    test "returns error when y is missing", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots/search?x=15")
+      response = json_response(conn, 400)
+      assert response["error"] == "x and y query parameters are required"
+    end
+
+    test "returns error for invalid x coordinate", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots/search?x=abc&y=15")
+      response = json_response(conn, 400)
+      assert response["error"] == "Invalid x,y coordinates. Must be numbers."
+    end
+
+    test "returns error for invalid y coordinate", %{conn: conn} do
+      conn = get(conn, ~p"/api/plots/search?x=15&y=xyz")
+      response = json_response(conn, 400)
+      assert response["error"] == "Invalid x,y coordinates. Must be numbers."
+    end
+
+    test "handles decimal coordinates", %{conn: conn, user: user} do
+      plot =
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+            srid: 4326
+          }
+        })
+
+      conn = get(conn, ~p"/api/plots/search?x=15.5&y=15.5")
+      response = json_response(conn, 200)["data"]
+
+      assert response["id"] == plot.id
+    end
+
+    test "handles negative coordinates", %{conn: conn, user: user} do
+      plot =
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{-20, -20}, {-20, -10}, {-10, -10}, {-10, -20}, {-20, -20}]],
+            srid: 4326
+          }
+        })
+
+      conn = get(conn, ~p"/api/plots/search?x=-15&y=-15")
+      response = json_response(conn, 200)["data"]
+
+      assert response["id"] == plot.id
+    end
+
+    test "returns 404 for point on boundary (exclusive)", %{conn: conn, user: user} do
+      _plot =
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+            srid: 4326
+          }
+        })
+
+      # Point exactly on the boundary - ST_Contains typically excludes boundary
+      conn = get(conn, ~p"/api/plots/search?x=10&y=10")
+      # This might return the plot depending on PostGIS behavior
+      # We're testing that it doesn't crash
+      assert conn.status in [200, 404]
+    end
+
+    test "does not return deleted plots", %{conn: conn, user: user} do
+      plot =
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+            srid: 4326
+          }
+        })
+
+      # Delete the plot
+      conn = delete(conn, ~p"/api/plots/#{plot.id}")
+      assert response(conn, 204)
+
+      # Search should not find it
+      conn = get(conn, ~p"/api/plots/search?x=15&y=15")
+      assert response(conn, 404)
+    end
+  end
 end

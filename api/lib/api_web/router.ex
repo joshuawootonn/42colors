@@ -44,6 +44,7 @@ defmodule ApiWeb.Router do
     pipe_through :api
 
     get "/plots", PlotController, :index
+    get "/plots/search", PlotController, :search
     get "/plots/:id", PlotController, :show
     get "/pixels", PixelSubSectionInFileAsBinary, :index
 
