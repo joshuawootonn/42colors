@@ -15,6 +15,7 @@ export const plotSchema = z.object({
   updatedAt: z.string(),
   deletedAt: z.string().nullable(),
   userId: z.number(),
+  username: z.string().nullable().optional(),
   score: z.number().optional().default(0),
 });
 

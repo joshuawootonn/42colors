@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Footer } from "@/components/footer";
 import { Navigation } from "@/components/navigation";
 import { Palette } from "@/components/palette";
+import { UserProfilePopover } from "@/components/plots-popover/user-profile-popover";
 import { Toolbar } from "@/components/toolbar";
 import { WebGPUWarning } from "@/components/webgpu-warning";
 import authService from "@/lib/auth";
@@ -187,6 +188,7 @@ export default function Page() {
 
       <NewPlotPopover />
       <SelectedPlotPopover />
+      <UserProfilePopover />
 
       <div className="fixed right-3 top-3 flex">
         <Toolbar />

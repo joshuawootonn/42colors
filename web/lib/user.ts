@@ -3,6 +3,7 @@ import { z } from "zod";
 import { toasts } from "@/components/ui/toast";
 
 import analytics from "./analytics";
+import { polygonSchema } from "./geometry/polygon";
 import { store } from "./store";
 import { isInitialStore } from "./utils/is-initial-store";
 
@@ -49,7 +50,85 @@ const userSearchResponseUnionSchema = z.union([userSearchResponseSchema, userSea
 export type UserSearchResult = z.infer<typeof userSearchResponseSchema>;
 export type SearchedUser = z.infer<typeof userSearchResponseSchema.shape.users.element>;
 
+const userProfilePlotSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  description: z.string().nullable(),
+  polygon: polygonSchema,
+  insertedAt: z.string(),
+  updatedAt: z.string(),
+  score: z.number().optional().default(0),
+});
+
+const userProfileBaseSchema = z.object({
+  id: z.number(),
+  username: z.string(),
+  insertedAt: z.string(),
+});
+
+const userProfileResponseSchema = z.object({
+  data: userProfileBaseSchema,
+});
+
+const userProfilePlotsResponseSchema = z.object({
+  data: z.array(userProfilePlotSchema),
+});
+
+export type UserProfileBase = z.infer<typeof userProfileBaseSchema>;
+export type UserProfile = UserProfileBase & {
+  plots: UserProfilePlot[];
+};
+export type UserProfilePlot = z.infer<typeof userProfilePlotSchema>;
+
 const userService = {
+  async getUserProfile(userId: number): Promise<UserProfile> {
+    const context = store.getSnapshot().context;
+    if (isInitialStore(context)) {
+      throw new Error("Server context is not initialized");
+    }
+
+    // Fetch profile and plots in parallel
+    const [profileResponse, plotsResponse] = await Promise.all([
+      fetch(new URL(`/api/profile/${userId}`, context.server.apiOrigin), {
+        method: "GET",
+      }),
+      fetch(new URL(`/api/profile/${userId}/plots`, context.server.apiOrigin), {
+        method: "GET",
+      }),
+    ]);
+
+    if (!profileResponse.ok) {
+      throw new Error("Failed to fetch user profile");
+    }
+
+    if (!plotsResponse.ok) {
+      throw new Error("Failed to fetch user plots");
+    }
+
+    const [rawProfile, rawPlots] = await Promise.all([
+      profileResponse.json(),
+      plotsResponse.json(),
+    ]);
+
+    const profileResult = userProfileResponseSchema.safeParse(rawProfile);
+    const plotsResult = userProfilePlotsResponseSchema.safeParse(rawPlots);
+
+    if (!profileResult.success) {
+      console.error("Invalid user profile response format:", profileResult.error);
+      throw new Error("Invalid response format from server");
+    }
+
+    if (!plotsResult.success) {
+      console.error("Invalid user plots response format:", plotsResult.error);
+      throw new Error("Invalid response format from server");
+    }
+
+    return {
+      ...profileResult.data.data,
+      plots: plotsResult.data.data,
+    };
+  },
+
   async claimDailyGrant(origin: string): Promise<ClaimDailyGrantResponse> {
     const response = await fetch(`${origin}/api/users/me/claim_daily_bonus`, {
       method: "POST",
