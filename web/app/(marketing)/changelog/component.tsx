@@ -26,6 +26,209 @@ export default function Changelog() {
       <hr className="w-full border-t-2 border-border" />
       <ul>
         <li>
+          <DateComponent date={new Date("12/28/2025")} /> - Created a user profile popover so you
+          can easily see the plots of other users.
+          <br />
+          <ul>
+            <li>
+              Note: with this change I introduced the concept of a username. Your username is public
+              information and allows people to recognize you without identifying who you are IRL.
+              When you first create an account, you're given a username like{" "}
+              <code>transparent123</code>, but very soon you'll be able to customize this.
+            </li>
+            <li>
+              Within the plot popover, you can click on usernames to open the profile popover.
+              <video
+                src="/changelog/25-12-28-profile-popover.mp4"
+                muted
+                controls
+                className="mt-4 border border-border"
+              />
+            </li>
+            <li>
+              {" "}
+              This new popover allows you to see all of the plots created by a user, and will soon
+              include information about their popularity and stats over time.
+              <video
+                src="/changelog/25-12-28-iterating-profile-plots.mp4"
+                muted
+                controls
+                className="mt-4 border border-border"
+              />
+            </li>
+            <li>
+              I also created an expandable section on the selection popover so you can see both the
+              description and creator of the plot.
+              <video
+                src="/changelog/25-12-28-selection-description.mp4"
+                muted
+                controls
+                className="mt-4 border border-border"
+              />
+            </li>
+          </ul>
+        </li>
+        <li>
+          <DateComponent date={new Date("12/21/2025")} /> - Designed a new color palette with names
+          and hex codes for better usability. The darks were too dark, and there were a lot of gaps
+          in the palette. This palette will hopefully fix that 🤞
+          <div className="mt-2 mb-6 space-y-6">
+            <div className="flex gap-4 justify-start">
+              <div>
+                <h4 className="mb-2 font-bold">Old Palette</h4>
+                <div className="grid grid-cols-4 gap-0.5">
+                  {[
+                    { id: 3, hex: "#b7c4cc" },
+                    { id: 4, hex: "#7a7c8a" },
+                    { id: 5, hex: "#3d3a4a" },
+                    { id: 6, hex: "#171622" },
+                    { id: 7, hex: "#ccbfab" },
+                    { id: 8, hex: "#8a716f" },
+                    { id: 9, hex: "#4a333d" },
+                    { id: 10, hex: "#221524" },
+                    { id: 11, hex: "#dda980" },
+                    { id: 12, hex: "#a4644a" },
+                    { id: 13, hex: "#60302c" },
+                    { id: 14, hex: "#301117" },
+                    { id: 15, hex: "#ff947d" },
+                    { id: 16, hex: "#f23722" },
+                    { id: 17, hex: "#8c1d32" },
+                    { id: 18, hex: "#3c0b22" },
+                    { id: 19, hex: "#ffb45f" },
+                    { id: 20, hex: "#f36f1c" },
+                    { id: 21, hex: "#87381d" },
+                    { id: 22, hex: "#3d1212" },
+                    { id: 23, hex: "#f6f04a" },
+                    { id: 24, hex: "#cead19" },
+                    { id: 25, hex: "#6f5922" },
+                    { id: 26, hex: "#39230f" },
+                    { id: 27, hex: "#a0ff78" },
+                    { id: 28, hex: "#3ecb2b" },
+                    { id: 29, hex: "#1a6636" },
+                    { id: 30, hex: "#062622" },
+                    { id: 31, hex: "#84eeff" },
+                    { id: 32, hex: "#299be2" },
+                    { id: 33, hex: "#274fa2" },
+                    { id: 34, hex: "#0f1b4d" },
+                    { id: 35, hex: "#ff98fc" },
+                    { id: 36, hex: "#bc2fe3" },
+                    { id: 37, hex: "#5e198e" },
+                    { id: 38, hex: "#231047" },
+                    { id: 39, hex: "#ff9494" },
+                    { id: 40, hex: "#f11985" },
+                    { id: 41, hex: "#88126f" },
+                    { id: 42, hex: "#3f0d43" },
+                    { id: 1, hex: "#000000" },
+                    { id: 2, hex: "#ffffff" },
+                  ].map((color) => (
+                    <div key={`v1-${color.id}`} className="group relative">
+                      <div
+                        className="size-8 border-1.5 border-border bg-white"
+                        style={{
+                          backgroundColor: color.hex,
+                          backgroundImage:
+                            color.hex === "transparent"
+                              ? "linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc)"
+                              : undefined,
+                          backgroundSize: color.hex === "transparent" ? "10px 10px" : undefined,
+                          backgroundPosition:
+                            color.hex === "transparent" ? "0 0, 5px 5px" : undefined,
+                        }}
+                        title={`${color.id}: ${color.hex}`}
+                      />
+                      <span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[8px] font-mono opacity-0 mix-blend-difference text-white transition-opacity group-hover:opacity-100">
+                        {color.id}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center justify-center py-4 text-primary">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="text-muted-foreground"
+                >
+                  <path d="M5 12h14m-7-7l7 7-7 7" stroke="currentColor" strokeWidth="2" />
+                </svg>
+              </div>
+
+              <div>
+                <h4 className="mb-2 font-bold">New Palette </h4>
+                <div className="grid grid-cols-4 gap-0.5">
+                  {[
+                    { id: 2, hex: "#DFDFDF" },
+                    { id: 3, hex: "#ADADAD" },
+                    { id: 4, hex: "#626262" },
+                    { id: 5, hex: "#000000" },
+                    { id: 6, hex: "#E7CFBE" },
+                    { id: 7, hex: "#B97C55" },
+                    { id: 8, hex: "#8A3E08" },
+                    { id: 9, hex: "#623510" },
+                    { id: 10, hex: "#F5BE8C" },
+                    { id: 11, hex: "#F38846" },
+                    { id: 12, hex: "#E75B15" },
+                    { id: 13, hex: "#C4480D" },
+                    { id: 14, hex: "#F6EE96" },
+                    { id: 15, hex: "#F5E826" },
+                    { id: 16, hex: "#F4C72C" },
+                    { id: 17, hex: "#C18817" },
+                    { id: 18, hex: "#E0EC6B" },
+                    { id: 19, hex: "#96B115" },
+                    { id: 20, hex: "#958814" },
+                    { id: 21, hex: "#575308" },
+                    { id: 22, hex: "#B6EBAD" },
+                    { id: 23, hex: "#62D842" },
+                    { id: 24, hex: "#1C9850" },
+                    { id: 25, hex: "#10633D" },
+                    { id: 26, hex: "#ACF6EF" },
+                    { id: 27, hex: "#2BCEC3" },
+                    { id: 28, hex: "#1C9393" },
+                    { id: 29, hex: "#106068" },
+                    { id: 30, hex: "#AEE4FF" },
+                    { id: 31, hex: "#1F8FF2" },
+                    { id: 32, hex: "#1248BD" },
+                    { id: 33, hex: "#09148D" },
+                    { id: 34, hex: "#C7B4F5" },
+                    { id: 35, hex: "#8155D8" },
+                    { id: 36, hex: "#7634A7" },
+                    { id: 37, hex: "#360881" },
+                    { id: 38, hex: "#EE6071" },
+                    { id: 39, hex: "#D51010" },
+                    { id: 40, hex: "#A70D2E" },
+                    { id: 41, hex: "#830819" },
+                    { id: 42, hex: "#F5B3E0" },
+                    { id: 43, hex: "#F375A4" },
+                    { id: 1, hex: "#ffffff" },
+                  ].map((color) => (
+                    <div key={`v2-${color.id}`} className="group relative">
+                      <div
+                        className="size-8 border-1.5 border-border bg-white"
+                        style={{
+                          backgroundColor: color.hex,
+                          backgroundImage:
+                            color.hex === "transparent"
+                              ? "linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc)"
+                              : undefined,
+                          backgroundSize: color.hex === "transparent" ? "10px 10px" : undefined,
+                          backgroundPosition:
+                            color.hex === "transparent" ? "0 0, 5px 5px" : undefined,
+                        }}
+                        title={`${color.id}: ${color.hex}`}
+                      />
+                      <span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[8px] font-mono opacity-0 mix-blend-difference text-white transition-opacity group-hover:opacity-100">
+                        {color.id}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </li>
+        <li>
           <video
             src="/changelog/25-12-15-mobile-responsive.mp4"
             muted
