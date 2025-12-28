@@ -7,7 +7,7 @@ import { getCameraOffset } from "../tools/brush/brush";
 import { isInitialStore } from "../utils/is-initial-store";
 import { BLUE, DARK_RED, LIGHT_GRAY } from "../webgpu/colors";
 import { LineItem } from "../webgpu/web-gpu-manager";
-import { getPixelSize, getSizeInPixelsPlusBleed } from "./canvas";
+import { getPixelSize, getSizeInPixelsPlusBleed, getZoomIndependentSize } from "./canvas";
 import { getFullsizeHeight, getFullsizeWidth } from "./fullsize";
 
 export function redrawSelectedPlot(context: InitializedStore) {
@@ -20,8 +20,13 @@ export function redrawSelectedPlot(context: InitializedStore) {
   const selectedPlot = findPlotById(selectedPlotId, context);
   if (selectedPlot?.polygon == null) return;
 
-  const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
+  const zoomMultiplier = getZoomMultiplier(context.camera);
+  const pixelSize = getPixelSize(zoomMultiplier);
   const { xOffset, yOffset } = getCameraOffset(context.camera);
+
+  // Scale line width to match the yellow editing outline
+  const handleSize = getZoomIndependentSize(0.9, zoomMultiplier, 0.5, 5);
+  const lineWidth = handleSize * 0.77;
 
   webgpuManager.redrawPolygons([{ polygon: selectedPlot.polygon }], {
     xOffset,
@@ -30,7 +35,7 @@ export function redrawSelectedPlot(context: InitializedStore) {
     yCamera: context.camera.y,
     pixelSize,
     containsMatchingEndpoints: true,
-    lineWidth: 0.37,
+    lineWidth,
     color: BLUE,
   });
 }
@@ -99,8 +104,12 @@ export function redrawRejectedPlots(context: InitializedStore) {
 
   if (polygonItems.length === 0) return;
 
-  const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
+  const zoomMultiplier = getZoomMultiplier(context.camera);
+  const pixelSize = getPixelSize(zoomMultiplier);
   const { xOffset, yOffset } = getCameraOffset(context.camera);
+
+  // Scale line width to maintain consistent screen appearance when zoomed out
+  const lineWidth = getZoomIndependentSize(0.5, zoomMultiplier, 0.25, 2.5);
 
   webgpuManager.redrawPolygons(polygonItems, {
     xOffset,
@@ -109,7 +118,7 @@ export function redrawRejectedPlots(context: InitializedStore) {
     yCamera: context.camera.y,
     pixelSize,
     containsMatchingEndpoints: true,
-    lineWidth: 0.5,
+    lineWidth,
     color: DARK_RED,
     filled: false,
   });
@@ -122,7 +131,8 @@ export function redrawCrosshair(context: InitializedStore) {
   const crosshairState = crosshairAtom.get();
   if (!crosshairState.visible) return;
 
-  const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
+  const zoomMultiplier = getZoomMultiplier(context.camera);
+  const pixelSize = getPixelSize(zoomMultiplier);
 
   const canvasWidth = getFullsizeWidth();
   const canvasHeight = getFullsizeHeight();
@@ -134,8 +144,9 @@ export function redrawCrosshair(context: InitializedStore) {
   const centerX = Math.floor(canvasPixelWidth / 2);
   const centerY = Math.floor(canvasPixelHeight / 2);
 
-  const crosshairSize = 0.5; // Size of crosshair arms in world units
-  const lineThickness = 0.25; // Thickness in world units
+  // Scale crosshair size to maintain consistent screen appearance when zoomed out
+  const crosshairSize = getZoomIndependentSize(0.5, zoomMultiplier, 0.25, 3);
+  const lineThickness = getZoomIndependentSize(0.25, zoomMultiplier, 0.15, 1.5);
 
   const lines: LineItem[] = [
     // Horizontal line

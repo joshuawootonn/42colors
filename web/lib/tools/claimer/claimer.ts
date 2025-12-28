@@ -2,7 +2,7 @@ import { toasts } from "@/components/ui/toast";
 
 import { ACTION_TYPES } from "../../action-types";
 import { getZoomMultiplier } from "../../camera";
-import { getPixelSize } from "../../canvas/canvas";
+import { getPixelSize, getZoomIndependentSize } from "../../canvas/canvas";
 import {
   Polygon,
   getCompositePolygons,
@@ -14,7 +14,7 @@ import {
 import { Rect, rectSchema } from "../../geometry/rect";
 import { simplifyPolygon } from "../../geometry/simplify-polygon";
 import { InitializedStore } from "../../store";
-import { CLAIMER_YELLOW, GRAY_800 } from "../../webgpu/colors";
+import { CLAIMER_YELLOW, WHITE } from "../../webgpu/colors";
 import { EnqueueObject } from "../../xstate-internal-types";
 import { getAbsolutePoint, getCameraOffset } from "../brush/brush";
 import { getUserPlots } from "./claimer.rest";
@@ -49,7 +49,8 @@ function updateCursor(context: InitializedStore): void {
 
   // In edit/create mode, show grab cursor when near a handle
   const { clientX, clientY } = context.interaction.cursorPosition;
-  const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
+  const zoomMultiplier = getZoomMultiplier(context.camera);
+  const pixelSize = getPixelSize(zoomMultiplier);
   const { xOffset, yOffset } = getCameraOffset(context.camera);
 
   // Convert screen coordinates to world coordinates
@@ -71,8 +72,8 @@ function updateCursor(context: InitializedStore): void {
     return;
   }
 
-  // Check if cursor is near any vertex (handle)
-  const handleProximity = 0.5; // world units
+  // Scale handle proximity to maintain consistent hit area when zoomed out
+  const handleProximity = getZoomIndependentSize(0.5, zoomMultiplier, 0.25, 3);
   const isNearHandle = polygon.vertices.some(
     ([vx, vy]) =>
       Math.abs(vx - worldX) <= handleProximity && Math.abs(vy - worldY) <= handleProximity,
@@ -88,7 +89,8 @@ function redrawTelegraph(context: InitializedStore) {
     return context;
   }
 
-  const pixelSize = getPixelSize(getZoomMultiplier(context.camera));
+  const zoomMultiplier = getZoomMultiplier(context.camera);
+  const pixelSize = getPixelSize(zoomMultiplier);
   const { xOffset, yOffset } = getCameraOffset(context.camera);
 
   if (
@@ -140,27 +142,53 @@ function redrawTelegraph(context: InitializedStore) {
   // Draw the simplified polygon outline
   const webGPUPolygons = polygons.map((polygon) => ({ polygon }));
 
+  // Scale handle size to maintain consistent screen appearance when zoomed out
+  const handleSize = getZoomIndependentSize(0.9, zoomMultiplier, 0.5, 5);
+  const outlineSize = handleSize * 1.2;
+  // Scale proportionally with handles
+  const lineWidth = handleSize * 0.77;
+
   uiTelegraphWebGPUManager.redrawPolygons(webGPUPolygons, {
     xOffset,
     yOffset,
     xCamera: context.camera.x,
     yCamera: context.camera.y,
     pixelSize,
-    lineWidth: 0.4,
+    lineWidth,
     color: CLAIMER_YELLOW,
   });
 
   if (context.activeAction.polygon != null) {
-    const lines = context.activeAction.polygon.vertices.map(([x, y]) => ({
+    // Draw yellow outline first (larger)
+    const outlineLines = context.activeAction.polygon.vertices.map(([x, y]) => ({
       startX: x,
       startY: y,
       endX: x,
       endY: y,
-      color: GRAY_800,
-      thickness: 0.45,
+      color: CLAIMER_YELLOW,
+      thickness: outlineSize,
     }));
 
-    uiTelegraphWebGPUManager.redrawLines(lines, {
+    uiTelegraphWebGPUManager.redrawLines(outlineLines, {
+      xOffset,
+      yOffset,
+      xCamera: context.camera.x,
+      yCamera: context.camera.y,
+      pixelSize,
+      cameraMode: "relative" as const,
+    });
+
+    // Draw white fill on top (smaller)
+    const fillLines = context.activeAction.polygon.vertices.map(([x, y]) => ({
+      startX: x,
+      startY: y,
+      endX: x,
+      endY: y,
+      color: WHITE,
+      thickness: handleSize,
+    }));
+
+    uiTelegraphWebGPUManager.redrawLines(fillLines, {
       xOffset,
       yOffset,
       xCamera: context.camera.x,

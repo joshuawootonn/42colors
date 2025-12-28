@@ -12,6 +12,25 @@ export function getPixelSize(zoomMultiplier: ZoomMultiplier): PixelSize {
   return pixelSizeSchema.parse(CANVAS_PIXEL_RATIO * zoomMultiplier);
 }
 
+/**
+ * Calculates a size that maintains consistent screen appearance regardless of zoom level.
+ * When zoomed out, world-unit sizes need to be larger to appear the same on screen.
+ *
+ * @param baseSize - The size in world units at default zoom (zoomMultiplier = 1)
+ * @param zoomMultiplier - Current zoom multiplier
+ * @param minSize - Minimum size to prevent elements from getting too small when zoomed in
+ * @param maxSize - Maximum size to prevent elements from getting too large when zoomed out
+ */
+export function getZoomIndependentSize(
+  baseSize: number,
+  zoomMultiplier: ZoomMultiplier,
+  minSize: number = baseSize * 0.5,
+  maxSize: number = baseSize * 4,
+): number {
+  const scaledSize = baseSize / zoomMultiplier;
+  return Math.min(maxSize, Math.max(minSize, scaledSize));
+}
+
 export function getSizeInPixels(length: number, pixelSize: PixelSize) {
   return length / pixelSize;
 }
