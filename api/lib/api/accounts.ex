@@ -122,8 +122,10 @@ defmodule Api.Accounts do
          end)
          |> Repo.transaction() do
       {:ok, %{user: user}} ->
-        # Generate and set the username using the new user's ID
-        username = User.generate_username(user.id)
+        # Generate and set the username using the count of users (0-indexed)
+        # This gives us sequential usernames based on order of registration
+        user_count = Repo.aggregate(User, :count, :id) - 1
+        username = User.generate_username(user_count)
 
         {:ok, user_with_username} =
           user
