@@ -112,32 +112,36 @@ defmodule Api.Accounts do
   """
   def register_user(attrs) do
     alias Api.Logs.Log.Service, as: LogService
+    alias Api.Accounts.UsernameCount
     alias Ecto.Multi
 
-    # First, create the user
+    # First, create the user with username generation
     case Multi.new()
          |> Multi.insert(:user, fn _changes ->
            %User{}
            |> User.registration_changeset(attrs)
          end)
+         |> Multi.run(:username, fn _repo, %{user: _user} ->
+           # Get next username for transparent (color_id = 0)
+           username = UsernameCount.Repo.get_next_username(0)
+           {:ok, username}
+         end)
+         |> Multi.update(:user_with_username, fn %{user: user, username: username} ->
+           Ecto.Changeset.change(user, username: username)
+         end)
+         |> Multi.run(:increment_count, fn _repo, _changes ->
+           UsernameCount.Repo.increment_count(0)
+         end)
          |> Repo.transaction() do
-      {:ok, %{user: user}} ->
-        # Generate and set the username using the count of users (0-indexed)
-        # This gives us sequential usernames based on order of registration
-        user_count = Repo.aggregate(User, :count, :id) - 1
-        username = User.generate_username(user_count)
-
-        {:ok, user_with_username} =
-          user
-          |> Ecto.Changeset.change(username: username)
-          |> Repo.update()
+      {:ok, %{user_with_username: user_with_username}} ->
+        user = user_with_username
 
         # Calculate balance change using the public function
-        balance_change = LogService.calculate_balance_change(user_with_username.balance, 2000)
+        balance_change = LogService.calculate_balance_change(user.balance, 2000)
 
         # Create the initial grant log
         case LogService.create_log(%{
-               user_id: user_with_username.id,
+               user_id: user.id,
                old_balance: balance_change.old_balance,
                new_balance: balance_change.new_balance,
                log_type: "initial_grant",
