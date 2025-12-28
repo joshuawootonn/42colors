@@ -47,6 +47,8 @@ defmodule ApiWeb.Router do
     get "/plots/search", PlotController, :search
     get "/plots/:id", PlotController, :show
     get "/pixels", PixelSubSectionInFileAsBinary, :index
+    get "/profile/:id", ProfileController, :show
+    get "/profile/:id/plots", ProfileController, :show_plots
 
     post "/users/confirm/:token", UserConfirmationController, :update
     delete "/users/log_out", UserSessionController, :delete
