@@ -8,6 +8,7 @@ import type { Log } from "@/lib/logs/logs.rest";
 import { store } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { useSelector } from "@xstate/store/react";
+import { Button } from "@base-ui/react/button";
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString("en-US", {
@@ -78,18 +79,20 @@ function getLogDescription(log: Log, selectPlot: (id: number) => void): ReactNod
               <div className="mb-1">Votes Cast</div>
               <div className="space-y-0.5">
                 {log.diffs?.votesCast?.map((vote) => (
-                  <button
+                  <Button
+                    render={<span />}
+                    nativeButton={false}
                     key={vote.name}
-                    className="group/vote-button flex w-full whitespace-nowrap text-left"
+                    className="group/vote-button relative z-10 svg-outline-sm flex justify-start whitespace-nowrap text-left"
                     onClick={() => selectPlot(vote.plotId)}
                   >
                     <div className="mr-1 shrink-0 translate-y-[-1px]">-</div>
-                    <span className="truncate group-hover/vote-button:underline group-focus-visible/vote-button:underline">
+                    <span className="truncate underline decoration-dotted underline-offset-2 hover:decoration-solid">
                       {vote.name}
                     </span>
                     &nbsp;
                     <div>(#{vote.newScore})</div>
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -98,17 +101,19 @@ function getLogDescription(log: Log, selectPlot: (id: number) => void): ReactNod
             <div className="mt-2">
               <div className="mt-1.5 space-y-1">Votes Received</div>
               {log.diffs?.votesReceived?.map((vote) => (
-                <button
+                <Button
+                  render={<span />}
+                  nativeButton={false}
                   key={vote.name}
-                  className="group/vote-button flex w-full whitespace-nowrap text-left"
+                  className="group/vote-button relative z-10 svg-outline-sm flex justify-start whitespace-nowrap text-left"
                   onClick={() => selectPlot(vote.plotId)}
                 >
                   <div className="mr-1 shrink-0 translate-y-[-1px]">-</div>
-                  <span className="truncate group-hover/vote-button:underline group-focus-visible/vote-button:underline">
+                  <span className="truncate underline decoration-dotted underline-offset-2 hover:decoration-solid">
                     {vote.name}
                   </span>
                   <div>&nbsp;(+{vote.newScore - vote.oldScore})</div>
-                </button>
+                </Button>
               ))}
             </div>
           )}
