@@ -1030,6 +1030,113 @@ defmodule ApiWeb.PlotControllerTest do
     end
   end
 
+  describe "user information in plot responses" do
+    test "show returns plot with username", %{conn: conn, user: user} do
+      plot = plot_fixture(%{user_id: user.id})
+
+      conn = get(conn, ~p"/api/plots/#{plot.id}")
+      response = json_response(conn, 200)["data"]
+
+      assert response["userId"] == user.id
+      assert response["username"] == user.username
+    end
+
+    test "index returns plots with usernames", %{conn: conn, user: user} do
+      plot =
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{95, 95}, {95, 105}, {105, 105}, {105, 95}, {95, 95}]],
+            srid: 4326
+          }
+        })
+
+      conn = get(conn, ~p"/api/plots?x=100&y=100")
+      response = json_response(conn, 200)["data"]
+
+      plot_data = Enum.find(response, &(&1["id"] == plot.id))
+      assert plot_data != nil
+      assert plot_data["userId"] == user.id
+      assert plot_data["username"] == user.username
+    end
+
+    test "me_plots returns plots with username", %{conn: conn, user: user} do
+      _plot = plot_fixture(%{user_id: user.id})
+
+      conn = get(conn, ~p"/api/plots/me")
+      [resp_plot] = json_response(conn, 200)["data"]
+
+      assert resp_plot["userId"] == user.id
+      assert resp_plot["username"] == user.username
+    end
+
+    test "create returns newly created plot with username", %{conn: conn, user: user} do
+      polygon = %{
+        "vertices" => [
+          [0, 0],
+          [0, 1],
+          [1, 1],
+          [1, 0],
+          [0, 0]
+        ]
+      }
+
+      attrs = Map.put(@create_attrs, :polygon, polygon)
+      conn = post(conn, ~p"/api/plots", plot: attrs)
+      response = json_response(conn, 201)["data"]
+
+      assert response["userId"] == user.id
+      assert response["username"] == user.username
+    end
+
+    test "update returns updated plot with username", %{conn: conn, user: user} do
+      plot = plot_fixture(%{user_id: user.id})
+
+      conn = put(conn, ~p"/api/plots/#{plot}", plot: @update_attrs)
+      response = json_response(conn, 200)["data"]
+
+      assert response["userId"] == user.id
+      assert response["username"] == user.username
+    end
+
+    test "global index returns plots with usernames from multiple users", %{conn: conn} do
+      user1 = user_fixture()
+      user2 = user_fixture()
+
+      plot1 =
+        plot_fixture(%{
+          user_id: user1.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{10, 10}, {10, 20}, {20, 20}, {20, 10}, {10, 10}]],
+            srid: 4326
+          }
+        })
+
+      plot2 =
+        plot_fixture(%{
+          user_id: user2.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{30, 30}, {30, 40}, {40, 40}, {40, 30}, {30, 30}]],
+            srid: 4326
+          }
+        })
+
+      conn = get(conn, ~p"/api/plots")
+      response = json_response(conn, 200)["data"]
+
+      plot1_data = Enum.find(response, &(&1["id"] == plot1.id))
+      plot2_data = Enum.find(response, &(&1["id"] == plot2.id))
+
+      assert plot1_data != nil
+      assert plot1_data["userId"] == user1.id
+      assert plot1_data["username"] == user1.username
+
+      assert plot2_data != nil
+      assert plot2_data["userId"] == user2.id
+      assert plot2_data["username"] == user2.username
+    end
+  end
+
   describe "search" do
     test "returns plot at given point", %{conn: conn, user: user} do
       plot =
