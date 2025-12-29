@@ -42,6 +42,9 @@ export function invalidatePlotById(
   queryClient: QueryClient,
   context: InitializedStore,
 ) {
+  // Invalidate the individual plot query (used by useSelectedPlot)
+  queryClient.invalidateQueries({ queryKey: ["plots", plotId] });
+
   // Check if plot is in user plots
   const userPlots = (queryClient.getQueryData(["user", "plots"]) ?? []) as Plot[];
   if (userPlots.some((plot) => plot.id === plotId)) {
