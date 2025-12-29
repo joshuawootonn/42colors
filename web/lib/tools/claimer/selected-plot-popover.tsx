@@ -99,7 +99,7 @@ export function SelectedPlotPopover() {
       }}
     >
       <PopoverContent
-        className="w-auto border-none"
+        className="bg-transparent w-auto border-none"
         isDraggable={false}
         positionerProps={{
           side: "bottom",
@@ -160,14 +160,19 @@ export function SelectedPlotPopover() {
 
           {/* Bottom row: description and creator info */}
           {isDescriptionExpanded && (
-            <div className="mt-[-1.5px] min-h-8 flex items-center border-1.5 border-border bg-secondary px-2 py-1.5">
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="absolute bottom-[1.5px] min-w-full left-0 translate-y-full min-h-8 flex items-center border-1.5 border-border bg-secondary px-2 py-1.5">
+              <div className="flex flex-1 flex-col gap-1">
                 {selectedPlot.description && (
-                  <div className="line-clamp-2 max-w-xs text-xs text-muted-foreground">
+                  <div
+                    className={cn(
+                      "text-xs text-muted-foreground",
+                      selectedPlot.description.length > 40 ? "min-w-[40ch]" : "min-w-full",
+                    )}
+                  >
                     {selectedPlot.description}
                   </div>
                 )}
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-muted-foreground text-right">
                   -{" "}
                   <button
                     className={cn(
