@@ -137,7 +137,7 @@ defmodule Api.Accounts do
         user = user_with_username
 
         # Calculate balance change using the public function
-        balance_change = LogService.calculate_balance_change(user.balance, 2000)
+        balance_change = LogService.calculate_balance_change(user.balance, 4000)
 
         # Create the initial grant log
         case LogService.create_log(%{
@@ -147,7 +147,7 @@ defmodule Api.Accounts do
                log_type: "initial_grant",
                diffs: %{
                  "reason" => "Initial grant for new user",
-                 "grant_amount" => 2000
+                 "grant_amount" => 4000
                }
              }) do
           {:ok, {_log, updated_user}} ->

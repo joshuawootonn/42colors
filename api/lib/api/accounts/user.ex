@@ -9,7 +9,7 @@ defmodule Api.Accounts.User do
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
-    field :balance, :integer, default: 2000
+    field :balance, :integer, default: 0
     field :last_visit_grant_at, :utc_datetime
 
     timestamps(type: :utc_datetime)
