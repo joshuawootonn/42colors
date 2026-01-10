@@ -18,11 +18,7 @@ export default function Page() {
         }
       }}
     >
-      <DialogContent
-        // There's nothing here to focus except for the contact me form, which I don't really want to focus, so I'm preventing autofocus for this dialogue.
-        initialFocus={() => null}
-        className={cn(...dialogProse, "w-157")}
-      >
+      <DialogContent initialFocus={() => null} className={cn(...dialogProse, "w-157")}>
         <TermsOfService />
       </DialogContent>
     </Dialog>
