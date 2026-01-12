@@ -8,7 +8,6 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 function TrackPageView() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   // Load the Fathom script on mount
   useEffect(() => {
@@ -17,15 +16,15 @@ function TrackPageView() {
     });
   }, []);
 
-  // Record a pageview when route changes
+  // Record a pageview when route changes (excluding search param changes)
   useEffect(() => {
     if (!pathname) return;
 
     trackPageview({
-      url: pathname + searchParams?.toString(),
+      url: pathname,
       referrer: document.referrer,
     });
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   return null;
 }
