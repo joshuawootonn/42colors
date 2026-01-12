@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverHeading, PopoverTrigger } from "@/components/ui/popover";
+import analytics from "@/lib/analytics";
 import {
   invalidatePlotChunks,
   invalidateRecentPlots,
@@ -45,6 +46,12 @@ export function CreatePlotForm() {
   const { mutate: createPlotMutation } = useMutation({
     mutationFn: createPlot,
     onSuccess: (plot) => {
+      analytics.trackEvent("plot_created", {
+        plot_id: plot.id,
+        plot_name: plot.name,
+        has_description: !!plot.description,
+      });
+
       const context = store.getSnapshot().context;
       if (context.queryClient == null) return;
       invalidateUserPlotCaches(context.queryClient);

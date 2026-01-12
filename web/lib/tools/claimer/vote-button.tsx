@@ -4,6 +4,7 @@ import { ArrowUp12 } from "@/components/icons/arrow_up_12";
 import { Button } from "@/components/ui/button";
 import { toasts } from "@/components/ui/toast";
 import * as Tooltip from "@/components/ui/tooltip";
+import analytics from "@/lib/analytics";
 import { invalidatePlotById } from "@/lib/plots/plots.rest";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -49,6 +50,13 @@ export function VoteButton({ plot }: VoteButtonsProps) {
       }
 
       return { previousVote, previousPlot };
+    },
+
+    onSuccess: () => {
+      analytics.trackEvent("plot_upvote", {
+        plot_id: plot.id,
+        plot_name: plot.name,
+      });
     },
 
     onError: (err, _, context) => {
