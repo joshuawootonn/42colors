@@ -74,7 +74,7 @@ function useIsWithinDialogContext() {
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Popup>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Popup>
->(({ className, children, style, ...props }, ref) => {
+>(({ className, children, style, initialFocus, ...props }, ref) => {
   const zIndex = useOverlayZIndex();
 
   return (
@@ -88,6 +88,7 @@ const DialogContent = React.forwardRef<
           "fixed left-[50%] top-[50%] flex max-h-[min(calc(100vh-40px),600px)] w-full max-w-[calc(100vw-40px)] translate-x-[-50%] translate-y-[-50%] gap-4 border-1.5 border-primary bg-background shadow-lg",
           className,
         )}
+        initialFocus={initialFocus}
         {...props}
       >
         <DialogContext.Provider value={true}>

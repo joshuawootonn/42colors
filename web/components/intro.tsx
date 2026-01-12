@@ -19,7 +19,7 @@ export function Intro({ defaultOpen }: { defaultOpen: boolean }) {
         }
       }}
     >
-      <DialogContent className={cn(...dialogProse, "w-157 pt-2")}>
+      <DialogContent initialFocus={false} className={cn(...dialogProse, "w-157 pt-2")}>
         <About />
       </DialogContent>
     </Dialog>
