@@ -79,6 +79,11 @@ import { clampLineSize } from "./tools/line/line-utils";
 import { PaletteSettings } from "./tools/palette";
 import { MoveTool } from "./tools/move";
 import { WheelTool } from "./tools/wheel";
+import { RectangleTool } from "./tools/shape/rectangle";
+import { RectangleFillTool } from "./tools/shape/rectangle-fill";
+import { EllipseTool } from "./tools/shape/ellipse";
+import { EllipseFillTool } from "./tools/shape/ellipse-fill";
+import { ShapePickerSettings } from "./tools/shape/shape-picker-settings";
 import { clamp } from "./utils/clamp";
 import { isInitialStore } from "./utils/is-initial-store";
 import { uuid } from "./utils/uuid";
@@ -917,6 +922,24 @@ export const store = createStore({
       };
     },
 
+    updateShapePickerSettings: (
+      context,
+      { shapePicker }: { shapePicker: Partial<ShapePickerSettings> },
+    ) => {
+      if (isInitialStore(context)) return;
+      const toolSettings = {
+        ...context.toolSettings,
+        shapePicker: { ...context.toolSettings.shapePicker, ...shapePicker },
+      };
+
+      updateToolSettings(toolSettings);
+
+      return {
+        ...context,
+        toolSettings,
+      };
+    },
+
     togglePlotBorderVisibility: (context) => {
       if (isInitialStore(context)) return;
       if (!isAdminUser(context.user)) return context;
@@ -1164,8 +1187,15 @@ export const store = createStore({
         return MoveTool.onPointerDown(e, context);
       }
 
+      const isShapeActionActive =
+        context.activeAction?.type === ACTION_TYPES.RECTANGLE_ACTIVE ||
+        context.activeAction?.type === ACTION_TYPES.RECTANGLE_FILL_ACTIVE ||
+        context.activeAction?.type === ACTION_TYPES.ELLIPSE_ACTIVE ||
+        context.activeAction?.type === ACTION_TYPES.ELLIPSE_FILL_ACTIVE;
+
       // Alt/Option key quick mode: temporarily switch to eyedropper
-      if (context.interaction.isAltPressed || e.altKey) {
+      // Skip this if we're actively using a shape tool (Shift/Alt are used for constraints/center drawing)
+      if ((context.interaction.isAltPressed || e.altKey) && !isShapeActionActive) {
         return EyedropperTool.onPointerDown(e, context, enqueue);
       }
 
@@ -1199,6 +1229,22 @@ export const store = createStore({
         return EyedropperTool.onPointerDown(e, context, enqueue);
       }
 
+      if (tool === Tool.Rectangle) {
+        return RectangleTool.onPointerDown(e, context, enqueue);
+      }
+
+      if (tool === Tool.RectangleFill) {
+        return RectangleFillTool.onPointerDown(e, context, enqueue);
+      }
+
+      if (tool === Tool.Ellipse) {
+        return EllipseTool.onPointerDown(e, context, enqueue);
+      }
+
+      if (tool === Tool.EllipseFill) {
+        return EllipseFillTool.onPointerDown(e, context, enqueue);
+      }
+
       return context;
     },
 
@@ -1210,7 +1256,14 @@ export const store = createStore({
       });
 
       // Alt/Option key quick mode: show eyedropper cursor
-      if (context.interaction.isAltPressed || e.altKey) {
+      // Skip this if we're actively using a shape tool
+      const isShapeActionActive =
+        context.activeAction?.type === ACTION_TYPES.RECTANGLE_ACTIVE ||
+        context.activeAction?.type === ACTION_TYPES.RECTANGLE_FILL_ACTIVE ||
+        context.activeAction?.type === ACTION_TYPES.ELLIPSE_ACTIVE ||
+        context.activeAction?.type === ACTION_TYPES.ELLIPSE_FILL_ACTIVE;
+
+      if ((context.interaction.isAltPressed || e.altKey) && !isShapeActionActive) {
         return EyedropperTool.onPointerMove(e, context, enqueue);
       }
 
@@ -1240,6 +1293,22 @@ export const store = createStore({
         return EyedropperTool.onPointerMove(e, context, enqueue);
       }
 
+      if (tool === Tool.Rectangle) {
+        return RectangleTool.onPointerMove(e, context, enqueue);
+      }
+
+      if (tool === Tool.RectangleFill) {
+        return RectangleFillTool.onPointerMove(e, context, enqueue);
+      }
+
+      if (tool === Tool.Ellipse) {
+        return EllipseTool.onPointerMove(e, context, enqueue);
+      }
+
+      if (tool === Tool.EllipseFill) {
+        return EllipseFillTool.onPointerMove(e, context, enqueue);
+      }
+
       return context;
     },
 
@@ -1267,6 +1336,22 @@ export const store = createStore({
         return ClaimerTool.onPointerUp(e, context, enqueue);
       }
 
+      if (tool === Tool.Rectangle) {
+        return RectangleTool.onPointerUp(e, context, enqueue);
+      }
+
+      if (tool === Tool.RectangleFill) {
+        return RectangleFillTool.onPointerUp(e, context, enqueue);
+      }
+
+      if (tool === Tool.Ellipse) {
+        return EllipseTool.onPointerUp(e, context, enqueue);
+      }
+
+      if (tool === Tool.EllipseFill) {
+        return EllipseFillTool.onPointerUp(e, context, enqueue);
+      }
+
       return context;
     },
 
@@ -1291,6 +1376,22 @@ export const store = createStore({
 
       if (tool === Tool.Claimer) {
         return ClaimerTool.onPointerOut(e, context, enqueue);
+      }
+
+      if (tool === Tool.Rectangle) {
+        return RectangleTool.onPointerOut(e, context, enqueue);
+      }
+
+      if (tool === Tool.RectangleFill) {
+        return RectangleFillTool.onPointerOut(e, context, enqueue);
+      }
+
+      if (tool === Tool.Ellipse) {
+        return EllipseTool.onPointerOut(e, context, enqueue);
+      }
+
+      if (tool === Tool.EllipseFill) {
+        return EllipseFillTool.onPointerOut(e, context, enqueue);
       }
 
       return context;
@@ -1555,6 +1656,18 @@ export const store = createStore({
           );
         }
 
+        if (
+          context.toolSettings.currentTool === Tool.Rectangle ||
+          context.toolSettings.currentTool === Tool.Ellipse
+        ) {
+          const currentSize = context.toolSettings.line.size;
+          enqueue.effect(() =>
+            store.trigger.updateLineSettings({
+              line: { size: clampLineSize(currentSize + 1) },
+            }),
+          );
+        }
+
         return context;
       }
 
@@ -1589,6 +1702,18 @@ export const store = createStore({
           );
         }
 
+        if (
+          context.toolSettings.currentTool === Tool.Rectangle ||
+          context.toolSettings.currentTool === Tool.Ellipse
+        ) {
+          const currentSize = context.toolSettings.line.size;
+          enqueue.effect(() =>
+            store.trigger.updateLineSettings({
+              line: { size: clampLineSize(currentSize - 1) },
+            }),
+          );
+        }
+
         return context;
       }
 
@@ -1613,6 +1738,16 @@ export const store = createStore({
       // Alt/Option key: toggle eyedropper mode
       // Only trigger when Alt is pressed by itself (not as a modifier for another key)
       if (e.code === "AltLeft" || e.code === "AltRight") {
+        const isShapeActionActive =
+          context.activeAction?.type === ACTION_TYPES.RECTANGLE_ACTIVE ||
+          context.activeAction?.type === ACTION_TYPES.RECTANGLE_FILL_ACTIVE ||
+          context.activeAction?.type === ACTION_TYPES.ELLIPSE_ACTIVE ||
+          context.activeAction?.type === ACTION_TYPES.ELLIPSE_FILL_ACTIVE;
+
+        if (isShapeActionActive) {
+          return context;
+        }
+
         // Only toggle if not already in eyedropper mode
         if (!context.interaction.isAltPressed) {
           return {
@@ -1730,6 +1865,22 @@ export const store = createStore({
 
       if (tool === Tool.Claimer) {
         return ClaimerTool.onWheel(e, context, enqueue);
+      }
+
+      if (tool === Tool.Rectangle) {
+        return RectangleTool.onWheel(e, context, enqueue);
+      }
+
+      if (tool === Tool.RectangleFill) {
+        return RectangleFillTool.onWheel(e, context, enqueue);
+      }
+
+      if (tool === Tool.Ellipse) {
+        return EllipseTool.onWheel(e, context, enqueue);
+      }
+
+      if (tool === Tool.EllipseFill) {
+        return EllipseFillTool.onWheel(e, context, enqueue);
       }
 
       return context;

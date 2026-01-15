@@ -7,6 +7,7 @@ import { ClaimerSettings, claimerSettingsSchema } from "./tools/claimer/claimer-
 import { ErasureSettings } from "./tools/erasure/erasure";
 import { LineSettings } from "./tools/line/line";
 import { PaletteSettings } from "./tools/palette";
+import { ShapePickerSettings } from "./tools/shape/shape-picker-settings";
 
 function createToolKey(key: string) {
   return `${TOOL_SETTINGS}-${key}`;
@@ -24,6 +25,7 @@ const PALETTE_FOREGROUND_COLOR_REF = "palette-foreground-color-ref";
 const PALETTE_BACKGROUND_COLOR_REF = "palette-background-color-ref";
 const CLAIMER_SELECTED_PLOT_ID = "claimer-selected-plot-id";
 const CURRENT_TOOL = "current-tool";
+const SHAPE_PICKER_LAST_TOOL = "shape-picker-last-tool";
 
 export function updateToolSettings(toolSettings: ToolSettings) {
   window.localStorage.setItem(createToolKey(BRUSH_SIZE), toolSettings.brush.size.toString());
@@ -44,6 +46,10 @@ export function updateToolSettings(toolSettings: ToolSettings) {
   window.localStorage.setItem(
     createToolKey(CLAIMER_SELECTED_PLOT_ID),
     toolSettings.claimer.selectedPlotId?.toString() ?? "",
+  );
+  window.localStorage.setItem(
+    createToolKey(SHAPE_PICKER_LAST_TOOL),
+    toolSettings.shapePicker.lastTool,
   );
   window.localStorage.setItem(createToolKey(CURRENT_TOOL), toolSettings.currentTool);
 }
@@ -68,6 +74,10 @@ export enum Tool {
   Bucket = "bucket",
   Eyedropper = "eyedropper",
   Move = "move",
+  Rectangle = "rectangle",
+  RectangleFill = "rectangle-fill",
+  Ellipse = "ellipse",
+  EllipseFill = "ellipse-fill",
 }
 
 const toolSchema = z.nativeEnum(Tool);
@@ -84,6 +94,9 @@ const toolSettingsSchema = z.object({
     backgroundColorRef: colorRefSchema,
   }),
   claimer: claimerSettingsSchema,
+  shapePicker: z.object({
+    lastTool: toolSchema,
+  }),
   currentTool: toolSchema,
 });
 
@@ -93,6 +106,7 @@ export type ToolSettings = {
   line: LineSettings;
   palette: PaletteSettings;
   claimer: ClaimerSettings;
+  shapePicker: ShapePickerSettings;
   currentTool: Tool;
 };
 
@@ -114,6 +128,9 @@ export const DEFAULT_TOOL_SETTINGS = toolSettingsSchema.parse({
   claimer: {
     selectedPlotId: undefined,
   },
+  shapePicker: {
+    lastTool: Tool.Rectangle,
+  },
   currentTool: Tool.Move,
 });
 
@@ -129,6 +146,7 @@ export function getToolSettings(): ToolSettings | undefined {
   const paletteBackgroundColorRef = stringToColorRefSchema.safeParse(
     getByKey(PALETTE_BACKGROUND_COLOR_REF),
   );
+  const shapePickerLastTool = stringToToolSchema.safeParse(getByKey(SHAPE_PICKER_LAST_TOOL));
 
   const toolSettings: ToolSettings = {
     brush: {
@@ -149,6 +167,9 @@ export function getToolSettings(): ToolSettings | undefined {
     },
     claimer: {
       selectedPlotId: undefined,
+    },
+    shapePicker: {
+      lastTool: shapePickerLastTool.data ?? DEFAULT_TOOL_SETTINGS.shapePicker.lastTool,
     },
     currentTool: currentTool.data ?? DEFAULT_TOOL_SETTINGS.currentTool,
   };

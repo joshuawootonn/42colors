@@ -178,7 +178,11 @@ export default function Page() {
             {(currentTool === Tool.Brush ||
               currentTool === Tool.Line ||
               currentTool === Tool.Bucket ||
-              currentTool === Tool.Eyedropper) && <Palette />}
+              currentTool === Tool.Eyedropper ||
+              currentTool === Tool.Rectangle ||
+              currentTool === Tool.RectangleFill ||
+              currentTool === Tool.Ellipse ||
+              currentTool === Tool.EllipseFill) && <Palette />}
             {currentTool === Tool.Brush && <BrushPanel />}
             {currentTool === Tool.Erasure && <ErasurePanel />}
             {currentTool === Tool.Line && <LinePanel />}

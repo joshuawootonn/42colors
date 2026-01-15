@@ -5,6 +5,10 @@ import { BucketTool } from "../tools/bucket/bucket";
 import { ClaimerTool } from "../tools/claimer/claimer";
 import { ErasureTool } from "../tools/erasure/erasure";
 import { LineTool } from "../tools/line/line";
+import { RectangleTool } from "../tools/shape/rectangle";
+import { RectangleFillTool } from "../tools/shape/rectangle-fill";
+import { EllipseTool } from "../tools/shape/ellipse";
+import { EllipseFillTool } from "../tools/shape/ellipse-fill";
 import { isInitialStore } from "../utils/is-initial-store";
 
 export function renderPixelTelegraph(context: InitializedStore) {
@@ -25,6 +29,18 @@ export function renderPixelTelegraph(context: InitializedStore) {
       break;
     case Tool.Bucket:
       BucketTool.redrawTelegraph(context);
+      break;
+    case Tool.Rectangle:
+      RectangleTool.redrawTelegraph(context);
+      break;
+    case Tool.RectangleFill:
+      RectangleFillTool.redrawTelegraph(context);
+      break;
+    case Tool.Ellipse:
+      EllipseTool.redrawTelegraph(context);
+      break;
+    case Tool.EllipseFill:
+      EllipseFillTool.redrawTelegraph(context);
       break;
   }
 }

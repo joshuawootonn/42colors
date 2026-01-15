@@ -84,6 +84,18 @@ export const TOASTS = {
       "Powerful tools are reserved for logged-in users. To use the line tool, create an account and try again.",
     button: buttonOptions,
   }),
+  loginToUseRectangle: (buttonOptions: { label: string; onClick: () => void }) => ({
+    title: "Login to enable the rectangle tool",
+    description:
+      "Powerful tools are reserved for logged-in users. To use the rectangle tool, create an account and try again.",
+    button: buttonOptions,
+  }),
+  loginToUseEllipse: (buttonOptions: { label: string; onClick: () => void }) => ({
+    title: "Login to enable the ellipse tool",
+    description:
+      "Powerful tools are reserved for logged-in users. To use the ellipse tool, create an account and try again.",
+    button: buttonOptions,
+  }),
   loginToUseEyedropper: (buttonOptions: { label: string; onClick: () => void }) => ({
     title: "Login to enable the eyedropper",
     description:
@@ -150,6 +162,10 @@ export const toasts = {
     toast(TOASTS.loginToUseBucket(buttonOptions)),
   loginToUseLine: (buttonOptions: { label: string; onClick: () => void }) =>
     toast(TOASTS.loginToUseLine(buttonOptions)),
+  loginToUseRectangle: (buttonOptions: { label: string; onClick: () => void }) =>
+    toast(TOASTS.loginToUseRectangle(buttonOptions)),
+  loginToUseEllipse: (buttonOptions: { label: string; onClick: () => void }) =>
+    toast(TOASTS.loginToUseEllipse(buttonOptions)),
   loginToUseEyedropper: (buttonOptions: { label: string; onClick: () => void }) =>
     toast(TOASTS.loginToUseEyedropper(buttonOptions)),
   loginToVote: (buttonOptions: { label: string; onClick: () => void }) =>

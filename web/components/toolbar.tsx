@@ -1,9 +1,10 @@
-import { ComponentPropsWithoutRef, useCallback, useEffect } from "react";
+import { ComponentPropsWithoutRef, useCallback, useEffect, useState } from "react";
 
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { store } from "@/lib/store";
 import { Tool } from "@/lib/tool-settings";
 import { cn } from "@/lib/utils";
+import { Menu } from "@base-ui/react/menu";
 import { Tooltip } from "@base-ui/react/tooltip";
 import { useSelector } from "@xstate/store/react";
 
@@ -46,12 +47,106 @@ export function ToolIconButton({
 
 const restrictedToolHandle = Tooltip.createHandle<string>();
 
+function getToolButtonClassNames(active: boolean, className?: string) {
+  return cn(
+    "group flex size-8 items-center justify-center border-1.5 border-border bg-white text-white",
+    "rounded-none focus-visible:relative outline-none svg-outline",
+    active && "[&>div]:bg-primary [&_svg]:invert",
+    "aria-disabled:cursor-not-allowed",
+    className,
+  );
+}
+
+function getShapeToolIcon(shapeTool: Tool) {
+  switch (shapeTool) {
+    case Tool.Rectangle:
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 32 32"
+          fill="none"
+          className="stroke-primary"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="6" y="6" width="20" height="20" />
+        </svg>
+      );
+    case Tool.RectangleFill:
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 32 32"
+          fill="none"
+          className="stroke-primary fill-primary"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="6" y="6" width="20" height="20" />
+        </svg>
+      );
+    case Tool.Ellipse:
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 32 32"
+          fill="none"
+          className="stroke-primary"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <ellipse cx="16" cy="16" rx="10" ry="10" />
+        </svg>
+      );
+    case Tool.EllipseFill:
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="32"
+          height="32"
+          viewBox="0 0 32 32"
+          fill="none"
+          className="stroke-primary fill-primary"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <ellipse cx="16" cy="16" rx="10" ry="10" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 export function Toolbar() {
   const tool = useSelector(store, (state) => state.context.toolSettings.currentTool);
   const state = useSelector(store, (state) => state.context.state);
   const user = useSelector(store, (state) => state.context.user);
+  const shapePickerLastTool = useSelector(
+    store,
+    (state) => state.context.toolSettings.shapePicker.lastTool,
+  );
   const isLoggedOut = user == null;
   const isMobile = useIsMobile();
+  const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
+
+  const handleShapeSelect = useCallback((nextTool: Tool) => {
+    store.trigger.updateShapePickerSettings({
+      shapePicker: { lastTool: nextTool },
+    });
+    store.trigger.changeTool({ tool: nextTool });
+    setShapeMenuOpen(false);
+  }, []);
 
   // Auto-select Move tool on mobile when the component mounts
   useEffect(() => {
@@ -243,10 +338,118 @@ export function Toolbar() {
               </ToolIconButton>
             }
           />
+          {isLoggedOut ? (
+            <Tooltip.Trigger
+              handle={restrictedToolHandle}
+              payload={
+                shapePickerLastTool === Tool.Ellipse || shapePickerLastTool === Tool.EllipseFill
+                  ? "Log in to use the ellipse tool"
+                  : "Log in to use the rectangle tool"
+              }
+              render={
+                <Menu.Root open={shapeMenuOpen} onOpenChange={setShapeMenuOpen}>
+                  <Menu.Trigger
+                    className={getToolButtonClassNames(
+                      tool === Tool.Rectangle ||
+                        tool === Tool.RectangleFill ||
+                        tool === Tool.Ellipse ||
+                        tool === Tool.EllipseFill,
+                      "-mt-[3px]",
+                    )}
+                    onClick={(e) => {
+                      e.preventDefault();
+                    }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                    }}
+                    aria-disabled
+                  >
+                    <div>{getShapeToolIcon(shapePickerLastTool)}</div>
+                  </Menu.Trigger>
+                </Menu.Root>
+              }
+            />
+          ) : (
+            <Menu.Root modal={false} open={shapeMenuOpen} onOpenChange={setShapeMenuOpen}>
+              <Menu.Trigger
+                className={getToolButtonClassNames(
+                  tool === Tool.Rectangle ||
+                    tool === Tool.RectangleFill ||
+                    tool === Tool.Ellipse ||
+                    tool === Tool.EllipseFill,
+                  "-mt-[3px]",
+                )}
+                onClick={(e) => {
+                  if (e.button === 0) {
+                    const isShapeSelected =
+                      tool === Tool.Rectangle ||
+                      tool === Tool.RectangleFill ||
+                      tool === Tool.Ellipse ||
+                      tool === Tool.EllipseFill;
+                    if (!isShapeSelected) {
+                      console.log("changing tool to", shapePickerLastTool);
+                      store.trigger.changeTool({ tool: shapePickerLastTool });
+                      e.preventDefault();
+                      return;
+                    }
+                  }
+                }}
+              >
+                <div>{getShapeToolIcon(shapePickerLastTool)}</div>
+              </Menu.Trigger>
+              <Menu.Portal>
+                <Menu.Positioner side="left" sideOffset={-1.5}>
+                  <Menu.Popup
+                    className={cn(
+                      "grid grid-cols-4 gap-0 border-border bg-white text-white",
+                      "rounded-none svg-outline-border",
+                    )}
+                  >
+                    <Menu.Item
+                      onClick={() => handleShapeSelect(Tool.Rectangle)}
+                      className={getToolButtonClassNames(
+                        tool === Tool.Rectangle,
+                        "px-0 py-0 hover:[&>div]:bg-primary hover:[&_svg]:invert focus:[&>div]:bg-primary focus:[&_svg]:invert translate-x-[4.5px]",
+                      )}
+                    >
+                      <div>{getShapeToolIcon(Tool.Rectangle)}</div>
+                    </Menu.Item>
+                    <Menu.Item
+                      onClick={() => handleShapeSelect(Tool.RectangleFill)}
+                      className={getToolButtonClassNames(
+                        tool === Tool.RectangleFill,
+                        "px-0 py-0 hover:[&>div]:bg-primary hover:[&_svg]:invert focus:[&>div]:bg-primary focus:[&_svg]:invert translate-x-[3px]",
+                      )}
+                    >
+                      <div>{getShapeToolIcon(Tool.RectangleFill)}</div>
+                    </Menu.Item>
+                    <Menu.Item
+                      onClick={() => handleShapeSelect(Tool.Ellipse)}
+                      className={getToolButtonClassNames(
+                        tool === Tool.Ellipse,
+                        "px-0 py-0 hover:[&>div]:bg-primary hover:[&_svg]:invert focus:[&>div]:bg-primary focus:[&_svg]:invert translate-x-[1.5px]",
+                      )}
+                    >
+                      <div>{getShapeToolIcon(Tool.Ellipse)}</div>
+                    </Menu.Item>
+                    <Menu.Item
+                      onClick={() => handleShapeSelect(Tool.EllipseFill)}
+                      className={getToolButtonClassNames(
+                        tool === Tool.EllipseFill,
+                        "px-0 py-0 hover:[&>div]:bg-primary hover:[&_svg]:invert focus:[&>div]:bg-primary focus:[&_svg]:invert ",
+                      )}
+                    >
+                      <div>{getShapeToolIcon(Tool.EllipseFill)}</div>
+                    </Menu.Item>
+                  </Menu.Popup>
+                </Menu.Positioner>
+              </Menu.Portal>
+            </Menu.Root>
+          )}
           <ToolIconButton
             active={tool === Tool.Move}
             onClick={() => store.trigger.changeTool({ tool: Tool.Move })}
-            className="-mt-[3px]"
+            className="-mt-[3px] -ml-[1px]"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

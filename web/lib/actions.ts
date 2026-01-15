@@ -17,24 +17,50 @@ import {
 } from "./tools/claimer/claimer";
 import { ErasureActive } from "./tools/erasure/erasure";
 import { LineActive, LineComplete } from "./tools/line/line";
+import {
+  EllipseActive,
+  EllipseComplete,
+  EllipseFillActive,
+  EllipseFillComplete,
+  RectangleActive,
+  RectangleComplete,
+  RectangleFillActive,
+  RectangleFillComplete,
+} from "./tools/shape/shape-actions";
 
 export type Undo = { type: "undo"; chunkKeys: string[] };
 export type Redo = { type: "redo"; chunkKeys: string[] };
 
-export type EditableAction = ErasureActive | BrushActive | LineComplete | BucketActive;
+export type EditableAction =
+  | ErasureActive
+  | BrushActive
+  | LineComplete
+  | BucketActive
+  | RectangleComplete
+  | RectangleFillComplete
+  | EllipseComplete
+  | EllipseFillComplete;
 
 export function isEditableAction(action: Action): action is EditableAction {
   return (
     action.type === ACTION_TYPES.BRUSH_ACTIVE ||
     action.type === ACTION_TYPES.ERASURE_ACTIVE ||
     action.type === ACTION_TYPES.LINE_COMPLETE ||
-    action.type === ACTION_TYPES.BUCKET_ACTIVE
+    action.type === ACTION_TYPES.BUCKET_ACTIVE ||
+    action.type === ACTION_TYPES.RECTANGLE_COMPLETE ||
+    action.type === ACTION_TYPES.RECTANGLE_FILL_COMPLETE ||
+    action.type === ACTION_TYPES.ELLIPSE_COMPLETE ||
+    action.type === ACTION_TYPES.ELLIPSE_FILL_COMPLETE
   );
 }
 
 export type Action =
   | EditableAction
   | LineActive
+  | RectangleActive
+  | RectangleFillActive
+  | EllipseActive
+  | EllipseFillActive
   | ClaimerCreate
   | ClaimerNewRectCreate
   | ClaimerNewRectEdit
@@ -156,6 +182,13 @@ export function derivePixelsFromActions(actions: Action[]): Pixel[] {
       pixels.push(...pointsToPixels(action.points, action.color_ref));
     } else if (action.type === ACTION_TYPES.BUCKET_ACTIVE) {
       pixels.push(...absolutePointTupleToPixels(action.points, action.color_ref));
+    } else if (
+      action.type === ACTION_TYPES.RECTANGLE_COMPLETE ||
+      action.type === ACTION_TYPES.RECTANGLE_FILL_COMPLETE ||
+      action.type === ACTION_TYPES.ELLIPSE_COMPLETE ||
+      action.type === ACTION_TYPES.ELLIPSE_FILL_COMPLETE
+    ) {
+      pixels.push(...pointsToPixels(action.points, action.color_ref));
     } else if (action.type === "realtime-active") {
       pixels.push(...action.pixels);
     }
@@ -220,6 +253,19 @@ export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
                 (undonePixel) => undonePixel.x === pixel.x && undonePixel.y === pixel.y,
               ),
           );
+        } else if (
+          undoAction.type === ACTION_TYPES.RECTANGLE_COMPLETE ||
+          undoAction.type === ACTION_TYPES.RECTANGLE_FILL_COMPLETE ||
+          undoAction.type === ACTION_TYPES.ELLIPSE_COMPLETE ||
+          undoAction.type === ACTION_TYPES.ELLIPSE_FILL_COMPLETE
+        ) {
+          const undonePixels = pointsToPixels(undoAction.points, undoAction.color_ref);
+          unsetPixels = unsetPixels.filter(
+            (pixel) =>
+              !undonePixels.find(
+                (undonePixel) => undonePixel.x === pixel.x && undonePixel.y === pixel.y,
+              ),
+          );
         }
       }
     } else if (action.type === "undo") {
@@ -242,6 +288,13 @@ export function deriveUnsetPixelsFromActions(actions: Action[]): Pixel[] {
           unsetPixels.push(...pointsToPixels(brushPoints, action.color_ref));
         } else if (action.type === ACTION_TYPES.BUCKET_ACTIVE) {
           unsetPixels.push(...absolutePointTupleToPixels(action.points, action.color_ref));
+        } else if (
+          action.type === ACTION_TYPES.RECTANGLE_COMPLETE ||
+          action.type === ACTION_TYPES.RECTANGLE_FILL_COMPLETE ||
+          action.type === ACTION_TYPES.ELLIPSE_COMPLETE ||
+          action.type === ACTION_TYPES.ELLIPSE_FILL_COMPLETE
+        ) {
+          unsetPixels.push(...pointsToPixels(action.points, action.color_ref));
         }
       }
     } else {
@@ -304,7 +357,16 @@ export function resolveActions(actions: Action[]): Action[] {
 
 export function getActionToUndo(
   prevActions: Action[],
-): BrushActive | ErasureActive | LineComplete | BucketActive | null {
+):
+  | BrushActive
+  | ErasureActive
+  | LineComplete
+  | BucketActive
+  | RectangleComplete
+  | RectangleFillComplete
+  | EllipseComplete
+  | EllipseFillComplete
+  | null {
   return (
     [...resolveActions(prevActions)].reverse().find((action) => isEditableAction(action)) ?? null
   );
@@ -312,7 +374,16 @@ export function getActionToUndo(
 
 export function getActionToRedo(
   prevActions: Action[],
-): BrushActive | ErasureActive | LineComplete | BucketActive | null {
+):
+  | BrushActive
+  | ErasureActive
+  | LineComplete
+  | BucketActive
+  | RectangleComplete
+  | RectangleFillComplete
+  | EllipseComplete
+  | EllipseFillComplete
+  | null {
   const reversedCollapsedPrevActions = [...collapseUndoRedoCombos(prevActions)].reverse();
 
   if (reversedCollapsedPrevActions.at(0)?.type != "undo") return null;
@@ -333,7 +404,11 @@ export function updateActionBasedOnRejectedPixels(
       action.type !== ACTION_TYPES.BRUSH_ACTIVE &&
       action.type !== ACTION_TYPES.ERASURE_ACTIVE &&
       action.type !== ACTION_TYPES.LINE_COMPLETE &&
-      action.type !== ACTION_TYPES.BUCKET_ACTIVE
+      action.type !== ACTION_TYPES.BUCKET_ACTIVE &&
+      action.type !== ACTION_TYPES.RECTANGLE_COMPLETE &&
+      action.type !== ACTION_TYPES.RECTANGLE_FILL_COMPLETE &&
+      action.type !== ACTION_TYPES.ELLIPSE_COMPLETE &&
+      action.type !== ACTION_TYPES.ELLIPSE_FILL_COMPLETE
     )
       return action;
 
@@ -353,6 +428,21 @@ export function updateActionBasedOnRejectedPixels(
       return {
         ...action,
         points: filteredBrushPoints,
+      };
+    } else if (
+      action.type === ACTION_TYPES.RECTANGLE_COMPLETE ||
+      action.type === ACTION_TYPES.RECTANGLE_FILL_COMPLETE ||
+      action.type === ACTION_TYPES.ELLIPSE_COMPLETE ||
+      action.type === ACTION_TYPES.ELLIPSE_FILL_COMPLETE
+    ) {
+      const rejected_coords = new Set(rejected_pixels.map((p) => `${p.x},${p.y}`));
+      const filteredPoints = action.points.filter(
+        (point) => !rejected_coords.has(`${point.x},${point.y}`),
+      );
+
+      return {
+        ...action,
+        points: filteredPoints,
       };
     } else if (action.type === ACTION_TYPES.BUCKET_ACTIVE) {
       const rejected_coords = new Set(rejected_pixels.map((p) => `${p.x},${p.y}`));
