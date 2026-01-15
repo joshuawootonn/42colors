@@ -13,11 +13,13 @@ defmodule ApiWeb.PlotController do
       {nil, nil} ->
         # No x,y provided - return global list of plots
         limit_param = Map.get(params, "limit")
+        offset_param = Map.get(params, "offset")
         order_by_param = Map.get(params, "order_by")
 
         list_opts =
           %{}
           |> maybe_add_limit(limit_param)
+          |> maybe_add_offset(offset_param)
           |> maybe_add_order_by(order_by_param)
 
         plots = Plot.Service.list_plots(list_opts)
@@ -47,9 +49,17 @@ defmodule ApiWeb.PlotController do
     end
   end
 
-  def me_plots(conn, _params) do
+  def me_plots(conn, params) do
     user = conn.assigns.current_user
-    plots = Plot.Repo.list_user_plots(user.id)
+    limit_param = Map.get(params, "limit")
+    offset_param = Map.get(params, "offset")
+
+    list_opts =
+      %{}
+      |> maybe_add_limit(limit_param)
+      |> maybe_add_offset(offset_param)
+
+    plots = Plot.Repo.list_user_plots(user.id, list_opts)
     render(conn, :index, plots: plots)
   end
 
@@ -385,6 +395,24 @@ defmodule ApiWeb.PlotController do
       {:error, _} -> opts
     end
   end
+
+  defp maybe_add_offset(opts, nil), do: opts
+
+  defp maybe_add_offset(opts, offset_param) do
+    case parse_offset(offset_param) do
+      {:ok, offset} -> Map.put(opts, :offset, offset)
+      {:error, _} -> opts
+    end
+  end
+
+  defp parse_offset(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {offset, ""} when offset >= 0 -> {:ok, offset}
+      _ -> {:error, :invalid_offset}
+    end
+  end
+
+  defp parse_offset(_), do: {:error, :invalid_offset}
 
   defp maybe_add_order_by(opts, nil), do: opts
   defp maybe_add_order_by(opts, "top"), do: Map.put(opts, :order_by, "top")

@@ -1,6 +1,6 @@
 import { InitializedStore, store } from "@/lib/store";
 import { isInitialStore } from "@/lib/utils/is-initial-store";
-import { QueryClient, UseQueryOptions, useQuery } from "@tanstack/react-query";
+import { QueryClient, useInfiniteQuery } from "@tanstack/react-query";
 
 import { getChunkKey, getChunkOrigin } from "../canvas/chunk";
 import { inside, Polygon } from "../geometry/polygon";
@@ -108,6 +108,7 @@ export async function getPlot(id: number, options: GetPlotOptions = {}): Promise
 
 type GetPlotsOptions = {
   limit?: number;
+  offset?: number;
   order_by?: "recent" | "top";
 };
 
@@ -119,6 +120,7 @@ export async function getPlots(options: GetPlotsOptions = {}): Promise<Plot[]> {
 
   const search = new URLSearchParams();
   if (options.limit != null) search.set("limit", options.limit.toString());
+  if (options.offset != null) search.set("offset", options.offset.toString());
   if (options.order_by != null) search.set("order_by", options.order_by);
 
   const response = await fetch(new URL(`/api/plots?${search}`, context.server.apiOrigin), {
@@ -134,30 +136,30 @@ export async function getPlots(options: GetPlotsOptions = {}): Promise<Plot[]> {
   return arrayPlotResponseSchema.parse(json).data;
 }
 
-export function useRecentPlots(
-  limit: number = 20,
-  queryOptions?: Omit<UseQueryOptions<Plot[], Error>, "queryKey" | "queryFn">,
-) {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["plots", "list"],
-    queryFn: () => getPlots({ limit }),
-    ...queryOptions,
+export function useInfiniteRecentPlots(queryOptions?: { enabled?: boolean }) {
+  return useInfiniteQuery({
+    queryKey: ["plots", "list", "infinite"],
+    queryFn: ({ pageParam = 0 }) => getPlots({ limit: 20, offset: pageParam }),
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < 20) return undefined;
+      return allPages.length * 20;
+    },
+    initialPageParam: 0,
+    enabled: queryOptions?.enabled,
   });
-
-  return { data, isLoading, error };
 }
 
-export function useTopPlots(
-  limit: number = 20,
-  queryOptions?: Omit<UseQueryOptions<Plot[], Error>, "queryKey" | "queryFn">,
-) {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["plots", "top"],
-    queryFn: () => getPlots({ limit, order_by: "top" }),
-    ...queryOptions,
+export function useInfiniteTopPlots(queryOptions?: { enabled?: boolean }) {
+  return useInfiniteQuery({
+    queryKey: ["plots", "top", "infinite"],
+    queryFn: ({ pageParam = 0 }) => getPlots({ limit: 20, offset: pageParam, order_by: "top" }),
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < 20) return undefined;
+      return allPages.length * 20;
+    },
+    initialPageParam: 0,
+    enabled: queryOptions?.enabled,
   });
-
-  return { data, isLoading, error };
 }
 
 // ============================================================================

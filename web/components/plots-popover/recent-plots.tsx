@@ -1,6 +1,7 @@
 "use client";
 
-import { useRecentPlots } from "@/lib/plots/plots.rest";
+import { useInfiniteRecentPlots } from "@/lib/plots/plots.rest";
+import { useMemo } from "react";
 
 import { PlotsList } from "./plots-list";
 
@@ -11,13 +12,14 @@ interface RecentPlotsProps {
 }
 
 export function RecentPlots({ selectedPlotId, selectPlot, enabled = true }: RecentPlotsProps) {
-  const {
-    data: plots,
-    isLoading,
-    error,
-  } = useRecentPlots(100, {
-    enabled,
-  });
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteRecentPlots({
+      enabled,
+    });
+
+  const plots = useMemo(() => {
+    return data?.pages.flat() ?? [];
+  }, [data]);
 
   return (
     <PlotsList
@@ -28,6 +30,9 @@ export function RecentPlots({ selectedPlotId, selectPlot, enabled = true }: Rece
       selectPlot={selectPlot}
       emptyMessage="No plots found"
       loadingMessage="Loading plots..."
+      onLoadMore={() => fetchNextPage()}
+      hasMore={hasNextPage}
+      isLoadingMore={isFetchingNextPage}
     />
   );
 }

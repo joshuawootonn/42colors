@@ -1,6 +1,7 @@
 "use client";
 
-import { useTopPlots } from "@/lib/plots/plots.rest";
+import { useInfiniteTopPlots } from "@/lib/plots/plots.rest";
+import { useMemo } from "react";
 
 import { PlotsList } from "./plots-list";
 
@@ -11,13 +12,14 @@ type TopPlotsProps = {
 };
 
 export function TopPlots({ selectedPlotId, selectPlot, enabled = true }: TopPlotsProps) {
-  const {
-    data: plots,
-    isLoading,
-    error,
-  } = useTopPlots(100, {
-    enabled,
-  });
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteTopPlots({
+      enabled,
+    });
+
+  const plots = useMemo(() => {
+    return data?.pages.flat() ?? [];
+  }, [data]);
 
   return (
     <PlotsList
@@ -28,6 +30,9 @@ export function TopPlots({ selectedPlotId, selectPlot, enabled = true }: TopPlot
       selectPlot={selectPlot}
       emptyMessage="No plots found"
       loadingMessage="Loading top plots..."
+      onLoadMore={() => fetchNextPage()}
+      hasMore={hasNextPage}
+      isLoadingMore={isFetchingNextPage}
     />
   );
 }

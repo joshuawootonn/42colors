@@ -1,3 +1,4 @@
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { z } from "zod";
 
 import { ACTION_TYPES } from "../../action-types";
@@ -99,13 +100,27 @@ export async function createPlot(plotData: { name: string; description?: string 
   return parsedResponse.data;
 }
 
-export async function getUserPlots(): Promise<Plot[]> {
+type GetUserPlotsOptions = {
+  limit?: number;
+  offset?: number;
+};
+
+export async function getUserPlots(options: GetUserPlotsOptions = {}): Promise<Plot[]> {
   const context = store.getSnapshot().context;
   if (isInitialStore(context)) {
     throw new Error("Server context is not initialized");
   }
 
-  const response = await fetch(new URL(`/api/plots/me`, context.server.apiOrigin), {
+  const search = new URLSearchParams();
+  if (options.limit != null) search.set("limit", options.limit.toString());
+  if (options.offset != null) search.set("offset", options.offset.toString());
+
+  const url = new URL(`/api/plots/me`, context.server.apiOrigin);
+  if (search.toString()) {
+    url.search = search.toString();
+  }
+
+  const response = await fetch(url, {
     method: "GET",
     credentials: "include",
   });
@@ -192,4 +207,17 @@ export async function getPlotsByChunk(x: number, y: number): Promise<Plot[]> {
   const json = await response.json();
 
   return arrayPlotResponseSchema.parse(json).data;
+}
+
+export function useInfiniteUserPlots(queryOptions?: { enabled?: boolean }) {
+  return useInfiniteQuery({
+    queryKey: ["user", "plots", "infinite"],
+    queryFn: ({ pageParam = 0 }) => getUserPlots({ limit: 20, offset: pageParam }),
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < 20) return undefined;
+      return allPages.length * 20;
+    },
+    initialPageParam: 0,
+    enabled: queryOptions?.enabled,
+  });
 }

@@ -223,7 +223,7 @@ export const store = createStore({
         // todo(josh): why is this different?
         event.queryClient.fetchQuery({
           queryKey: ["user", "plots"],
-          queryFn: getUserPlots,
+          queryFn: () => getUserPlots(),
         });
       });
 

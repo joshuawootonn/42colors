@@ -1,7 +1,7 @@
 "use client";
 
-import { getUserPlots } from "@/lib/tools/claimer/claimer.rest";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteUserPlots } from "@/lib/tools/claimer/claimer.rest";
+import { useMemo } from "react";
 
 import { PlotsList } from "./plots-list";
 
@@ -13,15 +13,14 @@ interface UserPlotsProps {
 }
 
 export function UserPlots({ selectedPlotId, selectPlot, enabled = true, userId }: UserPlotsProps) {
-  const {
-    data: userPlots,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["user", "plots"],
-    queryFn: getUserPlots,
-    enabled: enabled && userId != null,
-  });
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteUserPlots({
+      enabled: enabled && userId != null,
+    });
+
+  const userPlots = useMemo(() => {
+    return data?.pages.flat() ?? [];
+  }, [data]);
 
   // If user is not authenticated, show a message encouraging them to create an account
   if (userId == null) {
@@ -41,6 +40,9 @@ export function UserPlots({ selectedPlotId, selectPlot, enabled = true, userId }
       selectPlot={selectPlot}
       emptyMessage="No user plots found"
       loadingMessage="Loading user plots..."
+      onLoadMore={() => fetchNextPage()}
+      hasMore={hasNextPage}
+      isLoadingMore={isFetchingNextPage}
     />
   );
 }

@@ -24,6 +24,9 @@ interface PlotsListProps {
   selectPlot: (plotId: number) => void;
   emptyMessage?: string;
   loadingMessage?: string;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
 }
 
 export function PlotsList({
@@ -34,9 +37,14 @@ export function PlotsList({
   selectPlot,
   emptyMessage = "No plots found",
   loadingMessage = "Loading plots...",
+  onLoadMore,
+  hasMore = false,
+  isLoadingMore = false,
 }: PlotsListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedPlotRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (selectedPlotId && containerRef.current && selectedPlotRef.current) {
       const selectedElement = selectedPlotRef.current;
@@ -47,6 +55,28 @@ export function PlotsList({
       });
     }
   }, [selectedPlotId]);
+
+  useEffect(() => {
+    if (!onLoadMore || !hasMore || isLoadingMore) return;
+
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    observer.observe(sentinel);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [onLoadMore, hasMore, isLoadingMore]);
 
   if (isLoading) {
     return (
@@ -122,6 +152,10 @@ export function PlotsList({
           </div>
         );
       })}
+      {hasMore && <div ref={sentinelRef} className="h-1" />}
+      {isLoadingMore && (
+        <div className="py-4 text-center text-sm text-muted-foreground">Loading more...</div>
+      )}
     </div>
   );
 }

@@ -11,17 +11,29 @@ defmodule Api.Canvas.Plot.Repo do
   @doc """
   Returns the list of plots for a user.
 
+  ## Options
+  - `limit`: Maximum number of plots to return (default: 100, max: 100)
+  - `offset`: Number of plots to skip for pagination (default: 0)
+
   ## Examples
 
       iex> list_user_plots(user_id)
       [%Plot{}, ...]
 
+      iex> list_user_plots(user_id, %{limit: 20, offset: 40})
+      [%Plot{}, ...]
+
   """
-  def list_user_plots(user_id) do
+  def list_user_plots(user_id, opts \\ %{}) do
+    limit = get_list_limit(opts)
+    offset = get_list_offset(opts)
+
     Plot
     |> where([p], p.user_id == ^user_id)
     |> where([p], is_nil(p.deleted_at))
     |> order_by([p], desc: p.inserted_at)
+    |> limit(^limit)
+    |> offset(^offset)
     |> Repo.all()
   end
 
@@ -186,6 +198,7 @@ defmodule Api.Canvas.Plot.Repo do
 
   ## Options
   - `limit`: Maximum number of plots to return (default: 10, max: 100)
+  - `offset`: Number of plots to skip for pagination (default: 0)
   - `order_by`: Sort order - "recent" (default) or "top" (by score descending)
 
   ## Returns
@@ -199,17 +212,22 @@ defmodule Api.Canvas.Plot.Repo do
       iex> list_plots(%{limit: 5})
       [%Plot{}, ...]
 
+      iex> list_plots(%{limit: 20, offset: 40})
+      [%Plot{}, ...]
+
       iex> list_plots(%{order_by: "top"})
       [%Plot{}, ...]
 
   """
   def list_plots(opts \\ %{}) do
     limit = get_list_limit(opts)
+    offset = get_list_offset(opts)
 
     Plot
     |> where([p], is_nil(p.deleted_at))
     |> apply_order_by(opts)
     |> limit(^limit)
+    |> offset(^offset)
     |> Repo.all()
   end
 
@@ -231,6 +249,14 @@ defmodule Api.Canvas.Plot.Repo do
 
   # Default limit
   defp get_list_limit(_), do: 10
+
+  # Private function to handle offset validation
+  defp get_list_offset(%{offset: offset}) when is_integer(offset) and offset >= 0 do
+    offset
+  end
+
+  # Default offset
+  defp get_list_offset(_), do: 0
 
   @doc """
   For a list of points, returns a map from {x, y} to the covering plot's id and owner user_id.

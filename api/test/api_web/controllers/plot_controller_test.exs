@@ -393,6 +393,167 @@ defmodule ApiWeb.PlotControllerTest do
       assert Enum.at(scores, 0) >= Enum.at(scores, 1)
       assert Enum.at(scores, 1) >= Enum.at(scores, 2)
     end
+
+    test "respects offset parameter when no x,y provided", %{conn: conn} do
+      # Create multiple plots with distinct scores for deterministic ordering
+      user = user_fixture()
+
+      plots =
+        for i <- 1..5 do
+          {:ok, plot} =
+            Plot.Repo.create_plot(%{
+              name: "Plot #{i}",
+              description: "Plot #{i}",
+              user_id: user.id,
+              score: i * 10,
+              polygon: %Geo.Polygon{
+                coordinates: [
+                  [
+                    {i * 100, i * 100},
+                    {i * 100, i * 100 + 10},
+                    {i * 100 + 10, i * 100 + 10},
+                    {i * 100 + 10, i * 100},
+                    {i * 100, i * 100}
+                  ]
+                ],
+                srid: 4326
+              }
+            })
+
+          Process.sleep(1)
+          plot
+        end
+
+      # Get first 3 plots (default recent order - newest first)
+      conn = get(conn, ~p"/api/plots?limit=3")
+      first_page = json_response(conn, 200)["data"]
+      assert length(first_page) == 3
+
+      # Get next 2 plots with offset
+      conn = get(conn, ~p"/api/plots?limit=3&offset=3")
+      second_page = json_response(conn, 200)["data"]
+      assert length(second_page) == 2
+
+      # Verify no overlap between pages
+      first_page_ids = Enum.map(first_page, & &1["id"])
+      second_page_ids = Enum.map(second_page, & &1["id"])
+
+      assert Enum.empty?(
+               MapSet.intersection(MapSet.new(first_page_ids), MapSet.new(second_page_ids))
+             )
+
+      # Verify all plots are accounted for
+      all_ids = first_page_ids ++ second_page_ids
+      expected_ids = Enum.map(plots, & &1.id)
+      assert MapSet.new(all_ids) == MapSet.new(expected_ids)
+    end
+
+    test "handles offset of 0 when no x,y provided", %{conn: conn} do
+      user = user_fixture()
+
+      for i <- 1..3 do
+        Plot.Repo.create_plot(%{
+          name: "Plot #{i}",
+          description: "Plot #{i}",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{i, i}, {i, i + 10}, {i + 10, i + 10}, {i + 10, i}, {i, i}]],
+            srid: 4326
+          }
+        })
+
+        Process.sleep(1)
+      end
+
+      # offset=0 should return same as no offset
+      conn = get(conn, ~p"/api/plots?limit=3&offset=0")
+      response = json_response(conn, 200)["data"]
+      assert length(response) == 3
+    end
+
+    test "handles invalid offset by using default (0) when no x,y provided", %{conn: conn} do
+      user = user_fixture()
+
+      Plot.Repo.create_plot(%{
+        name: "Test Plot",
+        description: "Test",
+        user_id: user.id,
+        polygon: %Geo.Polygon{
+          coordinates: [[{0, 0}, {0, 10}, {10, 10}, {10, 0}, {0, 0}]],
+          srid: 4326
+        }
+      })
+
+      conn = get(conn, ~p"/api/plots?offset=invalid")
+      response = json_response(conn, 200)["data"]
+      # Should use default offset (0) and return results
+      assert is_list(response)
+      assert length(response) >= 1
+    end
+
+    test "combines limit, offset, and order_by parameters", %{conn: conn} do
+      user = user_fixture()
+
+      # Create 10 plots with different scores
+      for i <- 1..10 do
+        Plot.Repo.create_plot(%{
+          name: "Plot #{i}",
+          description: "Plot #{i}",
+          user_id: user.id,
+          score: i * 10,
+          polygon: %Geo.Polygon{
+            coordinates: [
+              [
+                {i * 100, i * 100},
+                {i * 100, i * 100 + 10},
+                {i * 100 + 10, i * 100 + 10},
+                {i * 100 + 10, i * 100},
+                {i * 100, i * 100}
+              ]
+            ],
+            srid: 4326
+          }
+        })
+
+        Process.sleep(1)
+      end
+
+      # Get plots 4-6 sorted by score (top)
+      conn = get(conn, ~p"/api/plots?order_by=top&limit=3&offset=3")
+      response = json_response(conn, 200)["data"]
+
+      # Should return 3 plots
+      assert length(response) == 3
+
+      # Should be sorted by score descending
+      scores = Enum.map(response, & &1["score"])
+      assert scores == Enum.sort(scores, :desc)
+
+      # First plot should have score of 70 (7th highest)
+      assert Enum.at(scores, 0) == 70
+    end
+
+    test "returns empty list when offset is beyond available plots", %{conn: conn} do
+      user = user_fixture()
+
+      # Create only 2 plots
+      for i <- 1..2 do
+        Plot.Repo.create_plot(%{
+          name: "Plot #{i}",
+          description: "Plot #{i}",
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{i, i}, {i, i + 10}, {i + 10, i + 10}, {i + 10, i}, {i, i}]],
+            srid: 4326
+          }
+        })
+      end
+
+      # Request with offset beyond available plots
+      conn = get(conn, ~p"/api/plots?limit=10&offset=10")
+      response = json_response(conn, 200)["data"]
+      assert response == []
+    end
   end
 
   describe "me_plots" do
@@ -459,6 +620,143 @@ defmodule ApiWeb.PlotControllerTest do
       assert resp_plot["userId"] == user.id
       assert resp_plot["polygon"] != nil
       assert resp_plot["polygon"]["vertices"] == [[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]]
+    end
+
+    test "respects limit parameter", %{conn: conn, user: user} do
+      # Create 5 plots for the user
+      for i <- 1..5 do
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [[{i, i}, {i, i + 10}, {i + 10, i + 10}, {i + 10, i}, {i, i}]],
+            srid: 4326
+          }
+        })
+
+        Process.sleep(1)
+      end
+
+      # Request only 3 plots
+      conn = get(conn, ~p"/api/plots/me?limit=3")
+      response = json_response(conn, 200)["data"]
+      assert length(response) == 3
+    end
+
+    test "respects offset parameter", %{conn: conn, user: user} do
+      # Create 5 plots for the user
+      plots =
+        for i <- 1..5 do
+          plot =
+            plot_fixture(%{
+              user_id: user.id,
+              polygon: %Geo.Polygon{
+                coordinates: [[{i, i}, {i, i + 10}, {i + 10, i + 10}, {i + 10, i}, {i, i}]],
+                srid: 4326
+              }
+            })
+
+          Process.sleep(1)
+          plot
+        end
+
+      # Get first 2 plots
+      conn = get(conn, ~p"/api/plots/me?limit=2")
+      first_page = json_response(conn, 200)["data"]
+      assert length(first_page) == 2
+
+      # Get next 2 plots with offset
+      conn = get(conn, ~p"/api/plots/me?limit=2&offset=2")
+      second_page = json_response(conn, 200)["data"]
+      assert length(second_page) == 2
+
+      # Verify no overlap
+      first_page_ids = Enum.map(first_page, & &1["id"])
+      second_page_ids = Enum.map(second_page, & &1["id"])
+
+      assert Enum.empty?(
+               MapSet.intersection(MapSet.new(first_page_ids), MapSet.new(second_page_ids))
+             )
+
+      # Get last plot
+      conn = get(conn, ~p"/api/plots/me?limit=2&offset=4")
+      third_page = json_response(conn, 200)["data"]
+      assert length(third_page) == 1
+
+      # Verify all plots are accounted for
+      all_ids = first_page_ids ++ second_page_ids ++ Enum.map(third_page, & &1["id"])
+      expected_ids = Enum.map(plots, & &1.id)
+      assert MapSet.new(all_ids) == MapSet.new(expected_ids)
+    end
+
+    test "handles offset of 0", %{conn: conn, user: user} do
+      plot_fixture(%{user_id: user.id})
+      plot_fixture(%{user_id: user.id})
+
+      # offset=0 should return same as no offset
+      conn = get(conn, ~p"/api/plots/me?offset=0")
+      response = json_response(conn, 200)["data"]
+      assert length(response) == 2
+    end
+
+    test "handles invalid offset by using default (0)", %{conn: conn, user: user} do
+      plot_fixture(%{user_id: user.id})
+
+      conn = get(conn, ~p"/api/plots/me?offset=invalid")
+      response = json_response(conn, 200)["data"]
+      # Should use default offset (0) and return results
+      assert is_list(response)
+      assert length(response) == 1
+    end
+
+    test "handles invalid limit by using default", %{conn: conn, user: user} do
+      plot_fixture(%{user_id: user.id})
+
+      conn = get(conn, ~p"/api/plots/me?limit=invalid")
+      response = json_response(conn, 200)["data"]
+      # Should use default limit and return results
+      assert is_list(response)
+      assert length(response) == 1
+    end
+
+    test "returns empty list when offset is beyond available plots", %{conn: conn, user: user} do
+      # Create only 2 plots
+      plot_fixture(%{user_id: user.id})
+      plot_fixture(%{user_id: user.id})
+
+      # Request with offset beyond available plots
+      conn = get(conn, ~p"/api/plots/me?offset=10")
+      response = json_response(conn, 200)["data"]
+      assert response == []
+    end
+
+    test "combines limit and offset parameters correctly", %{conn: conn, user: user} do
+      # Create 10 plots for the user
+      for i <- 1..10 do
+        plot_fixture(%{
+          user_id: user.id,
+          polygon: %Geo.Polygon{
+            coordinates: [
+              [
+                {i * 100, i * 100},
+                {i * 100, i * 100 + 10},
+                {i * 100 + 10, i * 100 + 10},
+                {i * 100 + 10, i * 100},
+                {i * 100, i * 100}
+              ]
+            ],
+            srid: 4326
+          }
+        })
+
+        Process.sleep(1)
+      end
+
+      # Get plots 4-6 (offset 3, limit 3)
+      conn = get(conn, ~p"/api/plots/me?limit=3&offset=3")
+      response = json_response(conn, 200)["data"]
+
+      # Should return 3 plots
+      assert length(response) == 3
     end
   end
 
