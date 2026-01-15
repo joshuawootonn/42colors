@@ -26,6 +26,29 @@ export default function Changelog() {
       <hr className="w-full border-t-2 border-border" />
       <ul>
         <li>
+          <DateComponent date={new Date("01/15/2026")} /> - Added new rectangle and ellipse tools
+          with filled and outline variants.
+          <video
+            src="/changelog/26-01-15-rectangle-and-ellipse.mp4"
+            muted
+            controls
+            className="mt-4 border border-border"
+          />
+          <ul>
+            <li>
+              Shapes live under a single toolbar button with a right-click picker for the four
+              variants.
+            </li>
+            <li>
+              Hold <kbd>Shift</kbd> while dragging for an easy to way to maintian 1:1 aspect ratio.
+            </li>
+            <li>
+              Hold <kbd>Option</kbd>/<kbd>Alt</kbd> while dragging rotates the shape around its
+              center.
+            </li>
+          </ul>
+        </li>
+        <li>
           <DateComponent date={new Date("12/28/2025")} /> - Created a user profile popover so you
           can easily see the plots of other users.
           <br />
