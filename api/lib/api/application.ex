@@ -5,6 +5,11 @@ defmodule Api.Application do
 
   @impl true
   def start(_type, _args) do
+    # Set up Sentry logger handler before starting the supervision tree
+    :logger.add_handler(:sentry_handler, Sentry.LoggerHandler, %{
+      config: %{metadata: [:file, :line]}
+    })
+
     children = [
       ApiWeb.Telemetry,
       Api.PromEx,
