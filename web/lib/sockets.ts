@@ -14,6 +14,14 @@ import { InitializedStore, store } from "./store";
 import { Plot } from "./tools/claimer/claimer.rest";
 import { isInitialStore } from "./utils/is-initial-store";
 
+const subscribeChunksResponseSchema = z.object({
+  subscribed: z.array(z.string()),
+});
+
+const unsubscribeChunksResponseSchema = z.object({
+  unsubscribed: z.array(z.string()),
+});
+
 export function setupSocketConnection(apiWebsocketOrigin: string, token?: string): Socket {
   const socket = new Socket(new URL("/socket", apiWebsocketOrigin).href, {
     params: { token: token ?? null },
@@ -92,6 +100,38 @@ export function newPixels(context: InitializedStore, pixels: Pixel[], action_id?
 const pixelResponseSchema = z.object({
   pixels: pixelsSchema,
 });
+
+export function subscribeToChunks(channel: Channel, chunkKeys: string[]): void {
+  if (chunkKeys.length === 0) return;
+
+  channel
+    .push("subscribe_chunks", { chunk_keys: chunkKeys })
+    .receive("ok", (resp: unknown) => {
+      const parsed = subscribeChunksResponseSchema.safeParse(resp);
+      if (parsed.success) {
+        console.debug("Subscribed to chunks:", parsed.data.subscribed);
+      }
+    })
+    .receive("error", (resp: unknown) => {
+      console.error("Failed to subscribe to chunks:", resp);
+    });
+}
+
+export function unsubscribeFromChunks(channel: Channel, chunkKeys: string[]): void {
+  if (chunkKeys.length === 0) return;
+
+  channel
+    .push("unsubscribe_chunks", { chunk_keys: chunkKeys })
+    .receive("ok", (resp: unknown) => {
+      const parsed = unsubscribeChunksResponseSchema.safeParse(resp);
+      if (parsed.success) {
+        console.debug("Unsubscribed from chunks:", parsed.data.unsubscribed);
+      }
+    })
+    .receive("error", (resp: unknown) => {
+      console.error("Failed to unsubscribe from chunks:", resp);
+    });
+}
 
 export function setupChannel(socket: Socket): Channel {
   const channel = socket.channel("region:general", {});
