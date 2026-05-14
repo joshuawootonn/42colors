@@ -8,3 +8,5 @@ The idea is MSPaint + Minecraft server style land chartering & biomes.
 2. you find a spot in a biome you like
 3. you draw something cool
 4. if people like it you get a charter for another plot of land
+
+https://42colors.com/
