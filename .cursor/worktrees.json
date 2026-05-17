@@ -1,5 +1,5 @@
 {
   "setup-worktree": [
-    "bun install"
+    "bash .cursor/scripts/setup-worktree.sh"
   ]
 }
